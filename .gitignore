@@ -1,0 +1,9 @@
+_build
+build
+_temp
+.xmake
+.vscode
+.cache
+.clangd
+compile_commands.json
+node_modules/
