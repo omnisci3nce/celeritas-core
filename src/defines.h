@@ -1,7 +1,6 @@
 /**
  * @file defines.h
- * @author your name (you@domain.com)
- * @brief 
+ * @brief
  * @date 2024-02-24
  * @copyright Copyright (c) 2024
  */
@@ -42,3 +41,29 @@ _Static_assert(sizeof(f64) == 8, "type f64 should be 8 bytes");
 _Static_assert(sizeof(ptrdiff_t) == 8, "");
 
 #define alignof(x) _Alignof(x)
+
+/*
+Possible platform defines:
+#define CEL_PLATFORM_LINUX 1
+#define CEL_PLATFORM_WINDOWS 1
+#define CEL_PLATFORM_MAC 1
+#define CEL_PLATFORM_HEADLESS 1
+*/
+
+/*
+Renderer backend defines:
+#define CEL_REND_BACKEND_OPENGL 1
+#define CEL_REND_BACKEND_VULKAN 1
+#define CEL_REND_BACKEND_METAL 1
+*/
+
+// Platform will inform renderer backend (unless user overrides)
+#if defined(CEL_PLATFORM_LINUX) || defined(CEL_PLATFORM_WINDOWS)
+#define CEL_REND_BACKEND_OPENGL 1
+// #define CEL_REND_BACKEND_VULKAN 1
+#endif
+
+#if defined(CEL_PLATFORM_MAC)
+#define CEL_REND_BACKEND_METAL 1
+// #define CEL_REND_BACKEND_OPENGL 1
+#endif
