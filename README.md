@@ -1,1 +1,1 @@
-# celeritas_core
+# celeritas-core
