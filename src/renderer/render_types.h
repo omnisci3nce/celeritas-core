@@ -12,6 +12,16 @@
 
 struct GLFWwindow;
 
+#ifndef RESOURCE_HANDLE_DEFS
+CORE_DEFINE_HANDLE(texture_handle);
+#define RESOURCE_HANDLE_DEFS
+#endif
+
+/* @brief Opaque wrapper around a shader program */
+typedef struct shader {
+  u32 program_id;
+} shader;
+
 /** @brief configuration passed to the renderer at init time */
 typedef struct renderer_config {
   char window_name[256];

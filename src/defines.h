@@ -42,6 +42,13 @@ _Static_assert(sizeof(ptrdiff_t) == 8, "");
 
 #define alignof(x) _Alignof(x)
 
+// Wrap a u32 to make a type-safe "handle" or ID
+#define CORE_DEFINE_HANDLE(name) \
+  typedef struct name name;      \
+  struct name {                  \
+    u32 raw;                     \
+  }
+
 /*
 Possible platform defines:
 #define CEL_PLATFORM_LINUX 1

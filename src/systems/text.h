@@ -10,12 +10,6 @@
 #include "render_types.h"
 
 struct core;
-typedef struct texture_handle {
-  u32 raw
-} texture_handle;
-typedef struct shader {
-  u32 raw
-} shader;
 
 /** @brief internal font struct */
 typedef struct font {
