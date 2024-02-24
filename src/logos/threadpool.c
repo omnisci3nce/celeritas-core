@@ -8,7 +8,7 @@
 
 static void *worker_factory(void *arg) {
   threadpool_worker *worker = arg;
-  //   INFO("Starting job thread %d", worker->id);
+  // INFO("Starting job thread %d", worker->id);
 
   // Run forever, waiting for jobs.
   while (true) {
@@ -17,9 +17,9 @@ static void *worker_factory(void *arg) {
 
     task t;
     if (ring_queue_dequeue(worker->pool->task_queue, &t)) {
-      //   DEBUG("Job thread %d picked up task %d", worker->id, t.task_id);
+      DEBUG("Job thread %d picked up task %d", worker->id, t.task_id);
     } else {
-      //   WARN("Job thread %d didnt pick up a task as queue was empty", worker->id);
+      WARN("Job thread %d didnt pick up a task as queue was empty", worker->id);
       pthread_mutex_unlock(&worker->pool->mutex);
       break;
     }
