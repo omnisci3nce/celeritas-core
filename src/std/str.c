@@ -42,3 +42,27 @@ str8 str8_concat(arena* a, str8 left, str8 right) {
 
   return str8_create(dest, n_bytes);
 }
+
+str8 str8_substr(str8 s, u64 min, u64 max){
+  s.buf = s.buf + (ptrdiff_t)min;
+  s.len = max - min;
+  return s;
+}
+
+str8 str8_take(str8 s, u64 first_n){
+  return str8_substr(s, 0, first_n);
+}
+
+str8 str8_drop(str8 s, u64 last_n){
+  return str8_substr(s, s.len - last_n, s.len);
+}
+
+str8 str8_skip(str8 s, u64 n){
+  return str8_substr(s, n, s.len);
+}
+
+str8 str8_chop(str8 s, u64 n){
+  return str8_substr(s, 0, s.len - n);
+}
+
+
