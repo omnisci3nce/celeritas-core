@@ -9,7 +9,7 @@ jobs:
         run: |
           sudo add-apt-repository ppa:xmake-io/xmake
           sudo apt update
-          sudo apt install -y xmake libxrandr-dev libxinerama-dev clang-format
+          sudo apt install -y xmake xorg-dev libglu1-mesa-dev clang-format
       - name: Check out repository code
         uses: actions/checkout@v4
       - name: List files in the repository
