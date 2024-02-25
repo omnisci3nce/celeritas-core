@@ -4,7 +4,7 @@ set_config("cc", "gcc")
 
 add_rules("mode.debug", "mode.release") -- we have two modes: debug & release
 
--- add_syslinks("m", "dl") -- these are must have when compiling
+add_syslinks("m") -- these are must have when compiling
 
 -- -Wall     : base set of warnings
 -- -Wextra   : additional warnings not covered by -Wall
@@ -16,20 +16,23 @@ if is_mode("debug") then
     add_cflags("-g") -- Add debug symbols in debug mode
 end
 
--- Platform defines
+-- Platform defines and system packages
 if is_plat("linux") then
     add_defines("CEL_PLATFORM_LINUX")
+    add_syslinks("dl", "X11")
 elseif is_plat("windows") then
     add_defines("CEL_PLATFORM_WINDOWS")
 elseif is_plat("macosx") then
     add_defines("CEL_PLATFORM_MAC")
 end
 
-package("glfw")
+-- Compile GLFW from source
+package("local_glfw")
     add_deps("cmake")
-    set_sourcedir(path.join(os.scriptdir(), "glfw"))
+    set_sourcedir(path.join(os.scriptdir(), "deps/glfw-3.3.8"))
     on_install(function (package)
         local configs = {}
+        -- NOTE(omni): Keeping these around as comments in case we need to modify glfw flags
         -- table.insert(configs, "-DCMAKE_BUILD_TYPE=" .. (package:debug() and "Debug" or "Release"))
         -- table.insert(configs, "-DBUILD_SHARED_LIBS=" .. (package:config("shared") and "ON" or "OFF"))
         import("package.tools.cmake").install(package, configs)
@@ -39,12 +42,13 @@ package("glfw")
     end)
 package_end()
 
-add_requires("glfw")
+add_requires("local_glfw")
 
 -- common configuration for both static and shared libraries
 target("core_config")
     set_kind("static") -- kind is required but you can ignore it since it's just for common settings
-    add_packages("glfw")
+    add_syslinks("dl")
+    add_packages("local_glfw")
     add_includedirs("deps/glfw-3.3.8/include/GLFW", {public = true})
     add_includedirs("deps/glad/include", {public = true})
     add_includedirs("deps/stb_image", {public = true})
