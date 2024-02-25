@@ -1,14 +1,6 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#define ERROR_EXIT(...)           \
-  {                               \
-    fprintf(stderr, __VA_ARGS__); \
-    exit(1);                      \
-  }
 
 #define LOG_WARN_ENABLED 1
 #define LOG_INFO_ENABLED 1

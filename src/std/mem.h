@@ -11,6 +11,8 @@
 
 #include <stddef.h>
 
+void oom_handler();
+
 // Inspired by https://nullprogram.com/blog/2023/09/27/
 typedef struct arena {
   char* begin;

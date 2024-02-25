@@ -6,6 +6,7 @@
 #include "render.h"
 #include "render_types.h"
 #include "threadpool.h"
+#include "errors.h"
 
 #define SCR_WIDTH 1080
 #define SCR_HEIGHT 800

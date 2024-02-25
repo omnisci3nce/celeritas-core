@@ -42,6 +42,9 @@ _Static_assert(sizeof(ptrdiff_t) == 8, "");
 
 #define alignof(x) _Alignof(x)
 
+#define thread_local _Thread_local
+#define core_noreturn _Noreturn
+
 // Wrap a u32 to make a type-safe "handle" or ID
 #define CORE_DEFINE_HANDLE(name) \
   typedef struct name name;      \

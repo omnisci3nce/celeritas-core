@@ -3,6 +3,7 @@
 #include <pthread.h>
 
 #include "defines.h"
+#include "errors.h"
 #include "log.h"
 #include "ring_queue.h"
 
@@ -58,7 +59,7 @@ bool threadpool_create(threadpool *pool, u8 thread_count, u32 queue_size) {
   u8 num_worker_threads = thread_count;
   if (thread_count > MAX_NUM_THREADS) {
     ERROR_EXIT("Threadpool has a hard limit of %d threads, you tried to start one with %d",
-               MAX_NUM_THREADS, thread_count)
+               MAX_NUM_THREADS, thread_count);
     num_worker_threads = MAX_NUM_THREADS;
   }
 

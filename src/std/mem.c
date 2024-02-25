@@ -2,11 +2,16 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include "errors.h"
 #include "log.h"
 
 #ifndef DEFAULT_ALIGNMENT
 #define DEFAULT_ALIGNMENT (2 * sizeof(void*))
 #endif
+
+void oom_handler() {
+  CORE_ABORT("Out of memory");
+}
 
 void* arena_alloc_align(arena* a, size_t size, size_t align) {
   ptrdiff_t padding = -(uintptr_t)a->curr & (align - 1);

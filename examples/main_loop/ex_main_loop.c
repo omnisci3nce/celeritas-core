@@ -1,10 +1,13 @@
 #include <glfw3.h>
 
 #include "core.h"
+#include "errors.h"
 #include "render.h"
 
 int main() {
   core* core = core_bringup();
+
+  CORE_ABORT("");
 
   // Main loop
   while (!glfwWindowShouldClose(core->renderer.window)) {

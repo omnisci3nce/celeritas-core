@@ -11,6 +11,7 @@ add_syslinks("m") -- these are must have when compiling
 -- -Wundef   : undefined macros
 -- -Wdouble-promotion : catch implicit converion of float to double
 add_cflags("-Wall", "-Wextra", "-Wundef", "-Wdouble-promotion")
+add_cflags("-D_GNU_SOURCE", "-std=gnu11")
 
 if is_mode("debug") then
     add_cflags("-g") -- Add debug symbols in debug mode
@@ -47,8 +48,8 @@ add_requires("local_glfw")
 -- common configuration for both static and shared libraries
 target("core_config")
     set_kind("static") -- kind is required but you can ignore it since it's just for common settings
-    add_syslinks("dl")
     add_packages("local_glfw")
+    add_includedirs("deps/b_stacktrace", {public = true})
     add_includedirs("deps/glfw-3.3.8/include/GLFW", {public = true})
     add_includedirs("deps/glad/include", {public = true})
     add_includedirs("deps/stb_image", {public = true})
