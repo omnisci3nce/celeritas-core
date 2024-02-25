@@ -22,9 +22,11 @@ void* arena_alloc_align(arena* a, size_t size, size_t align) {
 void* arena_alloc(arena* a, size_t size) { return arena_alloc_align(a, size, DEFAULT_ALIGNMENT); }
 
 arena arena_create(void* backing_buffer, size_t capacity) {
-  return (arena){ .begin = backing_buffer, .curr = backing_buffer, .end = backing_buffer + (ptrdiff_t)capacity };
+  return (arena){ .begin = backing_buffer,
+                  .curr = backing_buffer,
+                  .end = backing_buffer + (ptrdiff_t)capacity };
 }
 
-void arena_free_all(arena *a) {
-  a->curr = a->begin; // pop everything at once and reset to the start.
+void arena_free_all(arena* a) {
+  a->curr = a->begin;  // pop everything at once and reset to the start.
 }
