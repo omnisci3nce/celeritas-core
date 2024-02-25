@@ -9,6 +9,7 @@
 
 #include "darray.h"
 #include "maths_types.h"
+#include "str.h"
 
 struct GLFWwindow;
 
@@ -65,7 +66,7 @@ KITC_DECL_TYPED_ARRAY(mesh)  // creates "mesh_darray"
 #endif
 
 typedef struct model {
-  char name[256];
+  str8 name;
 } model;
 
 #ifndef TYPED_MODEL_ARRAY
