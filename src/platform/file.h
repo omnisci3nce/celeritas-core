@@ -10,8 +10,8 @@
 #include "str.h"
 
 typedef struct str8_opt {
-    str8 contents;
-    bool has_value;
+  str8 contents;
+  bool has_value;
 } str8_opt;
 
 const char* string_from_file(const char* path);
