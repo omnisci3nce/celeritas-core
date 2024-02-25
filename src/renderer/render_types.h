@@ -57,7 +57,7 @@ typedef struct mesh {
   u32 *indices;
   u32 indices_len;
   size_t material_index;
-  u32 vbo, vao; /** OpenGL data */
+  u32 vbo, vao; /** OpenGL data. TODO: dont leak OpenGL details */
 } mesh;
 
 #ifndef TYPED_MESH_ARRAY
@@ -67,9 +67,39 @@ KITC_DECL_TYPED_ARRAY(mesh)  // creates "mesh_darray"
 
 typedef struct model {
   str8 name;
+  mesh_darray meshes;
+  aabb_3d bbox;
+  // TODO: materials
+  bool is_loaded;
+  bool is_uploaded;
 } model;
 
 #ifndef TYPED_MODEL_ARRAY
 KITC_DECL_TYPED_ARRAY(model)  // creates "model_darray"
 #define TYPED_MODEL_ARRAY
 #endif
+
+// --- Graphics API related
+
+typedef enum cel_primitive_topology {
+  CEL_PRIMITIVE_TOPOLOGY_POINT,
+  CEL_PRIMITIVE_TOPOLOGY_LINE,
+  CEL_PRIMITIVE_TOPOLOGY_LINE_STRIP,
+  CEL_PRIMITIVE_TOPOLOGY_TRIANGLE,
+  CEL_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+  CEL_PRIMITIVE_TOPOLOGY_COUNT
+} cel_primitive_topology;
+
+typedef enum gpu_texture_type {
+  TEXTURE_TYPE_2D,
+  TEXTURE_TYPE_3D,
+  TEXTURE_TYPE_2D_ARRAY,
+  TEXTURE_TYPE_CUBE_MAP,
+  TEXTURE_TYPE_COUNT
+} gpu_texture_type;
+
+typedef enum gpu_texture_format {
+  TEXTURE_FORMAT_8_8_8_8_RGBA_UNORM,
+  TEXTURE_FORMAT_DEPTH_DEFAULT,
+  TEXTURE_FORMAT_COUNT
+} gpu_texture_format;
