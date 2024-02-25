@@ -10,7 +10,7 @@
 
 #include <glad/glad.h>
 
-#include <GLFW/glfw3.h>
+#include <glfw3.h>
 
 /** @brief Internal backend state */
 typedef struct opengl_state {

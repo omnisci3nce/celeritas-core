@@ -1,4 +1,4 @@
-#include <GLFW/glfw3.h>
+#include <glfw3.h>
 
 #include "core.h"
 #include "render.h"

@@ -1,0 +1,23 @@
+name: GitHub Actions Demo
+run-name: ${{ github.actor }} pushed a new commit
+on: [push]
+jobs:
+  Compile-and-Test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install system dependencies, xmake, etc
+        run: |
+          sudo add-apt-repository ppa:xmake-io/xmake
+          sudo apt update
+          sudo apt install -y xmake xorg-dev libglu1-mesa-dev clang-format
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
+      - name: Check formatting
+        run: find src/ -iname *.h -o -iname *.c | xargs clang-format --style=file --dry-run --Werror
+      - name: Compile C code
+        run: xmake build -y
+      # - name: Run tests
+        # run: xmake run -g tests

@@ -4,7 +4,7 @@
  * @brief Shapes and intersections between them
  * @version 0.1
  * @date 2024-02-24
- * 
+ *
  * @copyright Copyright (c) 2024
  */
 #pragma once
