@@ -19,6 +19,6 @@ jobs:
       - name: Check formatting
         run: find src/ -iname *.h -o -iname *.c | xargs clang-format --style=file --dry-run --Werror
       - name: Compile C code
-        run: xmake build
+        run: xmake build -y
       # - name: Run tests
         # run: xmake run -g tests
