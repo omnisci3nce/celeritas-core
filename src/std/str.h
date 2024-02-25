@@ -7,8 +7,9 @@
 #include "defines.h"
 
 /**
- * @brief Fat pointer representing a UTF8 (TODO) encoded string
- * @note when using `printf` you must use %s.*s length, string
+ * @brief Fat pointer representing a UTF8 (TODO some APIs supporting utf8) encoded string
+ * @note when using `printf` you must use %s.*s length, string until our own modified
+         print routines are written. alternatively wrap in `cstr()` and pass to `%s`.
  */
 typedef struct {
   u8 *buf;
