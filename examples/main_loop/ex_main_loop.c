@@ -8,6 +8,7 @@
 int main() {
   core* core = core_bringup();
 
+  // Examples of how to work with arenas and strings
   size_t arena_size = 1024;
   arena scratch = arena_create(malloc(arena_size), arena_size);
   arena* a = &scratch;
@@ -30,16 +31,16 @@ int main() {
   }
 
   // Main loop
-  // while (!glfwWindowShouldClose(core->renderer.window)) {
-  //   input_update(&core->input);
-  //   threadpool_process_results(&core->threadpool, 1);
-  //
-  //   render_frame_begin(&core->renderer);
-  //
-  //   // insert work here
-  //
-  //   render_frame_end(&core->renderer);
-  // }
+  while (!glfwWindowShouldClose(core->renderer.window)) {
+    input_update(&core->input);
+    threadpool_process_results(&core->threadpool, 1);
+
+    render_frame_begin(&core->renderer);
+
+    // insert work here
+
+    render_frame_end(&core->renderer);
+  }
 
   return 0;
 }
