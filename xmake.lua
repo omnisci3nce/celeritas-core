@@ -24,6 +24,9 @@ elseif is_plat("windows") then
     add_defines("CEL_PLATFORM_WINDOWS")
 elseif is_plat("macosx") then
     add_defines("CEL_PLATFORM_MAC")
+    add_frameworks("Cocoa", "IOKit", "CoreVideo", "OpenGL")
+    set_runenv("MTL_DEBUG_LAYER", "1")
+    -- add_syslinks("GL")
 end
 
 -- Compile GLFW from source
@@ -79,6 +82,8 @@ target("core_config")
 target("core_static")
     set_kind("static")
     add_deps("core_config") -- inherit common configurations
+    set_policy("build.merge_archive", true)
+    add_files("src/empty.c")
 
 target("core_shared")
     set_kind("shared")

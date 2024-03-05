@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "core.h"
+#include "file.h"
 #include "darray.h"
 #include "log.h"
 #include "maths.h"

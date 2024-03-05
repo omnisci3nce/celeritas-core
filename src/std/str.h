@@ -10,6 +10,8 @@
  */
 #pragma once
 
+#include <ctype.h>
+
 #include "defines.h"
 #include "mem.h"
 
