@@ -12,6 +12,7 @@
 
 const char *string_from_file(const char *path) {
   FILE *f = fopen(path, "rb");
+  printf("Hello\n");
   if (f == NULL) {
     ERROR("Error reading file: %s. errno: %d", path, errno);
     return NULL;
@@ -20,6 +21,7 @@ const char *string_from_file(const char *path) {
     ERROR("Error reading file: %s. errno: %d", path, errno);
     return NULL;
   }
+  printf("Hello2\n");
   fseek(f, 0, SEEK_END);
   long fsize = ftell(f);
   rewind(f);
@@ -29,6 +31,8 @@ const char *string_from_file(const char *path) {
   fclose(f);
 
   string[fsize] = '\0';
+  printf("Hello3\n");
+  printf("Hello %s\n", string);
 
   return string;
 }

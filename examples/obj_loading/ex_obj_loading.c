@@ -6,6 +6,9 @@
 int main() {
   core* core = core_bringup();
 
+  // Set up our scene
+  model_handle cube = model_load_obj(core, "assets/models/obj/cube/cube.obj", true);
+
   // Main loop
   while (!glfwWindowShouldClose(core->renderer.window)) {
     input_update(&core->input);

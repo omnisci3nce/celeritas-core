@@ -71,3 +71,8 @@ str8 str8_concat(arena* a, str8 left, str8 right);
 static inline bool str8_is_null_term(str8 a) {
   return a.buf[a.len] == 0;  // This doesn't seem safe. YOLO
 }
+
+// TODO: move or delete this and replace with handling using our internal type
+static void skip_space(char *p) {
+  while (isspace((unsigned char)*p)) ++p;
+}

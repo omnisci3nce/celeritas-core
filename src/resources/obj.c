@@ -36,7 +36,9 @@ bool load_material_lib(const char *path, material_darray *materials);
 bool model_load_obj_str(const char *file_string, model *out_model, bool invert_textures_y);
 
 model_handle model_load_obj(core *core, const char *path, bool invert_textures_y) {
+  printf("Path %s\n", path);
   const char *file_string = string_from_file(path);
+  printf("Loaded file %s\n", file_string);
   model model;
 
   bool success = model_load_obj_str(file_string, &model, invert_textures_y);
@@ -89,7 +91,7 @@ bool model_load_obj_str(const char *file_string, model *out_model, bool invert_t
     } else {
       // read the first word of the line
       int res = sscanf(pch, "%s %n", line_header, &offset);
-      // printf("header: %s, offset : %d res: %d\n",line_header, offset, res);
+      /* printf("header: %s, offset : %d res: %d\n",line_header, offset, res); */
       if (res != 1) {
         break;
       }
