@@ -1,6 +1,7 @@
 #pragma once
 
 #include "defines.h"
+#include "render_types.h"
 
 struct core;
 

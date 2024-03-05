@@ -33,14 +33,22 @@
 
 #define PREFIX static
 
+    /* if (arena != NULL) {\ */
+      /* d = arena_alloc(arena, sizeof(T##_darray));\ */
+      /* data = arena_alloc(arena, starting_capacity * sizeof(T));\ */
+    /* } else {\ */
+    /* }\ */
+
 #define KITC_DECL_TYPED_ARRAY(T)                                                          \
   typedef typed_array(T) T##_darray;                                                      \
   typedef typed_array_iterator(T) T##_darray_iter;                                        \
                                                                                           \
   /* Create a new one growable array */                                                   \
-  PREFIX T##_darray *T##_darray_new(size_t starting_capacity) {                           \
-    T##_darray *d = malloc(sizeof(T##_darray));                                           \
-    T *data = malloc(starting_capacity * sizeof(T));                                      \
+  PREFIX T##_darray *T##_darray_new(size_t starting_capacity) {             \
+    T##_darray *d;\
+    T *data ;                                       \
+      d = malloc(sizeof(T##_darray));               \
+      data = malloc(starting_capacity * sizeof(T));\
                                                                                           \
     d->len = 0;                                                                           \
     d->capacity = starting_capacity;                                                      \

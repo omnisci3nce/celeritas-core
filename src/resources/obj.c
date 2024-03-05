@@ -39,12 +39,16 @@ bool model_load_obj_str(const char *file_string, model *out_model, bool invert_t
 model_handle model_load_obj(core *core, const char *path, bool invert_textures_y) {
   TRACE("Loading model at Path %s\n", path);
   const char *file_string = string_from_file(path);
-  model model;
+
+  model model = { 0 };
+  model.meshes = mesh_darray_new(1);
+  model.materials = material_darray_new(1);
 
   bool success = model_load_obj_str(file_string, &model, invert_textures_y);
 
   if (!success) {
-    exit(-1);  // FIXME: Return some sort of result type?
+    FATAL("Couldnt load OBJ file at path %s", path);
+    ERROR_EXIT("Load fails are considered crash-worthy right now. This will change later.\n");
   }
 
   u32 index = model_darray_len(core->models);
@@ -60,9 +64,6 @@ bool model_load_obj_str(const char *file_string, model *out_model, bool invert_t
   vec3_darray *tmp_normals = vec3_darray_new(1000);
   vec2_darray *tmp_uvs = vec2_darray_new(1000);
   face_darray *tmp_faces = face_darray_new(1000);
-
-  mesh_darray *meshes = mesh_darray_new(1);
-  material_darray *materials = material_darray_new(1);
 
   // Other state
   bool object_set = false;
@@ -101,16 +102,16 @@ bool model_load_obj_str(const char *file_string, model *out_model, bool invert_t
         if (!object_set) {
           object_set = true;
         } else {
-          create_submesh(meshes, tmp_positions, tmp_normals, tmp_uvs, tmp_faces, materials,
-                         material_loaded, current_material_name);
+          create_submesh(out_model->meshes, tmp_positions, tmp_normals, tmp_uvs, tmp_faces,
+                         out_model->materials, material_loaded, current_material_name);
           object_set = false;
         }
       } else if (strcmp(line_header, "v") == 0) {
         // special logic: if we went from faces back to vertices trigger a mesh output.
         // PS: I hate OBJ
         if (last_char_type == 'f') {
-          create_submesh(meshes, tmp_positions, tmp_normals, tmp_uvs, tmp_faces, materials,
-                         material_loaded, current_material_name);
+          create_submesh(out_model->meshes, tmp_positions, tmp_normals, tmp_uvs, tmp_faces,
+                         out_model->materials, material_loaded, current_material_name);
           object_set = false;
         }
 
@@ -163,8 +164,9 @@ bool model_load_obj_str(const char *file_string, model *out_model, bool invert_t
       } else if (strcmp(line_header, "mtllib") == 0) {
         char path[1024] = "assets/";
         sscanf(pch + offset, "%s", path + 7);
-        if (!load_material_lib(path, materials)) {
+        if (!load_material_lib(path, out_model->materials)) {
           ERROR("couldnt load material lib");
+          return false;
         }
       } else if (strcmp(line_header, "usemtl") == 0) {
         material_loaded = true;
@@ -178,8 +180,8 @@ bool model_load_obj_str(const char *file_string, model *out_model, bool invert_t
   // last mesh or if one wasnt created with 'o' directive
   if (face_darray_len(tmp_faces) > 0) {
     TRACE("Last leftover mesh");
-    create_submesh(meshes, tmp_positions, tmp_normals, tmp_uvs, tmp_faces, materials,
-                   material_loaded, current_material_name);
+    create_submesh(out_model->meshes, tmp_positions, tmp_normals, tmp_uvs, tmp_faces,
+                   out_model->materials, material_loaded, current_material_name);
   }
 
   // Free data
@@ -190,16 +192,16 @@ bool model_load_obj_str(const char *file_string, model *out_model, bool invert_t
   face_darray_free(tmp_faces);
   TRACE("Freed temporary OBJ loading data");
 
-  memset(out_model, 0, sizeof(model));
-  if (mesh_darray_len(meshes) > 256) {
-    printf("num meshes: %ld\n", mesh_darray_len(meshes));
+  /* memset(out_model, 0, sizeof(model)); */
+  if (mesh_darray_len(out_model->meshes) > 256) {
+    printf("num meshes: %ld\n", mesh_darray_len(out_model->meshes));
   }
-  out_model->meshes = meshes;
+  /* out_model->meshes = meshes; */
 
   // TODO: bounding box calculation for each mesh
   // TODO: bounding box calculation for model
 
-  out_model->materials = materials;
+  /* out_model->materials = materials; */
 
   return true;
 }
@@ -346,6 +348,8 @@ bool load_material_lib(const char *path, material_darray *materials) {
 
     pch = strtok_r(NULL, "\n", &saveptr);
   }
+
+  TRACE("end load material lib");
 
   // last mesh or if one wasnt created with 'o' directive
   // TRACE("Last leftover material");

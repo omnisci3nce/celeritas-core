@@ -96,6 +96,7 @@ texture texture_data_load(const char* path, bool invert_y) {
 }
 
 void texture_data_upload(texture* tex) {
+  printf("Texture name %s\n", tex->name);
   TRACE("Upload texture data");
   u32 texture_id;
   glGenTextures(1, &texture_id);
