@@ -1,5 +1,7 @@
 #include "ring_queue.h"
+
 #include <stdlib.h>
+#include <string.h>
 #include "defines.h"
 
 ring_queue* ring_queue_new(size_t type_size, size_t capacity, void* memory) {
