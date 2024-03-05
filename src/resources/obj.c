@@ -40,6 +40,8 @@ model_handle model_load_obj(core *core, const char *path, bool invert_textures_y
   TRACE("Loading model at Path %s\n", path);
   const char *file_string = string_from_file(path);
 
+  // TODO: store the relative path without the name.obj at the end
+
   model model = { 0 };
   model.meshes = mesh_darray_new(1);
   model.materials = material_darray_new(1);
@@ -64,6 +66,10 @@ bool model_load_obj_str(const char *file_string, model *out_model, bool invert_t
   vec3_darray *tmp_normals = vec3_darray_new(1000);
   vec2_darray *tmp_uvs = vec2_darray_new(1000);
   face_darray *tmp_faces = face_darray_new(1000);
+  // TODO: In the future I'd like these temporary arrays to be allocated from an arena provided
+  // by the function one level up, model_load_obj. That way we can just `return false;` anywhere in this code
+  // to indicate an error, and be sure that all that memory will be cleaned up without having to call
+  // vec3_darray_free in every single error case before returning.
 
   // Other state
   bool object_set = false;
@@ -192,16 +198,12 @@ bool model_load_obj_str(const char *file_string, model *out_model, bool invert_t
   face_darray_free(tmp_faces);
   TRACE("Freed temporary OBJ loading data");
 
-  /* memset(out_model, 0, sizeof(model)); */
   if (mesh_darray_len(out_model->meshes) > 256) {
     printf("num meshes: %ld\n", mesh_darray_len(out_model->meshes));
   }
-  /* out_model->meshes = meshes; */
 
   // TODO: bounding box calculation for each mesh
   // TODO: bounding box calculation for model
-
-  /* out_model->materials = materials; */
 
   return true;
 }
