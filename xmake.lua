@@ -4,8 +4,6 @@ set_config("cc", "gcc")
 
 add_rules("mode.debug", "mode.release") -- we have two modes: debug & release
 
-add_syslinks("m") -- these are must have when compiling
-
 -- -Wall     : base set of warnings
 -- -Wextra   : additional warnings not covered by -Wall
 -- -Wundef   : undefined macros
@@ -19,9 +17,11 @@ end
 -- Platform defines and system packages
 if is_plat("linux") then
     add_defines("CEL_PLATFORM_LINUX")
-    add_syslinks("dl", "X11")
+    add_syslinks("m", "dl", "X11")
 elseif is_plat("windows") then
     add_defines("CEL_PLATFORM_WINDOWS")
+    add_syslinks("user32", "gdi32", "kernel32", "shell32")
+    add_links("pthreadVC2-w64")
 elseif is_plat("macosx") then
     add_defines("CEL_PLATFORM_MAC")
 end
@@ -47,7 +47,6 @@ add_requires("local_glfw")
 -- common configuration for both static and shared libraries
 target("core_config")
     set_kind("static") -- kind is required but you can ignore it since it's just for common settings
-    add_syslinks("dl")
     add_packages("local_glfw")
     add_includedirs("deps/glfw-3.3.8/include/GLFW", {public = true})
     add_includedirs("deps/glad/include", {public = true})
@@ -72,15 +71,27 @@ target("core_config")
     add_files("src/std/*.c")
     add_files("src/std/containers/*.c")
     add_files("src/systems/*.c")
+    
     set_default(false) -- prevents standalone building of this target
 
 target("core_static")
     set_kind("static")
     add_deps("core_config") -- inherit common configurations
+     -- Link against static CRT
+    if is_plat("windows") then
+        add_links("libcmt", "legacy_stdio_definitions") -- for release builds
+        add_links("libcmtd", "legacy_stdio_definitions") -- for debug builds
+    end
 
 target("core_shared")
     set_kind("shared")
     add_deps("core_config") -- inherit common configurations
+    -- Link against dynamic CRT
+    if is_plat("windows") then
+        add_links("msvcrt", "legacy_stdio_definitions") -- for release builds
+        add_links("msvcrtd", "legacy_stdio_definitions") -- for debug builds
+        add_links("pthreadVC2-w64")
+    end
 
 target("main_loop")
     set_kind("binary")
