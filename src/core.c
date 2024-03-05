@@ -45,8 +45,7 @@ core* core_bringup() {
   }
   */
 
-  // c->underworld.models = model_darray_new(10);
-  // c->underworld.renderables = render_entity_darray_new(10);
+  c->models = model_darray_new(10);
 
   return c;
 }

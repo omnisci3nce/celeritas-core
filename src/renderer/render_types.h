@@ -107,7 +107,7 @@ KITC_DECL_TYPED_ARRAY(mesh)  // creates "mesh_darray"
 
 typedef struct model {
   str8 name;
-  mesh_darray meshes;
+  mesh_darray *meshes;
   aabb_3d bbox;
   material_darray *materials;
   bool is_loaded;

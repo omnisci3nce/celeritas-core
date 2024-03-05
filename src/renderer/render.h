@@ -1,7 +1,7 @@
 #pragma once
 
-#include "render_types.h"
 #include "loaders.h"
+#include "render_types.h"
 
 // --- Lifecycle
 /** @brief initialise the render system frontend */

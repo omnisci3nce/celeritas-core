@@ -11,8 +11,8 @@
 #include <string.h>
 
 #include "core.h"
-#include "file.h"
 #include "darray.h"
+#include "file.h"
 #include "log.h"
 #include "maths.h"
 #include "render.h"
@@ -39,7 +39,7 @@ bool model_load_obj_str(const char *file_string, model *out_model, bool invert_t
 model_handle model_load_obj(core *core, const char *path, bool invert_textures_y) {
   printf("Path %s\n", path);
   const char *file_string = string_from_file(path);
-  printf("Loaded file %s\n", file_string);
+  /* printf("Loaded file %s\n", file_string); */
   model model;
 
   bool success = model_load_obj_str(file_string, &model, invert_textures_y);
@@ -195,15 +195,14 @@ bool model_load_obj_str(const char *file_string, model *out_model, bool invert_t
   if (mesh_darray_len(meshes) > 256) {
     printf("num meshes: %ld\n", mesh_darray_len(meshes));
   }
-  for (int i = 0; i < mesh_darray_len(meshes); i++) {
-    mesh_darray_push(&out_model->meshes, ((mesh *)meshes->data)[i]);
-    // TODO: bounding box calculation for each mesh
-  }
+  out_model->meshes = meshes;
+  /* for (int i = 0; i < mesh_darray_len(meshes); i++) { */
+  /*   mesh_darray_push(&out_model->meshes, ((mesh *)meshes->data)[i]); */
+  /* } */
+  // TODO: bounding box calculation for each mesh
   // TODO: bounding box calculation for model
 
-  for (int i = 0; i < material_darray_len(materials); i++) {
-    material_darray_push(&out_model->materials, ((material *)materials->data)[i]);
-  }
+  out_model->materials = materials;
 
   return true;
 }

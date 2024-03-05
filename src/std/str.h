@@ -75,6 +75,6 @@ static inline bool str8_is_null_term(str8 a) {
 }
 
 // TODO: move or delete this and replace with handling using our internal type
-static void skip_space(char *p) {
+static void skip_space(char* p) {
   while (isspace((unsigned char)*p)) ++p;
 }
