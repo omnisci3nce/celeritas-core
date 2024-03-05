@@ -13,7 +13,11 @@
 
 struct GLFWwindow;
 
+#define MAX_MATERIAL_NAME_LEN 256
+#define MAX_TEXTURE_NAME_LEN 256
+
 #ifndef RESOURCE_HANDLE_DEFS
+CORE_DEFINE_HANDLE(model_handle);
 CORE_DEFINE_HANDLE(texture_handle);
 #define RESOURCE_HANDLE_DEFS
 #endif
@@ -35,6 +39,42 @@ typedef struct renderer {
   void *backend_state;       /** Graphics API-specific state */
   renderer_config config;
 } renderer;
+
+// --- Lighting & Materials
+
+typedef struct texture {
+  u32 texture_id;
+  char name[MAX_TEXTURE_NAME_LEN];
+  void *image_data;
+  u32 width;
+  u32 height;
+  u8 channel_count;
+  u32 channel_type;
+} texture;
+
+typedef struct blinn_phong_material {
+  char name[MAX_MATERIAL_NAME_LEN];
+  texture diffuse_texture;
+  char diffuse_tex_path[256];
+  texture specular_texture;
+  char specular_tex_path[256];
+  vec3 ambient_colour;
+  vec3 diffuse;
+  vec3 specular;
+  f32 spec_exponent;
+  bool is_loaded;
+  bool is_uploaded;
+} blinn_phong_material;
+typedef blinn_phong_material material;  // when we start using PBR, this will no longer be the case
+
+// the default blinn-phong material. MUST be initialised with the function below
+extern material DEFAULT_MATERIAL;
+void default_material_init();
+
+#ifndef TYPED_MATERIAL_ARRAY
+KITC_DECL_TYPED_ARRAY(material)  // creates "material_darray"
+#define TYPED_MATERIAL_ARRAY
+#endif
 
 /** @brief Vertex format for a static mesh */
 typedef struct vertex {
@@ -69,7 +109,7 @@ typedef struct model {
   str8 name;
   mesh_darray meshes;
   aabb_3d bbox;
-  // TODO: materials
+  material_darray *materials;
   bool is_loaded;
   bool is_uploaded;
 } model;
