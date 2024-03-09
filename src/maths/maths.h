@@ -11,10 +11,16 @@
 #include <math.h>
 #include "maths_types.h"
 
+// --- Helpers
+#define deg_to_rad(x) (x * 3.14 / 180.0)
+#define min(a, b) (a < b ? a : b)
+#define max(a, b) (a > b ? a : b)
+
 // --- Vector Implementations
 
 // Dimension 3
 static inline vec3 vec3_create(f32 x, f32 y, f32 z) { return (vec3){ x, y, z }; }
+#define vec3(x,y,z) (vec3_create(x, y, z))
 static inline vec3 vec3_add(vec3 a, vec3 b) { return (vec3){ a.x + b.x, a.y + b.y, a.z + b.z }; }
 static inline vec3 vec3_sub(vec3 a, vec3 b) { return (vec3){ a.x - b.x, a.y - b.y, a.z - b.z }; }
 static inline vec3 vec3_mult(vec3 a, f32 s) { return (vec3){ a.x * s, a.y * s, a.z * s }; }
@@ -48,6 +54,23 @@ static inline vec2 vec2_create(f32 x, f32 y) { return (vec2){ x, y }; }
 // TODO: Dimension 4
 #define VEC4_ZERO ((vec4){ .x = 0.0, .y = 0.0, .z = 0.0, .w = 0.0 })
 
+// --- Quaternion Implementations
+
+static inline f32 quat_dot(quat a, quat b) {
+  return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
+static inline quat quat_normalise(quat a) {
+  f32 length = sqrtf(
+    quat_dot(a, a) // same as len squared
+  );
+  return (quat) { a.x/length, a.y/length,a.z/length,a.w/length };
+}
+
+static inline quat quat_ident() {
+  return (quat) { .x = 0.0, .y = 0.0, .z = 0.0, .w = 1.0 };
+}
+
 // --- Matrix Implementations
 
 static inline mat4 mat4_ident() {
@@ -67,6 +90,26 @@ static inline mat4 mat4_scale(f32 scale) {
   out_matrix.data[0] = scale;
   out_matrix.data[5] = scale;
   out_matrix.data[10] = scale;
+  return out_matrix;
+}
+
+// TODO: double check this
+static inline mat4 mat4_rotation(quat rotation) {
+  mat4 out_matrix = mat4_ident();
+  quat n = quat_normalise(rotation);
+
+  out_matrix.data[0] = 1.0f - 2.0f * n.y * n.y - 2.0f * n.z * n.z;
+  out_matrix.data[1] = 2.0f * n.x * n.y - 2.0f * n.z * n.w;
+  out_matrix.data[2] = 2.0f * n.x * n.z + 2.0f * n.y * n.w;
+
+  out_matrix.data[4] = 2.0f * n.x * n.y + 2.0f * n.z * n.w;
+  out_matrix.data[5] = 1.0f - 2.0f * n.x * n.x - 2.0f * n.z * n.z;
+  out_matrix.data[6] = 2.0f * n.y * n.z - 2.0f * n.x * n.w;
+
+  out_matrix.data[8] = 2.0f * n.x * n.z - 2.0f * n.y * n.w;
+  out_matrix.data[9] = 2.0f * n.y * n.z + 2.0f * n.x * n.w;
+  out_matrix.data[10] = 1.0f - 2.0f * n.x * n.x - 2.0f * n.y * n.y;
+
   return out_matrix;
 }
 
@@ -155,8 +198,6 @@ static inline mat4 mat4_look_at(vec3 position, vec3 target, vec3 up) {
 }
 
 // ...
-
-// --- Quaternion Implementations
 
 // --- Transform Implementations
 
