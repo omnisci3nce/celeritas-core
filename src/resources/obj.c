@@ -17,6 +17,7 @@
 #include "maths.h"
 #include "render.h"
 #include "render_types.h"
+#include "str.h"
 
 struct face {
   u32 vertex_indices[3];
@@ -43,6 +44,7 @@ model_handle model_load_obj(core *core, const char *path, bool invert_textures_y
   // TODO: store the relative path without the name.obj at the end
 
   model model = { 0 };
+  model.name = str8lit(path);
   model.meshes = mesh_darray_new(1);
   model.materials = material_darray_new(1);
 
@@ -67,9 +69,9 @@ bool model_load_obj_str(const char *file_string, model *out_model, bool invert_t
   vec2_darray *tmp_uvs = vec2_darray_new(1000);
   face_darray *tmp_faces = face_darray_new(1000);
   // TODO: In the future I'd like these temporary arrays to be allocated from an arena provided
-  // by the function one level up, model_load_obj. That way we can just `return false;` anywhere in this code
-  // to indicate an error, and be sure that all that memory will be cleaned up without having to call
-  // vec3_darray_free in every single error case before returning.
+  // by the function one level up, model_load_obj. That way we can just `return false;` anywhere in
+  // this code to indicate an error, and be sure that all that memory will be cleaned up without
+  // having to call vec3_darray_free in every single error case before returning.
 
   // Other state
   bool object_set = false;
