@@ -103,7 +103,7 @@ target("std")
     add_files("examples/standard_lib/ex_std.c")
     set_rundir("$(projectdir)")
 
-target("obj_loading")
+target("obj")
     set_kind("binary")
     set_group("examples")
     add_deps("core_static")
