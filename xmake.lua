@@ -47,6 +47,19 @@ package_end()
 
 add_requires("local_glfw")
 
+local core_sources = {
+    "deps/glad/src/glad.c",
+    "src/*.c",
+    "src/logos/*.c",
+    "src/platform/*.c",
+    "src/renderer/*.c",
+    "src/renderer/backends/*.c",
+    "src/resources/*.c",
+    "src/std/*.c",
+    "src/std/containers/*.c",
+    "src/systems/*.c",
+}
+
 -- common configuration for both static and shared libraries
 target("core_config")
     set_kind("static") -- kind is required but you can ignore it since it's just for common settings
@@ -67,27 +80,19 @@ target("core_config")
     add_includedirs("src/std/", {public = true})
     add_includedirs("src/std/containers", {public = true})
     add_includedirs("src/systems/", {public = true})
-    add_files("deps/glad/src/glad.c")
-    add_files("src/*.c")
-    add_files("src/logos/*.c")
-    add_files("src/platform/*.c")
-    add_files("src/renderer/*.c")
-    add_files("src/renderer/backends/*.c")
-    add_files("src/resources/*.c")
-    add_files("src/std/*.c")
-    add_files("src/std/containers/*.c")
-    add_files("src/systems/*.c")
+    add_files("src/empty.c") -- for some reason we need this on Mac so it doesnt call 'ar' with no files and error
     set_default(false) -- prevents standalone building of this target
 
 target("core_static")
     set_kind("static")
     add_deps("core_config") -- inherit common configurations
     set_policy("build.merge_archive", true)
-    add_files("src/empty.c")
+    add_files(core_sources)
 
 target("core_shared")
     set_kind("shared")
     add_deps("core_config") -- inherit common configurations
+    add_files(core_sources)
 
 target("main_loop")
     set_kind("binary")
