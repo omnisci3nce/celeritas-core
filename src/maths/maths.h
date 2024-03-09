@@ -20,7 +20,7 @@
 
 // Dimension 3
 static inline vec3 vec3_create(f32 x, f32 y, f32 z) { return (vec3){ x, y, z }; }
-#define vec3(x,y,z) (vec3_create(x, y, z))
+#define vec3(x, y, z) (vec3_create(x, y, z))
 static inline vec3 vec3_add(vec3 a, vec3 b) { return (vec3){ a.x + b.x, a.y + b.y, a.z + b.z }; }
 static inline vec3 vec3_sub(vec3 a, vec3 b) { return (vec3){ a.x - b.x, a.y - b.y, a.z - b.z }; }
 static inline vec3 vec3_mult(vec3 a, f32 s) { return (vec3){ a.x * s, a.y * s, a.z * s }; }
@@ -56,20 +56,15 @@ static inline vec2 vec2_create(f32 x, f32 y) { return (vec2){ x, y }; }
 
 // --- Quaternion Implementations
 
-static inline f32 quat_dot(quat a, quat b) {
-  return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
-}
+static inline f32 quat_dot(quat a, quat b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
 
 static inline quat quat_normalise(quat a) {
-  f32 length = sqrtf(
-    quat_dot(a, a) // same as len squared
+  f32 length = sqrtf(quat_dot(a, a)  // same as len squared
   );
-  return (quat) { a.x/length, a.y/length,a.z/length,a.w/length };
+  return (quat){ a.x / length, a.y / length, a.z / length, a.w / length };
 }
 
-static inline quat quat_ident() {
-  return (quat) { .x = 0.0, .y = 0.0, .z = 0.0, .w = 1.0 };
-}
+static inline quat quat_ident() { return (quat){ .x = 0.0, .y = 0.0, .z = 0.0, .w = 1.0 }; }
 
 // --- Matrix Implementations
 

@@ -27,10 +27,10 @@ void texture_data_upload(texture* tex);                      // #backend
 // --- Uniforms
 
 /** @brief upload a vec3 of f32 to a uniform */
-void uniform_vec3f(u32 program_id, const char *uniform_name, vec3 *value);
+void uniform_vec3f(u32 program_id, const char* uniform_name, vec3* value);
 /** @brief upload a single f32 to a uniform */
-void uniform_f32(u32 program_id, const char *uniform_name, f32 value);
+void uniform_f32(u32 program_id, const char* uniform_name, f32 value);
 /** @brief upload a integer to a uniform */
-void uniform_i32(u32 program_id, const char *uniform_name, i32 value);
+void uniform_i32(u32 program_id, const char* uniform_name, i32 value);
 /** @brief upload a mat4 of f32 to a uniform */
-void uniform_mat4f(u32 program_id, const char *uniform_name, mat4 *value);
+void uniform_mat4f(u32 program_id, const char* uniform_name, mat4* value);
