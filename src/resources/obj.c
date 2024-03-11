@@ -51,7 +51,7 @@ model_handle model_load_obj(core *core, const char *path, bool invert_textures_y
   // TODO: store the relative path without the name.obj at the end
 
   model model = { 0 };
-  model.name = str8lit(path);
+  model.name = str8_cstr_view(path);
   model.meshes = mesh_darray_new(1);
   model.materials = material_darray_new(1);
 
@@ -182,7 +182,6 @@ bool model_load_obj_str(const char *file_string, str8 relative_path, model *out_
         sscanf(pch + offset, "%s", filename);
         char mtllib_path[1024];
         snprintf(mtllib_path, sizeof(mtllib_path), "%s/%s", relative_path.buf, filename);
-        // sscanf(pch + offset, "%s", path + 7);
         if (!load_material_lib(mtllib_path, out_model->materials)) {
           ERROR("couldnt load material lib");
           return false;
