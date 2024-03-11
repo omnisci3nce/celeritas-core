@@ -1,7 +1,7 @@
 # cube.obj
 #
 
-mtllib models/obj/cube/cube.mtl
+mtllib cube.mtl
 o cube
 
 v -0.500000 -0.500000 0.500000

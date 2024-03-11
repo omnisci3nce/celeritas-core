@@ -15,6 +15,7 @@
 #include "file.h"
 #include "log.h"
 #include "maths.h"
+#include "path.h"
 #include "render.h"
 #include "render_types.h"
 #include "str.h"
@@ -35,20 +36,26 @@ void create_submesh(mesh_darray *meshes, vec3_darray *tmp_positions, vec3_darray
                     vec2_darray *tmp_uvs, face_darray *tmp_faces, material_darray *materials,
                     bool material_loaded, char current_material_name[256]);
 bool load_material_lib(const char *path, material_darray *materials);
-bool model_load_obj_str(const char *file_string, model *out_model, bool invert_textures_y);
+bool model_load_obj_str(const char *file_string, str8 relative_path, model *out_model,
+                        bool invert_textures_y);
 
 model_handle model_load_obj(core *core, const char *path, bool invert_textures_y) {
   TRACE("Loading model at Path %s\n", path);
+  path_opt relative_path = path_parent(path);
+  if (!relative_path.has_value) {
+    WARN("Couldnt get a relative path for the path to use for loading materials & textures later");
+  }
+  printf("Relative path: %s\n", relative_path.path.buf);
   const char *file_string = string_from_file(path);
 
   // TODO: store the relative path without the name.obj at the end
 
   model model = { 0 };
-  model.name = str8lit(path);
+  model.name = str8_cstr_view(path);
   model.meshes = mesh_darray_new(1);
   model.materials = material_darray_new(1);
 
-  bool success = model_load_obj_str(file_string, &model, invert_textures_y);
+  bool success = model_load_obj_str(file_string, relative_path.path, &model, invert_textures_y);
 
   if (!success) {
     FATAL("Couldnt load OBJ file at path %s", path);
@@ -60,7 +67,8 @@ model_handle model_load_obj(core *core, const char *path, bool invert_textures_y
   return (model_handle){ .raw = index };
 }
 
-bool model_load_obj_str(const char *file_string, model *out_model, bool invert_textures_y) {
+bool model_load_obj_str(const char *file_string, str8 relative_path, model *out_model,
+                        bool invert_textures_y) {
   TRACE("Load OBJ from string");
 
   // Setup temps
@@ -170,9 +178,11 @@ bool model_load_obj_str(const char *file_string, model *out_model, bool invert_t
         //   f.vertex_indices[2], f.uv_indices[2], f.normal_indices[2]);
         face_darray_push(tmp_faces, f);
       } else if (strcmp(line_header, "mtllib") == 0) {
-        char path[1024] = "assets/";
-        sscanf(pch + offset, "%s", path + 7);
-        if (!load_material_lib(path, out_model->materials)) {
+        char filename[1024];
+        sscanf(pch + offset, "%s", filename);
+        char mtllib_path[1024];
+        snprintf(mtllib_path, sizeof(mtllib_path), "%s/%s", relative_path.buf, filename);
+        if (!load_material_lib(mtllib_path, out_model->materials)) {
           ERROR("couldnt load material lib");
           return false;
         }

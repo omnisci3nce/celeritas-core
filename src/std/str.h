@@ -38,6 +38,11 @@ char* str8_to_cstr(arena* a, str8 s);
 
 #define cstr(a, s) (str8_to_cstr(a, s))  // Shorthand
 
+/** @brief Return a str8 that references a statically allocated string.
+           `string` therefore must already be null-terminated.
+    @note  The backing `string` cannot be modified. */
+str8 str8_cstr_view(char* string);
+
 // --- Comparisons
 
 /** @brief Compare two strings for exact equality */
