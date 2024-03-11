@@ -18,6 +18,7 @@ struct GLFWwindow;
 
 #ifndef RESOURCE_HANDLE_DEFS
 CORE_DEFINE_HANDLE(model_handle);
+#define ABSENT_MODEL_HANDLE 999999999
 CORE_DEFINE_HANDLE(texture_handle);
 #define RESOURCE_HANDLE_DEFS
 #endif
