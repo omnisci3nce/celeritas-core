@@ -1,15 +1,15 @@
 
 /**
  * @file transform_hierarchy.h
-*/
+ */
 #pragma once
 #include "transform_hierarchy.h"
 #include <stdlib.h>
 #include <string.h>
 
 #include "log.h"
-#include "maths_types.h"
 #include "maths.h"
+#include "maths_types.h"
 #include "render_types.h"
 
 struct transform_hierarchy {
@@ -19,22 +19,20 @@ struct transform_hierarchy {
 transform_hierarchy* transform_hierarchy_create() {
   transform_hierarchy* tfh = malloc(sizeof(transform_hierarchy));
 
-  tfh->root =(transform_node){
-    .model = ABSENT_MODEL_HANDLE,
-    .tf = TRANSFORM_DEFAULT,
-    .local_matrix_tf = mat4_ident(),
-    .world_matrix_tf = mat4_ident(),
-    .parent = NULL,
-    .children = {0},
-    .n_children = 0,
-    .tfh = tfh
-  };
+  tfh->root = (transform_node){ .model = { ABSENT_MODEL_HANDLE },
+                                .tf = TRANSFORM_DEFAULT,
+                                .local_matrix_tf = mat4_ident(),
+                                .world_matrix_tf = mat4_ident(),
+                                .parent = NULL,
+                                .children = { 0 },
+                                .n_children = 0,
+                                .tfh = tfh };
 
   return tfh;
 }
 
 bool free_node(transform_node* node, void* _ctx_data) {
-  if (!node) return true; // leaf node
+  if (!node) return true;  // leaf node
   if (node == &node->tfh->root) {
     WARN("You can't free the root node!");
     return false;
@@ -50,9 +48,7 @@ void transform_hierarchy_free(transform_hierarchy* tfh) {
   free(tfh);
 }
 
-transform_node* transform_hierarchy_root_node(transform_hierarchy* tfh) {
-  return &tfh->root;
-}
+transform_node* transform_hierarchy_root_node(transform_hierarchy* tfh) { return &tfh->root; }
 
 void transform_hierarchy_add_node(transform_node* parent, model_handle model, transform tf) {
   if (!parent) {
@@ -89,17 +85,20 @@ void transform_hierarchy_delete_node(transform_node* node) {
 
   if (node->parent) {
     for (u32 i = 0; i < node->parent->n_children; i++) {
-        transform_node* child = node->parent->children[i];
-        if (child == node) {
-          node->parent->children[i] = NULL; // HACK: this will leave behind empty slots in the children array of the parent. oh well.
-        }
+      transform_node* child = node->parent->children[i];
+      if (child == node) {
+        node->parent->children[i] = NULL;  // HACK: this will leave behind empty slots in the
+                                           // children array of the parent. oh well.
+      }
     }
   }
 
   free(node);
 }
 
-void transform_hierarchy_dfs(transform_node* start_node, bool (*visit_node)(transform_node* node, void* ctx_data), bool is_pre_order, void* ctx_data) {
+void transform_hierarchy_dfs(transform_node* start_node,
+                             bool (*visit_node)(transform_node* node, void* ctx_data),
+                             bool is_pre_order, void* ctx_data) {
   if (!start_node) return;
 
   bool continue_traversal = true;

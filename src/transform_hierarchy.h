@@ -36,11 +36,12 @@ void transform_hierarchy_free(transform_hierarchy* tfh);
 
 // --- Main usecase
 
+/** @brief Updates matrices of any invalidated nodes based on the `is_dirty` flag inside `transform` */
 void transform_hierarchy_propagate_transforms(transform_hierarchy* tfh);
 
 // --- Queries
 
-/** Get a pointer to the root node */
+/** @brief Get a pointer to the root node */
 transform_node* transform_hierarchy_root_node(transform_hierarchy* tfh);
 
 // --- Mutations
@@ -57,8 +58,8 @@ void transform_hierarchy_delete_node(transform_node* node);
  * @param ctx_data An optional pointer to data that is be passed on each call to `visit_node`. Can be used to carry additional information or context.
  *
  * @note The main use-cases are:
-            1. traversing the whole tree to update cached 4x4 affine transform matrices
-            2. freeing child nodes after deleting a node in the tree
-            3. debug pretty printing the whole tree
+            1. traversing the whole tree to update cached 4x4 affine transform matrices (pre-order)
+            2. freeing child nodes after deleting a node in the tree (post-order)
+            3. debug pretty printing the whole tree (post-order)
  */
 void transform_hierarchy_dfs(transform_node* start_node, bool (*visit_node)(transform_node* node, void* ctx_data), bool is_pre_order, void* ctx_data);
