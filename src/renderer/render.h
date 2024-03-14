@@ -17,7 +17,7 @@ void render_frame_end(renderer* ren);
 
 // --- models meshes
 void model_upload_meshes(renderer* ren, model* model);
-void draw_model(renderer* ren, camera* camera, model* model, transform tf);
+void draw_model(renderer* ren, camera* camera, model* model, transform tf, scene* scene);
 void draw_mesh(renderer* ren, mesh* mesh, transform tf, material* mat, mat4* view, mat4* proj);
 
 // ---

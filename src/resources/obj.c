@@ -35,7 +35,7 @@ KITC_DECL_TYPED_ARRAY(face)
 void create_submesh(mesh_darray *meshes, vec3_darray *tmp_positions, vec3_darray *tmp_normals,
                     vec2_darray *tmp_uvs, face_darray *tmp_faces, material_darray *materials,
                     bool material_loaded, char current_material_name[256]);
-bool load_material_lib(const char *path, material_darray *materials);
+bool load_material_lib(const char *path, str8 relative_path, material_darray *materials);
 bool model_load_obj_str(const char *file_string, str8 relative_path, model *out_model,
                         bool invert_textures_y);
 
@@ -182,7 +182,7 @@ bool model_load_obj_str(const char *file_string, str8 relative_path, model *out_
         sscanf(pch + offset, "%s", filename);
         char mtllib_path[1024];
         snprintf(mtllib_path, sizeof(mtllib_path), "%s/%s", relative_path.buf, filename);
-        if (!load_material_lib(mtllib_path, out_model->materials)) {
+        if (!load_material_lib(mtllib_path, relative_path, out_model->materials)) {
           ERROR("couldnt load material lib");
           return false;
         }
@@ -262,7 +262,6 @@ void create_submesh(mesh_darray *meshes, vec3_darray *tmp_positions, vec3_darray
     material_darray_iter mat_iter = material_darray_iter_new(materials);
     blinn_phong_material *cur_material;
     while ((cur_material = material_darray_iter_next(&mat_iter))) {
-      printf("Material name %s vs %s \n", cur_material->name, current_material_name);
       if (strcmp(cur_material->name, current_material_name) == 0) {
         DEBUG("Found match");
         m.material_index = mat_iter.current_idx - 1;
@@ -280,7 +279,7 @@ void create_submesh(mesh_darray *meshes, vec3_darray *tmp_positions, vec3_darray
   mesh_darray_push(meshes, m);
 }
 
-bool load_material_lib(const char *path, material_darray *materials) {
+bool load_material_lib(const char *path,str8 relative_path, material_darray *materials) {
   TRACE("BEGIN load material lib at %s", path);
 
   const char *file_string = string_from_file(path);
@@ -338,9 +337,12 @@ bool load_material_lib(const char *path, material_darray *materials) {
       // specular exponent
       sscanf(pch + offset, "%f", &current_material.spec_exponent);
     } else if (strcmp(line_header, "map_Kd") == 0) {
-      char diffuse_map_path[1024] = "assets/";
-      sscanf(pch + offset, "%s", diffuse_map_path + 7);
+      char diffuse_map_filename[1024];
+      sscanf(pch + offset, "%s", diffuse_map_filename);
+      char diffuse_map_path[1024];
+      snprintf(diffuse_map_path, sizeof(diffuse_map_path), "%s/%s", relative_path.buf, diffuse_map_filename);
       printf("load from %s\n", diffuse_map_path);
+
       // --------------
       texture diffuse_texture = texture_data_load(diffuse_map_path, true);
       current_material.diffuse_texture = diffuse_texture;
@@ -348,8 +350,13 @@ bool load_material_lib(const char *path, material_darray *materials) {
       texture_data_upload(&current_material.diffuse_texture);
       // --------------
     } else if (strcmp(line_header, "map_Ks") == 0) {
-      char specular_map_path[1024] = "assets/";
-      sscanf(pch + offset, "%s", specular_map_path + 7);
+      // char specular_map_path[1024] = "assets/";
+      // sscanf(pch + offset, "%s", specular_map_path + 7);
+      char specular_map_filename[1024];
+      sscanf(pch + offset, "%s", specular_map_filename);
+      char specular_map_path[1024];
+      snprintf(specular_map_path, sizeof(specular_map_path), "%s/%s", relative_path.buf, specular_map_filename);
+      printf("load from %s\n", specular_map_path);
       // --------------
       texture specular_texture = texture_data_load(specular_map_path, true);
       current_material.specular_texture = specular_texture;

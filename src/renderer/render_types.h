@@ -78,6 +78,27 @@ KITC_DECL_TYPED_ARRAY(material)  // creates "material_darray"
 #define TYPED_MATERIAL_ARRAY
 #endif
 
+// lights
+typedef struct point_light {
+  vec3 position;
+  f32 constant, linear, quadratic;
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+} point_light;
+
+typedef struct directional_light {
+  vec3 direction;
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+} directional_light;
+
+void point_light_upload_uniforms(shader shader, point_light *light, char index);
+void dir_light_upload_uniforms(shader shader, directional_light *light);
+
+// --- Models & Meshes
+
 /** @brief Vertex format for a static mesh */
 typedef struct vertex {
   vec3 position;
@@ -89,8 +110,6 @@ typedef struct vertex {
 KITC_DECL_TYPED_ARRAY(vertex)  // creates "vertex_darray"
 #define TYPED_VERTEX_ARRAY
 #endif
-
-// --- Models & Meshes
 
 typedef struct mesh {
   vertex_darray *vertices;
@@ -120,6 +139,17 @@ typedef struct model {
 KITC_DECL_TYPED_ARRAY(model)  // creates "model_darray"
 #define TYPED_MODEL_ARRAY
 #endif
+
+// --- Scene
+
+// NOTE: This struct won't stay like this for a long time. It's somewhat temporary
+//       in order to get a basic scene working without putting burden on the caller of
+//       draw_model()
+typedef struct scene {
+  directional_light dir_light;
+  point_light point_lights[4];
+  size_t n_point_lights;
+} scene;
 
 // --- Graphics API related
 
