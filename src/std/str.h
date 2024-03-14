@@ -10,6 +10,8 @@
  */
 #pragma once
 
+#include <ctype.h>
+
 #include "defines.h"
 #include "mem.h"
 
@@ -35,6 +37,11 @@ str8 str8_create(u8* buf, size_t len);
 char* str8_to_cstr(arena* a, str8 s);
 
 #define cstr(a, s) (str8_to_cstr(a, s))  // Shorthand
+
+/** @brief Return a str8 that references a statically allocated string.
+           `string` therefore must already be null-terminated.
+    @note  The backing `string` cannot be modified. */
+str8 str8_cstr_view(char* string);
 
 // --- Comparisons
 
@@ -70,4 +77,9 @@ str8 str8_concat(arena* a, str8 left, str8 right);
 
 static inline bool str8_is_null_term(str8 a) {
   return a.buf[a.len] == 0;  // This doesn't seem safe. YOLO
+}
+
+// TODO: move or delete this and replace with handling using our internal type
+static void skip_space(char* p) {
+  while (isspace((unsigned char)*p)) ++p;
 }

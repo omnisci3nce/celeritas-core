@@ -5,6 +5,8 @@
 
 str8 str8_create(u8* buf, size_t len) { return (str8){ .buf = buf, .len = len }; }
 
+str8 str8_cstr_view(char* string) { return str8_create((u8*)string, strlen(string)); }
+
 bool str8_equals(str8 a, str8 b) {
   if (a.len != b.len) {
     return false;

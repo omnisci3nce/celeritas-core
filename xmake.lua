@@ -14,16 +14,22 @@ add_cflags("-Wall", "-Wextra", "-Wundef", "-Wdouble-promotion")
 
 if is_mode("debug") then
     add_cflags("-g") -- Add debug symbols in debug mode
+elseif is_mode("release") then
+    add_defines("CRELEASE")
 end
+
 
 -- Platform defines and system packages
 if is_plat("linux") then
     add_defines("CEL_PLATFORM_LINUX")
-    add_syslinks("dl", "X11")
+    add_syslinks("dl", "X11", "pthread")
 elseif is_plat("windows") then
     add_defines("CEL_PLATFORM_WINDOWS")
 elseif is_plat("macosx") then
     add_defines("CEL_PLATFORM_MAC")
+    add_frameworks("Cocoa", "IOKit", "CoreVideo", "OpenGL")
+    set_runenv("MTL_DEBUG_LAYER", "1")
+    -- add_syslinks("GL")
 end
 
 -- Compile GLFW from source
@@ -44,6 +50,19 @@ package_end()
 
 add_requires("local_glfw")
 
+local core_sources = {
+    "deps/glad/src/glad.c",
+    "src/*.c",
+    "src/logos/*.c",
+    "src/platform/*.c",
+    "src/renderer/*.c",
+    "src/renderer/backends/*.c",
+    "src/resources/*.c",
+    "src/std/*.c",
+    "src/std/containers/*.c",
+    "src/systems/*.c",
+}
+
 -- common configuration for both static and shared libraries
 target("core_config")
     set_kind("static") -- kind is required but you can ignore it since it's just for common settings
@@ -60,27 +79,23 @@ target("core_config")
     add_includedirs("src/platform/", {public = true})
     add_includedirs("src/renderer/", {public = true})
     add_includedirs("src/renderer/backends/", {public = true})
+    add_includedirs("src/resources/", {public = true})
     add_includedirs("src/std/", {public = true})
     add_includedirs("src/std/containers", {public = true})
     add_includedirs("src/systems/", {public = true})
-    add_files("deps/glad/src/glad.c")
-    add_files("src/*.c")
-    add_files("src/logos/*.c")
-    add_files("src/platform/*.c")
-    add_files("src/renderer/*.c")
-    add_files("src/renderer/backends/*.c")
-    add_files("src/std/*.c")
-    add_files("src/std/containers/*.c")
-    add_files("src/systems/*.c")
+    add_files("src/empty.c") -- for some reason we need this on Mac so it doesnt call 'ar' with no files and error
     set_default(false) -- prevents standalone building of this target
 
 target("core_static")
     set_kind("static")
     add_deps("core_config") -- inherit common configurations
+    set_policy("build.merge_archive", true)
+    add_files(core_sources)
 
 target("core_shared")
     set_kind("shared")
     add_deps("core_config") -- inherit common configurations
+    add_files(core_sources)
 
 target("main_loop")
     set_kind("binary")
@@ -94,4 +109,18 @@ target("std")
     set_group("examples")
     add_deps("core_static")
     add_files("examples/standard_lib/ex_std.c")
+    set_rundir("$(projectdir)")
+
+target("obj")
+    set_kind("binary")
+    set_group("examples")
+    add_deps("core_static")
+    add_files("examples/obj_loading/ex_obj_loading.c")
+    set_rundir("$(projectdir)")
+
+target("demo")
+    set_kind("binary")
+    set_group("examples")
+    add_deps("core_static")
+    add_files("examples/demo/demo.c")
     set_rundir("$(projectdir)")
