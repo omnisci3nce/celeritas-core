@@ -279,7 +279,7 @@ void create_submesh(mesh_darray *meshes, vec3_darray *tmp_positions, vec3_darray
   mesh_darray_push(meshes, m);
 }
 
-bool load_material_lib(const char *path,str8 relative_path, material_darray *materials) {
+bool load_material_lib(const char *path, str8 relative_path, material_darray *materials) {
   TRACE("BEGIN load material lib at %s", path);
 
   const char *file_string = string_from_file(path);
@@ -340,7 +340,8 @@ bool load_material_lib(const char *path,str8 relative_path, material_darray *mat
       char diffuse_map_filename[1024];
       sscanf(pch + offset, "%s", diffuse_map_filename);
       char diffuse_map_path[1024];
-      snprintf(diffuse_map_path, sizeof(diffuse_map_path), "%s/%s", relative_path.buf, diffuse_map_filename);
+      snprintf(diffuse_map_path, sizeof(diffuse_map_path), "%s/%s", relative_path.buf,
+               diffuse_map_filename);
       printf("load from %s\n", diffuse_map_path);
 
       // --------------
@@ -355,7 +356,8 @@ bool load_material_lib(const char *path,str8 relative_path, material_darray *mat
       char specular_map_filename[1024];
       sscanf(pch + offset, "%s", specular_map_filename);
       char specular_map_path[1024];
-      snprintf(specular_map_path, sizeof(specular_map_path), "%s/%s", relative_path.buf, specular_map_filename);
+      snprintf(specular_map_path, sizeof(specular_map_path), "%s/%s", relative_path.buf,
+               specular_map_filename);
       printf("load from %s\n", specular_map_path);
       // --------------
       texture specular_texture = texture_data_load(specular_map_path, true);

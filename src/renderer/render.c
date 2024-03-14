@@ -92,7 +92,7 @@ void draw_model(renderer* ren, camera* camera, model* model, transform tf, scene
   uniform_vec3f(ren->blinn_phong.program_id, "viewPos", &camera->position);
   // set light uniforms
   dir_light_upload_uniforms(ren->blinn_phong, &scene->dir_light);
-  for (int i = 0; i < scene->n_point_lights; i ++) {
+  for (int i = 0; i < scene->n_point_lights; i++) {
     point_light_upload_uniforms(ren->blinn_phong, &scene->point_lights[i], '0' + i);
   }
 
@@ -264,14 +264,14 @@ void texture_data_upload(texture* tex) {
   // stbi_image_free(tex->image_data);  // data is on gpu now so we dont need it around
 }
 
-void dir_light_upload_uniforms(shader shader, directional_light *light) {
+void dir_light_upload_uniforms(shader shader, directional_light* light) {
   uniform_vec3f(shader.program_id, "dirLight.direction", &light->direction);
   uniform_vec3f(shader.program_id, "dirLight.ambient", &light->ambient);
   uniform_vec3f(shader.program_id, "dirLight.diffuse", &light->diffuse);
   uniform_vec3f(shader.program_id, "dirLight.specular", &light->specular);
 }
 
-void point_light_upload_uniforms(shader shader, point_light *light, char index) {
+void point_light_upload_uniforms(shader shader, point_light* light, char index) {
   char position_str[] = "pointLights[x].position";
   position_str[12] = (char)index;
   char ambient_str[] = "pointLights[x].ambient";
