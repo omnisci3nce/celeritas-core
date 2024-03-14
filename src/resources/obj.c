@@ -45,10 +45,7 @@ model_handle model_load_obj(core *core, const char *path, bool invert_textures_y
   if (!relative_path.has_value) {
     WARN("Couldnt get a relative path for the path to use for loading materials & textures later");
   }
-  printf("Relative path: %s\n", relative_path.path.buf);
   const char *file_string = string_from_file(path);
-
-  // TODO: store the relative path without the name.obj at the end
 
   model model = { 0 };
   model.name = str8_cstr_view(path);
