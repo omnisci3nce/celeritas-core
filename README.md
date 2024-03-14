@@ -19,4 +19,5 @@ All third-party dependencies are licensed under their own license.
 * Formatting
     * `xmake format`
     * Lint (no change) `find src/ -iname *.h -o -iname *.c | xargs clang-format --style=file --dry-run --Werror`
-    * Format (edit in place) `find src/ -iname *.h -o -iname *.c | xargs clang-format -i --style=file`
+    * Format (edit in place) `find src/ \( -iname "*.h" -o -iname "*.c" \) | xargs clang-format -i --style=file`
+        * `clang-format` must be installed!

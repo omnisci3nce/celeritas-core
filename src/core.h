@@ -13,6 +13,7 @@ typedef struct core {
   input_state input;
   text_system_state text;
   screenspace_state screenspace;
+  model_darray* models;
 } core;
 
 // --- Lifecycle
