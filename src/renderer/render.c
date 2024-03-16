@@ -52,7 +52,7 @@ bool renderer_init(renderer* ren) {
   }
 
   ren->blinn_phong =
-      shader_create_separate("assets/shaders/blinn_phong.vert", "assets/shaders/blinn_phong.frag");
+      shader_create_separate("celeritas-core/assets/shaders/blinn_phong.vert", "celeritas-core/assets/shaders/blinn_phong.frag");
 
   return true;
 }

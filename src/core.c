@@ -5,6 +5,7 @@
 #include "log.h"
 #include "render.h"
 #include "render_types.h"
+#include "renderer/render.h"
 #include "threadpool.h"
 
 #define SCR_WIDTH 1080
@@ -49,3 +50,13 @@ core* core_bringup() {
 
   return c;
 }
+
+#include <glfw3.h>
+#include "input.h"
+#include "render.h"
+
+bool should_window_close(core *core) { glfwWindowShouldClose(core->renderer.window); }
+void core_input_update(core *core) { input_update(&core->input); }
+void core_frame_begin(core* core) { render_frame_begin(&core->renderer); }
+void core_frame_end(core* core) { render_frame_end(&core->renderer); }
+

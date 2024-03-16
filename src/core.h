@@ -21,3 +21,8 @@ core* core_bringup();
 void core_shutdown(core* core);
 
 void core_input_update(core* core);
+
+bool should_window_close(core*);
+void core_input_update(core* core);
+void core_frame_begin(core* core);
+void core_frame_end(core* core);
