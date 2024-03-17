@@ -18,7 +18,7 @@ struct transform_hierarchy {
 };
 
 transform_hierarchy* transform_hierarchy_create() {
-  transform_hierarchy* tfh = malloc(sizeof(transform_hierarchy));
+  transform_hierarchy* tfh = malloc(sizeof(struct transform_hierarchy));
 
   tfh->root = (transform_node){ .model = { ABSENT_MODEL_HANDLE },
                                 .tf = TRANSFORM_DEFAULT,
@@ -28,7 +28,6 @@ transform_hierarchy* transform_hierarchy_create() {
                                 .children = { 0 },
                                 .n_children = 0,
                                 .tfh = tfh };
-
   return tfh;
 }
 
@@ -51,10 +50,10 @@ void transform_hierarchy_free(transform_hierarchy* tfh) {
 
 transform_node* transform_hierarchy_root_node(transform_hierarchy* tfh) { return &tfh->root; }
 
-void transform_hierarchy_add_node(transform_node* parent, model_handle model, transform tf) {
+transform_node* transform_hierarchy_add_node(transform_node* parent, model_handle model, transform tf) {
   if (!parent) {
     WARN("You tried to add a node to a bad parent (NULL?)");
-    return;
+    return NULL;
   }
   transform_node* node = malloc(sizeof(transform_node));
   node->model = model;
@@ -75,6 +74,8 @@ void transform_hierarchy_add_node(transform_node* parent, model_handle model, tr
     parent->children[next_index] = node;
     parent->n_children++;
   }
+
+  return node;
 }
 
 void transform_hierarchy_delete_node(transform_node* node) {
@@ -124,7 +125,7 @@ void transform_hierarchy_dfs(transform_node* start_node,
 bool update_matrix(transform_node* node, void* _ctx_data) {
   if (!node) return true;  // leaf node
 
-  if (node->parent->tf.is_dirty) {
+  if (node->parent && node->parent->tf.is_dirty) {
     node->tf.is_dirty = true;
   }
 
@@ -147,17 +148,35 @@ void transform_hierarchy_propagate_transforms(transform_hierarchy* tfh) {
   transform_hierarchy_dfs(&tfh->root, update_matrix, false, NULL);
 }
 
-void print_node(transform_node* node, void* _ctx_data) {
-  // Grab the model 
-  model m = core->models->data[start_node->model.raw];
-  printf("Node %s\n", m.name.buf);
-}
-
 struct print_ctx {
   core* core;
   u32 indentation_lvl;
 };
 
-void transform_hierarchy_debug_print(transform_node* start_node, core* core) {
+bool print_node(transform_node* node, void* ctx_data) {
+  struct print_ctx* ctx = (struct print_ctx*)ctx_data;
+
+  if (!node) return true;
+  if (!node->parent) {
+    printf("Root Node\n");
+    ctx->indentation_lvl++;
+    return true;
+  }
+
+  // Grab the model 
+  model m = ctx->core->models->data[node->model.raw];
+  for (int i = 0; i < ctx->indentation_lvl; i++) {
+    printf("  ");
+  }
+  printf("Node %s\n", m.name.buf);
+  ctx->indentation_lvl++;
   
+  return true;
+}
+
+void transform_hierarchy_debug_print(transform_node* start_node, core* core) {
+  struct print_ctx* ctx = malloc(sizeof(struct print_ctx));
+  ctx->core = core;
+  ctx->indentation_lvl = 0;
+  transform_hierarchy_dfs(start_node, print_node, true, (void*)ctx);
 }

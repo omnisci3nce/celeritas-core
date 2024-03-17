@@ -45,7 +45,7 @@ void transform_hierarchy_propagate_transforms(transform_hierarchy* tfh);
 transform_node* transform_hierarchy_root_node(transform_hierarchy* tfh);
 
 // --- Mutations
-void transform_hierarchy_add_node(transform_node* parent, model_handle model, transform tf);
+transform_node* transform_hierarchy_add_node(transform_node* parent, model_handle model, transform tf);
 void transform_hierarchy_delete_node(transform_node* node);
 
 // --- Traversal
@@ -65,4 +65,4 @@ void transform_hierarchy_delete_node(transform_node* node);
 void transform_hierarchy_dfs(transform_node* start_node, bool (*visit_node)(transform_node* node, void* ctx_data), bool is_pre_order, void* ctx_data);
 
 struct core;
-void transform_hierarchy_debug_print(transform_node* start_nod, struct core* core);
+void transform_hierarchy_debug_print(transform_node* start_node, struct core* core);
