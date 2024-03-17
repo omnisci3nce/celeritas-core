@@ -62,7 +62,8 @@ int main() {
     // Draw the backpack
     transform model_tf = transform_create(vec3(0.0, -0.4, 0.0), quat_ident(),
                                           1.8);  // make the backpack a bit bigger
-    draw_model(&core->renderer, &cam, backpack, model_tf, &our_scene);
+    mat4 model_matrix = transform_to_mat(&model_tf);
+    draw_model(&core->renderer, &cam, backpack, &model_matrix, &our_scene);
 
     render_frame_end(&core->renderer);
   }
