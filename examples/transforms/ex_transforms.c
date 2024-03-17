@@ -77,10 +77,6 @@ int main() {
     node1->tf.position.x += 0.004;
     node1->tf.is_dirty = true;
     draw_scene(&frame_arena, core->models, &core->renderer, &cam, transform_tree, &our_scene);
-    // draw_model(&core->renderer, &cam, cube, &node1->world_matrix_tf, &our_scene);
-    // draw_model(&core->renderer, &cam, cube, &node2->world_matrix_tf, &our_scene);
-    // draw_model(&core->renderer, &cam, cube, &node3->world_matrix_tf, &our_scene);
-    // draw_model(&core->renderer, &cam, cube, &node4->world_matrix_tf, &our_scene);
 
     render_frame_end(&core->renderer);
     arena_free_all(&frame_arena);
