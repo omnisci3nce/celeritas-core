@@ -7,11 +7,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "core.h"
 #include "log.h"
 #include "maths.h"
 #include "maths_types.h"
 #include "render_types.h"
-#include "core.h"
 
 struct transform_hierarchy {
   transform_node root;
@@ -50,7 +50,8 @@ void transform_hierarchy_free(transform_hierarchy* tfh) {
 
 transform_node* transform_hierarchy_root_node(transform_hierarchy* tfh) { return &tfh->root; }
 
-transform_node* transform_hierarchy_add_node(transform_node* parent, model_handle model, transform tf) {
+transform_node* transform_hierarchy_add_node(transform_node* parent, model_handle model,
+                                             transform tf) {
   if (!parent) {
     WARN("You tried to add a node to a bad parent (NULL?)");
     return NULL;
@@ -163,14 +164,14 @@ bool print_node(transform_node* node, void* ctx_data) {
     return true;
   }
 
-  // Grab the model 
+  // Grab the model
   model m = ctx->core->models->data[node->model.raw];
   for (int i = 0; i < ctx->indentation_lvl; i++) {
     printf("  ");
   }
   printf("Node %s\n", m.name.buf);
   ctx->indentation_lvl++;
-  
+
   return true;
 }
 

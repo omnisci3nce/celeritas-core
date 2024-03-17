@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include "mem.h"
+#include "transform_hierarchy.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -78,6 +81,30 @@ void default_material_init() {
   strcpy(DEFAULT_MATERIAL.name, "Default");
   texture_data_upload(&DEFAULT_MATERIAL.diffuse_texture);
   texture_data_upload(&DEFAULT_MATERIAL.specular_texture);
+}
+
+typedef struct draw_ctx {
+  model_darray* models;
+  renderer* ren;
+  camera* cam;
+  scene* scene;
+} draw_ctx;
+bool draw_scene_node(transform_node* node, void* ctx_data) {
+  if (!node || !node->parent) return true;
+  draw_ctx* ctx = ctx_data;
+  model* m = &ctx->models->data[node->model.raw];
+  draw_model(ctx->ren, ctx->cam, m, &node->world_matrix_tf, ctx->scene);
+  return true;
+}
+
+void draw_scene(arena* frame, model_darray* models, renderer* ren, camera* camera,
+                transform_hierarchy* tfh, scene* scene) {
+  draw_ctx* ctx = arena_alloc(frame, sizeof(draw_ctx));
+  ctx->models = models;
+  ctx->ren = ren;
+  ctx->cam = camera;
+  ctx->scene = scene;
+  transform_hierarchy_dfs(transform_hierarchy_root_node(tfh), draw_scene_node, true, ctx);
 }
 
 void draw_model(renderer* ren, camera* camera, model* model, mat4* model_tf, scene* scene) {

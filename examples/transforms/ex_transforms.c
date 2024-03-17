@@ -1,10 +1,11 @@
 #include <glfw3.h>
 
 #include "core.h"
+#include "maths.h"
+#include "maths_types.h"
+#include "mem.h"
 #include "render.h"
 #include "render_types.h"
-#include "maths_types.h"
-#include "maths.h"
 #include "transform_hierarchy.h"
 
 const vec3 pointlight_positions[4] = {
@@ -23,8 +24,7 @@ int main() {
   vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
   camera cam = camera_create(camera_pos, camera_front, VEC3_Y, deg_to_rad(45.0));
 
-  model_handle cube_handle =
-      model_load_obj(core, "assets/models/obj/cube/cube.obj", true);
+  model_handle cube_handle = model_load_obj(core, "assets/models/obj/cube/cube.obj", true);
   model* cube = &core->models->data[cube_handle.raw];
   model_upload_meshes(&core->renderer, cube);
 
@@ -62,6 +62,9 @@ int main() {
 
   transform_hierarchy_debug_print(root_node, core);
 
+  char* frame_allocator_storage = malloc(1024 * 1024 * 64);
+  arena frame_arena = arena_create(frame_allocator_storage, 1024 * 1024 * 64);
+
   // Main loop
   while (!glfwWindowShouldClose(core->renderer.window)) {
     input_update(&core->input);
@@ -72,12 +75,14 @@ int main() {
 
     node1->tf.position.x += 0.002;
     node1->tf.is_dirty = true;
-    draw_model(&core->renderer, &cam, cube, &node1->world_matrix_tf, &our_scene);
-    draw_model(&core->renderer, &cam, cube, &node2->world_matrix_tf, &our_scene);
-    draw_model(&core->renderer, &cam, cube, &node3->world_matrix_tf, &our_scene);
-    draw_model(&core->renderer, &cam, cube, &node4->world_matrix_tf, &our_scene);
+    draw_scene(&frame_arena, core->models, &core->renderer, &cam, transform_tree, &our_scene);
+    // draw_model(&core->renderer, &cam, cube, &node1->world_matrix_tf, &our_scene);
+    // draw_model(&core->renderer, &cam, cube, &node2->world_matrix_tf, &our_scene);
+    // draw_model(&core->renderer, &cam, cube, &node3->world_matrix_tf, &our_scene);
+    // draw_model(&core->renderer, &cam, cube, &node4->world_matrix_tf, &our_scene);
 
     render_frame_end(&core->renderer);
+    arena_free_all(&frame_arena);
   }
 
   transform_hierarchy_free(transform_tree);
