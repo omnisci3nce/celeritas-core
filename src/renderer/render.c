@@ -80,7 +80,7 @@ void default_material_init() {
   texture_data_upload(&DEFAULT_MATERIAL.specular_texture);
 }
 
-void draw_model(renderer* ren, camera* camera, model* model, transform tf) {
+void draw_model(renderer* ren, camera* camera, model* model, transform tf, scene* scene) {
   // TRACE("Drawing model: %s", model->name);
   mat4 view;
   mat4 proj;
@@ -88,13 +88,22 @@ void draw_model(renderer* ren, camera* camera, model* model, transform tf) {
 
   set_shader(ren->blinn_phong);
 
+  // set camera uniform
+  uniform_vec3f(ren->blinn_phong.program_id, "viewPos", &camera->position);
+  // set light uniforms
+  dir_light_upload_uniforms(ren->blinn_phong, &scene->dir_light);
+  for (int i = 0; i < scene->n_point_lights; i++) {
+    point_light_upload_uniforms(ren->blinn_phong, &scene->point_lights[i], '0' + i);
+  }
+
   for (size_t i = 0; i < mesh_darray_len(model->meshes); i++) {
     mesh* m = &model->meshes->data[i];
     if (vertex_darray_len(m->vertices) == 0) {
       continue;
     }
     // TRACE("Drawing mesh %d", i);
-    draw_mesh(ren, m, tf, &(DEFAULT_MATERIAL), &view, &proj);
+    material* mat = &model->materials->data[m->material_index];
+    draw_mesh(ren, m, tf, mat, &view, &proj);
   }
 }
 
@@ -127,8 +136,6 @@ void draw_mesh(renderer* ren, mesh* mesh, transform tf, material* mat, mat4* vie
 
 void model_upload_meshes(renderer* ren, model* model) {
   INFO("Upload mesh vertex data to GPU for model %s", model->name);
-  // DEBUG("Loading model with handle %d", model_handle.raw);
-  // model m = models->data[model_handle.raw];
 
   size_t num_meshes = mesh_darray_len(model->meshes);
   u32 VBOs[num_meshes];
@@ -148,7 +155,7 @@ void model_upload_meshes(renderer* ren, model* model) {
     glBindBuffer(GL_ARRAY_BUFFER, VBOs[mesh_i]);
 
     size_t num_vertices = vertex_darray_len(model->meshes->data[mesh_i].vertices);
-    TRACE("Uploading vertex array data: %d verts", num_vertices);
+    // TRACE("Uploading vertex array data: %d verts", num_vertices);
     total_verts += num_vertices;
 
     // TODO: convert this garbage into a function
@@ -255,4 +262,35 @@ void texture_data_upload(texture* tex) {
   glGenerateMipmap(GL_TEXTURE_2D);
   DEBUG("Freeing texture image data after uploading to GPU");
   // stbi_image_free(tex->image_data);  // data is on gpu now so we dont need it around
+}
+
+void dir_light_upload_uniforms(shader shader, directional_light* light) {
+  uniform_vec3f(shader.program_id, "dirLight.direction", &light->direction);
+  uniform_vec3f(shader.program_id, "dirLight.ambient", &light->ambient);
+  uniform_vec3f(shader.program_id, "dirLight.diffuse", &light->diffuse);
+  uniform_vec3f(shader.program_id, "dirLight.specular", &light->specular);
+}
+
+void point_light_upload_uniforms(shader shader, point_light* light, char index) {
+  char position_str[] = "pointLights[x].position";
+  position_str[12] = (char)index;
+  char ambient_str[] = "pointLights[x].ambient";
+  ambient_str[12] = (char)index;
+  char diffuse_str[] = "pointLights[x].diffuse";
+  diffuse_str[12] = (char)index;
+  char specular_str[] = "pointLights[x].specular";
+  specular_str[12] = (char)index;
+  char constant_str[] = "pointLights[x].constant";
+  constant_str[12] = (char)index;
+  char linear_str[] = "pointLights[x].linear";
+  linear_str[12] = (char)index;
+  char quadratic_str[] = "pointLights[x].quadratic";
+  quadratic_str[12] = (char)index;
+  uniform_vec3f(shader.program_id, position_str, &light->position);
+  uniform_vec3f(shader.program_id, ambient_str, &light->ambient);
+  uniform_vec3f(shader.program_id, diffuse_str, &light->diffuse);
+  uniform_vec3f(shader.program_id, specular_str, &light->specular);
+  uniform_f32(shader.program_id, constant_str, light->constant);
+  uniform_f32(shader.program_id, linear_str, light->linear);
+  uniform_f32(shader.program_id, quadratic_str, light->quadratic);
 }

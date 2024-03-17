@@ -1,5 +1,7 @@
 # celeritas-core
 
+![Backpack model with lighting](examples/obj_loading/backpack_screenshot.png)
+
 Not all files are fleshed out right now.
 
 **Work-in-progress**: porting over code from old repository.
