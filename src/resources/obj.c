@@ -15,6 +15,7 @@
 #include "file.h"
 #include "log.h"
 #include "maths.h"
+#include "mem.h"
 #include "path.h"
 #include "render.h"
 #include "render_types.h"
@@ -40,15 +41,15 @@ bool model_load_obj_str(const char *file_string, str8 relative_path, model *out_
                         bool invert_textures_y);
 
 model_handle model_load_obj(core *core, const char *path, bool invert_textures_y) {
+  size_t arena_size = 1024;
+  arena scratch = arena_create(malloc(arena_size), arena_size);
+
   TRACE("Loading model at Path %s\n", path);
-  path_opt relative_path = path_parent(path);
+  path_opt relative_path = path_parent(&scratch, path);
   if (!relative_path.has_value) {
     WARN("Couldnt get a relative path for the path to use for loading materials & textures later");
   }
-  printf("Relative path: %s\n", relative_path.path.buf);
   const char *file_string = string_from_file(path);
-
-  // TODO: store the relative path without the name.obj at the end
 
   model model = { 0 };
   model.name = str8_cstr_view(path);
@@ -64,6 +65,9 @@ model_handle model_load_obj(core *core, const char *path, bool invert_textures_y
 
   u32 index = model_darray_len(core->models);
   model_darray_push(core->models, model);
+
+  arena_free_all(&scratch);
+  arena_free_storage(&scratch);
   return (model_handle){ .raw = index };
 }
 

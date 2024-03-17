@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include "mem.h"
+#include "transform_hierarchy.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -80,7 +83,31 @@ void default_material_init() {
   texture_data_upload(&DEFAULT_MATERIAL.specular_texture);
 }
 
-void draw_model(renderer* ren, camera* camera, model* model, transform tf, scene* scene) {
+typedef struct draw_ctx {
+  model_darray* models;
+  renderer* ren;
+  camera* cam;
+  scene* scene;
+} draw_ctx;
+bool draw_scene_node(transform_node* node, void* ctx_data) {
+  if (!node || !node->parent) return true;
+  draw_ctx* ctx = ctx_data;
+  model* m = &ctx->models->data[node->model.raw];
+  draw_model(ctx->ren, ctx->cam, m, &node->world_matrix_tf, ctx->scene);
+  return true;
+}
+
+void draw_scene(arena* frame, model_darray* models, renderer* ren, camera* camera,
+                transform_hierarchy* tfh, scene* scene) {
+  draw_ctx* ctx = arena_alloc(frame, sizeof(draw_ctx));
+  ctx->models = models;
+  ctx->ren = ren;
+  ctx->cam = camera;
+  ctx->scene = scene;
+  transform_hierarchy_dfs(transform_hierarchy_root_node(tfh), draw_scene_node, true, ctx);
+}
+
+void draw_model(renderer* ren, camera* camera, model* model, mat4* model_tf, scene* scene) {
   // TRACE("Drawing model: %s", model->name);
   mat4 view;
   mat4 proj;
@@ -103,11 +130,11 @@ void draw_model(renderer* ren, camera* camera, model* model, transform tf, scene
     }
     // TRACE("Drawing mesh %d", i);
     material* mat = &model->materials->data[m->material_index];
-    draw_mesh(ren, m, tf, mat, &view, &proj);
+    draw_mesh(ren, m, model_tf, mat, &view, &proj);
   }
 }
 
-void draw_mesh(renderer* ren, mesh* mesh, transform tf, material* mat, mat4* view, mat4* proj) {
+void draw_mesh(renderer* ren, mesh* mesh, mat4* model_tf, material* mat, mat4* view, mat4* proj) {
   shader lighting_shader = ren->blinn_phong;
 
   // bind buffer
@@ -119,12 +146,12 @@ void draw_mesh(renderer* ren, mesh* mesh, transform tf, material* mat, mat4* vie
   uniform_f32(lighting_shader.program_id, "material.shininess", 32.);
 
   // upload model transform
-  mat4 trans = mat4_translation(tf.position);
-  mat4 rot = mat4_rotation(tf.rotation);
-  mat4 scale = mat4_scale(tf.scale);
-  mat4 model_tf = mat4_mult(trans, mat4_mult(rot, scale));
+  // mat4 trans = mat4_translation(tf.position);
+  // mat4 rot = mat4_rotation(tf.rotation);
+  // mat4 scale = mat4_scale(tf.scale);
+  // mat4 model_tf = mat4_mult(trans, mat4_mult(rot, scale));
 
-  uniform_mat4f(lighting_shader.program_id, "model", &model_tf);
+  uniform_mat4f(lighting_shader.program_id, "model", model_tf);
   // upload view & projection matrices
   uniform_mat4f(lighting_shader.program_id, "view", view);
   uniform_mat4f(lighting_shader.program_id, "projection", proj);

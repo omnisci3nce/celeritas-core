@@ -203,12 +203,14 @@ static inline mat4 mat4_look_at(vec3 position, vec3 target, vec3 up) {
                 .is_dirty = false })
 
 static transform transform_create(vec3 pos, quat rot, f32 scale) {
-  return (transform){ .position = pos, .rotation = rot, .scale = scale, .is_dirty = false };
+  return (transform){ .position = pos, .rotation = rot, .scale = scale, .is_dirty = true };
 }
 
 static inline mat4 transform_to_mat(transform *tf) {
-  // TODO: rotation
-  return mat4_mult(mat4_translation(tf->position), mat4_scale(tf->scale));
+  mat4 trans = mat4_translation(tf->position);
+  mat4 rot = mat4_rotation(tf->rotation);
+  mat4 scale = mat4_scale(tf->scale);
+  return mat4_mult(trans, mat4_mult(rot, scale));
 }
 
 // --- Sizing asserts
