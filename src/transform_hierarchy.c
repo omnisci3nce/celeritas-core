@@ -11,6 +11,7 @@
 #include "maths.h"
 #include "maths_types.h"
 #include "render_types.h"
+#include "core.h"
 
 struct transform_hierarchy {
   transform_node root;
@@ -144,4 +145,19 @@ bool update_matrix(transform_node* node, void* _ctx_data) {
 void transform_hierarchy_propagate_transforms(transform_hierarchy* tfh) {
   // kickoff traversal
   transform_hierarchy_dfs(&tfh->root, update_matrix, false, NULL);
+}
+
+void print_node(transform_node* node, void* _ctx_data) {
+  // Grab the model 
+  model m = core->models->data[start_node->model.raw];
+  printf("Node %s\n", m.name.buf);
+}
+
+struct print_ctx {
+  core* core;
+  u32 indentation_lvl;
+};
+
+void transform_hierarchy_debug_print(transform_node* start_node, core* core) {
+  
 }

@@ -64,4 +64,5 @@ void transform_hierarchy_delete_node(transform_node* node);
  */
 void transform_hierarchy_dfs(transform_node* start_node, bool (*visit_node)(transform_node* node, void* ctx_data), bool is_pre_order, void* ctx_data);
 
-void transform_hierarchy_debug_print(transform_node* start_node, )
+struct core;
+void transform_hierarchy_debug_print(transform_node* start_nod, struct core* core);
