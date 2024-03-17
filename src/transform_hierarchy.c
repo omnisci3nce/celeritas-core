@@ -179,4 +179,5 @@ void transform_hierarchy_debug_print(transform_node* start_node, core* core) {
   ctx->core = core;
   ctx->indentation_lvl = 0;
   transform_hierarchy_dfs(start_node, print_node, true, (void*)ctx);
+  free(ctx);
 }
