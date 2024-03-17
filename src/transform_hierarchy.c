@@ -118,3 +118,30 @@ void transform_hierarchy_dfs(transform_node* start_node,
     visit_node(start_node, ctx_data);
   }
 }
+
+// Update matrix for the current node
+bool update_matrix(transform_node* node, void* _ctx_data) {
+  if (!node) return true;  // leaf node
+
+  if (node->parent->tf.is_dirty) {
+    node->tf.is_dirty = true;
+  }
+
+  if (node->tf.is_dirty) {
+    // invalidates children
+    mat4 updated_local_transform = transform_to_mat(&node->tf);
+    node->local_matrix_tf = updated_local_transform;
+    if (node->parent) {
+      mat4 updated_world_transform =
+          mat4_mult(node->parent->world_matrix_tf, updated_local_transform);
+      node->world_matrix_tf = updated_world_transform;
+    }
+  }
+
+  return true;
+}
+
+void transform_hierarchy_propagate_transforms(transform_hierarchy* tfh) {
+  // kickoff traversal
+  transform_hierarchy_dfs(&tfh->root, update_matrix, false, NULL);
+}

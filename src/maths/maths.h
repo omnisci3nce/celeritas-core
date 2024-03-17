@@ -207,8 +207,10 @@ static transform transform_create(vec3 pos, quat rot, f32 scale) {
 }
 
 static inline mat4 transform_to_mat(transform *tf) {
-  // TODO: rotation
-  return mat4_mult(mat4_translation(tf->position), mat4_scale(tf->scale));
+  mat4 trans = mat4_translation(tf->position);
+  mat4 rot = mat4_rotation(tf->rotation);
+  mat4 scale = mat4_scale(tf->scale);
+  return mat4_mult(trans, mat4_mult(rot, scale));
 }
 
 // --- Sizing asserts

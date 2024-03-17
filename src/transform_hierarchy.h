@@ -58,8 +58,10 @@ void transform_hierarchy_delete_node(transform_node* node);
  * @param ctx_data An optional pointer to data that is be passed on each call to `visit_node`. Can be used to carry additional information or context.
  *
  * @note The main use-cases are:
-            1. traversing the whole tree to update cached 4x4 affine transform matrices (pre-order)
+            1. traversing the whole tree to update cached 4x4 affine transform matrices (post-order)
             2. freeing child nodes after deleting a node in the tree (post-order)
             3. debug pretty printing the whole tree (post-order)
  */
 void transform_hierarchy_dfs(transform_node* start_node, bool (*visit_node)(transform_node* node, void* ctx_data), bool is_pre_order, void* ctx_data);
+
+void transform_hierarchy_debug_print(transform_node* start_node, )
