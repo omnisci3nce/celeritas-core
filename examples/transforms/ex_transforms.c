@@ -73,7 +73,8 @@ int main() {
     render_frame_begin(&core->renderer);
     transform_hierarchy_propagate_transforms(transform_tree);
 
-    node1->tf.position.x += 0.002;
+    // TODO: Add setters to transform API
+    node1->tf.position.x += 0.004;
     node1->tf.is_dirty = true;
     draw_scene(&frame_arena, core->models, &core->renderer, &cam, transform_tree, &our_scene);
     // draw_model(&core->renderer, &cam, cube, &node1->world_matrix_tf, &our_scene);
