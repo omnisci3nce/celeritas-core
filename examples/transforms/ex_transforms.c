@@ -51,18 +51,16 @@ int main() {
   transform_node* root_node = transform_hierarchy_root_node(transform_tree);
   // Add nodes
   // -- 4 cubes
-  transform cube1 = transform_create(vec3(1.0, 1.0, 0.0), quat_ident(), 2.0);
-  transform cube2 = transform_create(vec3(1.0, -1.0, 0.0), quat_ident(), 2.0);
-  transform cube3 = transform_create(vec3(0.0, 1.0, 0.0), quat_ident(), 2.0);
-  transform cube4 = transform_create(vec3(0.0, -1.0, 0.0), quat_ident(), 2.0);
+  transform cube1 = transform_create(vec3(0.0, -2.0, 0.0), quat_ident(), 0.8);
+  transform cube2 = transform_create(vec3(0.0, 1.0, 0.0), quat_ident(), 1.0);
+  transform cube3 = transform_create(vec3(0.0, 1.0, 0.0), quat_ident(), 1.0);
+  transform cube4 = transform_create(vec3(0.0, 1.0, 0.0), quat_ident(), 1.0);
   transform_node* node1 = transform_hierarchy_add_node(root_node, cube_handle, cube1);
-  transform_node* node2 = transform_hierarchy_add_node(root_node, cube_handle, cube2);
-
-  transform_node* node3 = transform_hierarchy_add_node(node1, cube_handle, cube3);
-  transform_node* node4 = transform_hierarchy_add_node(node2, cube_handle, cube4);
+  transform_node* node2 = transform_hierarchy_add_node(node1, cube_handle, cube2);
+  transform_node* node3 = transform_hierarchy_add_node(node2, cube_handle, cube3);
+  transform_node* node4 = transform_hierarchy_add_node(node3, cube_handle, cube4);
 
   transform_hierarchy_debug_print(root_node, core);
-  
 
   // Main loop
   while (!glfwWindowShouldClose(core->renderer.window)) {
@@ -72,6 +70,8 @@ int main() {
     render_frame_begin(&core->renderer);
     transform_hierarchy_propagate_transforms(transform_tree);
 
+    node1->tf.position.x += 0.002;
+    node1->tf.is_dirty = true;
     draw_model(&core->renderer, &cam, cube, &node1->world_matrix_tf, &our_scene);
     draw_model(&core->renderer, &cam, cube, &node2->world_matrix_tf, &our_scene);
     draw_model(&core->renderer, &cam, cube, &node3->world_matrix_tf, &our_scene);
