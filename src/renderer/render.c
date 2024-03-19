@@ -22,6 +22,8 @@
 //        in renderer
 #define SCR_WIDTH 1080
 #define SCR_HEIGHT 800
+#define SHADOW_HEIGHT 400
+#define SHADOW_WIDTH 400
 
 material DEFAULT_MATERIAL = { 0 };
 
@@ -56,6 +58,8 @@ bool renderer_init(renderer* ren) {
 
   ren->blinn_phong =
       shader_create_separate("assets/shaders/blinn_phong.vert", "assets/shaders/blinn_phong.frag");
+    ren->shadow_map_depth =
+      shader_create_separate("assets/shaders/shadow_map_depth.vert", "assets/shaders/no_op.frag");
 
   return true;
 }

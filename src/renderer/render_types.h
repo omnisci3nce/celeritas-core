@@ -28,6 +28,12 @@ typedef struct shader {
   u32 program_id;
 } shader;
 
+typedef struct framebuffer {
+  u32 id;
+  bool has_depth;
+  texture_handle depth_attachment;
+} framebuffer;
+
 /** @brief configuration passed to the renderer at init time */
 typedef struct renderer_config {
   char window_name[256];
@@ -41,6 +47,7 @@ typedef struct renderer {
   renderer_config config;
   // shaders
   shader blinn_phong;
+  shader shadow_map_depth;
 } renderer;
 
 // --- Lighting & Materials
