@@ -2,6 +2,7 @@
 
 #include "camera.h"
 #include "loaders.h"
+#include "maths_types.h"
 #include "render_types.h"
 #include "transform_hierarchy.h"
 
@@ -23,9 +24,11 @@ void draw_mesh(renderer* ren, mesh* mesh, mat4* tf, material* mat, mat4* view, m
 void draw_scene(arena* frame, model_darray* models, renderer* ren, camera* camera,
                 transform_hierarchy* tfh, scene* scene);
 
-// ---
+// --- Textures
 texture texture_data_load(const char* path, bool invert_y);  // #frontend
 void texture_data_upload(texture* tex);                      // #backend
+texture_handle texture_create(const char* debug_name, gpu_texture_type type,
+                              gpu_texture_format format, u32x3 dimensions);
 
 // --- Uniforms
 
@@ -37,3 +40,7 @@ void uniform_f32(u32 program_id, const char* uniform_name, f32 value);
 void uniform_i32(u32 program_id, const char* uniform_name, i32 value);
 /** @brief upload a mat4 of f32 to a uniform */
 void uniform_mat4f(u32 program_id, const char* uniform_name, mat4* value);
+
+// ---
+
+framebuffer framebuffer_create(bool has_depth, texture_handle depth_attachment);

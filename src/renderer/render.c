@@ -56,10 +56,19 @@ bool renderer_init(renderer* ren) {
     return false;
   }
 
+  // Load default Blinn-phong lighting model shaders
   ren->blinn_phong =
       shader_create_separate("assets/shaders/blinn_phong.vert", "assets/shaders/blinn_phong.frag");
-    ren->shadow_map_depth =
+  // Load shadow maps shaders
+  ren->shadow_map_depth =
       shader_create_separate("assets/shaders/shadow_map_depth.vert", "assets/shaders/no_op.frag");
+
+  // Create depth texture for shadow maps
+  ren->depth_texture =
+      texture_create("shadow_maps_depth", TEXTURE_TYPE_2D, TEXTURE_FORMAT_DEPTH_DEFAULT,
+                     u32x3((SCR_WIDTH), (SCR_HEIGHT), 0));
+  // Create framebuffer to paint depths to
+  ren->depth_buffer = framebuffer_create(true, ren->depth_texture);
 
   return true;
 }
@@ -240,6 +249,34 @@ void model_upload_meshes(renderer* ren, model* model) {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+texture_handle texture_create(const char* debug_name, gpu_texture_type type,
+                              gpu_texture_format format, u32x3 dimensions) {
+  const u32 width = dimensions.x, height = dimensions.y;
+  TRACE("Texture create with width %d height %d\n", width, height);
+
+  u32 texture_id;
+  glGenTextures(1, &texture_id);
+
+  // OpenGL calls
+  if (format == TEXTURE_FORMAT_DEPTH_DEFAULT) {
+    INFO("Creating depth texture");
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT,
+                 GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  } else {
+    WARN("Unimplemented non depth texture");
+  }
+
+  // TODO: start allocating resources and providing handles rather than storing the data inside
+  // like this (I think this will only work for OpenGL potentially.
+  INFO("finished texture");
+  return (texture_handle){ .raw = texture_id };
+}
+
 texture texture_data_load(const char* path, bool invert_y) {
   TRACE("Load texture %s", path);
 
@@ -324,4 +361,23 @@ void point_light_upload_uniforms(shader shader, point_light* light, char index) 
   uniform_f32(shader.program_id, constant_str, light->constant);
   uniform_f32(shader.program_id, linear_str, light->linear);
   uniform_f32(shader.program_id, quadratic_str, light->quadratic);
+}
+
+framebuffer framebuffer_create(bool has_depth, texture_handle depth_attachment) {
+  u32 depthMapFBO;
+  glGenFramebuffers(1, &depthMapFBO);
+  float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+  if (has_depth) {
+    // attach depth texture as FBO's depth buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_attachment.raw,
+                           0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  }
+  return (framebuffer){ .id = depthMapFBO,
+                        .has_depth = has_depth,
+                        .depth_attachment = depth_attachment };
 }

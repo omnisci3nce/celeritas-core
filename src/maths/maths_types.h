@@ -61,3 +61,20 @@ typedef struct transform {
   f32 scale;
   bool is_dirty;
 } transform;
+
+// --- Some other types
+typedef struct u32x3 {
+  union {
+    struct {
+      u32 x;
+      u32 y;
+      u32 z;
+    };
+    struct {
+      u32 r;
+      u32 g;
+      u32 b;
+    };
+  };
+} u32x3;
+#define u32x3(x, y, z) ((u32x3){ x, y, z })

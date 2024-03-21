@@ -16,7 +16,8 @@ core* core_bringup() {
   renderer_config conf = { .window_name = { "Celeritas Engine Core" },
                            .scr_width = SCR_WIDTH,
                            .scr_height = SCR_HEIGHT,
-                           .clear_colour = (vec3){ .08, .08, .1 } };
+                           .clear_colour = (vec3){ .08, .08, .1 },
+                           .shadows_enabled = true };
   c->renderer.config = conf;
   c->renderer.backend_state = NULL;
 

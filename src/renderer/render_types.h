@@ -39,6 +39,7 @@ typedef struct renderer_config {
   char window_name[256];
   u32 scr_width, scr_height;
   vec3 clear_colour; /** colour that the screen gets cleared to every frame */
+  bool shadows_enabled : true;
 } renderer_config;
 
 typedef struct renderer {
@@ -48,6 +49,8 @@ typedef struct renderer {
   // shaders
   shader blinn_phong;
   shader shadow_map_depth;
+  texture_handle depth_texture;
+  framebuffer depth_buffer;
 } renderer;
 
 // --- Lighting & Materials
