@@ -36,7 +36,7 @@ typedef struct renderer_config {
 
 typedef struct renderer {
   struct GLFWwindow *window; /** Currently all platforms use GLFW*/
-  void *backend_state;       /** Graphics API-specific state */
+  void* backend_state;       /** Graphics API-specific state */
   renderer_config config;
   // shaders
   shader blinn_phong;

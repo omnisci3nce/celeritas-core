@@ -38,7 +38,7 @@ bool renderer_init(renderer* ren) {
   GLFWwindow* window = glfwCreateWindow(ren->config.scr_width, ren->config.scr_height,
                                         ren->config.window_name, NULL, NULL);
   if (window == NULL) {
-    printf("Failed to create GLFW window\n");
+    ERROR("Failed to create GLFW window\n");
     glfwTerminate();
     return false;
   }

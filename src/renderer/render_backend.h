@@ -1,5 +1,5 @@
 /**
- * @brief
+ * @brief Renderer backend
  */
 #pragma once
 
@@ -7,6 +7,8 @@
 #include "render_types.h"
 
 /// --- Lifecycle
+
+/** @brief Initialise the graphics API backend */
 bool gfx_backend_init(renderer* ren);
 void gfx_backend_shutdown(renderer* ren);
 

@@ -1,3 +1,13 @@
+/**
+ * @file render.h
+ * @author your name (you@domain.com)
+ * @brief Renderer frontend
+ * @version 0.1
+ * @date 2024-03-21
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
 #pragma once
 
 #include "camera.h"
@@ -9,6 +19,10 @@
 bool renderer_init(renderer* ren);
 /** @brief shutdown the render system frontend */
 void renderer_shutdown(renderer* ren);
+
+void renderer_on_resize(renderer *ren);
+
+struct render_packet;
 
 // --- Frame
 
