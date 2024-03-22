@@ -23,6 +23,8 @@ void draw_model(renderer* ren, camera* camera, model* model, mat4* tf, scene* sc
 void draw_mesh(renderer* ren, mesh* mesh, mat4* tf, material* mat, mat4* view, mat4* proj);
 void draw_scene(arena* frame, model_darray* models, renderer* ren, camera* camera,
                 transform_hierarchy* tfh, scene* scene);
+void draw_shadows(renderer* ren, arena* frame, model_darray* models, vec3 light_pos,
+                  transform_hierarchy* tfh, scene* scene);
 
 // --- Textures
 texture texture_data_load(const char* path, bool invert_y);  // #frontend
