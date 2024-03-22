@@ -28,6 +28,7 @@ struct render_packet;
 
 void render_frame_begin(renderer* ren);
 void render_frame_end(renderer* ren);
+void render_frame_draw(renderer* ren);
 
 // --- models meshes
 void model_upload_meshes(renderer* ren, model* model);
