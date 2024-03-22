@@ -1,3 +1,7 @@
+/**
+ * @brief The main renderer frontend API
+ */
+
 #pragma once
 
 #include "camera.h"
