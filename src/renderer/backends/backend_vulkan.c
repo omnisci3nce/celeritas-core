@@ -30,6 +30,10 @@ typedef struct vulkan_device {
   i32 present_queue_index;
   i32 compute_queue_index;
   i32 transfer_queue_index;
+  VkQueue graphics_queue;
+  VkQueue present_queue;
+  VkQueue compute_queue;
+  VkQueue transfer_queue;
   VkPhysicalDeviceProperties properties;
   VkPhysicalDeviceFeatures features;
   VkPhysicalDeviceMemoryProperties memory;
@@ -124,14 +128,79 @@ bool select_physical_device(vulkan_context* ctx) {
   return true;
 }
 
-bool vulkan_device_create(vulkan_context* ctx) {
-  if (!select_physical_device(ctx)) {
+bool vulkan_device_create(vulkan_context* context) {
+  // Physical device - NOTE: mutates the context directly
+  if (!select_physical_device(context)) {
     return false;
   }
 
+  TRACE("HERE");
+
+// Logical device - NOTE: mutates the context directly
+
+// queues
+#define VULKAN_QUEUES_COUNT 3
+  const char* queue_names[VULKAN_QUEUES_COUNT] = { "GRAPHICS", "PRESENT", 
+  // "COMPUTE",
+   "TRANSFER" };
+  i32 indices[VULKAN_QUEUES_COUNT] = { context->device.graphics_queue_index,
+                                       context->device.present_queue_index,
+                                      //  context->device.compute_queue_index,
+                                       context->device.transfer_queue_index };
+  VkDeviceQueueCreateInfo
+      queue_create_info[VULKAN_QUEUES_COUNT];  // one for each of graphics,present,compute,transfer
+  for (int i = 0; i < VULKAN_QUEUES_COUNT; i++) {
+    TRACE("Configure %s queue", queue_names[i]);
+    queue_create_info[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queue_create_info[i].queueFamilyIndex = indices[i];
+    queue_create_info[i].queueCount = 1;  // make just one of them
+    queue_create_info[i].flags = 0;
+    queue_create_info[i].pNext = 0;
+    f32 priority = 1.0;
+    queue_create_info[i].pQueuePriorities = &priority;
+  }
+
+  // features
+  VkPhysicalDeviceFeatures device_features = {};
+  device_features.samplerAnisotropy = VK_TRUE;  // request anistrophy
+
+  // device itself
+  VkDeviceCreateInfo device_create_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+  device_create_info.queueCreateInfoCount = VULKAN_QUEUES_COUNT;
+  device_create_info.pQueueCreateInfos = queue_create_info;
+  device_create_info.pEnabledFeatures = &device_features;
+  device_create_info.enabledExtensionCount = 1;
+  const char* extension_names = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+  device_create_info.ppEnabledExtensionNames = &extension_names;
+
+  // deprecated
+  device_create_info.enabledLayerCount = 0;
+  device_create_info.ppEnabledLayerNames = 0;
+
+  VkResult result = vkCreateDevice(context->device.physical_device, &device_create_info,
+                                   context->allocator, &context->device.logical_device);
+  if (result != VK_SUCCESS) {
+    printf("error creating logical device with status %u\n", result);
+    ERROR_EXIT("Bye bye");
+  }
+  INFO("Logical device created");
+
+  // get queues
+  vkGetDeviceQueue(context->device.logical_device, context->device.graphics_queue_index, 0,
+                   &context->device.graphics_queue);
+  vkGetDeviceQueue(context->device.logical_device, context->device.present_queue_index, 0,
+                   &context->device.present_queue);
+  vkGetDeviceQueue(context->device.logical_device, context->device.compute_queue_index, 0,
+                   &context->device.compute_queue);
+  vkGetDeviceQueue(context->device.logical_device, context->device.transfer_queue_index, 0,
+                   &context->device.transfer_queue);
+
   return true;
 }
-void vulkan_device_destroy(vulkan_context* ctx) {}
+void vulkan_device_destroy(vulkan_context* context) {
+  context->device.physical_device = 0;  // release
+  // TODO: reset other memory
+}
 
 bool gfx_backend_init(renderer* ren) {
   INFO("loading Vulkan backend");
@@ -280,20 +349,20 @@ void uniform_mat4f(u32 program_id, const char* uniform_name, mat4* value) {}
 
 VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
     VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT flags,
-    const VkDebugUtilsMessengerCallbackDataEXT callback_data, void* user_data) {
+    const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void* user_data) {
   switch (severity) {
     default:
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-      ERROR(callback_data.pMessage);
+      ERROR("%s", callback_data->pMessage);
       break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-      WARN(callback_data.pMessage);
+      WARN("%s", callback_data->pMessage);
       break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-      INFO(callback_data.pMessage);
+      INFO("%s", callback_data->pMessage);
       break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-      TRACE(callback_data.pMessage);
+      TRACE("%s", callback_data->pMessage);
       break;
   }
   return VK_FALSE;
