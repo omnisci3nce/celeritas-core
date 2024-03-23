@@ -39,15 +39,17 @@
 /* } else {\ */
 /* }\ */
 
-#define KITC_DECL_TYPED_ARRAY(T)                                                          \
-  typedef typed_array(T) T##_darray;                                                      \
-  typedef typed_array_iterator(T) T##_darray_iter;                                        \
+#define KITC_DECL_TYPED_ARRAY(T) DECL_TYPED_ARRAY(T, T)
+
+#define DECL_TYPED_ARRAY(T, Type)                                                         \
+  typedef typed_array(T) Type##_darray;                                                   \
+  typedef typed_array_iterator(Type) Type##_darray_iter;                                  \
                                                                                           \
   /* Create a new one growable array */                                                   \
-  PREFIX T##_darray *T##_darray_new(size_t starting_capacity) {                           \
-    T##_darray *d;                                                                        \
+  PREFIX Type##_darray *Type##_darray_new(size_t starting_capacity) {                     \
+    Type##_darray *d;                                                                     \
     T *data;                                                                              \
-    d = malloc(sizeof(T##_darray));                                                       \
+    d = malloc(sizeof(Type##_darray));                                                    \
     data = malloc(starting_capacity * sizeof(T));                                         \
                                                                                           \
     d->len = 0;                                                                           \
@@ -57,14 +59,14 @@
     return d;                                                                             \
   }                                                                                       \
                                                                                           \
-  PREFIX void T##_darray_free(T##_darray *d) {                                            \
+  PREFIX void Type##_darray_free(Type##_darray *d) {                                      \
     if (d != NULL) {                                                                      \
       free(d->data);                                                                      \
       free(d);                                                                            \
     }                                                                                     \
   }                                                                                       \
                                                                                           \
-  PREFIX T *T##_darray_resize(T##_darray *d, size_t capacity) {                           \
+  PREFIX T *Type##_darray_resize(Type##_darray *d, size_t capacity) {                     \
     /* resize the internal data block */                                                  \
     T *new_data = realloc(d->data, sizeof(T) * capacity);                                 \
     /* TODO: handle OOM error */                                                          \
@@ -74,22 +76,22 @@
     return new_data;                                                                      \
   }                                                                                       \
                                                                                           \
-  PREFIX void T##_darray_push(T##_darray *d, T value) {                                   \
+  PREFIX void Type##_darray_push(Type##_darray *d, T value) {                             \
     if (d->len >= d->capacity) {                                                          \
       size_t new_capacity =                                                               \
           d->capacity > 0 ? d->capacity * DARRAY_RESIZE_FACTOR : DARRAY_DEFAULT_CAPACITY; \
-      T *resized = T##_darray_resize(d, new_capacity);                                    \
+      T *resized = Type##_darray_resize(d, new_capacity);                                 \
     }                                                                                     \
                                                                                           \
     d->data[d->len] = value;                                                              \
     d->len += 1;                                                                          \
   }                                                                                       \
                                                                                           \
-  PREFIX void T##_darray_push_copy(T##_darray *d, const T *value) {                       \
+  PREFIX void Type##_darray_push_copy(Type##_darray *d, const T *value) {                 \
     if (d->len >= d->capacity) {                                                          \
       size_t new_capacity =                                                               \
           d->capacity > 0 ? d->capacity * DARRAY_RESIZE_FACTOR : DARRAY_DEFAULT_CAPACITY; \
-      T *resized = T##_darray_resize(d, new_capacity);                                    \
+      T *resized = Type##_darray_resize(d, new_capacity);                                 \
     }                                                                                     \
                                                                                           \
     T *place = d->data + d->len;                                                          \
@@ -97,18 +99,18 @@
     memcpy(place, value, sizeof(T));                                                      \
   }                                                                                       \
                                                                                           \
-  PREFIX void T##_darray_pop(T##_darray *d, T *dest) {                                    \
+  PREFIX void Type##_darray_pop(Type##_darray *d, T *dest) {                              \
     T *item = d->data + (d->len - 1);                                                     \
     d->len -= 1;                                                                          \
     memcpy(dest, item, sizeof(T));                                                        \
   }                                                                                       \
                                                                                           \
-  PREFIX void T##_darray_ins(T##_darray *d, const T *value, size_t index) {               \
+  PREFIX void Type##_darray_ins(Type##_darray *d, const T *value, size_t index) {         \
     /* check if requires resize */                                                        \
     if (d->len + 1 > d->capacity) {                                                       \
       size_t new_capacity =                                                               \
           d->capacity > 0 ? d->capacity * DARRAY_RESIZE_FACTOR : DARRAY_DEFAULT_CAPACITY; \
-      T *resized = T##_darray_resize(d, new_capacity);                                    \
+      T *resized = Type##_darray_resize(d, new_capacity);                                 \
     }                                                                                     \
                                                                                           \
     /* shift existing data after index */                                                 \
@@ -122,14 +124,14 @@
     memcpy(insert_dest, value, sizeof(T));                                                \
   }                                                                                       \
                                                                                           \
-  PREFIX void T##_darray_clear(T##_darray *d) {                                           \
+  PREFIX void Type##_darray_clear(Type##_darray *d) {                                     \
     d->len = 0;                                                                           \
     memset(d->data, 0, d->capacity * sizeof(T));                                          \
   }                                                                                       \
                                                                                           \
-  PREFIX size_t T##_darray_len(T##_darray *d) { return d->len; }                          \
+  PREFIX size_t Type##_darray_len(Type##_darray *d) { return d->len; }                    \
                                                                                           \
-  PREFIX void T##_darray_print(T##_darray *d) {                                           \
+  PREFIX void Type##_darray_print(Type##_darray *d) {                                     \
     printf("len: %zu ", d->len);                                                          \
     printf("capacity: %zu\n", d->capacity);                                               \
     for (int i = 0; i < d->len; i++) {                                                    \
@@ -137,14 +139,14 @@
     }                                                                                     \
   }                                                                                       \
                                                                                           \
-  PREFIX T##_darray_iter T##_darray_iter_new(T##_darray *d) {                             \
-    T##_darray_iter iterator;                                                             \
+  PREFIX Type##_darray_iter Type##_darray_iter_new(Type##_darray *d) {                    \
+    Type##_darray_iter iterator;                                                          \
     iterator.array = d;                                                                   \
     iterator.current_idx = 0;                                                             \
     return iterator;                                                                      \
   }                                                                                       \
                                                                                           \
-  PREFIX void *T##_darray_iter_next(T##_darray_iter *iterator) {                          \
+  PREFIX void *Type##_darray_iter_next(Type##_darray_iter *iterator) {                    \
     if (iterator->current_idx < iterator->array->len) {                                   \
       return &iterator->array->data[iterator->current_idx++];                             \
     } else {                                                                              \

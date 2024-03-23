@@ -34,9 +34,13 @@ typedef struct renderer_config {
   vec3 clear_colour; /** colour that the screen gets cleared to every frame */
 } renderer_config;
 
+typedef struct frame_stats {
+  u64 last_time;
+} frame_stats;
+
 typedef struct renderer {
   struct GLFWwindow *window; /** Currently all platforms use GLFW*/
-  void* backend_state;       /** Graphics API-specific state */
+  void *backend_state;       /** Graphics API-specific state */
   renderer_config config;
   // shaders
   shader blinn_phong;

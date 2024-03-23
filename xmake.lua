@@ -22,7 +22,7 @@ end
 -- Platform defines and system packages
 if is_plat("linux") then
     add_defines("CEL_PLATFORM_LINUX")
-    add_syslinks("dl", "X11", "pthread")
+    add_syslinks("vulkan", "dl", "X11", "pthread")
 elseif is_plat("windows") then
     add_defines("CEL_PLATFORM_WINDOWS")
 elseif is_plat("macosx") then

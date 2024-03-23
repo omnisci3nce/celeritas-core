@@ -8,6 +8,7 @@
 #include "threadpool.h"
 
 typedef struct core {
+  // TODO: Add application name
   renderer renderer;
   threadpool threadpool;
   input_state input;
