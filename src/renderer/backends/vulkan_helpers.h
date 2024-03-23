@@ -55,7 +55,7 @@ typedef struct vulkan_swapchain_support_info {
 
 VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
     VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT flags,
-    const VkDebugUtilsMessengerCallbackDataEXT callback_data, void* user_data);
+    const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void* user_data);
 
 void vulkan_device_query_swapchain_support(VkPhysicalDevice device, VkSurfaceKHR surface,
                                            vulkan_swapchain_support_info* out_support_info) {
