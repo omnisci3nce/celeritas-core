@@ -1,5 +1,9 @@
-#include "str.h"
 #define CEL_PLATFORM_LINUX
+#include <assert.h>
+#include <vulkan/vk_platform.h>
+#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
+#include "str.h"
 
 #include "darray.h"
 #include "defines.h"
@@ -17,12 +21,29 @@
 #include <glad/glad.h>
 
 #include <glfw3.h>
-#include <vulkan/vulkan.h>
-#include <vulkan/vulkan_core.h>
+
+typedef struct vulkan_device {
+  VkPhysicalDevice physical_device;
+  VkDevice logical_device;
+  vulkan_swapchain_support_info swapchain_support;
+  i32 graphics_queue_index;
+  i32 present_queue_index;
+  i32 compute_queue_index;
+  i32 transfer_queue_index;
+  VkPhysicalDeviceProperties properties;
+  VkPhysicalDeviceFeatures features;
+  VkPhysicalDeviceMemoryProperties memory;
+} vulkan_device;
 
 typedef struct vulkan_context {
   VkInstance instance;
   VkAllocationCallbacks* allocator;
+  VkSurfaceKHR surface;
+  vulkan_device device;
+
+#if defined(DEBUG)
+  VkDebugUtilsMessengerEXT vk_debugger;
+#endif
 } vulkan_context;
 
 static vulkan_context context;
@@ -32,6 +53,85 @@ typedef struct vulkan_state {
 } vulkan_state;
 
 KITC_DECL_TYPED_ARRAY(VkLayerProperties)
+
+bool select_physical_device(vulkan_context* ctx) {
+  u32 physical_device_count = 0;
+  VK_CHECK(vkEnumeratePhysicalDevices(ctx->instance, &physical_device_count, 0));
+  if (physical_device_count == 0) {
+    FATAL("No devices that support vulkan were found");
+    return false;
+  }
+  TRACE("Number of devices found %d", physical_device_count);
+
+  VkPhysicalDevice physical_devices[physical_device_count];
+  VK_CHECK(vkEnumeratePhysicalDevices(ctx->instance, &physical_device_count, physical_devices));
+
+  for (u32 i = 0; i < physical_device_count; i++) {
+    VkPhysicalDeviceProperties properties;
+    vkGetPhysicalDeviceProperties(physical_devices[i], &properties);
+
+    VkPhysicalDeviceFeatures features;
+    vkGetPhysicalDeviceFeatures(physical_devices[i], &features);
+
+    VkPhysicalDeviceMemoryProperties memory;
+    vkGetPhysicalDeviceMemoryProperties(physical_devices[i], &memory);
+
+    vulkan_physical_device_requirements requirements = {};
+    requirements.graphics = true;
+    requirements.present = true;
+    requirements.compute = true;
+    requirements.transfer = true;
+
+    requirements.sampler_anistropy = true;
+    requirements.discrete_gpu = true;
+    requirements.device_ext_names[0] = str8lit(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    requirements.device_ext_name_count = 1;
+
+    vulkan_physical_device_queue_family_info queue_info = {};
+
+    bool result = physical_device_meets_requirements(physical_devices[i], ctx->surface, &properties,
+                                                     &features, &requirements, &queue_info,
+                                                     &ctx->device.swapchain_support);
+
+    if (result) {
+      INFO("GPU Driver version: %d.%d.%d", VK_VERSION_MAJOR(properties.driverVersion),
+           VK_VERSION_MINOR(properties.driverVersion), VK_VERSION_PATCH(properties.driverVersion));
+
+      INFO("Vulkan API version: %d.%d.%d", VK_VERSION_MAJOR(properties.apiVersion),
+           VK_VERSION_MINOR(properties.apiVersion), VK_VERSION_PATCH(properties.apiVersion));
+
+      // TODO: print gpu memory information -
+      // https://youtu.be/6Kj3O2Ov1RU?si=pXfP5NvXXcXjJsrG&t=2439
+
+      ctx->device.physical_device = physical_devices[i];
+      ctx->device.graphics_queue_index = queue_info.graphics_family_index;
+      ctx->device.present_queue_index = queue_info.present_family_index;
+      ctx->device.compute_queue_index = queue_info.compute_family_index;
+      ctx->device.transfer_queue_index = queue_info.transfer_family_index;
+      ctx->device.properties = properties;
+      ctx->device.features = features;
+      ctx->device.memory = memory;
+      break;
+    }
+  }
+
+  if (!ctx->device.physical_device) {
+    ERROR("No suitable physical devices were found :(");
+    return false;
+  }
+
+  INFO("Physical device selected: %s\n", ctx->device.properties.deviceName);
+  return true;
+}
+
+bool vulkan_device_create(vulkan_context* ctx) {
+  if (!select_physical_device(ctx)) {
+    return false;
+  }
+
+  return true;
+}
+void vulkan_device_destroy(vulkan_context* ctx) {}
 
 bool gfx_backend_init(renderer* ren) {
   INFO("loading Vulkan backend");
@@ -111,11 +211,58 @@ bool gfx_backend_init(renderer* ren) {
     return false;
   }
 
+  // Debugger
+#if defined(DEBUG)
+  DEBUG("Creating Vulkan debugger")
+  u32 log_severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
+                     VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+  VkDebugUtilsMessengerCreateInfoEXT debug_create_info = {
+    VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT
+  };
+  debug_create_info.messageSeverity = log_severity;
+  debug_create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                  VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
+                                  VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+  debug_create_info.pfnUserCallback = vk_debug_callback;
+
+  PFN_vkCreateDebugUtilsMessengerEXT func =
+      (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(context.instance,
+                                                                "vkCreateDebugUtilsMessengerEXT");
+  assert(func);
+  VK_CHECK(func(context.instance, &debug_create_info, context.allocator, &context.vk_debugger));
+  DEBUG("Vulkan debugger created");
+
+#endif
+
+  // Surface creation
+  DEBUG("Create SurfaceKHR")
+  VkSurfaceKHR surface;
+  VK_CHECK(glfwCreateWindowSurface(context.instance, ren->window, NULL, &surface));
+  context.surface = surface;
+  DEBUG("Vulkan surface created")
+
+  // Device creation
+  if (!vulkan_device_create(&context)) {
+    FATAL("device creation failed");
+    return false;
+  }
+
   INFO("Vulkan renderer initialisation succeeded");
   return true;
 }
 
-void gfx_backend_shutdown(renderer* ren) {}
+void gfx_backend_shutdown(renderer* ren) {
+  DEBUG("Destroying Vulkan debugger");
+  if (context.vk_debugger) {
+    PFN_vkDestroyDebugUtilsMessengerEXT func =
+        (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+            context.instance, "vkDestroyDebugUtilsMessengerEXT");
+    func(context.instance, context.vk_debugger, context.allocator);
+  }
+
+  DEBUG("Destroying Vulkan instance...");
+  vkDestroyInstance(context.instance, context.allocator);
+}
 
 void clear_screen(vec3 colour) {}
 
@@ -130,5 +277,26 @@ void uniform_vec3f(u32 program_id, const char* uniform_name, vec3* value) {}
 void uniform_f32(u32 program_id, const char* uniform_name, f32 value) {}
 void uniform_i32(u32 program_id, const char* uniform_name, i32 value) {}
 void uniform_mat4f(u32 program_id, const char* uniform_name, mat4* value) {}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT flags,
+    const VkDebugUtilsMessengerCallbackDataEXT callback_data, void* user_data) {
+  switch (severity) {
+    default:
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+      ERROR(callback_data.pMessage);
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+      WARN(callback_data.pMessage);
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+      INFO(callback_data.pMessage);
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+      TRACE(callback_data.pMessage);
+      break;
+  }
+  return VK_FALSE;
+}
 
 #endif

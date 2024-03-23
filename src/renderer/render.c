@@ -28,11 +28,14 @@ bool renderer_init(renderer* ren) {
   // NOTE: all platforms use GLFW at the moment but thats subject to change
   glfwInit();
 
-  DEBUG("init graphics api (OpenGL) backend");
+#if defined(CEL_REND_BACKEND_OPENGL)
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#elif defined(CEL_REND_BACKEND_VULKAN)
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+#endif
 
   // glfw window creation
   GLFWwindow* window = glfwCreateWindow(ren->config.scr_width, ren->config.scr_height,
@@ -46,6 +49,7 @@ bool renderer_init(renderer* ren) {
 
   glfwMakeContextCurrent(ren->window);
 
+  DEBUG("init graphics api backend");
   if (!gfx_backend_init(ren)) {
     FATAL("Couldnt load graphics api backend");
     return false;
