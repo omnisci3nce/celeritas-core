@@ -28,6 +28,8 @@
 
 #include <glfw3.h>
 
+KITC_DECL_TYPED_ARRAY(VkLayerProperties)
+
 typedef struct vulkan_device {
   VkPhysicalDevice physical_device;
   VkDevice logical_device;
@@ -40,6 +42,7 @@ typedef struct vulkan_device {
   VkQueue present_queue;
   VkQueue compute_queue;
   VkQueue transfer_queue;
+  VkCommandPool gfx_command_pool;
   VkPhysicalDeviceProperties properties;
   VkPhysicalDeviceFeatures features;
   VkPhysicalDeviceMemoryProperties memory;
@@ -86,12 +89,17 @@ typedef enum vulkan_command_buffer_state {
   COMMAND_BUFFER_STATE_READY,
   COMMAND_BUFFER_STATE_IN_RENDER_PASS,
   COMMAND_BUFFER_STATE_RECORDING,
+  COMMAND_BUFFER_STATE_RECORDING_ENDED,
+  COMMAND_BUFFER_STATE_SUBMITTED,
+  COMMAND_BUFFER_STATE_NOT_ALLOCATED,
 } vulkan_command_buffer_state;
 
 typedef struct vulkan_command_buffer {
   VkCommandBuffer handle;
   vulkan_command_buffer_state state;
 } vulkan_command_buffer;
+
+KITC_DECL_TYPED_ARRAY(vulkan_command_buffer)
 
 typedef struct vulkan_context {
   VkInstance instance;
@@ -102,6 +110,8 @@ typedef struct vulkan_context {
   u32 framebuffer_height;
   vulkan_swapchain swapchain;
   vulkan_renderpass main_renderpass;
+  vulkan_command_buffer_darray* gfx_command_buffers;
+
   u32 image_index;
   u32 current_frame;
 
@@ -117,8 +127,6 @@ static vulkan_context context;
 /** @brief Internal backend state */
 typedef struct vulkan_state {
 } vulkan_state;
-
-KITC_DECL_TYPED_ARRAY(VkLayerProperties)
 
 bool select_physical_device(vulkan_context* ctx) {
   u32 physical_device_count = 0;
@@ -255,6 +263,14 @@ bool vulkan_device_create(vulkan_context* context) {
   vkGetDeviceQueue(context->device.logical_device, context->device.transfer_queue_index, 0,
                    &context->device.transfer_queue);
 
+  // create command pool for graphics queue
+  VkCommandPoolCreateInfo pool_create_info = { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
+  pool_create_info.queueFamilyIndex = context->device.graphics_queue_index;
+  pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  vkCreateCommandPool(context->device.logical_device, &pool_create_info, context->allocator,
+                      &context->device.gfx_command_pool);
+  INFO("Created Command Pool")
+
   return true;
 }
 void vulkan_device_destroy(vulkan_context* context) {
@@ -364,6 +380,74 @@ void vulkan_image_create(vulkan_context* context, VkImageType image_type, u32 wi
 }
 
 // TODO: vulkan_image_destroy
+
+void vulkan_command_buffer_allocate(vulkan_context* context, VkCommandPool pool, bool is_primary,
+                                    vulkan_command_buffer* out_command_buffer) {
+  VkCommandBufferAllocateInfo allocate_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+  allocate_info.commandPool = pool;
+  allocate_info.level =
+      is_primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+  allocate_info.commandBufferCount = 1;
+  allocate_info.pNext = 0;
+
+  out_command_buffer->state = COMMAND_BUFFER_STATE_NOT_ALLOCATED;
+  vkAllocateCommandBuffers(context->device.logical_device, &allocate_info,
+                           &out_command_buffer->handle);
+  out_command_buffer->state = COMMAND_BUFFER_STATE_READY;
+}
+
+void vulkan_command_buffer_free(vulkan_context* context, VkCommandPool pool,
+                                vulkan_command_buffer* out_command_buffer) {
+  // TODO: implement freeing
+}
+
+void vulkan_command_buffer_begin(vulkan_command_buffer* command_buffer, bool is_single_use,
+                                 bool is_renderpass_continue, bool is_simultaneous_use) {
+  VkCommandBufferBeginInfo begin_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+  begin_info.flags = 0;
+  if (is_single_use) {
+    begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+  }
+  // TODO: RENDER_PASS_CONTINUE_BIT & SIMULTANEOUS_USE_BIT
+
+  begin_info.pNext = 0;
+  begin_info.pInheritanceInfo = 0;
+  vkBeginCommandBuffer(command_buffer->handle, &begin_info);
+
+  command_buffer->state = COMMAND_BUFFER_STATE_RECORDING;
+}
+
+void vulkan_command_buffer_end(vulkan_command_buffer* command_buffer) {
+  VK_CHECK(vkEndCommandBuffer(command_buffer->handle));
+  command_buffer->state = COMMAND_BUFFER_STATE_RECORDING_ENDED;
+}
+void vulkan_command_buffer_update_submitted(vulkan_command_buffer* command_buffer) {
+  command_buffer->state = COMMAND_BUFFER_STATE_SUBMITTED;
+}
+void vulkan_command_buffer_reset(vulkan_command_buffer* command_buffer) {
+  command_buffer->state = COMMAND_BUFFER_STATE_READY;
+}
+
+void vulkan_command_buffer_allocate_and_begin_oneshot(vulkan_context* context, VkCommandPool pool,
+                                                      vulkan_command_buffer* out_command_buffer) {
+  vulkan_command_buffer_allocate(context, pool, true, out_command_buffer);
+  vulkan_command_buffer_begin(out_command_buffer, true, false, false);
+}
+
+void vulkan_command_buffer_end_oneshot(vulkan_context* context, VkCommandPool pool,
+                                       vulkan_command_buffer* command_buffer, VkQueue queue) {
+  vulkan_command_buffer_end(command_buffer);
+
+  // submit to queue
+  VkSubmitInfo submit_info = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+  submit_info.commandBufferCount = 1;
+  submit_info.pCommandBuffers = &command_buffer->handle;
+  VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, 0));
+  // wait for it to finish
+  VK_CHECK(vkQueueWaitIdle(queue));
+
+  vulkan_command_buffer_free(context, pool, command_buffer);
+}
 
 void vulkan_swapchain_create(vulkan_context* context, u32 width, u32 height,
                              vulkan_swapchain* out_swapchain) {
@@ -617,6 +701,17 @@ void vulkan_renderpass_end(vulkan_command_buffer* command_buffer, vulkan_renderp
   command_buffer->state = COMMAND_BUFFER_STATE_RECORDING;
 }
 
+void create_command_buffers(renderer* ren) {
+  if (!context.gfx_command_buffers) {
+    context.gfx_command_buffers = vulkan_command_buffer_darray_new(context.swapchain.image_count);
+  }
+
+  for (u32 i = 0; i < context.swapchain.image_count; i++) {
+    vulkan_command_buffer_allocate(&context, context.device.gfx_command_pool, true,
+                                   &context.gfx_command_buffers->data[i]);
+  }
+}
+
 bool gfx_backend_init(renderer* ren) {
   INFO("loading Vulkan backend");
 
@@ -738,6 +833,9 @@ bool gfx_backend_init(renderer* ren) {
   vulkan_renderpass_create(&context, &context.main_renderpass,
                            vec4(0, 0, context.framebuffer_width, context.framebuffer_height),
                            vec4(0.0, 0.0, 0.2, 1.0), 1.0, 0);
+
+  // Command buffers creation
+  create_command_buffers(ren);
 
   INFO("Vulkan renderer initialisation succeeded");
   return true;
