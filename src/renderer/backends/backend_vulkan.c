@@ -122,6 +122,10 @@ typedef struct vulkan_context {
 #endif
 } vulkan_context;
 
+typedef struct vulkan_framebuffer {
+  // TODO: struct members
+} vulkan_framebuffer;
+
 static vulkan_context context;
 
 /** @brief Internal backend state */
