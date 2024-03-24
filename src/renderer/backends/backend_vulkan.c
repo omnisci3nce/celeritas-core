@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <string.h>
 #define CEL_PLATFORM_LINUX
 #include <assert.h>
 #include <vulkan/vk_platform.h>
@@ -10,12 +11,16 @@
 #include "defines.h"
 #include "file.h"
 #include "log.h"
+#include "maths.h"
 #include "maths_types.h"
 #include "render_backend.h"
 #include "render_types.h"
 #include "vulkan_helpers.h"
 
 #include <stdlib.h>
+
+#define SCR_WIDTH 1080
+#define SCR_HEIGHT 800
 
 #if CEL_REND_BACKEND_VULKAN
 
@@ -38,7 +43,34 @@ typedef struct vulkan_device {
   VkPhysicalDeviceProperties properties;
   VkPhysicalDeviceFeatures features;
   VkPhysicalDeviceMemoryProperties memory;
+  VkFormat depth_format;
 } vulkan_device;
+
+typedef struct vulkan_image {
+  VkImage handle;
+  VkDeviceMemory memory;
+  VkImageView view;
+  u32 width;
+  u32 height;
+} vulkan_image;
+
+typedef enum vulkan_renderpass_state {
+  READY,
+  RECORDING,
+  IN_RENDER_PASS,
+  RECORDING_ENDING,
+  SUBMITTED,
+  NOT_ALLOCATED
+} vulkan_renderpass_state;
+
+typedef struct vulkan_renderpass {
+  VkRenderPass handle;
+  vec4 render_area;
+  vec4 clear_colour;
+  f32 depth;
+  u32 stencil;
+  vulkan_renderpass_state state;
+} vulkan_renderpass;
 
 typedef struct vulkan_swapchain {
   VkSurfaceFormatKHR image_format;
@@ -47,14 +79,29 @@ typedef struct vulkan_swapchain {
   u32 image_count;
   VkImage* images;
   VkImageView* views;
+  vulkan_image depth_attachment;
 } vulkan_swapchain;
+
+typedef enum vulkan_command_buffer_state {
+  COMMAND_BUFFER_STATE_READY,
+  COMMAND_BUFFER_STATE_IN_RENDER_PASS,
+  COMMAND_BUFFER_STATE_RECORDING,
+} vulkan_command_buffer_state;
+
+typedef struct vulkan_command_buffer {
+  VkCommandBuffer handle;
+  vulkan_command_buffer_state state;
+} vulkan_command_buffer;
 
 typedef struct vulkan_context {
   VkInstance instance;
   VkAllocationCallbacks* allocator;
   VkSurfaceKHR surface;
   vulkan_device device;
+  u32 framebuffer_width;
+  u32 framebuffer_height;
   vulkan_swapchain swapchain;
+  vulkan_renderpass main_renderpass;
   u32 image_index;
   u32 current_frame;
 
@@ -215,6 +262,109 @@ void vulkan_device_destroy(vulkan_context* context) {
   // TODO: reset other memory
 }
 
+bool vulkan_device_detect_depth_format(vulkan_device* device) {
+  const size_t n_candidates = 3;
+  VkFormat candidates[3] = { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
+                             VK_FORMAT_D24_UNORM_S8_UINT };
+  u32 flags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+  for (u64 i = 0; i < n_candidates; i++) {
+    VkFormatProperties properties;
+    vkGetPhysicalDeviceFormatProperties(device->physical_device, candidates[i], &properties);
+
+    if ((properties.linearTilingFeatures & flags) == flags) {
+      device->depth_format = candidates[i];
+      return true;
+    }
+    if ((properties.optimalTilingFeatures & flags) == flags) {
+      device->depth_format = candidates[i];
+      return true;
+    }
+  }
+  return false;
+}
+
+void vulkan_image_view_create(vulkan_context* context, VkFormat format, vulkan_image* image,
+                              VkImageAspectFlags aspect_flags) {
+  VkImageViewCreateInfo view_create_info = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+  view_create_info.image = image->handle;
+  view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  view_create_info.format = format;
+  view_create_info.subresourceRange.aspectMask = aspect_flags;
+
+  view_create_info.subresourceRange.baseMipLevel = 0;
+  view_create_info.subresourceRange.levelCount = 1;
+  view_create_info.subresourceRange.baseArrayLayer = 0;
+  view_create_info.subresourceRange.layerCount = 1;
+
+  vkCreateImageView(context->device.logical_device, &view_create_info, context->allocator,
+                    &image->view);
+}
+
+void vulkan_image_create(vulkan_context* context, VkImageType image_type, u32 width, u32 height,
+                         VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
+                         VkMemoryPropertyFlags memory_flags, bool create_view,
+                         VkImageAspectFlags aspect_flags, vulkan_image* out_image) {
+  // copy params
+  out_image->width = width;
+  out_image->height = height;
+
+  // create info
+  VkImageCreateInfo image_create_info = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+  image_create_info.imageType = image_type;
+  image_create_info.extent.width = width;
+  image_create_info.extent.height = height;
+  image_create_info.extent.depth = 1;
+  image_create_info.mipLevels = 4;
+  image_create_info.arrayLayers = 1;
+  image_create_info.format = format;
+  image_create_info.tiling = tiling;
+  image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  image_create_info.usage = usage;
+  image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+  image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  vkCreateImage(context->device.logical_device, &image_create_info, context->allocator,
+                &out_image->handle);
+
+  VkMemoryRequirements memory_reqs;
+  vkGetImageMemoryRequirements(context->device.logical_device, out_image->handle, &memory_reqs);
+
+  i32 memory_type = -1;
+  VkPhysicalDeviceMemoryProperties memory_properties;
+  vkGetPhysicalDeviceMemoryProperties(context->device.physical_device, &memory_properties);
+
+  for (u32 i = 0; i < memory_properties.memoryTypeCount; i++) {
+    // typefilter = memoryTypeBits , prop filter = memory_flags
+    if (memory_reqs.memoryTypeBits & (1 << i) &&
+        (memory_properties.memoryTypes[i].propertyFlags & memory_flags)) {
+      memory_type = i;
+      break;
+    }
+  }
+
+  if (memory_type < 0) {
+    ERROR_EXIT("couldnt find a suitable memory type for the image");
+  }
+
+  // allocate memory
+  VkMemoryAllocateInfo memory_allocate_info = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
+  memory_allocate_info.allocationSize = memory_reqs.size;
+  memory_allocate_info.memoryTypeIndex = memory_type;
+  vkAllocateMemory(context->device.logical_device, &memory_allocate_info, context->allocator,
+                   &out_image->memory);
+
+  // bind memory
+  // TODO: maybe bind context->device.logical_device to device at the top of the functions?
+  vkBindImageMemory(context->device.logical_device, out_image->handle, out_image->memory, 0);
+
+  if (create_view) {
+    out_image->view = 0;
+    vulkan_image_view_create(context, format, out_image, aspect_flags);
+  }
+}
+
+// TODO: vulkan_image_destroy
+
 void vulkan_swapchain_create(vulkan_context* context, u32 width, u32 height,
                              vulkan_swapchain* out_swapchain) {
   VkExtent2D swapchain_extent = { width, height };
@@ -261,8 +411,9 @@ void vulkan_swapchain_create(vulkan_context* context, u32 width, u32 height,
   swapchain_create_info.clipped = VK_TRUE;
   swapchain_create_info.oldSwapchain = 0;
 
-  vkCreateSwapchainKHR(context->device.logical_device, &swapchain_create_info, context->allocator,
-                       &out_swapchain->handle);
+  TRACE("Create swapchain");
+  VK_CHECK(vkCreateSwapchainKHR(context->device.logical_device, &swapchain_create_info,
+                                context->allocator, &out_swapchain->handle));
 
   context->current_frame = 0;
 
@@ -285,6 +436,7 @@ void vulkan_swapchain_create(vulkan_context* context, u32 width, u32 height,
     VkImageViewCreateInfo view_info = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
     view_info.image = out_swapchain->images[i];
     view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    view_info.format = out_swapchain->image_format.format;
     view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     view_info.subresourceRange.baseMipLevel = 0;
     view_info.subresourceRange.levelCount = 1;
@@ -294,6 +446,19 @@ void vulkan_swapchain_create(vulkan_context* context, u32 width, u32 height,
     VK_CHECK(vkCreateImageView(context->device.logical_device, &view_info, context->allocator,
                                &out_swapchain->views[i]));
   }
+
+  // depth attachment
+  if (!vulkan_device_detect_depth_format(&context->device)) {
+    ERROR_EXIT("Failed to find a supported depth format");
+  }
+  vulkan_image_create(context, VK_IMAGE_TYPE_2D, swapchain_extent.width, swapchain_extent.height,
+                      context->device.depth_format, VK_IMAGE_TILING_OPTIMAL,
+                      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, true, VK_IMAGE_ASPECT_DEPTH_BIT,
+                      &out_swapchain->depth_attachment);
+  INFO("Depth attachment created");
+
+  INFO("Swapchain created successfully");
 }
 
 // TODO: swapchain destroy
@@ -333,6 +498,123 @@ void vulkan_swapchain_present(vulkan_context* context, vulkan_swapchain* swapcha
   if (result != VK_SUCCESS) {
     FATAL("Failed to present swapchain iamge");
   }
+}
+
+void vulkan_renderpass_create(vulkan_context* context, vulkan_renderpass* out_renderpass,
+                              vec4 render_area, vec4 clear_colour, f32 depth, u32 stencil) {
+  // main subpass
+  VkSubpassDescription subpass = {};
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+  // attachments
+  u32 attachment_desc_count = 2;
+  VkAttachmentDescription attachment_descriptions[2];
+
+  // Colour attachment
+  VkAttachmentDescription color_attachment;
+  color_attachment.format = context->swapchain.image_format.format;
+  color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  color_attachment.flags = 0;
+
+  attachment_descriptions[0] = color_attachment;
+
+  VkAttachmentReference color_attachment_reference;
+  color_attachment_reference.attachment = 0;
+  color_attachment_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &color_attachment_reference;
+
+  // Depth attachment
+  VkAttachmentDescription depth_attachment;
+  depth_attachment.format = context->device.depth_format;
+  depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  depth_attachment.flags = 0;
+
+  attachment_descriptions[1] = depth_attachment;
+
+  VkAttachmentReference depth_attachment_reference;
+  depth_attachment_reference.attachment = 1;
+  depth_attachment_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  subpass.pDepthStencilAttachment = &depth_attachment_reference;
+
+  // TODO: other attachment styles
+
+  subpass.inputAttachmentCount = 0;
+  subpass.pInputAttachments = 0;
+  subpass.pResolveAttachments = 0;
+  subpass.preserveAttachmentCount = 0;
+  subpass.preserveAttachmentCount = 0;
+
+  // renderpass dependencies
+  VkSubpassDependency dependency;
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstAccessMask =
+      VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependency.dependencyFlags = 0;
+
+  VkRenderPassCreateInfo render_pass_create_info = { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
+  render_pass_create_info.attachmentCount = attachment_desc_count;
+  render_pass_create_info.pAttachments = attachment_descriptions;
+  render_pass_create_info.subpassCount = 1;
+  render_pass_create_info.pSubpasses = &subpass;
+  render_pass_create_info.dependencyCount = 1;
+  render_pass_create_info.pDependencies = &dependency;
+  render_pass_create_info.pNext = 0;
+  render_pass_create_info.flags = 0;
+
+  VK_CHECK(vkCreateRenderPass(context->device.logical_device, &render_pass_create_info,
+                              context->allocator, &out_renderpass->handle));
+}
+
+// TODO: renderpass destroy
+
+void vulkan_renderpass_begin(vulkan_command_buffer* command_buffer, vulkan_renderpass* renderpass,
+                             VkFramebuffer framebuffer) {
+  VkRenderPassBeginInfo begin_info = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+  begin_info.renderPass = renderpass->handle;
+  begin_info.framebuffer = framebuffer;
+  begin_info.renderArea.offset.x = renderpass->render_area.x;
+  begin_info.renderArea.offset.y = renderpass->render_area.y;
+  begin_info.renderArea.extent.width = renderpass->render_area.z;
+  begin_info.renderArea.extent.height = renderpass->render_area.w;
+
+  VkClearValue clear_values[2];
+  memset(&clear_values, 0, sizeof(VkClearValue) * 2);
+  clear_values[0].color.float32[0] = renderpass->clear_colour.x;
+  clear_values[0].color.float32[1] = renderpass->clear_colour.y;
+  clear_values[0].color.float32[2] = renderpass->clear_colour.z;
+  clear_values[0].color.float32[3] = renderpass->clear_colour.w;
+  clear_values[1].depthStencil.depth = renderpass->depth;
+  clear_values[1].depthStencil.stencil = renderpass->stencil;
+
+  begin_info.clearValueCount = 2;
+  begin_info.pClearValues = clear_values;
+
+  vkCmdBeginRenderPass(command_buffer->handle, &begin_info, VK_SUBPASS_CONTENTS_INLINE);
+  command_buffer->state = COMMAND_BUFFER_STATE_IN_RENDER_PASS;
+}
+
+void vulkan_renderpass_end(vulkan_command_buffer* command_buffer, vulkan_renderpass* renderpass) {
+  vkCmdEndRenderPass(command_buffer->handle);
+  command_buffer->state = COMMAND_BUFFER_STATE_RECORDING;
 }
 
 bool gfx_backend_init(renderer* ren) {
@@ -448,6 +730,14 @@ bool gfx_backend_init(renderer* ren) {
     FATAL("device creation failed");
     return false;
   }
+
+  // Swapchain creation
+  vulkan_swapchain_create(&context, SCR_WIDTH, SCR_HEIGHT, &context.swapchain);
+
+  // Renderpass creation
+  vulkan_renderpass_create(&context, &context.main_renderpass,
+                           vec4(0, 0, context.framebuffer_width, context.framebuffer_height),
+                           vec4(0.0, 0.0, 0.2, 1.0), 1.0, 0);
 
   INFO("Vulkan renderer initialisation succeeded");
   return true;

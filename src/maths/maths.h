@@ -52,6 +52,8 @@ static inline vec3 vec3_cross(vec3 a, vec3 b) {
 static inline vec2 vec2_create(f32 x, f32 y) { return (vec2){ x, y }; }
 
 // TODO: Dimension 4
+static inline vec4 vec4_create(f32 x, f32 y, f32 z, f32 w) { return (vec4){ x, y, z, w }; }
+#define vec4(x, y, z, w) (vec4_create(x, y, z, w))
 #define VEC4_ZERO ((vec4){ .x = 0.0, .y = 0.0, .z = 0.0, .w = 0.0 })
 
 // --- Quaternion Implementations

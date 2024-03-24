@@ -5,6 +5,10 @@
  */
 // COPIED FROM KITC WITH SOME MINOR ADJUSTMENTS
 
+/* TODO:
+     - a 'find' function that takes a predicate (maybe wrap with a macro so we dont have to define a new function?)
+*/
+
 #ifndef KITC_TYPED_ARRAY_H
 #define KITC_TYPED_ARRAY_H
 
