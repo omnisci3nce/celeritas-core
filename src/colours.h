@@ -12,6 +12,8 @@ typedef struct rgba {
 #define COLOUR_SEA_GREEN ((rgba){ 0.18, 0.77, 0.71, 1.0 })
 #define COLOUR_WHITE ((rgba){ 1.0, 1.0, 1.0, 1.0 })
 
+#define rgba_to_vec4(color) (vec4(color.r, color.g, color.b, color.a))
+
 // Thanks ChatGPT
 #define STONE_50 ((rgba){ 0.980, 0.980, 0.976, 1.0 })
 #define STONE_100 ((rgba){ 0.961, 0.961, 0.957, 1.0 })

@@ -1,5 +1,7 @@
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
+#include "colours.h"
 #define CEL_PLATFORM_LINUX
 #include <assert.h>
 #include <vulkan/vk_platform.h>
@@ -637,6 +639,11 @@ void vulkan_swapchain_present(vulkan_context* context, vulkan_swapchain* swapcha
 
 void vulkan_renderpass_create(vulkan_context* context, vulkan_renderpass* out_renderpass,
                               vec4 render_area, vec4 clear_colour, f32 depth, u32 stencil) {
+  out_renderpass->render_area = render_area;
+  out_renderpass->clear_colour = clear_colour;
+  out_renderpass->depth = depth;
+  out_renderpass->stencil = stencil;
+
   // main subpass
   VkSubpassDescription subpass = {};
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -940,7 +947,7 @@ bool gfx_backend_init(renderer* ren) {
   // Renderpass creation
   vulkan_renderpass_create(&context, &context.main_renderpass,
                            vec4(0, 0, context.framebuffer_width, context.framebuffer_height),
-                           vec4(0.0, 0.0, 0.2, 1.0), 1.0, 0);
+                           rgba_to_vec4(COLOUR_SEA_GREEN), 1.0, 0);
 
   // Framebiffers creation
   context.swapchain.framebuffers = vulkan_framebuffer_darray_new(context.swapchain.image_count);
@@ -953,10 +960,10 @@ bool gfx_backend_init(renderer* ren) {
 
   // Sync objects
   context.image_available_semaphores =
-      malloc(sizeof(VkSemaphore) * context.swapchain.max_frames_in_flight);
+      calloc(context.swapchain.max_frames_in_flight, sizeof(VkSemaphore));
   context.queue_complete_semaphores =
-      malloc(sizeof(VkSemaphore) * context.swapchain.max_frames_in_flight);
-  context.in_flight_fences = malloc(sizeof(vulkan_fence) * context.swapchain.max_frames_in_flight);
+      calloc(context.swapchain.max_frames_in_flight, sizeof(VkSemaphore));
+  context.in_flight_fences = calloc(context.swapchain.max_frames_in_flight, sizeof(vulkan_fence));
 
   for (u8 i = 0; i < context.swapchain.max_frames_in_flight; i++) {
     VkSemaphoreCreateInfo semaphore_create_info = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
@@ -991,6 +998,92 @@ void gfx_backend_shutdown(renderer* ren) {
 
   DEBUG("Destroying Vulkan instance...");
   vkDestroyInstance(context.instance, context.allocator);
+}
+
+void backend_begin_frame(renderer* ren, f32 delta_time) {
+  vulkan_device* device = &context.device;
+
+  // TODO: resize gubbins
+
+  if (!vulkan_fence_wait(&context, &context.in_flight_fences[context.current_frame], UINT64_MAX)) {
+    WARN("In-flight fence wait failure");
+  }
+
+  if (!vulkan_swapchain_acquire_next_image_index(
+          &context, &context.swapchain, UINT64_MAX,
+          context.image_available_semaphores[context.current_frame], 0, &context.image_index)) {
+    WARN("couldnt acquire swapchain next image");
+  }
+
+  vulkan_command_buffer* command_buffer = &context.gfx_command_buffers->data[context.image_index];
+  vulkan_command_buffer_reset(command_buffer);
+  vulkan_command_buffer_begin(command_buffer, false, false, false);
+
+  VkViewport viewport;
+  viewport.x = 0.0;
+  viewport.y = (f32)context.framebuffer_height;
+  viewport.width = (f32)context.framebuffer_width;
+  viewport.height = -(f32)context.framebuffer_height;
+  viewport.minDepth = 0.0;
+  viewport.maxDepth = 1.0;
+
+  VkRect2D scissor;
+  scissor.offset.x = scissor.offset.y = 0;
+  scissor.extent.width = context.framebuffer_width;
+  scissor.extent.height = context.framebuffer_height;
+
+  vkCmdSetViewport(command_buffer->handle, 0, 1, &viewport);
+  vkCmdSetScissor(command_buffer->handle, 0, 1, &scissor);
+
+  context.main_renderpass.render_area.z = context.framebuffer_width;
+  context.main_renderpass.render_area.w = context.framebuffer_height;
+
+  vulkan_renderpass_begin(command_buffer, &context.main_renderpass,
+                          context.swapchain.framebuffers->data[context.image_index].handle);
+}
+
+void backend_end_frame(renderer* ren, f32 delta_time) {
+  vulkan_command_buffer* command_buffer = &context.gfx_command_buffers->data[context.image_index];
+
+  vulkan_renderpass_end(command_buffer, &context.main_renderpass);
+
+  vulkan_command_buffer_end(command_buffer);
+
+  // TODO: wait on fence - https://youtu.be/hRL71D1f3pU?si=nLJx-ZsemDBeQiQ1&t=1037
+
+  context.images_in_flight[context.image_index] = &context.in_flight_fences[context.current_frame];
+
+  vulkan_fence_reset(&context, &context.in_flight_fences[context.current_frame]);
+
+  VkSubmitInfo submit_info = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+  submit_info.commandBufferCount = 1;
+  submit_info.pCommandBuffers = &command_buffer->handle;
+  submit_info.signalSemaphoreCount = 1;
+  submit_info.pSignalSemaphores = &context.queue_complete_semaphores[context.current_frame];
+  submit_info.waitSemaphoreCount = 1;
+  submit_info.pWaitSemaphores = &context.image_available_semaphores[context.current_frame];
+
+  VkPipelineStageFlags flags[1] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+  submit_info.pWaitDstStageMask = flags;
+
+  VkResult result = vkQueueSubmit(context.device.graphics_queue, 1, &submit_info,
+                                  context.in_flight_fences[context.current_frame].handle);
+
+  if (result != VK_SUCCESS) {
+    ERROR("queue submission failed. fark.");
+  }
+
+  vulkan_command_buffer_update_submitted(command_buffer);
+
+  vulkan_swapchain_present(
+      &context, &context.swapchain, context.device.graphics_queue, context.device.present_queue,
+      context.queue_complete_semaphores[context.current_frame], context.image_index);
+}
+
+void gfx_backend_draw_frame(renderer* ren) {
+  backend_begin_frame(ren, 16.0);
+
+  backend_end_frame(ren, 16.0);
 }
 
 void clear_screen(vec3 colour) {}

@@ -12,6 +12,8 @@
 bool gfx_backend_init(renderer* ren);
 void gfx_backend_shutdown(renderer* ren);
 
+void gfx_backend_draw_frame(renderer* ren);
+
 void clear_screen(vec3 colour);
 
 void bind_texture(shader s, texture* tex, u32 slot);
