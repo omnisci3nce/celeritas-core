@@ -391,14 +391,9 @@ void vulkan_image_create(vulkan_context* context, VkImageType image_type, u32 wi
 
 // TODO: vulkan_image_destroy
 
-void vulkan_framebuffer_create(
-  vulkan_context* context,
-  vulkan_renderpass* renderpass,
-  u32 width, u32 height,
-  u32 attachment_count,
-  VkImageView* attachments,
-  vulkan_framebuffer* out_framebuffer
-) {
+void vulkan_framebuffer_create(vulkan_context* context, vulkan_renderpass* renderpass, u32 width,
+                               u32 height, u32 attachment_count, VkImageView* attachments,
+                               vulkan_framebuffer* out_framebuffer) {
   out_framebuffer->attachments = malloc(sizeof(VKImageView) * attachment_count);
   for (u32 i = 0; i < attachment_count; i++) {
     out_framebuffer->attachments[i] = attachments[i];
@@ -406,17 +401,13 @@ void vulkan_framebuffer_create(
   out_framebuffer->attachment_count = attachment_count;
   out_framebuffer->renderpass = renderpass;
 
-  VkFramebufferCreateInfo framebuffer_create_info = {}; // TODO
+  VkFramebufferCreateInfo framebuffer_create_info = {};  // TODO
 
   framebuffer_create_info.renderPass = renderpass->handle;
   // TODO: fill out info - https://youtu.be/Is6CwlsaCFE?si=86ZGxU7S8licijCD&t=252
 
-  vkCreateFramebuffer(
-    context->device.logical_device,
-    &framebuffer_create_info,
-    context->allocator,
-    &out_framebuffer->handle
-  );
+  vkCreateFramebuffer(context->device.logical_device, &framebuffer_create_info, context->allocator,
+                      &out_framebuffer->handle);
 }
 
 // TODO: vulkan_framebuffer_destroy
@@ -752,17 +743,16 @@ void create_command_buffers(renderer* ren) {
   }
 }
 
-void regenerate_framebuffers(renderer* ren, vulkan_swapchain* swapchain, vulkan_renderpass* renderpass) {
+void regenerate_framebuffers(renderer* ren, vulkan_swapchain* swapchain,
+                             vulkan_renderpass* renderpass) {
   for (u32 i = 0; i < swapchain->image_count; i++) {
-    u32 attachment_count = 2; // one for depth, one for colour
+    u32 attachment_count = 2;  // one for depth, one for colour
 
-    VkImageView attachments[2] = {
-      swapchain->views[i],
-      swapchain->depth_attachment
-    };
+    VkImageView attachments[2] = { swapchain->views[i], swapchain->depth_attachment };
 
-    vulkan_framebuffer_create(context, 
-      renderpass, context.framebuffer_width, context.framebuffer_height, 2, attachments, swapchain->framebuffers->data[i]);
+    vulkan_framebuffer_create(context, renderpass, context.framebuffer_width,
+                              context.framebuffer_height, 2, attachments,
+                              swapchain->framebuffers->data[i]);
   }
 }
 
