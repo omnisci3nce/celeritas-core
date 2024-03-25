@@ -111,6 +111,11 @@ typedef struct vulkan_command_buffer {
 
 KITC_DECL_TYPED_ARRAY(vulkan_command_buffer)
 
+typedef struct vulkan_fence {
+  VkFence handle;
+  bool is_signaled;
+} vulkan_fence;
+
 typedef struct vulkan_context {
   VkInstance instance;
   VkAllocationCallbacks* allocator;
@@ -121,6 +126,12 @@ typedef struct vulkan_context {
   vulkan_swapchain swapchain;
   vulkan_renderpass main_renderpass;
   vulkan_command_buffer_darray* gfx_command_buffers;
+
+  VkSemaphore* image_available_semaphores;
+  VkSemaphore* queue_complete_semaphores;
+  u32 in_flight_fence_count;
+  vulkan_fence* in_flight_fences;
+  vulkan_fence** images_in_flight;
 
   u32 image_index;
   u32 current_frame;
@@ -394,17 +405,23 @@ void vulkan_image_create(vulkan_context* context, VkImageType image_type, u32 wi
 void vulkan_framebuffer_create(vulkan_context* context, vulkan_renderpass* renderpass, u32 width,
                                u32 height, u32 attachment_count, VkImageView* attachments,
                                vulkan_framebuffer* out_framebuffer) {
-  out_framebuffer->attachments = malloc(sizeof(VKImageView) * attachment_count);
+  out_framebuffer->attachments = malloc(sizeof(VkImageView) * attachment_count);
   for (u32 i = 0; i < attachment_count; i++) {
     out_framebuffer->attachments[i] = attachments[i];
   }
   out_framebuffer->attachment_count = attachment_count;
   out_framebuffer->renderpass = renderpass;
 
-  VkFramebufferCreateInfo framebuffer_create_info = {};  // TODO
+  VkFramebufferCreateInfo framebuffer_create_info = {
+    VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO
+  };  // TODO
 
   framebuffer_create_info.renderPass = renderpass->handle;
-  // TODO: fill out info - https://youtu.be/Is6CwlsaCFE?si=86ZGxU7S8licijCD&t=252
+  framebuffer_create_info.attachmentCount = attachment_count;
+  framebuffer_create_info.pAttachments = out_framebuffer->attachments;
+  framebuffer_create_info.width = width;
+  framebuffer_create_info.height = height;
+  framebuffer_create_info.layers = 1;
 
   vkCreateFramebuffer(context->device.logical_device, &framebuffer_create_info, context->allocator,
                       &out_framebuffer->handle);
@@ -613,6 +630,9 @@ void vulkan_swapchain_present(vulkan_context* context, vulkan_swapchain* swapcha
   if (result != VK_SUCCESS) {
     FATAL("Failed to present swapchain iamge");
   }
+
+  // advance the current frame
+  context->current_frame = (context->current_frame + 1) % swapchain->max_frames_in_flight;
 }
 
 void vulkan_renderpass_create(vulkan_context* context, vulkan_renderpass* out_renderpass,
@@ -748,11 +768,52 @@ void regenerate_framebuffers(renderer* ren, vulkan_swapchain* swapchain,
   for (u32 i = 0; i < swapchain->image_count; i++) {
     u32 attachment_count = 2;  // one for depth, one for colour
 
-    VkImageView attachments[2] = { swapchain->views[i], swapchain->depth_attachment };
+    VkImageView attachments[2] = { swapchain->views[i], swapchain->depth_attachment.view };
 
-    vulkan_framebuffer_create(context, renderpass, context.framebuffer_width,
+    vulkan_framebuffer_create(&context, renderpass, context.framebuffer_width,
                               context.framebuffer_height, 2, attachments,
-                              swapchain->framebuffers->data[i]);
+                              &swapchain->framebuffers->data[i]);
+  }
+}
+
+void vulkan_fence_create(vulkan_context* context, bool create_signaled, vulkan_fence* out_fence) {
+  out_fence->is_signaled = create_signaled;
+  VkFenceCreateInfo fence_create_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+  if (out_fence->is_signaled) {
+    fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+  }
+
+  vkCreateFence(context->device.logical_device, &fence_create_info, context->allocator,
+                &out_fence->handle);
+}
+
+// TODO: vulkan_fence_destroy
+
+bool vulkan_fence_wait(vulkan_context* context, vulkan_fence* fence, u64 timeout_ns) {
+  if (!fence->is_signaled) {
+    VkResult result =
+        vkWaitForFences(context->device.logical_device, 1, &fence->handle, true, timeout_ns);
+    switch (result) {
+      case VK_SUCCESS:
+        fence->is_signaled = true;
+        return true;
+      case VK_TIMEOUT:
+        WARN("vk_fence_wait - Timed out");
+        break;
+      default:
+        ERROR("vk_fence_wait - Unhanlded error type");
+        break;
+    }
+  } else {
+    return true;
+  }
+
+  return false;
+}
+void vulkan_fence_reset(vulkan_context* context, vulkan_fence* fence) {
+  if (fence->is_signaled) {
+    vkResetFences(context->device.logical_device, 1, &fence->handle);
+    fence->is_signaled = false;
   }
 }
 
@@ -763,6 +824,9 @@ bool gfx_backend_init(renderer* ren) {
   ren->backend_state = (void*)internal;
 
   context.allocator = 0;  // TODO: custom allocator
+
+  context.framebuffer_width = SCR_WIDTH;
+  context.framebuffer_height = SCR_HEIGHT;
 
   // Setup Vulkan instance
   VkApplicationInfo app_info = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
@@ -881,9 +945,36 @@ bool gfx_backend_init(renderer* ren) {
   // Framebiffers creation
   context.swapchain.framebuffers = vulkan_framebuffer_darray_new(context.swapchain.image_count);
   regenerate_framebuffers(ren, &context.swapchain, &context.main_renderpass);
+  INFO("Framebuffers created");
 
   // Command buffers creation
   create_command_buffers(ren);
+  INFO("Command buffers created");
+
+  // Sync objects
+  context.image_available_semaphores =
+      malloc(sizeof(VkSemaphore) * context.swapchain.max_frames_in_flight);
+  context.queue_complete_semaphores =
+      malloc(sizeof(VkSemaphore) * context.swapchain.max_frames_in_flight);
+  context.in_flight_fences = malloc(sizeof(vulkan_fence) * context.swapchain.max_frames_in_flight);
+
+  for (u8 i = 0; i < context.swapchain.max_frames_in_flight; i++) {
+    VkSemaphoreCreateInfo semaphore_create_info = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+    vkCreateSemaphore(context.device.logical_device, &semaphore_create_info, context.allocator,
+                      &context.image_available_semaphores[i]);
+    vkCreateSemaphore(context.device.logical_device, &semaphore_create_info, context.allocator,
+                      &context.queue_complete_semaphores[i]);
+
+    // create the fence in a signaled state
+    vulkan_fence_create(&context, true, &context.in_flight_fences[i]);
+  }
+
+  context.images_in_flight = malloc(sizeof(vulkan_fence*) * context.swapchain.max_frames_in_flight);
+  for (u8 i = 0; i < context.swapchain.max_frames_in_flight; i++) {
+    context.images_in_flight[i] = 0;
+  }
+
+  INFO("Sync objects created");
 
   INFO("Vulkan renderer initialisation succeeded");
   return true;
