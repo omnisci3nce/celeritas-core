@@ -151,6 +151,48 @@ static vulkan_context context;
 typedef struct vulkan_state {
 } vulkan_state;
 
+typedef struct vulkan_shader_stage {
+  VkShaderModuleCreateInfo create_info;
+  VkShaderModule handle;
+  VkPipelineShaderStageCreateInfo stage_create_info;
+} vulkan_shader_stage;
+
+typedef struct vulkan_pipeline {
+  VkPipeline handle;
+  VkPipelineLayout layout;
+} vulkan_pipeline;
+
+#define SHADER_STAGE_COUNT 2
+
+typedef struct vulkan_shader {
+  // vertex, fragment
+  vulkan_shader_stage stages[SHADER_STAGE_COUNT];
+  vulkan_pipeline pipeline;
+} vulkan_shader;
+
+bool create_shader_module(vulkan_context* context, const char* filename, const char* type_str,
+                          VkShaderStageFlagBits flag, u32 stage_index,
+                          vulkan_shader_stage* shader_stages) {
+  // char file_name[512];
+
+  memset(&shader_stages[stage_index].create_info, 0, sizeof(VkShaderModuleCreateInfo));
+  shader_stages[stage_index].create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+
+  // todo: file input
+}
+
+bool vulkan_object_shader_create(vulkan_context* context, vulkan_shader* out_shader) {
+  char stage_type_strs[SHADER_STAGE_COUNT][5] = { "vert", "frag" };
+  VkShaderStageFlagBits stage_types[SHADER_STAGE_COUNT] = { VK_SHADER_STAGE_VERTEX_BIT,
+                                                            VK_SHADER_STAGE_FRAGMENT_BIT };
+  for (u8 i = 0; i < SHADER_STAGE_COUNT; i++) {
+    create_shader_module(context, "build/linux/x86_64/debug/blinn_phong.vert.spv",
+                         stage_type_strs[i], stage_types[i], i, out_shader->stages);
+  }
+}
+void vulkan_object_shader_destroy(vulkan_context* context, vulkan_shader* shader) {}
+void vulkan_object_shader_use(vulkan_context* context, vulkan_shader* shader) {}
+
 bool select_physical_device(vulkan_context* ctx) {
   u32 physical_device_count = 0;
   VK_CHECK(vkEnumeratePhysicalDevices(ctx->instance, &physical_device_count, 0));
@@ -980,8 +1022,9 @@ bool gfx_backend_init(renderer* ren) {
   for (u8 i = 0; i < context.swapchain.max_frames_in_flight; i++) {
     context.images_in_flight[i] = 0;
   }
-
   INFO("Sync objects created");
+
+  // Shader modules
 
   INFO("Vulkan renderer initialisation succeeded");
   return true;

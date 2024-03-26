@@ -63,6 +63,17 @@ local core_sources = {
     "src/systems/*.c",
 }
 
+rule("compile_glsl_shaders")
+    set_extensions(".vert")
+    on_buildcmd_file(function (target, batchcmds, sourcefile, opt) 
+        local targetfile = path.join(target:targetdir(), path.basename(sourcefile) .. ".vert.spv")
+        
+        print("Compiling shader: %s", sourcefile)
+        batchcmds:vrunv('glslc', {sourcefile, "-o", targetfile})
+        batchcmds:add_depfiles(sourcefile)
+end)
+-- TODO: Metal shaders compilation
+
 -- common configuration for both static and shared libraries
 target("core_config")
     set_kind("static") -- kind is required but you can ignore it since it's just for common settings
@@ -83,7 +94,10 @@ target("core_config")
     add_includedirs("src/std/", {public = true})
     add_includedirs("src/std/containers", {public = true})
     add_includedirs("src/systems/", {public = true})
+    add_rules("compile_glsl_shaders")
     add_files("src/empty.c") -- for some reason we need this on Mac so it doesnt call 'ar' with no files and error
+    add_files("assets/shaders/*.vert")
+    -- add_files("assets/shaders/*.frag")
     set_default(false) -- prevents standalone building of this target
 
 target("core_static")
