@@ -61,3 +61,33 @@ str8_opt str8_from_file(arena *a, str8 path) {
 
   return result;
 }
+
+FileData load_spv_file(const char *path) {
+    FILE *f = fopen(path, "rb");
+    if (f == NULL) {
+        perror("Error opening file");
+        return (FileData){NULL, 0};
+    }
+
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    rewind(f);
+
+    char *data = (char *)malloc(fsize);
+    if (data == NULL) {
+        perror("Memory allocation failed");
+        fclose(f);
+        return (FileData){NULL, 0};
+    }
+
+    size_t bytesRead = fread(data, 1, fsize, f);
+    if (bytesRead < fsize) {
+        perror("Failed to read the entire file");
+        free(data);
+        fclose(f);
+        return (FileData){NULL, 0};
+    }
+
+    fclose(f);
+    return (FileData){data, bytesRead};
+}

@@ -118,6 +118,25 @@ typedef struct vulkan_fence {
   bool is_signaled;
 } vulkan_fence;
 
+typedef struct vulkan_shader_stage {
+  VkShaderModuleCreateInfo create_info;
+  VkShaderModule handle;
+  VkPipelineShaderStageCreateInfo stage_create_info;
+} vulkan_shader_stage;
+
+typedef struct vulkan_pipeline {
+  VkPipeline handle;
+  VkPipelineLayout layout;
+} vulkan_pipeline;
+
+#define SHADER_STAGE_COUNT 2
+
+typedef struct vulkan_shader {
+  // vertex, fragment
+  vulkan_shader_stage stages[SHADER_STAGE_COUNT];
+  vulkan_pipeline pipeline;
+} vulkan_shader;
+
 typedef struct vulkan_context {
   VkInstance instance;
   VkAllocationCallbacks* allocator;
@@ -138,6 +157,8 @@ typedef struct vulkan_context {
   u32 image_index;
   u32 current_frame;
 
+  vulkan_shader object_shader;
+
   // TODO: swapchain recreation
 
 #if defined(DEBUG)
@@ -151,29 +172,20 @@ static vulkan_context context;
 typedef struct vulkan_state {
 } vulkan_state;
 
-typedef struct vulkan_shader_stage {
-  VkShaderModuleCreateInfo create_info;
-  VkShaderModule handle;
-  VkPipelineShaderStageCreateInfo stage_create_info;
-} vulkan_shader_stage;
+// pipeline stuff
+bool vulkan_graphics_pipeline_create(
+  vulkan_context* context,
+  vulkan_renderpass* renderpass,
+  u32 attribute_count,
+  VkVertexInputAttributeDescription* attributes,
+  // ... https://youtu.be/OmPmftW7Kjg?si=qn_777v_ppHKzswK&t=568
+) {
 
-typedef struct vulkan_pipeline {
-  VkPipeline handle;
-  VkPipelineLayout layout;
-} vulkan_pipeline;
-
-#define SHADER_STAGE_COUNT 2
-
-typedef struct vulkan_shader {
-  // vertex, fragment
-  vulkan_shader_stage stages[SHADER_STAGE_COUNT];
-  vulkan_pipeline pipeline;
-} vulkan_shader;
+}
 
 bool create_shader_module(vulkan_context* context, const char* filename, const char* type_str,
                           VkShaderStageFlagBits flag, u32 stage_index,
                           vulkan_shader_stage* shader_stages) {
-  // char file_name[512];
 
   memset(&shader_stages[stage_index].create_info, 0, sizeof(VkShaderModuleCreateInfo));
   memset(&shader_stages[stage_index].stage_create_info, 0, sizeof(VkPipelineShaderStageCreateInfo));
@@ -181,11 +193,10 @@ bool create_shader_module(vulkan_context* context, const char* filename, const c
   shader_stages[stage_index].create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 
   // todo: file input
-  const char* file_contents = string_from_file(filename);
+  FileData file_contents = load_spv_file(filename);
 
-  u64 bytes = strlen(file_contents);
-  shader_stages[stage_index].create_info.codeSize = bytes;
-  shader_stages[stage_index].create_info.pCode = (u32*)file_contents;
+  shader_stages[stage_index].create_info.codeSize = file_contents.size;
+  shader_stages[stage_index].create_info.pCode = (u32*)file_contents.data;
 
   vkCreateShaderModule(context->device.logical_device, &shader_stages[stage_index].create_info,
                        context->allocator, &shader_stages[stage_index].handle);
@@ -196,18 +207,23 @@ bool create_shader_module(vulkan_context* context, const char* filename, const c
   shader_stages[stage_index].stage_create_info.module = shader_stages[stage_index].handle;
   shader_stages[stage_index].stage_create_info.pName = "main";
 
-  free(file_contents);
+  free(file_contents.data);
+
+  // TODO: Descriptors
 
   return true;
 }
 
 bool vulkan_object_shader_create(vulkan_context* context, vulkan_shader* out_shader) {
   char stage_type_strs[SHADER_STAGE_COUNT][5] = { "vert", "frag" };
+  char stage_filenames[SHADER_STAGE_COUNT][256] = { "build/linux/x86_64/debug/triangle.vert.spv",
+                                                    "build/linux/x86_64/debug/triangle.frag.spv" };
   VkShaderStageFlagBits stage_types[SHADER_STAGE_COUNT] = { VK_SHADER_STAGE_VERTEX_BIT,
                                                             VK_SHADER_STAGE_FRAGMENT_BIT };
   for (u8 i = 0; i < SHADER_STAGE_COUNT; i++) {
-    create_shader_module(context, "build/linux/x86_64/debug/triangle.vert.spv", stage_type_strs[i],
-                         stage_types[i], i, out_shader->stages);
+    DEBUG("Loading %s", stage_filenames[i]);
+    create_shader_module(context, stage_filenames[i], stage_type_strs[i], stage_types[i], i,
+                         out_shader->stages);
   }
 }
 void vulkan_object_shader_destroy(vulkan_context* context, vulkan_shader* shader) {}
@@ -1045,6 +1061,8 @@ bool gfx_backend_init(renderer* ren) {
   INFO("Sync objects created");
 
   // Shader modules
+  vulkan_object_shader_create(&context, &context.object_shader);
+  INFO("Compiled shader modules")
 
   INFO("Vulkan renderer initialisation succeeded");
   return true;
