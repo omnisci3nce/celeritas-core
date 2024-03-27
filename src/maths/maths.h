@@ -236,3 +236,9 @@ typedef struct u32x3 {
   };
 } u32x3;
 #define u32x3(x, y, z) ((u32x3){ x, y, z })
+
+typedef struct u32x2 {
+  u32 x;
+  u32 y;
+} u32x2;
+#define u32x2(x, y) ((u32x3){ x, y })

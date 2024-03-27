@@ -173,20 +173,15 @@ typedef struct vulkan_state {
 } vulkan_state;
 
 // pipeline stuff
-bool vulkan_graphics_pipeline_create(
-  vulkan_context* context,
-  vulkan_renderpass* renderpass,
-  u32 attribute_count,
-  VkVertexInputAttributeDescription* attributes,
-  // ... https://youtu.be/OmPmftW7Kjg?si=qn_777v_ppHKzswK&t=568
-) {
-
-}
+bool vulkan_graphics_pipeline_create(vulkan_context* context, vulkan_renderpass* renderpass,
+                                     u32 attribute_count,
+                                     VkVertexInputAttributeDescription* attributes,
+                                     // ... https://youtu.be/OmPmftW7Kjg?si=qn_777v_ppHKzswK&t=568
+) {}
 
 bool create_shader_module(vulkan_context* context, const char* filename, const char* type_str,
                           VkShaderStageFlagBits flag, u32 stage_index,
                           vulkan_shader_stage* shader_stages) {
-
   memset(&shader_stages[stage_index].create_info, 0, sizeof(VkShaderModuleCreateInfo));
   memset(&shader_stages[stage_index].stage_create_info, 0, sizeof(VkPipelineShaderStageCreateInfo));
 

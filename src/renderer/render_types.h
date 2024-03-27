@@ -8,6 +8,7 @@
 #pragma once
 
 #include "darray.h"
+#include "maths.h"
 #include "maths_types.h"
 #include "str.h"
 
