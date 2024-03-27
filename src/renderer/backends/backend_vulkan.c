@@ -176,9 +176,29 @@ bool create_shader_module(vulkan_context* context, const char* filename, const c
   // char file_name[512];
 
   memset(&shader_stages[stage_index].create_info, 0, sizeof(VkShaderModuleCreateInfo));
+  memset(&shader_stages[stage_index].stage_create_info, 0, sizeof(VkPipelineShaderStageCreateInfo));
+
   shader_stages[stage_index].create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 
   // todo: file input
+  const char* file_contents = string_from_file(filename);
+
+  u64 bytes = strlen(file_contents);
+  shader_stages[stage_index].create_info.codeSize = bytes;
+  shader_stages[stage_index].create_info.pCode = (u32*)file_contents;
+
+  vkCreateShaderModule(context->device.logical_device, &shader_stages[stage_index].create_info,
+                       context->allocator, &shader_stages[stage_index].handle);
+
+  shader_stages[stage_index].stage_create_info.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  shader_stages[stage_index].stage_create_info.stage = flag;
+  shader_stages[stage_index].stage_create_info.module = shader_stages[stage_index].handle;
+  shader_stages[stage_index].stage_create_info.pName = "main";
+
+  free(file_contents);
+
+  return true;
 }
 
 bool vulkan_object_shader_create(vulkan_context* context, vulkan_shader* out_shader) {
@@ -186,8 +206,8 @@ bool vulkan_object_shader_create(vulkan_context* context, vulkan_shader* out_sha
   VkShaderStageFlagBits stage_types[SHADER_STAGE_COUNT] = { VK_SHADER_STAGE_VERTEX_BIT,
                                                             VK_SHADER_STAGE_FRAGMENT_BIT };
   for (u8 i = 0; i < SHADER_STAGE_COUNT; i++) {
-    create_shader_module(context, "build/linux/x86_64/debug/blinn_phong.vert.spv",
-                         stage_type_strs[i], stage_types[i], i, out_shader->stages);
+    create_shader_module(context, "build/linux/x86_64/debug/triangle.vert.spv", stage_type_strs[i],
+                         stage_types[i], i, out_shader->stages);
   }
 }
 void vulkan_object_shader_destroy(vulkan_context* context, vulkan_shader* shader) {}
