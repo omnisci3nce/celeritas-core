@@ -25,8 +25,8 @@
 
 #include <stdlib.h>
 
-#define SCR_WIDTH 2160
-#define SCR_HEIGHT 1080
+#define SCR_WIDTH 1000
+#define SCR_HEIGHT 1000
 
 #if CEL_REND_BACKEND_VULKAN
 
@@ -544,26 +544,42 @@ bool vulkan_device_create(vulkan_context* context) {
 // Logical device - NOTE: mutates the context directly
 
 // queues
-#define VULKAN_QUEUES_COUNT 3
-  const char* queue_names[VULKAN_QUEUES_COUNT] = { "GRAPHICS", "PRESENT",
-                                                   // "COMPUTE",
-                                                   "TRANSFER" };
-  i32 indices[VULKAN_QUEUES_COUNT] = { context->device.graphics_queue_index,
-                                       context->device.present_queue_index,
-                                       //  context->device.compute_queue_index,
-                                       context->device.transfer_queue_index };
-  VkDeviceQueueCreateInfo
-      queue_create_info[VULKAN_QUEUES_COUNT];  // one for each of graphics,present,compute,transfer
-  for (int i = 0; i < VULKAN_QUEUES_COUNT; i++) {
-    TRACE("Configure %s queue", queue_names[i]);
-    queue_create_info[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queue_create_info[i].queueFamilyIndex = indices[i];
-    queue_create_info[i].queueCount = 1;  // make just one of them
-    queue_create_info[i].flags = 0;
-    queue_create_info[i].pNext = 0;
-    f32 priority = 1.0;
-    queue_create_info[i].pQueuePriorities = &priority;
-  }
+#define VULKAN_QUEUES_COUNT 2
+  const char* queue_names[VULKAN_QUEUES_COUNT] = {
+    "GRAPHICS",
+    "TRANSFER",
+  };
+  i32 indices[VULKAN_QUEUES_COUNT] = {
+    context->device.graphics_queue_index,
+    context->device.transfer_queue_index,
+  };
+  f32 prio_one = 1.0;
+  VkDeviceQueueCreateInfo queue_create_info[2];  // HACK: make 2 queues, graphics and transfer
+                                                 // graphics
+  queue_create_info[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+  queue_create_info[0].queueFamilyIndex = 0;
+  queue_create_info[0].queueCount = 1;
+  queue_create_info[0].flags = 0;
+  queue_create_info[0].pNext = 0;
+  queue_create_info[0].pQueuePriorities = &prio_one;
+  // transfer
+  queue_create_info[1].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+  queue_create_info[1].queueFamilyIndex = 1;
+  queue_create_info[1].queueCount = 1;
+  queue_create_info[1].flags = 0;
+  queue_create_info[1].pNext = 0;
+  queue_create_info[1].pQueuePriorities = &prio_one;
+
+  // for (int i = 0; i < 2; i++) {
+  //   TRACE("Configure %s queue", queue_names[i]);
+  //   queue_create_info[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+  //   queue_create_info[i].queueFamilyIndex = indices[i];
+  //   queue_create_info[i].queueCount = 1;  // make just one of them
+  //   queue_create_info[i].flags = 0;
+  //   queue_create_info[i].pNext = 0;
+  //   f32 priority = 1.0;
+  //   queue_create_info[i].pQueuePriorities = &priority;
+  // }
 
   // features
   VkPhysicalDeviceFeatures device_features = {};
@@ -593,10 +609,10 @@ bool vulkan_device_create(vulkan_context* context) {
   // get queues
   vkGetDeviceQueue(context->device.logical_device, context->device.graphics_queue_index, 0,
                    &context->device.graphics_queue);
-  vkGetDeviceQueue(context->device.logical_device, context->device.present_queue_index, 0,
-                   &context->device.present_queue);
-  vkGetDeviceQueue(context->device.logical_device, context->device.compute_queue_index, 0,
-                   &context->device.compute_queue);
+  // vkGetDeviceQueue(context->device.logical_device, context->device.present_queue_index, 0,
+  //                  &context->device.present_queue);
+  // vkGetDeviceQueue(context->device.logical_device, context->device.compute_queue_index, 0,
+  //                  &context->device.compute_queue);
   vkGetDeviceQueue(context->device.logical_device, context->device.transfer_queue_index, 0,
                    &context->device.transfer_queue);
 
@@ -773,7 +789,8 @@ void* vulkan_buffer_unlock_memory(vulkan_context* context, vulkan_buffer* buffer
 void vulkan_buffer_load_data(vulkan_context* context, vulkan_buffer* buffer, u64 offset, u64 size,
                              u32 flags, const void* data) {
   void* data_ptr = 0;
-  VK_CHECK(vkMapMemory(context->device.logical_device, buffer->memory, offset, size, flags, &data_ptr));
+  VK_CHECK(
+      vkMapMemory(context->device.logical_device, buffer->memory, offset, size, flags, &data_ptr));
   memcpy(data_ptr, data, size);
   vkUnmapMemory(context->device.logical_device, buffer->memory);
 }
@@ -925,6 +942,7 @@ void vulkan_swapchain_create(vulkan_context* context, u32 width, u32 height,
   swapchain_create_info.minImageCount = image_count;
   swapchain_create_info.imageFormat = out_swapchain->image_format.format;
   swapchain_create_info.imageColorSpace = out_swapchain->image_format.colorSpace;
+  DEBUG("Image extend %d %d\n", swapchain_extent.width, swapchain_extent.height);
   swapchain_create_info.imageExtent = swapchain_extent;
   swapchain_create_info.imageArrayLayers = 1;
   swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -1024,7 +1042,11 @@ void vulkan_swapchain_present(vulkan_context* context, vulkan_swapchain* swapcha
 
   VkResult result = vkQueuePresentKHR(present_queue, &present_info);
   if (result != VK_SUCCESS) {
-    FATAL("Failed to present swapchain iamge");
+    if (result == VK_SUBOPTIMAL_KHR) {
+      // WARN("Swapchain suboptimal - maybe resize needed?");
+    } else {
+      FATAL("Failed to present swapchain iamge");
+    }
   }
 
   // advance the current frame
@@ -1562,7 +1584,7 @@ void backend_end_frame(renderer* ren, f32 delta_time) {
   vulkan_command_buffer_update_submitted(command_buffer);
 
   vulkan_swapchain_present(
-      &context, &context.swapchain, context.device.graphics_queue, context.device.present_queue,
+      &context, &context.swapchain, context.device.graphics_queue, context.device.graphics_queue,
       context.queue_complete_semaphores[context.current_frame], context.image_index);
 }
 
