@@ -7,8 +7,8 @@
 #include "render_types.h"
 #include "threadpool.h"
 
-#define SCR_WIDTH 2160
-#define SCR_HEIGHT 1080
+#define SCR_WIDTH 1000
+#define SCR_HEIGHT 1000
 
 core* core_bringup() {
   INFO("Initiate Core bringup");

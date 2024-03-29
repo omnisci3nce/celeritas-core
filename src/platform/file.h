@@ -19,8 +19,8 @@ const char* string_from_file(const char* path);
 str8_opt str8_from_file(arena* a, str8 path);
 
 typedef struct {
-    char *data;
-    size_t size;
+  char* data;
+  size_t size;
 } FileData;
 
-FileData load_spv_file(const char *path);
+FileData load_spv_file(const char* path);
