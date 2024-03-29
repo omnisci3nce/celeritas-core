@@ -27,9 +27,8 @@ elseif is_plat("windows") then
     add_defines("CEL_PLATFORM_WINDOWS")
 elseif is_plat("macosx") then
     add_defines("CEL_PLATFORM_MAC")
-    add_frameworks("Cocoa", "IOKit", "CoreVideo", "OpenGL")
+    add_frameworks("Foundation", "Metal", "QuartzCore", "Cocoa", "IOKit", "CoreVideo", "OpenGL")
     set_runenv("MTL_DEBUG_LAYER", "1")
-    -- add_syslinks("GL")
 end
 
 -- Compile GLFW from source
@@ -103,11 +102,15 @@ target("core_config")
     add_includedirs("src/std/", {public = true})
     add_includedirs("src/std/containers", {public = true})
     add_includedirs("src/systems/", {public = true})
-    add_rules("compile_glsl_vert_shaders")
-    add_rules("compile_glsl_frag_shaders")
+    if is_plat("macosx") then 
+        -- TODO: compile metal shaders
+    else
+        add_rules("compile_glsl_vert_shaders")
+        add_rules("compile_glsl_frag_shaders")
+        add_files("assets/shaders/triangle.vert")
+        add_files("assets/shaders/triangle.frag")
+    end
     add_files("src/empty.c") -- for some reason we need this on Mac so it doesnt call 'ar' with no files and error
-    add_files("assets/shaders/triangle.vert")
-    add_files("assets/shaders/triangle.frag")
     -- add_files("assets/shaders/*.frag")
     set_default(false) -- prevents standalone building of this target
 

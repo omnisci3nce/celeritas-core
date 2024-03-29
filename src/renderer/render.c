@@ -65,6 +65,9 @@ void render_frame_begin(renderer* ren) {
   vec3 color = ren->config.clear_colour;
   clear_screen(color);
 }
+
+void render_frame_draw(renderer* ren) {}
+
 void render_frame_end(renderer* ren) {
   // present frame
   glfwSwapBuffers(ren->window);

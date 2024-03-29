@@ -14,9 +14,9 @@ typedef struct texture_desc {
   // u32x2 extents;
 } texture_desc;
 
-/* 
+/*
  - render_types.h
- - ral_types.h 
+ - ral_types.h
  - ral.h
  - render.h ?
 */
@@ -49,15 +49,11 @@ typedef enum gpu_texture_format {
 typedef struct mesh mesh;
 typedef struct model model;
 typedef struct model pbr_material;
-typedef struct model bp_material; // blinn-phong
+typedef struct model bp_material;  // blinn-phong
 
 #include "maths_types.h"
 
-typedef enum vertex_format {
-  VERTEX_STATIC_3D,
-  VERTEX_SPRITE,
-  VERTEX_COUNT
-} vertex_format;
+typedef enum vertex_format { VERTEX_STATIC_3D, VERTEX_SPRITE, VERTEX_COUNT } vertex_format;
 
 typedef union vertex {
   struct {
@@ -88,7 +84,7 @@ typedef struct mesh {
   buffer_handle index_buffer;
   u32 index_count;
   bool has_indices;
-  geometry_data* vertices; // NULL means it has been freed
+  geometry_data* vertices;  // NULL means it has been freed
 } mesh;
 
 typedef struct model {
@@ -132,7 +128,8 @@ void gpu_buffer_upload();
 void imm_draw_cuboid();
 void imm_draw_sphere(vec3 pos, f32 radius, vec4 colour);
 void imm_draw_camera_frustum();
-static void imm_draw_model(const char* model_filepath); // tracks internally whether the model is loaded
+static void imm_draw_model(
+    const char* model_filepath);  // tracks internally whether the model is loaded
 
 static void imm_draw_model(const char* model_filepath) {
   // check that model is loaded

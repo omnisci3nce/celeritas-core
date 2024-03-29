@@ -1,12 +1,13 @@
+#define CEL_PLATFORM_LINUX
+#if CEL_REND_BACKEND_VULKAN
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-#include "colours.h"
-#define CEL_PLATFORM_LINUX
-#include <assert.h>
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
+#include "colours.h"
 #include "str.h"
 
 #include "darray.h"
@@ -23,8 +24,6 @@
 
 #define SCR_WIDTH 1080
 #define SCR_HEIGHT 800
-
-#if CEL_REND_BACKEND_VULKAN
 
 #include <glad/glad.h>
 

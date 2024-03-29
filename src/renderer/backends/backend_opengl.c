@@ -1,13 +1,12 @@
-#include <stdlib.h>
-#define CEL_PLATFORM_LINUX
-
 #include "defines.h"
+#if CEL_REND_BACKEND_OPENGL
+
+#include <stdlib.h>
+
 #include "file.h"
 #include "log.h"
 #include "maths_types.h"
 #include "render_types.h"
-
-#if CEL_REND_BACKEND_OPENGL
 
 #include <glad/glad.h>
 
@@ -40,6 +39,9 @@ bool gfx_backend_init(renderer *ren) {
 
   return true;
 }
+
+void gfx_backend_draw_frame(renderer *ren) {}
+
 void gfx_backend_shutdown(renderer *ren) {}
 
 void uniform_vec3f(u32 program_id, const char *uniform_name, vec3 *value) {
