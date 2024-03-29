@@ -14,6 +14,7 @@ add_cflags("-Wall", "-Wextra", "-Wundef", "-Wdouble-promotion")
 
 if is_mode("debug") then
     add_cflags("-g") -- Add debug symbols in debug mode
+    add_defines("CDEBUG")
 elseif is_mode("release") then
     add_defines("CRELEASE")
 end

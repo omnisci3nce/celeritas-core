@@ -17,8 +17,8 @@
 
 // FIXME: get rid of these and store dynamic screen realestate
 //        in renderer
-#define SCR_WIDTH 1080
-#define SCR_HEIGHT 800
+#define SCR_WIDTH 2160
+#define SCR_HEIGHT 1080
 
 material DEFAULT_MATERIAL = { 0 };
 
