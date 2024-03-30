@@ -61,3 +61,7 @@ typedef struct transform {
   f32 scale;
   bool is_dirty;
 } transform;
+
+typedef struct vec4i {
+  i32 x, y, z, w;
+} vec4i;

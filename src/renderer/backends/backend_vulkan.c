@@ -103,6 +103,7 @@ typedef struct vulkan_swapchain {
   vulkan_framebuffer_darray* framebuffers;
 } vulkan_swapchain;
 
+// overengineered
 typedef enum vulkan_command_buffer_state {
   COMMAND_BUFFER_STATE_READY,
   COMMAND_BUFFER_STATE_IN_RENDER_PASS,

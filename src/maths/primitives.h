@@ -55,7 +55,7 @@ static mesh prim_cube_mesh_create() {
 
 /** @brief create a new model with the shape of a cube */
 static model_handle prim_cube_new(core* core) {
-     model model = { 0 };
+  model model = { 0 };
   mesh cube = prim_cube_mesh_create();
 
   mesh_darray_push(model.meshes, cube);
