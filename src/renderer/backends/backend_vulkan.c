@@ -1040,7 +1040,7 @@ void vulkan_swapchain_create(vulkan_context* context, u32 width, u32 height,
   swapchain_create_info.minImageCount = image_count;
   swapchain_create_info.imageFormat = out_swapchain->image_format.format;
   swapchain_create_info.imageColorSpace = out_swapchain->image_format.colorSpace;
-  DEBUG("Image extend %d %d\n", swapchain_extent.width, swapchain_extent.height);
+  DEBUG("Image extent %d %d\n", swapchain_extent.width, swapchain_extent.height);
   swapchain_create_info.imageExtent = swapchain_extent;
   swapchain_create_info.imageArrayLayers = 1;
   swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -1553,17 +1553,19 @@ bool gfx_backend_init(renderer* ren) {
   const u32 vert_count = 4;
   vertex_pos verts[4] = { 0 };
 
-  verts[0].pos.x = 0.0;
-  verts[0].pos.y = -0.5;
+  const f32 s = 10.0;
 
-  verts[1].pos.x = 0.5;
-  verts[1].pos.y = 0.5;
+  verts[0].pos.x = 0.0 * s;
+  verts[0].pos.y = -0.5 * s;
 
-  verts[2].pos.x = 0.0;
-  verts[2].pos.y = 0.5;
+  verts[1].pos.x = 0.5 * s;
+  verts[1].pos.y = 0.5 * s;
 
-  verts[3].pos.x = 0.5;
-  verts[3].pos.y = -0.5;
+  verts[2].pos.x = 0.0 * s;
+  verts[2].pos.y = 0.5 * s;
+
+  verts[3].pos.x = 0.5 * s;
+  verts[3].pos.y = -0.5 * s;
 
   const u32 index_count = 6;
   u32 indices[6] = { 0, 1, 2, 0, 3, 1 };
@@ -1689,8 +1691,12 @@ void backend_end_frame(renderer* ren, f32 delta_time) {
 void gfx_backend_draw_frame(renderer* ren) {
   backend_begin_frame(ren, 16.0);
 
-  gfx_backend_update_global_state(mat4_ident(), mat4_ident(), VEC3_ZERO, vec4(1.0, 1.0, 1.0, 1.0),
-                                  0);
+  static f32 z = -1.0;
+  z -= 0.2;
+  mat4 proj = mat4_perspective(deg_to_rad(45.0), 1000 / 1000.0, 0.1, 1000.0);
+  mat4 view = mat4_translation(vec3(0, 0, z));
+
+  gfx_backend_update_global_state(proj, view, VEC3_ZERO, vec4(1.0, 1.0, 1.0, 1.0), 0);
 
   backend_end_frame(ren, 16.0);
 }
