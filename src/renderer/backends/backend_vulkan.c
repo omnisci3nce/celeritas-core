@@ -1,4 +1,5 @@
 #include "camera.h"
+#include "primitives.h"
 #define CDEBUG
 #define CEL_PLATFORM_LINUX
 // ^ Temporary
@@ -226,6 +227,7 @@ typedef struct vulkan_state {
 
 typedef struct vertex_pos {
   vec3 pos;
+  vec3 normal;
 } vertex_pos;
 
 // pipeline stuff
@@ -530,9 +532,9 @@ bool vulkan_object_shader_create(vulkan_context* context, vulkan_shader* out_sha
   // Pipeline creation
   VkViewport viewport;
   viewport.x = 0;
-  viewport.y = (f32)context->framebuffer_height;
+  viewport.y = 0;
   viewport.width = (f32)context->framebuffer_width;
-  viewport.height = -(f32)context->framebuffer_height;
+  viewport.height = (f32)context->framebuffer_height;
   viewport.minDepth = 0.0;
   viewport.maxDepth = 1.0;
 
@@ -543,12 +545,12 @@ bool vulkan_object_shader_create(vulkan_context* context, vulkan_shader* out_sha
 
   // Attributes
   u32 offset = 0;
-  const i32 attribute_count = 1;
-  VkVertexInputAttributeDescription attribute_descs[1];
+  const i32 attribute_count = 2;
+  VkVertexInputAttributeDescription attribute_descs[2];
   // Position
-  VkFormat formats[1] = { VK_FORMAT_R32G32B32_SFLOAT };
+  VkFormat formats[2] = { VK_FORMAT_R32G32B32_SFLOAT, VK_FORMAT_R32G32B32_SFLOAT };
 
-  u64 sizes[1] = { sizeof(vec3) };
+  u64 sizes[2] = { sizeof(vec3), sizeof(vec3) };
 
   for (u32 i = 0; i < attribute_count; i++) {
     attribute_descs[i].binding = 0;
@@ -651,9 +653,10 @@ void vulkan_object_shader_update_object(vulkan_context* context, vulkan_shader* 
   vkCmdBindVertexBuffers(cmd_buffer, 0, 1, &context->object_vertex_buffer.handle,
                          (VkDeviceSize*)offsets);
 
-  vkCmdBindIndexBuffer(cmd_buffer, context->object_index_buffer.handle, 0, VK_INDEX_TYPE_UINT32);
+  // vkCmdBindIndexBuffer(cmd_buffer, context->object_index_buffer.handle, 0, VK_INDEX_TYPE_UINT32);
 
-  vkCmdDrawIndexed(cmd_buffer, 6, 1, 0, 0, 0);
+  // vkCmdDrawIndexed(cmd_buffer, 6, 1, 0, 0, 0);
+  vkCmdDraw(cmd_buffer, 36, 1, 0, 0);
 }
 
 bool select_physical_device(vulkan_context* ctx) {
@@ -1580,22 +1583,33 @@ bool gfx_backend_init(renderer* ren) {
   INFO("Created buffers");
 
   // TODO: temporary test code
-  const u32 vert_count = 4;
-  vertex_pos verts[4] = { 0 };
 
-  const f32 s = 10.0;
+  mesh cube = prim_cube_mesh_create();
 
-  verts[0].pos.x = -0.5 * s;
-  verts[0].pos.y = -0.5 * s;
+  const u32 vert_count = 36;
+  // vertex_pos verts[4] = { 0 };
 
-  verts[1].pos.x = 0.5 * s;
-  verts[1].pos.y = 0.5 * s;
+  vertex_pos verts[36] = { 0 };
 
-  verts[2].pos.x = -0.5 * s;
-  verts[2].pos.y = 0.5 * s;
+  f32 scale = 3.0;
+  for (size_t i = 0; i < 36; i++) {
+    verts[i].pos = vec3_mult(cube.vertices->data[i].position, scale);
+    verts[i].normal = cube.vertices->data[i].normal;
+  }
 
-  verts[3].pos.x = 0.5 * s;
-  verts[3].pos.y = -0.5 * s;
+  // const f32 s = 10.0;
+
+  // verts[0].pos.x = -0.5 * s;
+  // verts[0].pos.y = -0.5 * s;
+
+  // verts[1].pos.x = 0.5 * s;
+  // verts[1].pos.y = 0.5 * s;
+
+  // verts[2].pos.x = -0.5 * s;
+  // verts[2].pos.y = 0.5 * s;
+
+  // verts[3].pos.x = 0.5 * s;
+  // verts[3].pos.y = -0.5 * s;
 
   const u32 index_count = 6;
   u32 indices[6] = { 0, 1, 2, 0, 3, 1 };
@@ -1603,9 +1617,9 @@ bool gfx_backend_init(renderer* ren) {
   upload_data_range(&context, context.device.gfx_command_pool, 0, context.device.graphics_queue,
                     &context.object_vertex_buffer, 0, sizeof(vertex_pos) * vert_count, verts);
   TRACE("Uploaded vertex data");
-  upload_data_range(&context, context.device.gfx_command_pool, 0, context.device.graphics_queue,
-                    &context.object_index_buffer, 0, sizeof(u32) * index_count, indices);
-  TRACE("Uploaded index data");
+  // upload_data_range(&context, context.device.gfx_command_pool, 0, context.device.graphics_queue,
+  //                   &context.object_index_buffer, 0, sizeof(u32) * index_count, indices);
+  // TRACE("Uploaded index data");
   // --- End test code
 
   INFO("Vulkan renderer initialisation succeeded");
@@ -1646,9 +1660,9 @@ void backend_begin_frame(renderer* ren, f32 delta_time) {
 
   VkViewport viewport;
   viewport.x = 0.0;
-  viewport.y = (f32)context.framebuffer_height;
+  viewport.y = 0.0;
   viewport.width = (f32)context.framebuffer_width;
-  viewport.height = -(f32)context.framebuffer_height;
+  viewport.height = (f32)context.framebuffer_height;
   viewport.minDepth = 0.0;
   viewport.maxDepth = 1.0;
 

@@ -6,8 +6,10 @@
 #include "keys.h"
 #include "maths.h"
 #include "maths_types.h"
+#include "primitives.h"
 #include "render.h"
 #include "render_backend.h"
+#include "render_types.h"
 
 typedef struct game_state {
   camera camera;
@@ -21,11 +23,14 @@ void update_camera_rotation(input_state* input, game_state* game, camera* cam);
 int main() {
   core* core = core_bringup();
 
+  vec3 cam_pos = vec3_create(-15, 20.0, 13);
   game_state game = {
-    .camera = camera_create(vec3_create(0, 0, 30), vec3_create(0, 0, -1), VEC3_Y, deg_to_rad(45.0)),
+    .camera = camera_create(cam_pos, vec3_negate(cam_pos), VEC3_Y, deg_to_rad(45.0)),
     .camera_euler = vec3_create(90, 0, 0),
     .first_mouse_update = true,
   };
+
+  // model_handle cube_handle = prim_cube_new(core);
 
   printf("Starting look direction: ");
   print_vec3(game.camera.front);
@@ -53,12 +58,13 @@ int main() {
       translation = vec3_mult(lateral, camera_speed);
     }
     game.camera.position = vec3_add(game.camera.position, translation);
-    update_camera_rotation(&core->input, &game, &game.camera);
+    // update_camera_rotation(&core->input, &game, &game.camera);
 
     // UNUSED: threadpool_process_results(&core->threadpool, 1);
 
     render_frame_begin(&core->renderer);
 
+    // model cube = core->models->data[cube_handle.raw];
     mat4 model = mat4_translation(VEC3_ZERO);
 
     gfx_backend_draw_frame(&core->renderer, &game.camera, model);

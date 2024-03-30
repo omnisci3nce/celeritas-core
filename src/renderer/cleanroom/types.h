@@ -77,10 +77,12 @@ typedef union vertex {
 } vertex;
 
 KITC_DECL_TYPED_ARRAY(vertex)
+KITC_DECL_TYPED_ARRAY(u32)
 
 typedef struct geometry_data {
   vertex_format format;
   vertex_darray vertices;
+  u32_darray indices;
 } geometry_data;
 
 typedef struct mesh {
@@ -110,7 +112,7 @@ void texture_data_upload(texture_handle texture);
 buffer_handle buffer_create(const char* debug_name, u64 size);
 
 // models and meshes are implemented **in terms of the above**
-mesh mesh_create();
+mesh mesh_create(geometry_data* geometry);
 model_handle model_load(const char* filepath);
 
 /* ral.h */
@@ -123,10 +125,11 @@ void gpu_texture_init();
 void gpu_texture_upload();
 void gpu_buffer_init();
 void gpu_buffer_upload();
+void gpu_buffer_bind();
 
 // command buffer gubbins
 
-// 3. SIMA (simplified immediate mode api)
+// 3. SIMA (simplified immediate mode api) / render.h
 //      - dont need to worry about uploading mesh data
 //      - very useful for debugging
 void imm_draw_cuboid();
