@@ -79,8 +79,6 @@ void update_camera_rotation(input_state* input, game_state* game, camera* cam) {
     game->first_mouse_update = false;
   }
 
-  printf("x offset: %f y offset %f\n", xoffset, yoffset);
-
   float sensitivity = 0.1f;  // change this value to your liking
   xoffset *= sensitivity;
   yoffset *= sensitivity;
@@ -107,7 +105,7 @@ void update_camera_rotation(input_state* input, game_state* game, camera* cam) {
   // save it back
   cam->front.x = front.x;
   cam->front.y = front.y;
-  // cam->front.z = front.z;
+  // roll is static
 
   print_vec3(cam->front);
 }
