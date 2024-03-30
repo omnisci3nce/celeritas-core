@@ -12,7 +12,7 @@
 typedef struct game_state {
   camera camera;
   vec3 camera_euler;
-  bool first_mouse_update;
+  bool first_mouse_update; // so the camera doesnt lurch when you run the first process_camera_rotation
 } game_state;
 
 void update_camera_rotation(input_state* input, game_state* game, camera* cam);
