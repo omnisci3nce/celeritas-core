@@ -17,8 +17,8 @@
 
 // FIXME: get rid of these and store dynamic screen realestate
 //        in renderer
-#define SCR_WIDTH 1080
-#define SCR_HEIGHT 800
+#define SCR_WIDTH 1000
+#define SCR_HEIGHT 1000
 
 material DEFAULT_MATERIAL = { 0 };
 
@@ -60,6 +60,8 @@ bool renderer_init(renderer* ren) {
 
   return true;
 }
+
+void renderer_shutdown(renderer* ren) {}
 
 void render_frame_begin(renderer* ren) {
   vec3 color = ren->config.clear_colour;
