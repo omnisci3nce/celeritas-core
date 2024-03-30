@@ -9,4 +9,12 @@ layout(set = 0, binding = 0) uniform global_object_uniform {
 }
 global_ubo;
 
-void main() { gl_Position = global_ubo.projection * global_ubo.view * vec4(in_position, 1.0); }
+layout(push_constant) uniform push_constants {
+  mat4 model;  // 64 bytes
+}
+u_push_constants;
+
+void main() {
+  gl_Position =
+      global_ubo.projection * global_ubo.view * u_push_constants.model * vec4(in_position, 1.0);
+}

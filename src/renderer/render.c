@@ -61,6 +61,8 @@ bool renderer_init(renderer* ren) {
   return true;
 }
 
+void renderer_shutdown(renderer* ren) {}
+
 void render_frame_begin(renderer* ren) {
   vec3 color = ren->config.clear_colour;
   clear_screen(color);

@@ -1,3 +1,4 @@
+#include "camera.h"
 #define CDEBUG
 #define CEL_PLATFORM_LINUX
 // ^ Temporary
@@ -337,6 +338,16 @@ bool vulkan_graphics_pipeline_create(vulkan_context* context, vulkan_renderpass*
   VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
     VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
   };
+
+  // Pushconstants
+  VkPushConstantRange push_constant;
+  push_constant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  push_constant.offset = sizeof(mat4) * 0;
+  push_constant.size = sizeof(mat4) * 2;
+
+  pipeline_layout_create_info.pushConstantRangeCount = 1;
+  pipeline_layout_create_info.pPushConstantRanges = &push_constant;
+
   pipeline_layout_create_info.setLayoutCount = descriptor_set_layout_count;
   pipeline_layout_create_info.pSetLayouts = descriptor_set_layouts;
 
@@ -600,9 +611,6 @@ void vulkan_object_shader_update_global_state(vulkan_context* context, vulkan_sh
   VkCommandBuffer cmd_buffer = context->gfx_command_buffers->data[image_index].handle;
   VkDescriptorSet global_descriptors = shader->descriptor_sets[image_index];
 
-  vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->pipeline.layout, 0,
-                          1, &global_descriptors, 0, 0);
-
   u32 range = sizeof(global_object_uniform);
   u64 offset = 0;
 
@@ -624,6 +632,28 @@ void vulkan_object_shader_update_global_state(vulkan_context* context, vulkan_sh
   descriptor_write.pBufferInfo = &buffer_info;
 
   vkUpdateDescriptorSets(context->device.logical_device, 1, &descriptor_write, 0, 0);
+
+  vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->pipeline.layout, 0,
+                          1, &global_descriptors, 0, 0);
+}
+
+void vulkan_object_shader_update_object(vulkan_context* context, vulkan_shader* shader,
+                                        mat4 model) {
+  u32 image_index = context->image_index;
+  VkCommandBuffer cmd_buffer = context->gfx_command_buffers->data[image_index].handle;
+  // vulkan_command_buffer* cmd_buffer = &context->gfx_command_buffers->data[context.image_index];
+
+  vkCmdPushConstants(cmd_buffer, shader->pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0,
+                     sizeof(mat4), &model);
+
+  // vulkan_object_shader_use(context, &context->object_shader);
+  VkDeviceSize offsets[1] = { 0 };
+  vkCmdBindVertexBuffers(cmd_buffer, 0, 1, &context->object_vertex_buffer.handle,
+                         (VkDeviceSize*)offsets);
+
+  vkCmdBindIndexBuffer(cmd_buffer, context->object_index_buffer.handle, 0, VK_INDEX_TYPE_UINT32);
+
+  vkCmdDrawIndexed(cmd_buffer, 6, 1, 0, 0, 0);
 }
 
 bool select_physical_device(vulkan_context* ctx) {
@@ -1555,13 +1585,13 @@ bool gfx_backend_init(renderer* ren) {
 
   const f32 s = 10.0;
 
-  verts[0].pos.x = 0.0 * s;
+  verts[0].pos.x = -0.5 * s;
   verts[0].pos.y = -0.5 * s;
 
   verts[1].pos.x = 0.5 * s;
   verts[1].pos.y = 0.5 * s;
 
-  verts[2].pos.x = 0.0 * s;
+  verts[2].pos.x = -0.5 * s;
   verts[2].pos.y = 0.5 * s;
 
   verts[3].pos.x = 0.5 * s;
@@ -1688,39 +1718,28 @@ void backend_end_frame(renderer* ren, f32 delta_time) {
       context.queue_complete_semaphores[context.current_frame], context.image_index);
 }
 
-void gfx_backend_draw_frame(renderer* ren) {
+void gfx_backend_draw_frame(renderer* ren, camera* cam, mat4 model) {
   backend_begin_frame(ren, 16.0);
 
-  static f32 z = -1.0;
-  z -= 0.2;
-  mat4 proj = mat4_perspective(deg_to_rad(45.0), 1000 / 1000.0, 0.1, 1000.0);
-  mat4 view = mat4_translation(vec3(0, 0, z));
+  mat4 proj;
+  mat4 view;
+
+  camera_view_projection(cam, SCR_HEIGHT, SCR_WIDTH, &view, &proj);
 
   gfx_backend_update_global_state(proj, view, VEC3_ZERO, vec4(1.0, 1.0, 1.0, 1.0), 0);
+  vulkan_object_shader_update_object(&context, &context.object_shader, model);
 
   backend_end_frame(ren, 16.0);
 }
 
 void gfx_backend_update_global_state(mat4 projection, mat4 view, vec3 view_pos, vec4 ambient_colour,
                                      i32 mode) {
-  vulkan_command_buffer* cmd_buffer = &context.gfx_command_buffers->data[context.image_index];
   vulkan_object_shader_use(&context, &context.object_shader);
 
   vulkan_object_shader_update_global_state(&context, &context.object_shader);
   context.object_shader.global_ubo.projection = projection;
   context.object_shader.global_ubo.view = view;
   // TODO: other UBO properties
-
-  // vulkan_object_shader_use(&context, &context.object_shader);
-
-  VkDeviceSize offsets[1] = { 0 };
-  vkCmdBindVertexBuffers(cmd_buffer->handle, 0, 1, &context.object_vertex_buffer.handle,
-                         (VkDeviceSize*)offsets);
-
-  vkCmdBindIndexBuffer(cmd_buffer->handle, context.object_index_buffer.handle, 0,
-                       VK_INDEX_TYPE_UINT32);
-
-  vkCmdDrawIndexed(cmd_buffer->handle, 6, 1, 0, 0, 0);
 }
 
 void clear_screen(vec3 colour) {}

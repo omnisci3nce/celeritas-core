@@ -15,7 +15,11 @@ int main() {
 
     render_frame_begin(&core->renderer);
 
-    gfx_backend_draw_frame(&core->renderer);
+    static f32 x = 0.0;
+    x += 0.01;
+    mat4 model = mat4_translation(vec3(x, 0, 0));
+
+    gfx_backend_draw_frame(&core->renderer, model);
 
     // insert work here
 

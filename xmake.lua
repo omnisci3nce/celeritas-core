@@ -71,7 +71,7 @@ rule("compile_glsl_vert_shaders")
         
         print("Compiling shader: %s to %s", sourcefile, targetfile)
         batchcmds:vrunv('glslc', {sourcefile, "-o", targetfile})
-        batchcmds:add_depfiles(sourcefile)
+        -- batchcmds:add_depfiles(sourcefile)
 end)
 rule("compile_glsl_frag_shaders")
     set_extensions(".frag")
@@ -80,7 +80,7 @@ rule("compile_glsl_frag_shaders")
         
         print("Compiling shader: %s to %s", sourcefile, targetfile)
         batchcmds:vrunv('glslc', {sourcefile, "-o", targetfile})
-        batchcmds:add_depfiles(sourcefile)
+        -- batchcmds:add_depfiles(sourcefile)
 end)
 -- TODO: Metal shaders compilation
 
@@ -142,6 +142,13 @@ target("obj")
     set_group("examples")
     add_deps("core_static")
     add_files("examples/obj_loading/ex_obj_loading.c")
+    set_rundir("$(projectdir)")
+
+target("input")
+    set_kind("binary")
+    set_group("examples")
+    add_deps("core_static")
+    add_files("examples/input/ex_input.c")
     set_rundir("$(projectdir)")
 
 target("demo")

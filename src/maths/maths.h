@@ -9,6 +9,7 @@
 #pragma once
 
 #include <math.h>
+#include <stdio.h>
 #include "maths_types.h"
 
 // --- Helpers
@@ -47,6 +48,10 @@ static inline vec3 vec3_cross(vec3 a, vec3 b) {
 #define VEC3_NEG_Y ((vec3){ .x = 0.0, .y = -1.0, .z = 0.0 })
 #define VEC3_Z ((vec3){ .x = 0.0, .y = 0.0, .z = 1.0 })
 #define VEC3_NEG_Z ((vec3){ .x = 0.0, .y = 0.0, .z = -1.0 })
+
+static inline void print_vec3(vec3 v) {
+  printf("{ x: %f, y: %f, z: %f )\n", v.x, v.y, v.z);
+}
 
 // TODO: Dimension 2
 static inline vec2 vec2_create(f32 x, f32 y) { return (vec2){ x, y }; }

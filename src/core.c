@@ -2,6 +2,9 @@
 
 #include <stdlib.h>
 
+#include "glfw3.h"
+#include "input.h"
+#include "keys.h"
 #include "log.h"
 #include "render.h"
 #include "render_types.h"
@@ -48,4 +51,14 @@ core* core_bringup() {
   c->models = model_darray_new(10);
 
   return c;
+}
+
+void core_shutdown(core* core) {
+  // threadpool_destroy(&core->threadpool);
+  input_system_shutdown(&core->input);
+  renderer_shutdown(&core->renderer);
+}
+
+bool should_exit(core* core) {
+  return key_just_released(KEYCODE_ESCAPE) || glfwWindowShouldClose(core->renderer.window);
 }

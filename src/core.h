@@ -20,5 +20,6 @@ typedef struct core {
 // --- Lifecycle
 core* core_bringup();
 void core_shutdown(core* core);
+bool should_exit(core* core);
 
 void core_input_update(core* core);
