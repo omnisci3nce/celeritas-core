@@ -133,13 +133,11 @@ typedef struct vulkan_pipeline {
   VkPipelineLayout layout;
 } vulkan_pipeline;
 
-#define SHADER_STAGE_COUNT 2
-
-typedef struct vulkan_shader {
-  // vertex, fragment
-  vulkan_shader_stage stages[SHADER_STAGE_COUNT];
-  vulkan_pipeline pipeline;
-} vulkan_shader;
+typedef struct global_object_uniform {
+  mat4 projection;  // 64 bytes
+  mat4 view;        // 64 bytes
+  f32 padding[32];
+} global_object_uniform;
 
 typedef struct vulkan_buffer {
   u64 total_size;
@@ -150,6 +148,24 @@ typedef struct vulkan_buffer {
   i32 memory_index;
   u32 memory_property_flags;
 } vulkan_buffer;
+
+#define SHADER_STAGE_COUNT 2
+
+typedef struct vulkan_shader {
+  // vertex, fragment
+  vulkan_shader_stage stages[SHADER_STAGE_COUNT];
+  vulkan_pipeline pipeline;
+
+  // descriptors
+  VkDescriptorPool descriptor_pool;
+  VkDescriptorSetLayout descriptor_set_layout;
+  VkDescriptorSet descriptor_sets[3];  // one for each in-flight frame
+
+  vulkan_buffer global_uniforms_buffer;
+
+  // Data that's global for all objects drawn
+  global_object_uniform global_ubo;
+} vulkan_shader;
 
 typedef struct vulkan_context {
   VkInstance instance;
@@ -366,6 +382,69 @@ void vulkan_pipeline_bind(vulkan_command_buffer* command_buffer, VkPipelineBindP
   vkCmdBindPipeline(command_buffer->handle, bind_point, pipeline->handle);
 }
 
+void vulkan_buffer_bind(vulkan_context* context, vulkan_buffer* buffer, u64 offset) {
+  vkBindBufferMemory(context->device.logical_device, buffer->handle, buffer->memory, offset);
+}
+
+bool vulkan_buffer_create(vulkan_context* context, u64 size, VkBufferUsageFlagBits usage,
+                          u32 memory_property_flags, bool bind_on_create,
+                          vulkan_buffer* out_buffer) {
+  memset(out_buffer, 0, sizeof(vulkan_buffer));
+  out_buffer->total_size = size;
+  out_buffer->usage = usage;
+  out_buffer->memory_property_flags = memory_property_flags;
+
+  VkBufferCreateInfo buffer_info = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+  buffer_info.size = size;
+  buffer_info.usage = usage;
+  buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  vkCreateBuffer(context->device.logical_device, &buffer_info, context->allocator,
+                 &out_buffer->handle);
+
+  VkMemoryRequirements requirements;
+  vkGetBufferMemoryRequirements(context->device.logical_device, out_buffer->handle, &requirements);
+  out_buffer->memory_index =
+      find_memory_index(context, requirements.memoryTypeBits, out_buffer->memory_property_flags);
+
+  // Allocate
+  VkMemoryAllocateInfo allocate_info = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
+  allocate_info.allocationSize = requirements.size;
+  allocate_info.memoryTypeIndex = (u32)out_buffer->memory_index;
+
+  vkAllocateMemory(context->device.logical_device, &allocate_info, context->allocator,
+                   &out_buffer->memory);
+
+  if (bind_on_create) {
+    vulkan_buffer_bind(context, out_buffer, 0);
+  }
+
+  return true;
+}
+
+// lock and unlock?
+
+void* vulkan_buffer_lock_memory(vulkan_context* context, vulkan_buffer* buffer, u64 offset,
+                                u64 size, u32 flags) {
+  void* data;
+  vkMapMemory(context->device.logical_device, buffer->memory, offset, size, flags, &data);
+  return data;
+}
+void* vulkan_buffer_unlock_memory(vulkan_context* context, vulkan_buffer* buffer) {
+  vkUnmapMemory(context->device.logical_device, buffer->memory);
+}
+
+void vulkan_buffer_load_data(vulkan_context* context, vulkan_buffer* buffer, u64 offset, u64 size,
+                             u32 flags, const void* data) {
+  void* data_ptr = 0;
+  VK_CHECK(
+      vkMapMemory(context->device.logical_device, buffer->memory, offset, size, flags, &data_ptr));
+  memcpy(data_ptr, data, size);
+  vkUnmapMemory(context->device.logical_device, buffer->memory);
+}
+
+// TODO: destroy
+
 bool create_shader_module(vulkan_context* context, const char* filename, const char* type_str,
                           VkShaderStageFlagBits flag, u32 stage_index,
                           vulkan_shader_stage* shader_stages) {
@@ -398,8 +477,8 @@ bool create_shader_module(vulkan_context* context, const char* filename, const c
 
 bool vulkan_object_shader_create(vulkan_context* context, vulkan_shader* out_shader) {
   char stage_type_strs[SHADER_STAGE_COUNT][5] = { "vert", "frag" };
-  char stage_filenames[SHADER_STAGE_COUNT][256] = { "build/linux/x86_64/debug/triangle.vert.spv",
-                                                    "build/linux/x86_64/debug/triangle.frag.spv" };
+  char stage_filenames[SHADER_STAGE_COUNT][256] = { "build/linux/x86_64/debug/object.vert.spv",
+                                                    "build/linux/x86_64/debug/object.frag.spv" };
   VkShaderStageFlagBits stage_types[SHADER_STAGE_COUNT] = { VK_SHADER_STAGE_VERTEX_BIT,
                                                             VK_SHADER_STAGE_FRAGMENT_BIT };
   for (u8 i = 0; i < SHADER_STAGE_COUNT; i++) {
@@ -408,7 +487,34 @@ bool vulkan_object_shader_create(vulkan_context* context, vulkan_shader* out_sha
                          out_shader->stages);
   }
 
-  // TODO: descriptors
+  // descriptors
+  VkDescriptorSetLayoutBinding global_ubo_layout_binding;
+  global_ubo_layout_binding.binding = 0;
+  global_ubo_layout_binding.descriptorCount = 1;
+  global_ubo_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  global_ubo_layout_binding.pImmutableSamplers = 0;
+  global_ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+  VkDescriptorSetLayoutCreateInfo global_layout_info = {
+    VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO
+  };
+  global_layout_info.bindingCount = 1;
+  global_layout_info.pBindings = &global_ubo_layout_binding;
+
+  VK_CHECK(vkCreateDescriptorSetLayout(context->device.logical_device, &global_layout_info,
+                                       context->allocator, &out_shader->descriptor_set_layout));
+
+  VkDescriptorPoolSize global_pool_size;
+  global_pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  global_pool_size.descriptorCount = 3;
+
+  VkDescriptorPoolCreateInfo pool_info = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
+  pool_info.poolSizeCount = 1;
+  pool_info.pPoolSizes = &global_pool_size;
+  pool_info.maxSets = 3;
+
+  VK_CHECK(vkCreateDescriptorPool(context->device.logical_device, &pool_info, context->allocator,
+                                  &out_shader->descriptor_pool));
 
   // Pipeline creation
   VkViewport viewport;
@@ -441,7 +547,8 @@ bool vulkan_object_shader_create(vulkan_context* context, vulkan_shader* out_sha
     offset += sizes[i];
   }
 
-  // TODO: Descriptor set
+  // Descriptor set layouts
+  VkDescriptorSetLayout layouts[1] = { out_shader->descriptor_set_layout };
 
   // Stages
   VkPipelineShaderStageCreateInfo stage_create_infos[SHADER_STAGE_COUNT];
@@ -451,10 +558,34 @@ bool vulkan_object_shader_create(vulkan_context* context, vulkan_shader* out_sha
     stage_create_infos[i] = out_shader->stages[i].stage_create_info;
   }
 
-  vulkan_graphics_pipeline_create(context, &context->main_renderpass, attribute_count,
-                                  attribute_descs, 0, 0, SHADER_STAGE_COUNT, stage_create_infos,
-                                  viewport, scissor, false, &out_shader->pipeline);
+  vulkan_graphics_pipeline_create(
+      context, &context->main_renderpass, attribute_count, attribute_descs, 1, layouts,
+      SHADER_STAGE_COUNT, stage_create_infos, viewport, scissor, false, &out_shader->pipeline);
   INFO("Graphics pipeline created!");
+
+  // Uniform buffer
+  if (!vulkan_buffer_create(context, sizeof(global_object_uniform),
+                            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT |
+                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                            true, &out_shader->global_uniforms_buffer)) {
+    ERROR("Couldnt create uniforms buffer");
+    return false;
+  }
+
+  VkDescriptorSetLayout global_layouts[3] = {
+    out_shader->descriptor_set_layout,
+    out_shader->descriptor_set_layout,
+    out_shader->descriptor_set_layout,
+  };
+
+  VkDescriptorSetAllocateInfo alloc_info = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+  alloc_info.descriptorPool = out_shader->descriptor_pool;
+  alloc_info.descriptorSetCount = 3;
+  alloc_info.pSetLayouts = global_layouts;
+  VK_CHECK(vkAllocateDescriptorSets(context->device.logical_device, &alloc_info,
+                                    out_shader->descriptor_sets));
 
   return true;
 }
@@ -463,6 +594,36 @@ void vulkan_object_shader_use(vulkan_context* context, vulkan_shader* shader) {
   u32 image_index = context->image_index;
   vulkan_pipeline_bind(&context->gfx_command_buffers->data[image_index],
                        VK_PIPELINE_BIND_POINT_GRAPHICS, &shader->pipeline);
+}
+void vulkan_object_shader_update_global_state(vulkan_context* context, vulkan_shader* shader) {
+  u32 image_index = context->image_index;
+  VkCommandBuffer cmd_buffer = context->gfx_command_buffers->data[image_index].handle;
+  VkDescriptorSet global_descriptors = shader->descriptor_sets[image_index];
+
+  vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->pipeline.layout, 0,
+                          1, &global_descriptors, 0, 0);
+
+  u32 range = sizeof(global_object_uniform);
+  u64 offset = 0;
+
+  // copy data to buffer
+  vulkan_buffer_load_data(context, &shader->global_uniforms_buffer, offset, range, 0,
+                          &shader->global_ubo);
+
+  VkDescriptorBufferInfo buffer_info;
+  buffer_info.buffer = shader->global_uniforms_buffer.handle;
+  buffer_info.offset = offset;
+  buffer_info.range = range;
+
+  VkWriteDescriptorSet descriptor_write = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+  descriptor_write.dstSet = shader->descriptor_sets[image_index];
+  descriptor_write.dstBinding = 0;
+  descriptor_write.dstArrayElement = 0;
+  descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptor_write.descriptorCount = 1;
+  descriptor_write.pBufferInfo = &buffer_info;
+
+  vkUpdateDescriptorSets(context->device.logical_device, 1, &descriptor_write, 0, 0);
 }
 
 bool select_physical_device(vulkan_context* ctx) {
@@ -734,69 +895,6 @@ void vulkan_image_create(vulkan_context* context, VkImageType image_type, u32 wi
 
 // TODO: vulkan_image_destroy
 
-void vulkan_buffer_bind(vulkan_context* context, vulkan_buffer* buffer, u64 offset) {
-  vkBindBufferMemory(context->device.logical_device, buffer->handle, buffer->memory, offset);
-}
-
-bool vulkan_buffer_create(vulkan_context* context, u64 size, VkBufferUsageFlagBits usage,
-                          u32 memory_property_flags, bool bind_on_create,
-                          vulkan_buffer* out_buffer) {
-  memset(out_buffer, 0, sizeof(vulkan_buffer));
-  out_buffer->total_size = size;
-  out_buffer->usage = usage;
-  out_buffer->memory_property_flags = memory_property_flags;
-
-  VkBufferCreateInfo buffer_info = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-  buffer_info.size = size;
-  buffer_info.usage = usage;
-  buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-  vkCreateBuffer(context->device.logical_device, &buffer_info, context->allocator,
-                 &out_buffer->handle);
-
-  VkMemoryRequirements requirements;
-  vkGetBufferMemoryRequirements(context->device.logical_device, out_buffer->handle, &requirements);
-  out_buffer->memory_index =
-      find_memory_index(context, requirements.memoryTypeBits, out_buffer->memory_property_flags);
-
-  // Allocate
-  VkMemoryAllocateInfo allocate_info = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
-  allocate_info.allocationSize = requirements.size;
-  allocate_info.memoryTypeIndex = (u32)out_buffer->memory_index;
-
-  vkAllocateMemory(context->device.logical_device, &allocate_info, context->allocator,
-                   &out_buffer->memory);
-
-  if (bind_on_create) {
-    vulkan_buffer_bind(context, out_buffer, 0);
-  }
-
-  return true;
-}
-
-// lock and unlock?
-
-void* vulkan_buffer_lock_memory(vulkan_context* context, vulkan_buffer* buffer, u64 offset,
-                                u64 size, u32 flags) {
-  void* data;
-  vkMapMemory(context->device.logical_device, buffer->memory, offset, size, flags, &data);
-  return data;
-}
-void* vulkan_buffer_unlock_memory(vulkan_context* context, vulkan_buffer* buffer) {
-  vkUnmapMemory(context->device.logical_device, buffer->memory);
-}
-
-void vulkan_buffer_load_data(vulkan_context* context, vulkan_buffer* buffer, u64 offset, u64 size,
-                             u32 flags, const void* data) {
-  void* data_ptr = 0;
-  VK_CHECK(
-      vkMapMemory(context->device.logical_device, buffer->memory, offset, size, flags, &data_ptr));
-  memcpy(data_ptr, data, size);
-  vkUnmapMemory(context->device.logical_device, buffer->memory);
-}
-
-// TODO: destroy
-
 void vulkan_framebuffer_create(vulkan_context* context, vulkan_renderpass* renderpass, u32 width,
                                u32 height, u32 attachment_count, VkImageView* attachments,
                                vulkan_framebuffer* out_framebuffer) {
@@ -935,7 +1033,7 @@ void vulkan_swapchain_create(vulkan_context* context, u32 width, u32 height,
 
   // TODO: requery swapchain support
 
-  u32 image_count = context->device.swapchain_support.capabilities.minImageCount + 1;
+  u32 image_count = context->device.swapchain_support.capabilities.minImageCount;
 
   VkSwapchainCreateInfoKHR swapchain_create_info = { VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
   swapchain_create_info.surface = context->surface;
@@ -1537,16 +1635,16 @@ void backend_begin_frame(renderer* ren, f32 delta_time) {
                           context.swapchain.framebuffers->data[context.image_index].handle);
 
   // TODO: temp test code
-  vulkan_object_shader_use(&context, &context.object_shader);
+  // vulkan_object_shader_use(&context, &context.object_shader);
 
-  VkDeviceSize offsets[1] = { 0 };
-  vkCmdBindVertexBuffers(command_buffer->handle, 0, 1, &context.object_vertex_buffer.handle,
-                         (VkDeviceSize*)offsets);
+  // VkDeviceSize offsets[1] = { 0 };
+  // vkCmdBindVertexBuffers(command_buffer->handle, 0, 1, &context.object_vertex_buffer.handle,
+  //                        (VkDeviceSize*)offsets);
 
-  vkCmdBindIndexBuffer(command_buffer->handle, context.object_index_buffer.handle, 0,
-                       VK_INDEX_TYPE_UINT32);
+  // vkCmdBindIndexBuffer(command_buffer->handle, context.object_index_buffer.handle, 0,
+  //                      VK_INDEX_TYPE_UINT32);
 
-  vkCmdDrawIndexed(command_buffer->handle, 6, 1, 0, 0, 0);
+  // vkCmdDrawIndexed(command_buffer->handle, 6, 1, 0, 0, 0);
   // --- End temp test code
 }
 
@@ -1591,7 +1689,32 @@ void backend_end_frame(renderer* ren, f32 delta_time) {
 void gfx_backend_draw_frame(renderer* ren) {
   backend_begin_frame(ren, 16.0);
 
+  gfx_backend_update_global_state(mat4_ident(), mat4_ident(), VEC3_ZERO, vec4(1.0, 1.0, 1.0, 1.0),
+                                  0);
+
   backend_end_frame(ren, 16.0);
+}
+
+void gfx_backend_update_global_state(mat4 projection, mat4 view, vec3 view_pos, vec4 ambient_colour,
+                                     i32 mode) {
+  vulkan_command_buffer* cmd_buffer = &context.gfx_command_buffers->data[context.image_index];
+  vulkan_object_shader_use(&context, &context.object_shader);
+
+  vulkan_object_shader_update_global_state(&context, &context.object_shader);
+  context.object_shader.global_ubo.projection = projection;
+  context.object_shader.global_ubo.view = view;
+  // TODO: other UBO properties
+
+  // vulkan_object_shader_use(&context, &context.object_shader);
+
+  VkDeviceSize offsets[1] = { 0 };
+  vkCmdBindVertexBuffers(cmd_buffer->handle, 0, 1, &context.object_vertex_buffer.handle,
+                         (VkDeviceSize*)offsets);
+
+  vkCmdBindIndexBuffer(cmd_buffer->handle, context.object_index_buffer.handle, 0,
+                       VK_INDEX_TYPE_UINT32);
+
+  vkCmdDrawIndexed(cmd_buffer->handle, 6, 1, 0, 0, 0);
 }
 
 void clear_screen(vec3 colour) {}

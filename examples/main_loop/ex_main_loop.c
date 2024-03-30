@@ -1,6 +1,7 @@
 #include <glfw3.h>
 
 #include "core.h"
+#include "maths.h"
 #include "render.h"
 #include "render_backend.h"
 

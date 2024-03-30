@@ -69,7 +69,7 @@ rule("compile_glsl_vert_shaders")
     on_buildcmd_file(function (target, batchcmds, sourcefile, opt) 
         local targetfile = path.join(target:targetdir(), path.basename(sourcefile) .. ".vert.spv")
         
-        print("Compiling shader: %s", sourcefile)
+        print("Compiling shader: %s to %s", sourcefile, targetfile)
         batchcmds:vrunv('glslc', {sourcefile, "-o", targetfile})
         batchcmds:add_depfiles(sourcefile)
 end)
@@ -78,7 +78,7 @@ rule("compile_glsl_frag_shaders")
     on_buildcmd_file(function (target, batchcmds, sourcefile, opt) 
         local targetfile = path.join(target:targetdir(), path.basename(sourcefile) .. ".frag.spv")
         
-        print("Compiling shader: %s", sourcefile)
+        print("Compiling shader: %s to %s", sourcefile, targetfile)
         batchcmds:vrunv('glslc', {sourcefile, "-o", targetfile})
         batchcmds:add_depfiles(sourcefile)
 end)
@@ -104,11 +104,11 @@ target("core_config")
     add_includedirs("src/std/", {public = true})
     add_includedirs("src/std/containers", {public = true})
     add_includedirs("src/systems/", {public = true})
+    add_files("src/empty.c") -- for some reason we need this on Mac so it doesnt call 'ar' with no files and error
     add_rules("compile_glsl_vert_shaders")
     add_rules("compile_glsl_frag_shaders")
-    add_files("src/empty.c") -- for some reason we need this on Mac so it doesnt call 'ar' with no files and error
-    add_files("assets/shaders/triangle.vert")
-    add_files("assets/shaders/triangle.frag")
+    add_files("assets/shaders/object.vert")
+    add_files("assets/shaders/object.frag")
     -- add_files("assets/shaders/*.frag")
     set_default(false) -- prevents standalone building of this target
 
