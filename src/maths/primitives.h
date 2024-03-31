@@ -22,36 +22,36 @@ static mesh prim_cube_mesh_create() {
   // back faces
   vertex_darray_push(
       cube.vertices,
-      (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0 } });
+      (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0, 1 } });
   vertex_darray_push(
       cube.vertices,
-      (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0 } });
+      (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0, 0 } });
   vertex_darray_push(
       cube.vertices,
-      (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0 } });
+      (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_NEG_Z, .uv = (vec2){ 1, 0 } });
   vertex_darray_push(
       cube.vertices,
-      (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0 } });
+      (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_NEG_Z, .uv = (vec2){ 1, 0 } });
   vertex_darray_push(
       cube.vertices,
-      (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0 } });
+      (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_NEG_Z, .uv = (vec2){ 1,1 } });
   vertex_darray_push(
       cube.vertices,
-      (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0 } });
+      (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0, 1 } });
 
   // front faces
   vertex_darray_push(cube.vertices,
-                     (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0 } });
+                     (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0, 1} });
   vertex_darray_push(cube.vertices,
-                     (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 0 } });
+                     (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 1, 0 } });
   vertex_darray_push(cube.vertices,
-                     (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0 } });
+                     (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0, 0} });
   vertex_darray_push(cube.vertices,
-                     (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0 } });
+                     (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0, 1 } });
   vertex_darray_push(cube.vertices,
-                     (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 0 } });
+                     (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 1, 1 } });
   vertex_darray_push(cube.vertices,
-                     (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 0 } });
+                     (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 1, 0 } });
 
   // top faces
   vertex_darray_push(cube.vertices,

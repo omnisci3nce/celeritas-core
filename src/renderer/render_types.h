@@ -52,7 +52,8 @@ typedef struct renderer {
 typedef struct texture {
   u32 texture_id;
   char name[MAX_TEXTURE_NAME_LEN];
-  void *image_data;
+  void* image_data;
+  void* backend_data;
   u32 width;
   u32 height;
   u8 channel_count;

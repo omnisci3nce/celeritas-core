@@ -6,7 +6,6 @@
 // ^ Temporary
 
 #include <assert.h>
-#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -63,6 +62,11 @@ typedef struct vulkan_image {
   u32 width;
   u32 height;
 } vulkan_image;
+
+typedef struct vulkan_texture_data {
+  vulkan_image image;
+  VkSampler sampler;
+} vulkan_texture_data;
 
 typedef enum vulkan_renderpass_state {
   READY,
@@ -863,6 +867,67 @@ void vulkan_image_view_create(vulkan_context* context, VkFormat format, vulkan_i
                     &image->view);
 }
 
+void vulkan_image_transition_layout(
+  vulkan_context* context,
+  vulkan_command_buffer* command_buffer,
+  vulkan_image* image,
+  VkFormat format,
+  VkImageLayout old_layout,
+  VkImageLayout new_layout
+) {
+  VkImageMemoryBarrier barrier = {VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+  barrier.oldLayout = old_layout;
+  barrier.newLayout = new_layout;
+  barrier.srcQueueFamilyIndex = context->device.graphics_queue_index;
+  barrier.dstQueueFamilyIndex = context->device.graphics_queue_index;
+  barrier.image = image->handle;
+  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.baseMipLevel = 0;
+  barrier.subresourceRange.levelCount = 1;
+  barrier.subresourceRange.baseArrayLayer = 0;
+  barrier.subresourceRange.layerCount = 1;
+  barrier.srcAccessMask = 0;
+  barrier.dstAccessMask = 0;
+
+  VkPipelineStageFlags source_stage;
+  VkPipelineStageFlags dest_stage;
+
+  if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    dest_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+  } else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    source_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    dest_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  } else {
+    FATAL("Unsupported image layout transition");
+    return;
+  }
+
+  vkCmdPipelineBarrier(command_buffer->handle, source_stage, dest_stage, 0, 0, 0, 0, 0, 1, &barrier);
+}
+
+void vulkan_image_copy_from_buffer(
+  vulkan_image* image,
+  VkBuffer buffer,
+  vulkan_command_buffer* command_buffer
+) {
+  VkBufferImageCopy region;
+  region.bufferOffset = 0;
+  region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.imageSubresource.mipLevel = 0;
+  region.imageSubresource.baseArrayLayer = 0;
+  region.imageSubresource.layerCount = 1;
+  region.imageExtent.width = image->width;
+  region.imageExtent.height = image->height;
+  region.imageExtent.depth = 1;
+
+  vkCmdCopyBufferToImage(command_buffer->handle, buffer, image->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+}
+
 void vulkan_image_create(vulkan_context* context, VkImageType image_type, u32 width, u32 height,
                          VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
                          VkMemoryPropertyFlags memory_flags, bool create_view,
@@ -1584,8 +1649,6 @@ bool gfx_backend_init(renderer* ren) {
 
   mesh cube = prim_cube_mesh_create();
 
-  // const u32 vert_count = 36;
-
   vertex_pos* verts = malloc(sizeof(vertex_pos) * cube.vertices->len);
 
   f32 scale = 3.0;
@@ -1620,6 +1683,8 @@ bool gfx_backend_init(renderer* ren) {
   upload_data_range(&context, context.device.gfx_command_pool, 0, context.device.graphics_queue,
                     &context.object_index_buffer, 0, sizeof(u32) * cube.indices_len, cube.indices);
   TRACE("Uploaded index data");
+  vertex_darray_free(cube.vertices);
+  free(cube.indices);
   // --- End test code
 
   INFO("Vulkan renderer initialisation succeeded");
@@ -1679,20 +1744,63 @@ void backend_begin_frame(renderer* ren, f32 delta_time) {
 
   vulkan_renderpass_begin(command_buffer, &context.main_renderpass,
                           context.swapchain.framebuffers->data[context.image_index].handle);
-
-  // TODO: temp test code
-  // vulkan_object_shader_use(&context, &context.object_shader);
-
-  // VkDeviceSize offsets[1] = { 0 };
-  // vkCmdBindVertexBuffers(command_buffer->handle, 0, 1, &context.object_vertex_buffer.handle,
-  //                        (VkDeviceSize*)offsets);
-
-  // vkCmdBindIndexBuffer(command_buffer->handle, context.object_index_buffer.handle, 0,
-  //                      VK_INDEX_TYPE_UINT32);
-
-  // vkCmdDrawIndexed(command_buffer->handle, 6, 1, 0, 0, 0);
-  // --- End temp test code
 }
+
+void texture_data_upload(texture* tex) {
+  printf("Texture name %s\n", tex->name);
+  tex->backend_data = malloc(sizeof(vulkan_texture_data));
+  vulkan_texture_data* data = (vulkan_texture_data*)tex->backend_data;
+  VkDeviceSize image_size = tex->width * tex->height * tex->channel_count;
+
+  VkFormat image_format = VK_FORMAT_R8G8B8A8_SNORM;
+
+  VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+  VkMemoryPropertyFlags memory_prop_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+  vulkan_buffer staging;
+  vulkan_buffer_create(&context, image_size, usage, memory_prop_flags, true, &staging);
+  vulkan_buffer_load_data(&context, &staging, 0, image_size, 0, tex->image_data);
+
+  vulkan_image_create(&context, VK_IMAGE_TYPE_2D, tex->width, tex->height, image_format, VK_IMAGE_TILING_OPTIMAL, 
+    VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+  , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, true, VK_IMAGE_ASPECT_COLOR_BIT, &data->image);
+
+  vulkan_command_buffer temp_buffer;
+  vulkan_command_buffer_allocate_and_begin_oneshot(&context, context.device.gfx_command_pool, &temp_buffer);
+
+  vulkan_image_transition_layout(&context, &temp_buffer, &data->image, image_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+  vulkan_image_copy_from_buffer(&data->image, staging.handle, &temp_buffer);
+
+  vulkan_image_transition_layout(&context, &temp_buffer, &data->image, image_format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+  vulkan_command_buffer_end_oneshot(&context, context.device.gfx_command_pool, &temp_buffer, context.device.graphics_queue);
+
+  VkSamplerCreateInfo sampler_info = {VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+  sampler_info.magFilter = VK_FILTER_LINEAR;
+  sampler_info.minFilter = VK_FILTER_LINEAR;
+  sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_info.anisotropyEnable = VK_TRUE;
+  sampler_info.maxAnisotropy = 16;
+  sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+  sampler_info.unnormalizedCoordinates = VK_FALSE;
+  sampler_info.compareEnable = VK_FALSE;
+  sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+  sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  sampler_info.mipLodBias = 0.0;
+  sampler_info.minLod = 0.0;
+  sampler_info.maxLod = 0.0;
+
+  VkResult res = vkCreateSampler(context.device.logical_device, &sampler_info, context.allocator, &data->sampler);
+  if (res != VK_SUCCESS) {
+    ERROR("Error creating texture sampler for image %s", tex->name);
+    return;
+  }
+  
+}
+
+// TODO: destroy texture
 
 void backend_end_frame(renderer* ren, f32 delta_time) {
   vulkan_command_buffer* command_buffer = &context.gfx_command_buffers->data[context.image_index];
