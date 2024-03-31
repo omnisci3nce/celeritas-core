@@ -180,3 +180,8 @@ typedef enum gpu_texture_format {
   TEXTURE_FORMAT_DEPTH_DEFAULT,
   TEXTURE_FORMAT_COUNT
 } gpu_texture_format;
+
+typedef enum pipeline_kind {
+  GRAPHICS,
+  COMPUTE,
+} pipeline_kind;

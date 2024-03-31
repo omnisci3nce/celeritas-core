@@ -4,9 +4,13 @@
 #include "maths_types.h"
 #include "str.h"
 
-typedef int texture_handle;
+// TODO: Replace with handle defines
 typedef int buffer_handle;
+typedef int texture_handle;
+typedef int sampler_handle;
 typedef int model_handle;
+
+typedef struct transform_hierarchy {} transform_hierarchy;
 
 /** @brief Texture Description - used by texture creation functions */
 typedef struct texture_desc {
@@ -47,8 +51,6 @@ typedef enum gpu_texture_format {
 } gpu_texture_format;
 
 /* render_types */
-typedef struct mesh mesh;
-typedef struct model model;
 typedef struct model pbr_material;
 typedef struct model bp_material;  // blinn-phong
 
@@ -77,7 +79,7 @@ typedef union vertex {
     vec3 normal;
     vec4i bone_ids;     // Integer vector for bone IDs
     vec4 bone_weights;  // Weight of each bone's influence
-  } animated_3d;        /** @brief vertex format for skeletal (animated) geometry in 3D */
+  } skinned_3d;        /** @brief vertex format for skeletal (animated) geometry in 3D */
 } vertex;
 
 KITC_DECL_TYPED_ARRAY(vertex)
@@ -122,79 +124,63 @@ typedef struct model {
 // 2 - you need to know how the overall renderer is designed
 // 1 - you need to understand graphics API specifics
 
+/* ral.h */
+
+// enum pipeline_type {
+//   GRAPHICS,
+//   COMPUTE,
+// } pipeline_type;
+
+
+
+// command buffer gubbins
+
+/* --- Backends */
+
+// struct vulkan_backend {
+//   gpu_pipeline static_opaque_pipeline;
+//   gpu_pipeline skinned_opaque_pipeline;
+// };
+
+/* --- Renderer layer */
 /* render.h */
+
+typedef struct renderer {
+  void* backend_context;
+} renderer;
+
+bool renderer_init(renderer* ren);
+void renderer_shutdown(renderer* ren);
+
 // frontend -- these can be called from say a loop in an example, or via FFI
 texture_handle texture_create(const char* debug_name, texture_desc description, const u8* data);
 
+// Frontend Resources
 void texture_data_upload(texture_handle texture);
 buffer_handle buffer_create(const char* debug_name, u64 size);
 bool buffer_destroy(buffer_handle buffer);
+sampler_handle sampler_create();
+
+void shader_hot_reload(const char* filepath);
 
 // models and meshes are implemented **in terms of the above**
 mesh mesh_create(geometry_data* geometry);
 model_handle model_load(const char* debug_name, const char* filepath);
 
-/* ral.h */
+// Drawing
 
-enum pipeline_type {
-  GRAPHICS,
-  COMPUTE,
-} pipeline_type;
+// void draw_mesh(gpu_cmd_encoder* encoder, mesh* mesh) {
+//   encode_set_vertex_buffer(encoder, mesh->vertex_buffer);
+//   encode_set_index_buffer(encoder, mesh->index_buffer);
+//   encode_draw_indexed(encoder, mesh->index_count)
+//   // vkCmdDrawIndexed
+// }
 
-// backend -- these are not seen by the higher-level code
-typedef struct gpu_swapchain gpu_swapchain;
-typedef struct gpu_device gpu_device;
-typedef struct gpu_pipeline gpu_pipeline;
-typedef struct gpu_cmd_encoder gpu_cmd_encoder;
-typedef struct gpu_cmd_buffer gpu_cmd_buffer;  // Ready for submission
+// void draw_scene(arena* frame, model_darray* models, renderer* ren, camera* camera,
+//                 transform_hierarchy* tfh, scene* scene) {
+//                   // set the pipeline first
+//                   encode_set_pipeline()
+//                   // in open this sets the shader
+//                   // in vulkan it sets the whole pipeline
 
-void gpu_cmd_encoder_begin();
-void gpu_cmd_encoder_begin_render();
-void gpu_cmd_encoder_begin_compute();
-
-/* Actual commands that we can encode */
-void encode_buffer_copy(gpu_cmd_encoder* encoder, buffer_handle src, u64 src_offset,
-                        buffer_handle dst, u64 dst_offset, u64 copy_size);
-void encode_clear_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
-// render pass
-void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
-void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
-void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count, u64* indices);
-
-// FUTURE: compute passes
-
-/** @brief Finish recording and return a command buffer that can be submitted to a queue */
-gpu_cmd_buffer gpu_cmd_encoder_finish(gpu_cmd_encoder* encoder);
-
-void gpu_queue_submit(gpu_cmd_buffer* buffer);
-
-// Buffers
-void gpu_buffer_create(u64 size);
-void gpu_buffer_destroy(buffer_handle buffer);
-void gpu_buffer_upload();
-void gpu_buffer_bind(buffer_handle buffer);
-
-// Textures
-void gpu_texture_create();
-void gpu_texture_destroy();
-void gpu_texture_upload();
-
-// Samplers
-void gpu_sampler_create();
-
-// command buffer gubbins
-
-// 3. SIMA (simplified immediate mode api) / render.h
-//      - dont need to worry about uploading mesh data
-//      - very useful for debugging
-void imm_draw_cuboid();
-void imm_draw_sphere(vec3 pos, f32 radius, vec4 colour);
-void imm_draw_camera_frustum();
-static void imm_draw_model(
-    const char* model_filepath);  // tracks internally whether the model is loaded
-
-static void imm_draw_model(const char* model_filepath) {
-  // check that model is loaded
-  // if not loaded, load model and upload to gpu - LRU cache for models
-  // else submit draw call
-}
+// }

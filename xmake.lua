@@ -58,6 +58,7 @@ local core_sources = {
     "src/platform/*.c",
     "src/renderer/*.c",
     "src/renderer/backends/*.c",
+    "src/renderer/cleanroom/*.c",
     "src/resources/*.c",
     "src/std/*.c",
     "src/std/containers/*.c",
@@ -100,15 +101,16 @@ target("core_config")
     add_includedirs("src/platform/", {public = true})
     add_includedirs("src/renderer/", {public = true})
     add_includedirs("src/renderer/backends/", {public = true})
+    add_includedirs("src/renderer/cleanroom/", {public = true})
     add_includedirs("src/resources/", {public = true})
     add_includedirs("src/std/", {public = true})
     add_includedirs("src/std/containers", {public = true})
     add_includedirs("src/systems/", {public = true})
     add_files("src/empty.c") -- for some reason we need this on Mac so it doesnt call 'ar' with no files and error
-    add_rules("compile_glsl_vert_shaders")
-    add_rules("compile_glsl_frag_shaders")
-    add_files("assets/shaders/object.vert")
-    add_files("assets/shaders/object.frag")
+    -- add_rules("compile_glsl_vert_shaders")
+    -- add_rules("compile_glsl_frag_shaders")
+    -- add_files("assets/shaders/object.vert")
+    -- add_files("assets/shaders/object.frag")
     -- add_files("assets/shaders/*.frag")
     set_default(false) -- prevents standalone building of this target
 

@@ -71,6 +71,6 @@ Renderer backend defines:
 #endif
 
 #if defined(CEL_PLATFORM_MAC)
-#define CEL_REND_BACKEND_METAL 1
-// #define CEL_REND_BACKEND_OPENGL 1
+// #define CEL_REND_BACKEND_METAL 1
+#define CEL_REND_BACKEND_OPENGL 1
 #endif
