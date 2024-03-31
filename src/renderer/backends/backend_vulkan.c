@@ -1,7 +1,8 @@
 #include "camera.h"
 #include "primitives.h"
 #define CDEBUG
-#define CEL_PLATFORM_LINUX
+// #define CEL_PLATFORM_LINUX
+#if CEL_REND_BACKEND_VULKAN
 // ^ Temporary
 
 #include <assert.h>
@@ -29,8 +30,6 @@
 
 #define SCR_WIDTH 1000
 #define SCR_HEIGHT 1000
-
-#if CEL_REND_BACKEND_VULKAN
 
 #include <glad/glad.h>
 
@@ -1661,9 +1660,9 @@ void backend_begin_frame(renderer* ren, f32 delta_time) {
 
   VkViewport viewport;
   viewport.x = 0.0;
-  viewport.y = (f32)context.framebuffer_height;
+  viewport.y = 0;
   viewport.width = (f32)context.framebuffer_width;
-  viewport.height = -(f32)context.framebuffer_height;
+  viewport.height = (f32)context.framebuffer_height;
   viewport.minDepth = 0.0;
   viewport.maxDepth = 1.0;
 
@@ -1740,14 +1739,6 @@ void gfx_backend_draw_frame(renderer* ren, camera* cam, mat4 model) {
   mat4 view;
 
   camera_view_projection(cam, SCR_HEIGHT, SCR_WIDTH, &view, &proj);
-
-  // proj = mat4_perspective(deg_to_rad(45.0), (f32)SCR_WIDTH / SCR_HEIGHT, 0.1, 100.0);
-
-  // proj.data[5] *= -1.0;
-
-  // vec3 pos = vec3_create(2, 2, 2);
-  // vec3 up = VEC3_Y;
-  // view = mat4_look_at(pos, VEC3_ZERO, up);
 
   gfx_backend_update_global_state(proj, view, cam->position, vec4(1.0, 1.0, 1.0, 1.0), 0);
   vulkan_object_shader_update_object(&context, &context.object_shader, model);

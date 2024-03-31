@@ -157,38 +157,16 @@ static mat4 mat4_transposed(mat4 matrix) {
 /** @brief Creates a perspective projection matrix compatible with Vulkan */
 static inline mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_clip,
                                     f32 far_clip) {
-  // near_clip *= -1.0;
-  // far_clip *= -1.0;
-
   f32 half_tan_fov = tanf(fov_radians * 0.5f);
   mat4 out_matrix = { .data = { 0 } };
 
   out_matrix.data[0] = 1.0f / (aspect_ratio * half_tan_fov);
-  out_matrix.data[5] = 1.0f / half_tan_fov;  // Flip Y-axis for Vulkan
+  out_matrix.data[5] = -1.0f / half_tan_fov;  // Flip Y-axis for Vulkan
   out_matrix.data[10] = -((far_clip + near_clip) / (far_clip - near_clip));
   out_matrix.data[11] = -1.0f;
   out_matrix.data[14] = -((2.0f * far_clip * near_clip) / (far_clip - near_clip));
 
-  // float half_tan_fov = tanf(fov_radians * 0.5);
-  //   float k = far_clip / (far_clip - near_clip);
-
-  //   out_matrix.data[0] = 1.0f / (aspect_ratio * half_tan_fov);
-  // out_matrix.data[5] = 1.0f / half_tan_fov;
-  // out_matrix.data[10] = k;
-  // out_matrix.data[11] = -1.0;
-  // out_matrix.data[14] = -1.0 * near_clip * k;
-
-  // f32 half_tan_fov = tan(fov_radians * 0.5f);
-  //   out_matrix.data[0] = 1.0f / (aspect_ratio * half_tan_fov);
-  //   out_matrix.data[5] = 1.0f / half_tan_fov;
-  //   out_matrix.data[10] = -((far_clip + near_clip) / (far_clip - near_clip));
-  //   out_matrix.data[11] = -1.0f;
-  //   out_matrix.data[14] =
-  //       -((2.0f * far_clip * near_clip) / (far_clip - near_clip));
-  //   return out_matrix;
-
   return out_matrix;
-  // return mat4_transposed(out_matrix);
 }
 #else
 /** @brief Creates a perspective projection matrix */
