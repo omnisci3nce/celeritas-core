@@ -30,6 +30,10 @@ int main() {
     .first_mouse_update = true,
   };
 
+  // load a texture
+  texture tex = texture_data_load("assets/models/obj/cube/container.jpg", false);
+  texture_data_upload(&tex);
+
   printf("Starting look direction: ");
   print_vec3(game.camera.front);
 
@@ -65,7 +69,7 @@ int main() {
 
     mat4 model = mat4_translation(VEC3_ZERO);
 
-    gfx_backend_draw_frame(&core->renderer, &game.camera, model);
+    gfx_backend_draw_frame(&core->renderer, &game.camera, model, &tex);
 
     render_frame_end(&core->renderer);
   }

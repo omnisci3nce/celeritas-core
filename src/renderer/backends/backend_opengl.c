@@ -60,7 +60,7 @@ void clear_screen(vec3 colour) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void texture_data_upload(texture* tex) {
+void texture_data_upload(texture *tex) {
   printf("Texture name %s\n", tex->name);
   TRACE("Upload texture data");
   u32 texture_id;
