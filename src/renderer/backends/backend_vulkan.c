@@ -654,10 +654,10 @@ void vulkan_object_shader_update_object(vulkan_context* context, vulkan_shader* 
   vkCmdBindVertexBuffers(cmd_buffer, 0, 1, &context->object_vertex_buffer.handle,
                          (VkDeviceSize*)offsets);
 
-  // vkCmdBindIndexBuffer(cmd_buffer, context->object_index_buffer.handle, 0, VK_INDEX_TYPE_UINT32);
+  vkCmdBindIndexBuffer(cmd_buffer, context->object_index_buffer.handle, 0, VK_INDEX_TYPE_UINT32);
 
-  // vkCmdDrawIndexed(cmd_buffer, 6, 1, 0, 0, 0);
-  vkCmdDraw(cmd_buffer, 36, 1, 0, 0);
+  vkCmdDrawIndexed(cmd_buffer, 36, 1, 0, 0, 0);
+  // vkCmdDraw(cmd_buffer, 36, 1, 0, 0);
 }
 
 bool select_physical_device(vulkan_context* ctx) {
@@ -1351,11 +1351,9 @@ void upload_data_range(vulkan_context* context, VkCommandPool pool, VkFence fenc
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
   vulkan_buffer staging;
   vulkan_buffer_create(context, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, flags, true, &staging);
-  TRACE("HERE");
   // load data into staging buffer
   printf("Size: %ld\n", size);
   vulkan_buffer_load_data(context, &staging, 0, size, 0, data);
-  TRACE("here");
 
   // copy
   vulkan_buffer_copy_to(context, pool, fence, queue, staging.handle, 0, buffer->handle, offset,
@@ -1587,18 +1585,19 @@ bool gfx_backend_init(renderer* ren) {
 
   mesh cube = prim_cube_mesh_create();
 
-  const u32 vert_count = 36;
-  // vertex_pos verts[4] = { 0 };
+  // const u32 vert_count = 36;
 
-  vertex_pos verts[36] = { 0 };
+  vertex_pos* verts = malloc(sizeof(vertex_pos) * cube.vertices->len);
 
   f32 scale = 3.0;
-  for (size_t i = 0; i < 36; i++) {
+  for (size_t i = 0; i < cube.vertices->len; i++) {
     verts[i].pos = vec3_mult(cube.vertices->data[i].position, scale);
     verts[i].normal = cube.vertices->data[i].normal;
   }
 
-  // const f32 s = 10.0;
+  // const f32 s = 1.0;
+  // const u32 vert_count = 4;
+  // vertex_pos verts[4] = { 0 };
 
   // verts[0].pos.x = -0.5 * s;
   // verts[0].pos.y = -0.5 * s;
@@ -1612,15 +1611,16 @@ bool gfx_backend_init(renderer* ren) {
   // verts[3].pos.x = 0.5 * s;
   // verts[3].pos.y = -0.5 * s;
 
-  const u32 index_count = 6;
-  u32 indices[6] = { 0, 1, 2, 0, 3, 1 };
+  // const u32 index_count = 6;
+  // u32 indices[6] = { 0, 1, 2, 0, 3, 1 };
 
   upload_data_range(&context, context.device.gfx_command_pool, 0, context.device.graphics_queue,
-                    &context.object_vertex_buffer, 0, sizeof(vertex_pos) * vert_count, verts);
+                    &context.object_vertex_buffer, 0, sizeof(vertex_pos) * cube.vertices->len,
+                    verts);
   TRACE("Uploaded vertex data");
-  // upload_data_range(&context, context.device.gfx_command_pool, 0, context.device.graphics_queue,
-  //                   &context.object_index_buffer, 0, sizeof(u32) * index_count, indices);
-  // TRACE("Uploaded index data");
+  upload_data_range(&context, context.device.gfx_command_pool, 0, context.device.graphics_queue,
+                    &context.object_index_buffer, 0, sizeof(u32) * cube.indices_len, cube.indices);
+  TRACE("Uploaded index data");
   // --- End test code
 
   INFO("Vulkan renderer initialisation succeeded");
@@ -1661,9 +1661,9 @@ void backend_begin_frame(renderer* ren, f32 delta_time) {
 
   VkViewport viewport;
   viewport.x = 0.0;
-  viewport.y = 0.0;
+  viewport.y = (f32)context.framebuffer_height;
   viewport.width = (f32)context.framebuffer_width;
-  viewport.height = (f32)context.framebuffer_height;
+  viewport.height = -(f32)context.framebuffer_height;
   viewport.minDepth = 0.0;
   viewport.maxDepth = 1.0;
 
@@ -1741,7 +1741,15 @@ void gfx_backend_draw_frame(renderer* ren, camera* cam, mat4 model) {
 
   camera_view_projection(cam, SCR_HEIGHT, SCR_WIDTH, &view, &proj);
 
-  gfx_backend_update_global_state(proj, view, VEC3_ZERO, vec4(1.0, 1.0, 1.0, 1.0), 0);
+  // proj = mat4_perspective(deg_to_rad(45.0), (f32)SCR_WIDTH / SCR_HEIGHT, 0.1, 100.0);
+
+  // proj.data[5] *= -1.0;
+
+  // vec3 pos = vec3_create(2, 2, 2);
+  // vec3 up = VEC3_Y;
+  // view = mat4_look_at(pos, VEC3_ZERO, up);
+
+  gfx_backend_update_global_state(proj, view, cam->position, vec4(1.0, 1.0, 1.0, 1.0), 0);
   vulkan_object_shader_update_object(&context, &context.object_shader, model);
 
   backend_end_frame(ren, 16.0);

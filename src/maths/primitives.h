@@ -1,55 +1,135 @@
 #pragma once
 
 #include <assert.h>
+#include <stdlib.h>
 #include "core.h"
+#include "maths.h"
 #include "render_types.h"
 
-static float cube_vertices[] = {
-  // positions          // normals           // texture coords
-  -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,  0.5f,  -0.5f, -0.5f, 0.0f,
-  0.0f,  -1.0f, 1.0f,  0.0f,  0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f, 1.0f,  1.0f,
-  0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f, 1.0f,  1.0f,  -0.5f, 0.5f,  -0.5f, 0.0f,
-  0.0f,  -1.0f, 0.0f,  1.0f,  -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,
-
-  -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,  0.5f,  -0.5f, 0.5f,  0.0f,
-  0.0f,  1.0f,  1.0f,  0.0f,  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
-  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,  -0.5f, 0.5f,  0.5f,  0.0f,
-  0.0f,  1.0f,  0.0f,  1.0f,  -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
-
-  -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,  1.0f,  0.0f,  -0.5f, 0.5f,  -0.5f, -1.0f,
-  0.0f,  0.0f,  1.0f,  1.0f,  -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,  0.0f,  1.0f,
-  -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,  0.0f,  1.0f,  -0.5f, -0.5f, 0.5f,  -1.0f,
-  0.0f,  0.0f,  0.0f,  0.0f,  -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,  1.0f,  0.0f,
-
-  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,  0.5f,  0.5f,  -0.5f, 1.0f,
-  0.0f,  0.0f,  1.0f,  1.0f,  0.5f,  -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-  0.5f,  -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,  0.0f,  1.0f,  0.5f,  -0.5f, 0.5f,  1.0f,
-  0.0f,  0.0f,  0.0f,  0.0f,  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-
-  -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,  0.0f,  1.0f,  0.5f,  -0.5f, -0.5f, 0.0f,
-  -1.0f, 0.0f,  1.0f,  1.0f,  0.5f,  -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,  1.0f,  0.0f,
-  0.5f,  -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,  1.0f,  0.0f,  -0.5f, -0.5f, 0.5f,  0.0f,
-  -1.0f, 0.0f,  0.0f,  0.0f,  -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,  0.0f,  1.0f,
-
-  -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,  0.0f,  1.0f,  0.5f,  0.5f,  -0.5f, 0.0f,
-  1.0f,  0.0f,  1.0f,  1.0f,  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
-  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,  -0.5f, 0.5f,  0.5f,  0.0f,
-  1.0f,  0.0f,  0.0f,  0.0f,  -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,  0.0f,  1.0f
-};
+static const vec3 BACK_BOT_LEFT = (vec3){ 0, 0, 0 };
+static const vec3 BACK_BOT_RIGHT = (vec3){ 1, 0, 0 };
+static const vec3 BACK_TOP_LEFT = (vec3){ 0, 1, 0 };
+static const vec3 BACK_TOP_RIGHT = (vec3){ 1, 1, 0 };
+static const vec3 FRONT_BOT_LEFT = (vec3){ 0, 0, 1 };
+static const vec3 FRONT_BOT_RIGHT = (vec3){ 1, 0, 1 };
+static const vec3 FRONT_TOP_LEFT = (vec3){ 0, 1, 1 };
+static const vec3 FRONT_TOP_RIGHT = (vec3){ 1, 1, 1 };
 
 static mesh prim_cube_mesh_create() {
   mesh cube = { 0 };
   cube.vertices = vertex_darray_new(36);
 
-  for (int i = 0; i < 36; i++) {
-    vertex vert = { .position = vec3_create(cube_vertices[(i * 8) + 0], cube_vertices[(i * 8) + 1],
-                                            cube_vertices[(i * 8) + 2]),
-                    .normal = vec3_create(cube_vertices[(i * 8) + 3], cube_vertices[(i * 8) + 4],
-                                          cube_vertices[(i * 8) + 5]),
-                    .uv = (vec2){ .x = cube_vertices[(i * 8) + 6],
-                                  .y = cube_vertices[(i * 8) + 7] } };
-    vertex_darray_push(cube.vertices, vert);
+  // back faces
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0 } });
+
+  // front faces
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 0 } });
+
+  // top faces
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_Y, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_Y, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Y, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_Y, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Y, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_Y, .uv = (vec2){ 0 } });
+
+  // bottom faces
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
+
+  // right faces
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_X, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_X, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_X, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_X, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_X, .uv = (vec2){ 0 } });
+  vertex_darray_push(cube.vertices,
+                     (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_X, .uv = (vec2){ 0 } });
+
+  // left faces
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
+  vertex_darray_push(
+      cube.vertices,
+      (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
+
+  cube.indices_len = cube.vertices->len;
+  cube.indices = malloc(sizeof(u32) * cube.indices_len);
+
+  for (u32 i = 0; i < cube.indices_len; i++) {
+    cube.indices[i] = i;
   }
+
+  cube.has_indices = true;
+
   return cube;
 }
 

@@ -132,6 +132,27 @@ static inline mat4 mat4_mult(mat4 lhs, mat4 rhs) {
   return out_matrix;
 }
 
+static mat4 mat4_transposed(mat4 matrix) {
+  mat4 out_matrix = mat4_ident();
+  out_matrix.data[0] = matrix.data[0];
+  out_matrix.data[1] = matrix.data[4];
+  out_matrix.data[2] = matrix.data[8];
+  out_matrix.data[3] = matrix.data[12];
+  out_matrix.data[4] = matrix.data[1];
+  out_matrix.data[5] = matrix.data[5];
+  out_matrix.data[6] = matrix.data[9];
+  out_matrix.data[7] = matrix.data[13];
+  out_matrix.data[8] = matrix.data[2];
+  out_matrix.data[9] = matrix.data[6];
+  out_matrix.data[10] = matrix.data[10];
+  out_matrix.data[11] = matrix.data[14];
+  out_matrix.data[12] = matrix.data[3];
+  out_matrix.data[13] = matrix.data[7];
+  out_matrix.data[14] = matrix.data[11];
+  out_matrix.data[15] = matrix.data[15];
+  return out_matrix;
+}
+
 #if defined(CEL_REND_BACKEND_VULKAN)
 /** @brief Creates a perspective projection matrix compatible with Vulkan */
 static inline mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_clip,
@@ -143,12 +164,31 @@ static inline mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_
   mat4 out_matrix = { .data = { 0 } };
 
   out_matrix.data[0] = 1.0f / (aspect_ratio * half_tan_fov);
-  out_matrix.data[5] = -1.0f / half_tan_fov;  // Flip Y-axis for Vulkan
+  out_matrix.data[5] = 1.0f / half_tan_fov;  // Flip Y-axis for Vulkan
   out_matrix.data[10] = -((far_clip + near_clip) / (far_clip - near_clip));
   out_matrix.data[11] = -1.0f;
   out_matrix.data[14] = -((2.0f * far_clip * near_clip) / (far_clip - near_clip));
 
+  // float half_tan_fov = tanf(fov_radians * 0.5);
+  //   float k = far_clip / (far_clip - near_clip);
+
+  //   out_matrix.data[0] = 1.0f / (aspect_ratio * half_tan_fov);
+  // out_matrix.data[5] = 1.0f / half_tan_fov;
+  // out_matrix.data[10] = k;
+  // out_matrix.data[11] = -1.0;
+  // out_matrix.data[14] = -1.0 * near_clip * k;
+
+  // f32 half_tan_fov = tan(fov_radians * 0.5f);
+  //   out_matrix.data[0] = 1.0f / (aspect_ratio * half_tan_fov);
+  //   out_matrix.data[5] = 1.0f / half_tan_fov;
+  //   out_matrix.data[10] = -((far_clip + near_clip) / (far_clip - near_clip));
+  //   out_matrix.data[11] = -1.0f;
+  //   out_matrix.data[14] =
+  //       -((2.0f * far_clip * near_clip) / (far_clip - near_clip));
+  //   return out_matrix;
+
   return out_matrix;
+  // return mat4_transposed(out_matrix);
 }
 #else
 /** @brief Creates a perspective projection matrix */
