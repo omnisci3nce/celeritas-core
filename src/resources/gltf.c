@@ -1,12 +1,186 @@
+#include <assert.h>
+#include <stdlib.h>
+#include "core.h"
+#include "defines.h"
+#include "file.h"
+#include "loaders.h"
+#include "log.h"
+#include "path.h"
+#include "render_types.h"
+#include "str.h"
+
+#define CGLTF_IMPLEMENTATION
+#include <cgltf.h>
 // TODO: Port code from old repo
 
-/*
 struct face {
   cgltf_uint indices[3];
 };
+typedef struct face face;
+
+KITC_DECL_TYPED_ARRAY(vec3)
+KITC_DECL_TYPED_ARRAY(vec2)
+KITC_DECL_TYPED_ARRAY(u32)
+KITC_DECL_TYPED_ARRAY(face)
+
+bool model_load_gltf_str(const char *file_string, const char *filepath, model *out_model,
+                         bool invert_textures_y);
+
+model_handle model_load_gltf(struct core *core, const char *path, bool invert_texture_y) {
+  size_t arena_size = 1024;
+  arena scratch = arena_create(malloc(arena_size), arena_size);
+
+  TRACE("Loading model at Path %s\n", path);
+  path_opt relative_path = path_parent(&scratch, path);
+  if (!relative_path.has_value) {
+    WARN("Couldnt get a relative path for the path to use for loading materials & textures later");
+  }
+  const char *file_string = string_from_file(path);
+
+  model model = { 0 };
+  model.name = str8_cstr_view(path);
+  model.meshes = mesh_darray_new(1);
+  model.materials = material_darray_new(1);
+
+  bool success = model_load_gltf_str(file_string, path, &model, invert_texture_y);
+
+  if (!success) {
+    FATAL("Couldnt load OBJ file at path %s", path);
+    ERROR_EXIT("Load fails are considered crash-worthy right now. This will change later.\n");
+  }
+
+  u32 index = model_darray_len(core->models);
+  model_darray_push(core->models, model);
+
+  arena_free_all(&scratch);
+  arena_free_storage(&scratch);
+  return (model_handle){ .raw = index };
+}
 
 // TODO: Brainstorm how I can make this simpler and break it up into more testable pieces
 
+bool model_load_gltf_str(const char *file_string, const char *filepath, model *out_model,
+                         bool invert_textures_y) {
+  TRACE("Load GLTF from string");
+
+  // Setup temps
+  vec3_darray *tmp_positions = vec3_darray_new(1000);
+  vec3_darray *tmp_normals = vec3_darray_new(1000);
+  vec2_darray *tmp_uvs = vec2_darray_new(1000);
+  face_darray *tmp_faces = face_darray_new(1000);
+
+  cgltf_options options = { 0 };
+  cgltf_data *data = NULL;
+  cgltf_result result = cgltf_parse_file(&options, filepath, &data);
+  if (result != cgltf_result_success) {
+    WARN("gltf load failed");
+    // TODO: cleanup arrays(allocate all from arena ?)
+    return false;
+  }
+
+  cgltf_load_buffers(&options, data, filepath);
+  DEBUG("loaded buffers");
+
+  TRACE("Num meshes %d", data->meshes_count);
+  size_t num_meshes = data->meshes_count;
+  for (size_t m = 0; m < num_meshes; m++) {
+    cgltf_primitive primitive = data->meshes[m].primitives[0];
+    DEBUG("Found %d attributes", primitive.attributes_count);
+
+    for (int a = 0; a < data->meshes[m].primitives[0].attributes_count; a++) {
+      cgltf_attribute attribute = data->meshes[m].primitives[0].attributes[a];
+      if (attribute.type == cgltf_attribute_type_position) {
+        TRACE("Load positions from accessor");
+
+        cgltf_accessor *accessor = attribute.data;
+        assert(accessor->component_type == cgltf_component_type_r_32f);
+        // CASSERT_MSG(accessor->type == cgltf_type_vec3, "Vertex positions should be a vec3");
+
+        for (cgltf_size v = 0; v < accessor->count; ++v) {
+          vec3 pos;
+          cgltf_accessor_read_float(accessor, v, &pos.x, 3);
+          vec3_darray_push(tmp_positions, pos);
+        }
+
+      } else if (attribute.type == cgltf_attribute_type_normal) {
+        TRACE("Load normals from accessor");
+
+        cgltf_accessor *accessor = attribute.data;
+        assert(accessor->component_type == cgltf_component_type_r_32f);
+        // CASSERT_MSG(accessor->type == cgltf_type_vec3, "Normal vectors should be a vec3");
+
+        for (cgltf_size v = 0; v < accessor->count; ++v) {
+          vec3 pos;
+          cgltf_accessor_read_float(accessor, v, &pos.x, 3);
+          vec3_darray_push(tmp_normals, pos);
+        }
+
+      } else if (attribute.type == cgltf_attribute_type_texcoord) {
+        TRACE("Load texture coordinates from accessor");
+        cgltf_accessor *accessor = attribute.data;
+        assert(accessor->component_type == cgltf_component_type_r_32f);
+        // CASSERT_MSG(accessor->type == cgltf_type_vec2, "Texture coordinates should be a vec2");
+
+        for (cgltf_size v = 0; v < accessor->count; ++v) {
+          vec2 tex;
+          bool success = cgltf_accessor_read_float(accessor, v, &tex.x, 2);
+          if (!success) {
+            ERROR("Error loading tex coord");
+          }
+          vec2_darray_push(tmp_uvs, tex);
+        }
+      } else if (attribute.type == cgltf_attribute_type_joints) {
+        // TODO: handle joints
+      } else {
+        WARN("Unhandled cgltf_attribute_type: %s. skipping..", attribute.name);
+      }
+    }
+
+    mesh mesh;
+    mesh.vertices = vertex_darray_new(10);
+
+    cgltf_accessor *indices = primitive.indices;
+    if (primitive.indices > 0) {
+      mesh.has_indices = true;
+
+      mesh.indices = malloc(indices->count * sizeof(u32));
+      mesh.indices_len = indices->count;
+
+      // store indices
+      for (cgltf_size i = 0; i < indices->count; ++i) {
+        cgltf_uint ei;
+        cgltf_accessor_read_uint(indices, i, &ei, 1);
+        mesh.indices[i] = ei;
+      }
+
+      // fetch and store vertices for each index
+      for (cgltf_size i = 0; i < indices->count; ++i) {
+        vertex vert;
+        cgltf_uint index = mesh.indices[i];
+        // printf("Index %d\n", index);
+        vert.position = tmp_positions->data[index];
+        vert.normal = tmp_normals->data[index];
+        vert.uv = tmp_uvs->data[index];
+        vertex_darray_push(mesh.vertices, vert);
+      }
+
+    } else {
+      mesh.has_indices = false;
+      return false;  // TODO
+    }
+
+    // HACK
+    mesh.material_index = 0;
+
+    mesh_darray_push(out_model->meshes, mesh);
+  }
+
+  material_darray_push(out_model->materials, DEFAULT_MATERIAL);
+
+  return true;
+}
+
+/*
 bool model_load_gltf(const char *path, model *out_model) {
   TRACE("Load GLTF %s", path);
 
@@ -166,7 +340,7 @@ bool model_load_gltf(const char *path, model *out_model) {
           }
         } else if (attribute.type == cgltf_attribute_type_joints) {
           // handle joints
-          
+
         } else {
           WARN("Unhandled cgltf_attribute_type: %s. skipping..", attribute.name);
         }
