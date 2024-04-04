@@ -59,8 +59,8 @@ static inline vec2 vec2_create(f32 x, f32 y) { return (vec2){ x, y }; }
 static inline f32 quat_dot(quat a, quat b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
 
 static inline quat quat_normalise(quat a) {
-  f32 length = sqrtf(quat_dot(a, a)  // same as len squared
-  );
+  f32 length = sqrtf(quat_dot(a, a));  // same as len squared
+
   return (quat){ a.x / length, a.y / length, a.z / length, a.w / length };
 }
 
