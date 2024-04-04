@@ -35,5 +35,7 @@ void model_upload_meshes(renderer* ren, model* model);
 void draw_model(renderer* ren, camera* camera, model* model, transform tf, scene* scene);
 void draw_mesh(renderer* ren, mesh* mesh, transform tf, material* mat, mat4* view, mat4* proj);
 
+void model_destroy(model* model);
+
 // ---
 texture texture_data_load(const char* path, bool invert_y);  // #frontend

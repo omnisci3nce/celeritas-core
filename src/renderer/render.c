@@ -1,3 +1,4 @@
+#include "mem.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -86,6 +87,21 @@ void default_material_init() {
   strcpy(DEFAULT_MATERIAL.name, "Default");
   texture_data_upload(&DEFAULT_MATERIAL.diffuse_texture);
   texture_data_upload(&DEFAULT_MATERIAL.specular_texture);
+}
+
+void model_destroy(model* model) {
+  arena_free_all(&model->animation_data_arena);
+  arena_free_storage(&model->animation_data_arena);
+  mesh_darray_free(model->meshes);
+  material_darray_free(model->materials);
+  if (model->is_uploaded) {
+    // Delete gpu buffer data
+    for (u32 i = 0; i < mesh_darray_len(model->meshes); i++) {
+      // FIXME: dont leak Opengl
+      glDeleteBuffers(1, &model->meshes->data[i].vbo);
+      glDeleteVertexArrays(1, &model->meshes->data[i].vao);
+    }
+  }
 }
 
 void draw_model(renderer* ren, camera* camera, model* model, transform tf, scene* scene) {

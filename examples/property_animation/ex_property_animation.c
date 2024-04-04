@@ -4,6 +4,7 @@
 #include "core.h"
 #include "input.h"
 #include "keys.h"
+#include "log.h"
 #include "maths.h"
 #include "maths_types.h"
 #include "primitives.h"
@@ -96,6 +97,9 @@ int main() {
 
     render_frame_end(&core->renderer);
   }
+
+  INFO("Shutting down");
+  model_destroy(cube);
 
   core_shutdown(core);
 

@@ -1,11 +1,13 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include "animation.h"
 #include "core.h"
 #include "defines.h"
 #include "file.h"
 #include "loaders.h"
 #include "log.h"
+#include "mem.h"
 #include "path.h"
 #include "render.h"
 #include "render_types.h"
@@ -228,6 +230,63 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     printf("Mesh %d Mat index %d Mat name %s\n", i, mat_idx,
            out_model->materials->data[mat_idx].name);
   }
+
+  // Animations
+  TRACE("Num animations %d", data->animations_count);
+  size_t num_animations = data->animations_count;
+  if (num_animations > 0) {
+// Create an arena for all animation related data
+#define ANIMATION_STORAGE_ARENA_SIZE (1024 * 1024)
+    char *animation_backing_storage = malloc(ANIMATION_STORAGE_ARENA_SIZE);
+    // We'll store data on this arena so we can easily free it all at once later
+    arena anim_arena = arena_create(animation_backing_storage, ANIMATION_STORAGE_ARENA_SIZE);
+
+    if (!out_model->animations) {
+      out_model->animations = animation_clip_darray_new(num_animations);
+    }
+
+    for (int anim_idx = 0; anim_idx < data->animations_count; anim_idx++) {
+      cgltf_animation animation = data->animations[anim_idx];
+      animation_clip clip = { 0 };
+
+      for (size_t c = 0; c < animation.channels_count; c++) {
+        cgltf_animation_channel channel = animation.channels[c];
+
+        animation_sampler *sampler = arena_alloc(&anim_arena, sizeof(animation_sampler));
+
+        animation_sampler **target_property;
+        keyframe_kind data_type;
+
+        switch (channel.target_path) {
+          case cgltf_animation_path_type_rotation:
+            target_property = &clip.rotation;
+            data_type = KEYFRAME_ROTATION;
+            break;
+          default:
+            WARN("unsupported animation type");
+            return false;
+        }
+        *target_property = sampler;
+
+        sampler->current_index = 0;
+        sampler->animation.interpolation = INTERPOLATION_LINEAR;
+
+        // keyframe times
+        size_t n_frames = channel.sampler->input->count;
+        assert(channel.sampler->input->component_type == cgltf_component_type_r_32f);
+        // FIXME: CASSERT_MSG function "Expected animation sampler input component to be type f32 (keyframe times)");
+        
+        sampler,
+        
+        // keyframe values
+        size_t n_values = channel.sampler->output->count;
+        assert(n_frames == n_values);
+
+        sampler->animation.timestamps
+      }
+    }
+  }
+
   return true;
 }
 

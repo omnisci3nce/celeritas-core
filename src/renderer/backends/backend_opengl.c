@@ -42,9 +42,7 @@ bool gfx_backend_init(renderer *ren) {
   return true;
 }
 
-void gfx_backend_draw_frame(renderer* ren, camera* cam, mat4 model, texture* tex) {
-  
-}
+void gfx_backend_draw_frame(renderer *ren, camera *cam, mat4 model, texture *tex) {}
 
 void gfx_backend_shutdown(renderer *ren) {}
 

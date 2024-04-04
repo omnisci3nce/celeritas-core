@@ -7,6 +7,7 @@
  */
 #pragma once
 
+#include "animation.h"
 #include "darray.h"
 #include "maths.h"
 #include "maths_types.h"
@@ -52,8 +53,8 @@ typedef struct renderer {
 typedef struct texture {
   u32 texture_id;
   char name[MAX_TEXTURE_NAME_LEN];
-  void* image_data;
-  void* backend_data;
+  void *image_data;
+  void *backend_data;
   u32 width;
   u32 height;
   u8 channel_count;
@@ -82,6 +83,11 @@ void default_material_init();
 #ifndef TYPED_MATERIAL_ARRAY
 KITC_DECL_TYPED_ARRAY(material)  // creates "material_darray"
 #define TYPED_MATERIAL_ARRAY
+#endif
+
+#ifndef TYPED_ANIMATION_CLIP_ARRAY
+KITC_DECL_TYPED_ARRAY(animation_clip)  // creates "material_darray"
+#define TYPED_ANIMATION_CLIP_ARRAY
 #endif
 
 // lights
@@ -137,6 +143,8 @@ typedef struct model {
   mesh_darray *meshes;
   aabb_3d bbox;
   material_darray *materials;
+  animation_clip_darray *animations;
+  arena animation_data_arena;
   bool is_loaded;
   bool is_uploaded;
 } model;
