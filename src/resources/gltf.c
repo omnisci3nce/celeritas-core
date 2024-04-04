@@ -211,7 +211,8 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
 
     if (primitive.material != NULL) {
       for (int i = 0; i < material_darray_len(out_model->materials); i++) {
-        if (strcmp(primitive.material->name, out_model->materials->data[i].name)) {
+        printf("%s vs %s \n", primitive.material->name, out_model->materials->data[i].name);
+        if (strcmp(primitive.material->name, out_model->materials->data[i].name) == 0) {
           TRACE("Found material");
           mesh.material_index = i;
           break;
