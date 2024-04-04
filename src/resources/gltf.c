@@ -1,11 +1,13 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include "core.h"
 #include "defines.h"
 #include "file.h"
 #include "loaders.h"
 #include "log.h"
 #include "path.h"
+#include "render.h"
 #include "render_types.h"
 #include "str.h"
 
@@ -23,8 +25,8 @@ KITC_DECL_TYPED_ARRAY(vec2)
 KITC_DECL_TYPED_ARRAY(u32)
 KITC_DECL_TYPED_ARRAY(face)
 
-bool model_load_gltf_str(const char *file_string, const char *filepath, model *out_model,
-                         bool invert_textures_y);
+bool model_load_gltf_str(const char *file_string, const char *filepath, str8 relative_path,
+                         model *out_model, bool invert_textures_y);
 
 model_handle model_load_gltf(struct core *core, const char *path, bool invert_texture_y) {
   size_t arena_size = 1024;
@@ -42,7 +44,8 @@ model_handle model_load_gltf(struct core *core, const char *path, bool invert_te
   model.meshes = mesh_darray_new(1);
   model.materials = material_darray_new(1);
 
-  bool success = model_load_gltf_str(file_string, path, &model, invert_texture_y);
+  bool success =
+      model_load_gltf_str(file_string, path, relative_path.path, &model, invert_texture_y);
 
   if (!success) {
     FATAL("Couldnt load OBJ file at path %s", path);
@@ -59,8 +62,8 @@ model_handle model_load_gltf(struct core *core, const char *path, bool invert_te
 
 // TODO: Brainstorm how I can make this simpler and break it up into more testable pieces
 
-bool model_load_gltf_str(const char *file_string, const char *filepath, model *out_model,
-                         bool invert_textures_y) {
+bool model_load_gltf_str(const char *file_string, const char *filepath, str8 relative_path,
+                         model *out_model, bool invert_textures_y) {
   TRACE("Load GLTF from string");
 
   // Setup temps
@@ -81,6 +84,45 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, model *o
   cgltf_load_buffers(&options, data, filepath);
   DEBUG("loaded buffers");
 
+  // --- Materials
+  TRACE("Num materials %d", data->materials_count);
+  size_t num_materials = data->materials_count;
+  for (size_t m = 0; m < num_materials; m++) {
+    cgltf_material gltf_material = data->materials[m];
+    material our_material = DEFAULT_MATERIAL;
+
+    strcpy(our_material.name, gltf_material.name);
+
+    cgltf_pbr_metallic_roughness pbr = gltf_material.pbr_metallic_roughness;
+    if (gltf_material.has_pbr_metallic_roughness) {
+      // we will use base color texture like blinn phong
+      cgltf_texture_view diff_tex_view = pbr.base_color_texture;
+
+      char diffuse_map_path[1024];
+      snprintf(diffuse_map_path, sizeof(diffuse_map_path), "%s/%s", relative_path.buf,
+               diff_tex_view.texture->image->uri);
+
+      strcpy(our_material.diffuse_tex_path, diffuse_map_path);
+      texture diffuse_texture = texture_data_load(our_material.diffuse_tex_path, false);
+      texture_data_upload(&diffuse_texture);
+      our_material.diffuse_texture = diffuse_texture;
+
+      cgltf_texture_view specular_tex_view = pbr.metallic_roughness_texture;
+
+      char specular_map_path[1024];
+      snprintf(specular_map_path, sizeof(specular_map_path), "%s/%s", relative_path.buf,
+               specular_tex_view.texture->image->uri);
+
+      strcpy(our_material.specular_tex_path, specular_map_path);
+      texture specular_texture = texture_data_load(our_material.specular_tex_path, false);
+      texture_data_upload(&specular_texture);
+      our_material.specular_texture = specular_texture;
+    }
+
+    material_darray_push(out_model->materials, our_material);
+  }
+
+  // --- Meshes
   TRACE("Num meshes %d", data->meshes_count);
   size_t num_meshes = data->meshes_count;
   for (size_t m = 0; m < num_meshes; m++) {
@@ -157,26 +199,34 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, model *o
       for (cgltf_size i = 0; i < indices->count; ++i) {
         vertex vert;
         cgltf_uint index = mesh.indices[i];
-        // printf("Index %d\n", index);
         vert.position = tmp_positions->data[index];
         vert.normal = tmp_normals->data[index];
         vert.uv = tmp_uvs->data[index];
         vertex_darray_push(mesh.vertices, vert);
       }
-
     } else {
       mesh.has_indices = false;
       return false;  // TODO
     }
 
-    // HACK
-    mesh.material_index = 0;
+    if (primitive.material != NULL) {
+      for (int i = 0; i < material_darray_len(out_model->materials); i++) {
+        if (strcmp(primitive.material->name, out_model->materials->data[i].name)) {
+          TRACE("Found material");
+          mesh.material_index = i;
+          break;
+        }
+      }
+    }
 
     mesh_darray_push(out_model->meshes, mesh);
   }
 
-  material_darray_push(out_model->materials, DEFAULT_MATERIAL);
-
+  for (int i = 0; i < out_model->meshes->len; i++) {
+    u32 mat_idx = out_model->meshes->data[i].material_index;
+    printf("Mesh %d Mat index %d Mat name %s\n", i, mat_idx,
+           out_model->materials->data[mat_idx].name);
+  }
   return true;
 }
 
