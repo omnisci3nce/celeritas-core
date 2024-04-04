@@ -17,8 +17,8 @@
 
 // FIXME: get rid of these and store dynamic screen realestate
 //        in renderer
-#define SCR_WIDTH 1080
-#define SCR_HEIGHT 800
+#define SCR_WIDTH 1000
+#define SCR_HEIGHT 1000
 
 material DEFAULT_MATERIAL = { 0 };
 
@@ -28,17 +28,20 @@ bool renderer_init(renderer* ren) {
   // NOTE: all platforms use GLFW at the moment but thats subject to change
   glfwInit();
 
-  DEBUG("init graphics api (OpenGL) backend");
+#if defined(CEL_REND_BACKEND_OPENGL)
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#elif defined(CEL_REND_BACKEND_VULKAN)
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+#endif
 
   // glfw window creation
   GLFWwindow* window = glfwCreateWindow(ren->config.scr_width, ren->config.scr_height,
                                         ren->config.window_name, NULL, NULL);
   if (window == NULL) {
-    printf("Failed to create GLFW window\n");
+    ERROR("Failed to create GLFW window\n");
     glfwTerminate();
     return false;
   }
@@ -46,6 +49,7 @@ bool renderer_init(renderer* ren) {
 
   glfwMakeContextCurrent(ren->window);
 
+  DEBUG("init graphics api backend");
   if (!gfx_backend_init(ren)) {
     FATAL("Couldnt load graphics api backend");
     return false;
@@ -58,6 +62,8 @@ bool renderer_init(renderer* ren) {
 
   return true;
 }
+
+void renderer_shutdown(renderer* ren) {}
 
 void render_frame_begin(renderer* ren) {
   vec3 color = ren->config.clear_colour;
@@ -220,7 +226,7 @@ texture texture_data_load(const char* path, bool invert_y) {
   stbi_set_flip_vertically_on_load(invert_y);
 
 #pragma GCC diagnostic ignored "-Wpointer-sign"
-  char* data = stbi_load(path, &width, &height, &num_channels, 0);
+  char* data = stbi_load(path, &width, &height, &num_channels, STBI_rgb_alpha);
   if (data) {
     DEBUG("loaded texture: %s", path);
   } else {
@@ -241,29 +247,6 @@ texture texture_data_load(const char* path, bool invert_y) {
                     .channel_type = channel_type,
                     .name = "TODO: Texture names",
                     .image_data = data };
-}
-
-void texture_data_upload(texture* tex) {
-  printf("Texture name %s\n", tex->name);
-  TRACE("Upload texture data");
-  u32 texture_id;
-  glGenTextures(1, &texture_id);
-  glBindTexture(GL_TEXTURE_2D, texture_id);
-  tex->texture_id = texture_id;
-
-  // set the texture wrapping parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                  GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  // set texture filtering parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex->width, tex->height, 0, tex->channel_type,
-               GL_UNSIGNED_BYTE, tex->image_data);
-  glGenerateMipmap(GL_TEXTURE_2D);
-  DEBUG("Freeing texture image data after uploading to GPU");
-  // stbi_image_free(tex->image_data);  // data is on gpu now so we dont need it around
 }
 
 void dir_light_upload_uniforms(shader shader, directional_light* light) {

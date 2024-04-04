@@ -8,6 +8,7 @@
 #pragma once
 
 #include "darray.h"
+#include "maths.h"
 #include "maths_types.h"
 #include "str.h"
 
@@ -34,6 +35,10 @@ typedef struct renderer_config {
   vec3 clear_colour; /** colour that the screen gets cleared to every frame */
 } renderer_config;
 
+typedef struct frame_stats {
+  u64 last_time;
+} frame_stats;
+
 typedef struct renderer {
   struct GLFWwindow *window; /** Currently all platforms use GLFW*/
   void *backend_state;       /** Graphics API-specific state */
@@ -47,7 +52,8 @@ typedef struct renderer {
 typedef struct texture {
   u32 texture_id;
   char name[MAX_TEXTURE_NAME_LEN];
-  void *image_data;
+  void* image_data;
+  void* backend_data;
   u32 width;
   u32 height;
   u8 channel_count;

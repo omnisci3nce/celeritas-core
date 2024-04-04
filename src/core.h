@@ -8,6 +8,7 @@
 #include "threadpool.h"
 
 typedef struct core {
+  // TODO: Add application name
   renderer renderer;
   threadpool threadpool;
   input_state input;
@@ -19,5 +20,6 @@ typedef struct core {
 // --- Lifecycle
 core* core_bringup();
 void core_shutdown(core* core);
+bool should_exit(core* core);
 
 void core_input_update(core* core);

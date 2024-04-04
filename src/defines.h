@@ -66,8 +66,8 @@ Renderer backend defines:
 
 // Platform will inform renderer backend (unless user overrides)
 #if defined(CEL_PLATFORM_LINUX) || defined(CEL_PLATFORM_WINDOWS)
-#define CEL_REND_BACKEND_OPENGL 1
-// #define CEL_REND_BACKEND_VULKAN 1
+// #define CEL_REND_BACKEND_OPENGL 1
+#define CEL_REND_BACKEND_VULKAN 1
 #endif
 
 #if defined(CEL_PLATFORM_MAC)

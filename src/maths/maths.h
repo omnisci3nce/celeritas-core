@@ -9,6 +9,7 @@
 #pragma once
 
 #include <math.h>
+#include <stdio.h>
 #include "maths_types.h"
 
 // --- Helpers
@@ -48,10 +49,14 @@ static inline vec3 vec3_cross(vec3 a, vec3 b) {
 #define VEC3_Z ((vec3){ .x = 0.0, .y = 0.0, .z = 1.0 })
 #define VEC3_NEG_Z ((vec3){ .x = 0.0, .y = 0.0, .z = -1.0 })
 
+static inline void print_vec3(vec3 v) { printf("{ x: %f, y: %f, z: %f )\n", v.x, v.y, v.z); }
+
 // TODO: Dimension 2
 static inline vec2 vec2_create(f32 x, f32 y) { return (vec2){ x, y }; }
 
 // TODO: Dimension 4
+static inline vec4 vec4_create(f32 x, f32 y, f32 z, f32 w) { return (vec4){ x, y, z, w }; }
+#define vec4(x, y, z, w) (vec4_create(x, y, z, w))
 #define VEC4_ZERO ((vec4){ .x = 0.0, .y = 0.0, .z = 0.0, .w = 0.0 })
 
 // --- Quaternion Implementations
@@ -139,6 +144,43 @@ static inline mat4 mat4_mult(mat4 lhs, mat4 rhs) {
   return out_matrix;
 }
 
+static mat4 mat4_transposed(mat4 matrix) {
+  mat4 out_matrix = mat4_ident();
+  out_matrix.data[0] = matrix.data[0];
+  out_matrix.data[1] = matrix.data[4];
+  out_matrix.data[2] = matrix.data[8];
+  out_matrix.data[3] = matrix.data[12];
+  out_matrix.data[4] = matrix.data[1];
+  out_matrix.data[5] = matrix.data[5];
+  out_matrix.data[6] = matrix.data[9];
+  out_matrix.data[7] = matrix.data[13];
+  out_matrix.data[8] = matrix.data[2];
+  out_matrix.data[9] = matrix.data[6];
+  out_matrix.data[10] = matrix.data[10];
+  out_matrix.data[11] = matrix.data[14];
+  out_matrix.data[12] = matrix.data[3];
+  out_matrix.data[13] = matrix.data[7];
+  out_matrix.data[14] = matrix.data[11];
+  out_matrix.data[15] = matrix.data[15];
+  return out_matrix;
+}
+
+#if defined(CEL_REND_BACKEND_VULKAN)
+/** @brief Creates a perspective projection matrix compatible with Vulkan */
+static inline mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_clip,
+                                    f32 far_clip) {
+  f32 half_tan_fov = tanf(fov_radians * 0.5f);
+  mat4 out_matrix = { .data = { 0 } };
+
+  out_matrix.data[0] = 1.0f / (aspect_ratio * half_tan_fov);
+  out_matrix.data[5] = -1.0f / half_tan_fov;  // Flip Y-axis for Vulkan
+  out_matrix.data[10] = -((far_clip + near_clip) / (far_clip - near_clip));
+  out_matrix.data[11] = -1.0f;
+  out_matrix.data[14] = -((2.0f * far_clip * near_clip) / (far_clip - near_clip));
+
+  return out_matrix;
+}
+#else
 /** @brief Creates a perspective projection matrix */
 static inline mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_clip,
                                     f32 far_clip) {
@@ -151,6 +193,7 @@ static inline mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_
   out_matrix.data[14] = -((2.0f * far_clip * near_clip) / (far_clip - near_clip));
   return out_matrix;
 }
+#endif
 
 /** @brief Creates an orthographic projection matrix */
 static inline mat4 mat4_orthographic(f32 left, f32 right, f32 bottom, f32 top, f32 near_clip,
@@ -246,3 +289,9 @@ typedef struct u32x3 {
   };
 } u32x3;
 #define u32x3(x, y, z) ((u32x3){ x, y, z })
+
+typedef struct u32x2 {
+  u32 x;
+  u32 y;
+} u32x2;
+#define u32x2(x, y) ((u32x3){ x, y })

@@ -14,6 +14,7 @@ add_cflags("-Wall", "-Wextra", "-Wundef", "-Wdouble-promotion")
 
 if is_mode("debug") then
     add_cflags("-g") -- Add debug symbols in debug mode
+    add_defines("CDEBUG")
 elseif is_mode("release") then
     add_defines("CRELEASE")
 end
@@ -22,7 +23,7 @@ end
 -- Platform defines and system packages
 if is_plat("linux") then
     add_defines("CEL_PLATFORM_LINUX")
-    add_syslinks("dl", "X11", "pthread")
+    add_syslinks("vulkan", "dl", "X11", "pthread")
 elseif is_plat("windows") then
     add_defines("CEL_PLATFORM_WINDOWS")
 elseif is_plat("macosx") then
@@ -63,6 +64,26 @@ local core_sources = {
     "src/systems/*.c",
 }
 
+rule("compile_glsl_vert_shaders")
+    set_extensions(".vert")
+    on_buildcmd_file(function (target, batchcmds, sourcefile, opt) 
+        local targetfile = path.join(target:targetdir(), path.basename(sourcefile) .. ".vert.spv")
+        
+        print("Compiling shader: %s to %s", sourcefile, targetfile)
+        batchcmds:vrunv('glslc', {sourcefile, "-o", targetfile})
+        -- batchcmds:add_depfiles(sourcefile)
+end)
+rule("compile_glsl_frag_shaders")
+    set_extensions(".frag")
+    on_buildcmd_file(function (target, batchcmds, sourcefile, opt) 
+        local targetfile = path.join(target:targetdir(), path.basename(sourcefile) .. ".frag.spv")
+        
+        print("Compiling shader: %s to %s", sourcefile, targetfile)
+        batchcmds:vrunv('glslc', {sourcefile, "-o", targetfile})
+        -- batchcmds:add_depfiles(sourcefile)
+end)
+-- TODO: Metal shaders compilation
+
 -- common configuration for both static and shared libraries
 target("core_config")
     set_kind("static") -- kind is required but you can ignore it since it's just for common settings
@@ -85,6 +106,11 @@ target("core_config")
     add_includedirs("src/std/containers", {public = true})
     add_includedirs("src/systems/", {public = true})
     add_files("src/empty.c") -- for some reason we need this on Mac so it doesnt call 'ar' with no files and error
+    add_rules("compile_glsl_vert_shaders")
+    add_rules("compile_glsl_frag_shaders")
+    add_files("assets/shaders/object.vert")
+    add_files("assets/shaders/object.frag")
+    -- add_files("assets/shaders/*.frag")
     set_default(false) -- prevents standalone building of this target
 
 target("core_static")
@@ -131,6 +157,13 @@ target("animation")
     set_group("examples")
     add_deps("core_shared")
     add_files("examples/property_animation/ex_property_animation.c")
+    set_rundir("$(projectdir)")
+
+target("input")
+    set_kind("binary")
+    set_group("examples")
+    add_deps("core_static")
+    add_files("examples/input/ex_input.c")
     set_rundir("$(projectdir)")
 
 target("demo")
