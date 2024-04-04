@@ -67,15 +67,15 @@ static inline quat quat_normalise(quat a) {
 static inline quat quat_ident() { return (quat){ .x = 0.0, .y = 0.0, .z = 0.0, .w = 1.0 }; }
 
 static quat quat_from_axis_angle(vec3 axis, f32 angle, bool normalize) {
-    const f32 half_angle = 0.5f * angle;
-    f32 s = sinf(half_angle);
-    f32 c = cosf(half_angle);
+  const f32 half_angle = 0.5f * angle;
+  f32 s = sinf(half_angle);
+  f32 c = cosf(half_angle);
 
-    quat q = (quat){s * axis.x, s * axis.y, s * axis.z, c};
-    if (normalize) {
-        return quat_normalise(q);
-    }
-    return q;
+  quat q = (quat){ s * axis.x, s * axis.y, s * axis.z, c };
+  if (normalize) {
+    return quat_normalise(q);
+  }
+  return q;
 }
 
 // --- Matrix Implementations
