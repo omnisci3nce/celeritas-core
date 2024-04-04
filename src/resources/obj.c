@@ -18,6 +18,7 @@
 #include "mem.h"
 #include "path.h"
 #include "render.h"
+#include "render_backend.h"
 #include "render_types.h"
 #include "str.h"
 

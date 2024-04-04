@@ -29,18 +29,21 @@ typedef struct keyframes {
 } keyframes;
 
 typedef struct animation_spline {
-  f32_darray timestamps;
+  f32* timestamps;
+  size_t n_timestamps;
   keyframes values;
   interpolation interpolation;
 } animation_spline;
 
 typedef struct animation_sampler {
   int current_index;
+  f32 min;
+  f32 max;
   animation_spline animation;
 } animation_sampler;
 
 /** @brief Sample an animation at a given time `t` */
-keyframe animation_sample(animation_sampler sampler, f32 t);
+keyframe animation_sample(animation_sampler* sampler, f32 t);
 
 typedef struct animation_clip {
   // A clip contains one or more animation curves
@@ -51,3 +54,5 @@ typedef struct animation_clip {
   animation_sampler* scale;
   animation_sampler* weights;
 } animation_clip;
+
+void animation_play(animation_clip* clip);

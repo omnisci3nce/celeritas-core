@@ -1,5 +1,6 @@
 #include <glfw3.h>
 
+#include "animation.h"
 #include "camera.h"
 #include "core.h"
 #include "input.h"
@@ -30,6 +31,10 @@ typedef struct game_state {
 void update_camera_rotation(input_state* input, game_state* game, camera* cam);
 
 int main() {
+  double currentFrame = glfwGetTime();
+  double lastFrame = currentFrame;
+  double deltaTime;
+
   core* core = core_bringup();
 
   model_handle animated_cube_handle =
@@ -67,8 +72,18 @@ int main() {
   const f32 camera_lateral_speed = 0.2;
   const f32 camera_zoom_speed = 0.15;
 
+  // animation
+    animation_clip track = cube->animations->data[0];
+  f64 total_time = 0.0;
+
   while (!should_exit(core)) {
     input_update(&core->input);
+
+    currentFrame = glfwGetTime();
+    deltaTime = currentFrame - lastFrame;
+    total_time += deltaTime * 0.00001;
+    f64 t = fmod(total_time * 1000.0, 1.0);
+    INFO("Total time: %f", t);
 
     vec3 translation = VEC3_ZERO;
     if (key_is_pressed(KEYCODE_W) || key_is_pressed(KEYCODE_KEY_UP)) {
@@ -89,7 +104,9 @@ int main() {
     render_frame_begin(&core->renderer);
 
     mat4 model = mat4_translation(VEC3_ZERO);
-    transform tf = transform_create(VEC3_ZERO, quat_ident(), 1.0);
+    quat rot = animation_sample(track.rotation, t).rotation;
+    // quat rot = quat_ident();
+    transform tf = transform_create(VEC3_ZERO, rot, 1.0);
 
     draw_model(&core->renderer, &game.camera, cube, tf, &our_scene);
 

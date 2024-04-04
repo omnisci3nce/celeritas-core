@@ -10,6 +10,7 @@
 #include "mem.h"
 #include "path.h"
 #include "render.h"
+#include "render_backend.h"
 #include "render_types.h"
 #include "str.h"
 
@@ -236,10 +237,12 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
   size_t num_animations = data->animations_count;
   if (num_animations > 0) {
 // Create an arena for all animation related data
-#define ANIMATION_STORAGE_ARENA_SIZE (1024 * 1024)
+#define ANIMATION_STORAGE_ARENA_SIZE (1024 * 1024 * 1024)
     char *animation_backing_storage = malloc(ANIMATION_STORAGE_ARENA_SIZE);
     // We'll store data on this arena so we can easily free it all at once later
-    arena anim_arena = arena_create(animation_backing_storage, ANIMATION_STORAGE_ARENA_SIZE);
+    out_model->animation_data_arena =
+        arena_create(animation_backing_storage, ANIMATION_STORAGE_ARENA_SIZE);
+    arena *arena = &out_model->animation_data_arena;
 
     if (!out_model->animations) {
       out_model->animations = animation_clip_darray_new(num_animations);
@@ -252,38 +255,74 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
       for (size_t c = 0; c < animation.channels_count; c++) {
         cgltf_animation_channel channel = animation.channels[c];
 
-        animation_sampler *sampler = arena_alloc(&anim_arena, sizeof(animation_sampler));
+        animation_sampler *sampler = arena_alloc(arena, sizeof(animation_sampler));
 
-        animation_sampler **target_property;
+        // animation_sampler **target_property;
         keyframe_kind data_type;
 
         switch (channel.target_path) {
           case cgltf_animation_path_type_rotation:
-            target_property = &clip.rotation;
+            // target_property = &clip.rotation;
             data_type = KEYFRAME_ROTATION;
             break;
           default:
             WARN("unsupported animation type");
             return false;
         }
-        *target_property = sampler;
+        // *target_property = sampler;
 
         sampler->current_index = 0;
+        printf("1 %d index\n", sampler->current_index);
         sampler->animation.interpolation = INTERPOLATION_LINEAR;
 
         // keyframe times
         size_t n_frames = channel.sampler->input->count;
+        printf("n_frames: %d\n", n_frames);
         assert(channel.sampler->input->component_type == cgltf_component_type_r_32f);
-        // FIXME: CASSERT_MSG function "Expected animation sampler input component to be type f32 (keyframe times)");
-        
-        sampler,
-        
+        // FIXME: CASSERT_MSG function "Expected animation sampler input component to be type f32
+        // (keyframe times)");
+        printf("2 %d index\n", sampler->current_index);
+        f32 *times = arena_alloc(arena, n_frames * sizeof(f32));
+        printf("3 %d index\n", sampler->current_index);
+        sampler->animation.n_timestamps = n_frames;
+        printf("n_timestamps: %d\n", sampler->animation.n_timestamps);
+        sampler->animation.timestamps = times;
+        cgltf_accessor_unpack_floats(channel.sampler->input, times, n_frames);
+      
+        printf("4 %d index\n", sampler->current_index);
+
+        if (channel.target_path == cgltf_animation_path_type_rotation) {
+          assert(channel.sampler->output->component_type == cgltf_component_type_r_32f);
+          assert(channel.sampler->output->type == cgltf_type_vec4);
+        }
+
         // keyframe values
         size_t n_values = channel.sampler->output->count;
         assert(n_frames == n_values);
+        ERROR("N frames %d", n_frames);
 
-        sampler->animation.timestamps
+        keyframes keyframes = { 0 };
+        keyframes.kind = KEYFRAME_ROTATION;
+        keyframes.count = n_values;
+        keyframes.values = arena_alloc(arena, n_values * sizeof(keyframe));
+        for (cgltf_size v = 0; v < channel.sampler->output->count; ++v) {
+          quat rot;
+          cgltf_accessor_read_float(channel.sampler->output, v, &rot.x, 4);
+          printf("Quat %f %f %f %f\n", rot.x, rot.y, rot.z, rot.w);
+          keyframes.values[v].rotation = rot;
+        }
+        sampler->animation.values = keyframes;
+
+        sampler->min = channel.sampler->input->min[0];
+        sampler->max = channel.sampler->input->max[0];
+
+        clip.rotation = sampler;
+        printf("%d timestamps\n", sampler->animation.n_timestamps);
+        printf("%d index\n", sampler->current_index);
       }
+
+      WARN("stuff %ld", clip.rotation->animation.n_timestamps);
+      animation_clip_darray_push(out_model->animations, clip);
     }
   }
 
