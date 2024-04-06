@@ -63,6 +63,14 @@ model_handle model_load_gltf(struct core *core, const char *path, bool invert_te
   return (model_handle){ .raw = index };
 }
 
+void assert_path_type_matches_component_type(cgltf_animation_path_type target_path,
+                                             cgltf_accessor *output) {
+  if (target_path == cgltf_animation_path_type_rotation) {
+    assert(output->component_type == cgltf_component_type_r_32f);
+    assert(output->type == cgltf_type_vec4);
+  }
+}
+
 // TODO: Brainstorm how I can make this simpler and break it up into more testable pieces
 
 bool model_load_gltf_str(const char *file_string, const char *filepath, str8 relative_path,
@@ -175,7 +183,8 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
           vec2_darray_push(tmp_uvs, tex);
         }
       } else if (attribute.type == cgltf_attribute_type_joints) {
-        // TODO: handle joints
+        cgltf_accessor *accessor = attribute.data;
+        assert(accessor->component_type == cgltf_component_type_r_32u);
       } else {
         WARN("Unhandled cgltf_attribute_type: %s. skipping..", attribute.name);
       }
@@ -257,19 +266,32 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
 
         animation_sampler *sampler = arena_alloc(arena, sizeof(animation_sampler));
 
-        // animation_sampler **target_property;
+        animation_sampler **target_property;
         keyframe_kind data_type;
 
         switch (channel.target_path) {
           case cgltf_animation_path_type_rotation:
-            // target_property = &clip.rotation;
+            target_property = &clip.rotation;
             data_type = KEYFRAME_ROTATION;
             break;
+          case cgltf_animation_path_type_translation:
+            target_property = &clip.translation;
+            data_type = KEYFRAME_TRANSLATION;
+            break;
+          case cgltf_animation_path_type_scale:
+            target_property = &clip.scale;
+            data_type = KEYFRAME_SCALE;
+            break;
+          case cgltf_animation_path_type_weights:
+            target_property = &clip.weights;
+            data_type = KEYFRAME_WEIGHTS;
+            WARN("Morph target weights arent supported yet");
+            return false;
           default:
             WARN("unsupported animation type");
             return false;
         }
-        // *target_property = sampler;
+        *target_property = sampler;
 
         sampler->current_index = 0;
         printf("1 %d index\n", sampler->current_index);
@@ -277,48 +299,59 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
 
         // keyframe times
         size_t n_frames = channel.sampler->input->count;
-        printf("n_frames: %d\n", n_frames);
         assert(channel.sampler->input->component_type == cgltf_component_type_r_32f);
         // FIXME: CASSERT_MSG function "Expected animation sampler input component to be type f32
         // (keyframe times)");
-        printf("2 %d index\n", sampler->current_index);
         f32 *times = arena_alloc(arena, n_frames * sizeof(f32));
-        printf("3 %d index\n", sampler->current_index);
         sampler->animation.n_timestamps = n_frames;
-        printf("n_timestamps: %d\n", sampler->animation.n_timestamps);
         sampler->animation.timestamps = times;
         cgltf_accessor_unpack_floats(channel.sampler->input, times, n_frames);
-      
-        printf("4 %d index\n", sampler->current_index);
 
-        if (channel.target_path == cgltf_animation_path_type_rotation) {
-          assert(channel.sampler->output->component_type == cgltf_component_type_r_32f);
-          assert(channel.sampler->output->type == cgltf_type_vec4);
-        }
+        assert_path_type_matches_component_type(channel.target_path, channel.sampler->output);
 
         // keyframe values
         size_t n_values = channel.sampler->output->count;
         assert(n_frames == n_values);
-        ERROR("N frames %d", n_frames);
 
         keyframes keyframes = { 0 };
         keyframes.kind = KEYFRAME_ROTATION;
         keyframes.count = n_values;
         keyframes.values = arena_alloc(arena, n_values * sizeof(keyframe));
         for (cgltf_size v = 0; v < channel.sampler->output->count; ++v) {
-          quat rot;
-          cgltf_accessor_read_float(channel.sampler->output, v, &rot.x, 4);
-          printf("Quat %f %f %f %f\n", rot.x, rot.y, rot.z, rot.w);
-          keyframes.values[v].rotation = rot;
+          switch (data_type) {
+            case KEYFRAME_ROTATION: {
+              quat rot;
+              cgltf_accessor_read_float(channel.sampler->output, v, &rot.x, 4);
+              printf("Quat %f %f %f %f\n", rot.x, rot.y, rot.z, rot.w);
+              keyframes.values[v].rotation = rot;
+              break;
+            }
+            case KEYFRAME_TRANSLATION: {
+              vec3 trans;
+              cgltf_accessor_read_float(channel.sampler->output, v, &trans.x, 3);
+              keyframes.values[v].translation = trans;
+              break;
+            }
+            case KEYFRAME_SCALE: {
+              vec3 scale;
+              cgltf_accessor_read_float(channel.sampler->output, v, &scale.x, 3);
+              keyframes.values[v].scale = scale;
+              break;
+            }
+            case KEYFRAME_WEIGHTS: {
+              // TODO
+              break;
+            }
+          }
         }
         sampler->animation.values = keyframes;
 
         sampler->min = channel.sampler->input->min[0];
         sampler->max = channel.sampler->input->max[0];
 
-        clip.rotation = sampler;
-        printf("%d timestamps\n", sampler->animation.n_timestamps);
-        printf("%d index\n", sampler->current_index);
+        // clip.rotation = sampler;
+        // printf("%d timestamps\n", sampler->animation.n_timestamps);
+        // printf("%d index\n", sampler->current_index);
       }
 
       WARN("stuff %ld", clip.rotation->animation.n_timestamps);

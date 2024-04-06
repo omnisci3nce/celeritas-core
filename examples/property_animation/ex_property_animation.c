@@ -1,5 +1,6 @@
 #include <glfw3.h>
 
+#include "../example_scene.h"
 #include "animation.h"
 #include "camera.h"
 #include "core.h"
@@ -12,14 +13,6 @@
 #include "render.h"
 #include "render_backend.h"
 #include "render_types.h"
-
-const vec3 pointlight_positions[4] = {
-  { 0.7, 0.2, 2.0 },
-  { 2.3, -3.3, -4.0 },
-  { -4.0, 2.0, -12.0 },
-  { 0.0, 0.0, -3.0 },
-};
-point_light point_lights[4];
 
 typedef struct game_state {
   camera camera;
@@ -42,22 +35,7 @@ int main() {
   model* cube = &core->models->data[animated_cube_handle.raw];
   model_upload_meshes(&core->renderer, cube);
 
-  directional_light dir_light = { .direction = (vec3){ -0.2, -1.0, -0.3 },
-                                  .ambient = (vec3){ 0.2, 0.2, 0.2 },
-                                  .diffuse = (vec3){ 0.5, 0.5, 0.5 },
-                                  .specular = (vec3){ 1.0, 1.0, 1.0 } };
-
-  for (int i = 0; i < 4; i++) {
-    point_lights[i].position = pointlight_positions[i];
-    point_lights[i].ambient = (vec3){ 0.05, 0.05, 0.05 };
-    point_lights[i].diffuse = (vec3){ 0.8, 0.8, 0.8 };
-    point_lights[i].specular = (vec3){ 1.0, 1.0, 1.0 };
-    point_lights[i].constant = 1.0;
-    point_lights[i].linear = 0.09;
-    point_lights[i].quadratic = 0.032;
-  }
-  scene our_scene = { .dir_light = dir_light, .n_point_lights = 4 };
-  memcpy(&our_scene.point_lights, &point_lights, sizeof(point_light[4]));
+  scene our_scene = make_default_scene();
 
   vec3 cam_pos = vec3_create(5, 5, 5);
   game_state game = {
@@ -73,7 +51,7 @@ int main() {
   const f32 camera_zoom_speed = 0.15;
 
   // animation
-    animation_clip track = cube->animations->data[0];
+  animation_clip track = cube->animations->data[0];
   f64 total_time = 0.0;
 
   while (!should_exit(core)) {
@@ -81,8 +59,10 @@ int main() {
 
     currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
-    total_time += deltaTime * 0.00001;
-    f64 t = fmod(total_time * 1000.0, 1.0);
+    lastFrame = currentFrame;
+    total_time += deltaTime;
+    printf("delta time %f\n", deltaTime);
+    f64 t = fmod(total_time, 1.0);
     INFO("Total time: %f", t);
 
     vec3 translation = VEC3_ZERO;
