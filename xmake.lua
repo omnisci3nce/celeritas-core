@@ -159,6 +159,13 @@ target("animation")
     add_files("examples/property_animation/ex_property_animation.c")
     set_rundir("$(projectdir)")
 
+target("skinned")
+    set_kind("binary")
+    set_group("examples")
+    add_deps("core_shared")
+    add_files("examples/skinned_animation/ex_skinned_animation.c")
+    set_rundir("$(projectdir)")
+
 target("input")
     set_kind("binary")
     set_group("examples")

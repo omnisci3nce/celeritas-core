@@ -7,6 +7,7 @@
 #include "file.h"
 #include "loaders.h"
 #include "log.h"
+#include "maths_types.h"
 #include "mem.h"
 #include "path.h"
 #include "render.h"
@@ -26,6 +27,7 @@ typedef struct face face;
 KITC_DECL_TYPED_ARRAY(vec3)
 KITC_DECL_TYPED_ARRAY(vec2)
 KITC_DECL_TYPED_ARRAY(u32)
+KITC_DECL_TYPED_ARRAY(vec4i)
 KITC_DECL_TYPED_ARRAY(face)
 
 bool model_load_gltf_str(const char *file_string, const char *filepath, str8 relative_path,
@@ -82,6 +84,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
   vec3_darray *tmp_normals = vec3_darray_new(1000);
   vec2_darray *tmp_uvs = vec2_darray_new(1000);
   face_darray *tmp_faces = face_darray_new(1000);
+  vec4i_darray *tmp_joints = face_darray_new(1000);
 
   cgltf_options options = { 0 };
   cgltf_data *data = NULL;
@@ -94,6 +97,21 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
 
   cgltf_load_buffers(&options, data, filepath);
   DEBUG("loaded buffers");
+
+  // --- Skin
+  size_t num_skins = data->skins_count;
+  bool is_skinned = false;
+  if (num_skins == 1) {
+    is_skinned = true;
+  } else if (num_skins > 1) {
+    WARN("GLTF files with more than 1 skin are not supported");
+    return false;
+  }
+
+  {
+    cgltf_skin* gltf_skin = data->skins;
+    TRACE("loading skin %s", gltf_skin->name);
+  }
 
   // --- Materials
   TRACE("Num materials %d", data->materials_count);
@@ -139,6 +157,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
   for (size_t m = 0; m < num_meshes; m++) {
     cgltf_primitive primitive = data->meshes[m].primitives[0];
     DEBUG("Found %d attributes", primitive.attributes_count);
+    DEBUG("Number of this primitive %d", pri)
 
     for (int a = 0; a < data->meshes[m].primitives[0].attributes_count; a++) {
       cgltf_attribute attribute = data->meshes[m].primitives[0].attributes[a];
@@ -184,7 +203,12 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
         }
       } else if (attribute.type == cgltf_attribute_type_joints) {
         cgltf_accessor *accessor = attribute.data;
-        assert(accessor->component_type == cgltf_component_type_r_32u);
+        assert(accessor->component_type == cgltf_component_type_r_16u);
+        u16 joint_indices[4];
+        // ERROR("Access count %d", accessor.);
+        for (cgltf_size v = 0; v < accessor->count; ++v) {
+          // cgltf_accessor_read_uint(accessor, v, cgltf_uint *out, cgltf_size element_size)
+        }
       } else {
         WARN("Unhandled cgltf_attribute_type: %s. skipping..", attribute.name);
       }
@@ -322,7 +346,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
             case KEYFRAME_ROTATION: {
               quat rot;
               cgltf_accessor_read_float(channel.sampler->output, v, &rot.x, 4);
-              printf("Quat %f %f %f %f\n", rot.x, rot.y, rot.z, rot.w);
+              // printf("Quat %f %f %f %f\n", rot.x, rot.y, rot.z, rot.w);
               keyframes.values[v].rotation = rot;
               break;
             }

@@ -118,6 +118,14 @@ typedef struct vertex {
   vec2 uv;
 } vertex;
 
+typedef struct skinned_vertex {
+  vec3 position;
+  vec3 normal;
+  vec2 uv;
+  vec4i joints; /** @brief 4 indices of joints that influence vectors position */
+  vec4 weights; /** @brief weight (0,1) of each joint */
+} skinned_vertex;
+
 #ifndef TYPED_VERTEX_ARRAY
 KITC_DECL_TYPED_ARRAY(vertex)  // creates "vertex_darray"
 #define TYPED_VERTEX_ARRAY
