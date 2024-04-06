@@ -7,6 +7,7 @@
 #include "file.h"
 #include "loaders.h"
 #include "log.h"
+#include "maths.h"
 #include "maths_types.h"
 #include "mem.h"
 #include "path.h"
@@ -30,6 +31,7 @@ KITC_DECL_TYPED_ARRAY(u32)
 KITC_DECL_TYPED_ARRAY(vec4i)
 KITC_DECL_TYPED_ARRAY(vec4)
 KITC_DECL_TYPED_ARRAY(face)
+// KITC_DECL_TYPED_ARRAY(joint)
 
 bool model_load_gltf_str(const char *file_string, const char *filepath, str8 relative_path,
                          model *out_model, bool invert_textures_y);
@@ -84,9 +86,9 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
   vec3_darray *tmp_positions = vec3_darray_new(1000);
   vec3_darray *tmp_normals = vec3_darray_new(1000);
   vec2_darray *tmp_uvs = vec2_darray_new(1000);
-  face_darray *tmp_faces = face_darray_new(1000);
-  vec4i_darray *tmp_joints = vec4i_darray_new(1000);
+  vec4i_darray *tmp_joint_indices = vec4i_darray_new(1000);
   vec4_darray *tmp_weights = vec4_darray_new(1000);
+  joint_darray *tmp_joints = joint_darray_new(256);
 
   cgltf_options options = { 0 };
   cgltf_data *data = NULL;
@@ -112,7 +114,33 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
 
   if (is_skinned) {
     cgltf_skin *gltf_skin = data->skins;
-    TRACE("loading skin %s", gltf_skin->name);
+    DEBUG("loading skin %s", gltf_skin->name);
+    size_t num_joints = gltf_skin->joints_count;
+    DEBUG("# Joints %d", num_joints);
+
+    // for each one we'll spit out a joint
+    for (size_t i = 0; i < num_joints; i++) {
+      cgltf_node *joint_node = gltf_skin->joints[i];
+
+      joint joint_i = { .name = "testjoint" };
+      if (joint_node->children_count > 0 && !joint_node->has_translation &&
+          !joint_node->has_rotation) {
+        WARN("joint Node with index %d is the root node", i);
+        joint_i.transform_components = TRANSFORM_DEFAULT;
+      } else {
+        TRACE("Storing joint transform");
+        joint_i.transform_components = TRANSFORM_DEFAULT;
+        if (joint_node->has_translation) {
+          memcpy(&joint_i.transform_components.position, &joint_node->translation, 3 * sizeof(f32));
+        }
+        if (joint_node->has_rotation) {
+          memcpy(&joint_i.transform_components.rotation, &joint_node->rotation, 4 * sizeof(f32));
+        }
+        // TODO: support scaling as vec instead of float
+      }
+      joint_i.local_transform = transform_to_mat(&joint_i.transform_components);
+      joint_darray_push(tmp_joints, joint_i);
+    }
   }
 
   // --- Materials
@@ -218,9 +246,9 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
           joint_indices.y = (u32)joints_as_floats.y;
           joint_indices.z = (u32)joints_as_floats.z;
           joint_indices.w = (u32)joints_as_floats.w;
-          printf("Joints affecting %d %d %d %d\n", joint_indices.x, joint_indices.y,
-                 joint_indices.z, joint_indices.w);
-          vec4i_darray_push(tmp_joints, joint_indices);
+          // printf("Joints affecting %d %d %d %d\n", joint_indices.x, joint_indices.y,
+          //        joint_indices.z, joint_indices.w);
+          vec4i_darray_push(tmp_joint_indices, joint_indices);
         }
 
       } else if (attribute.type == cgltf_attribute_type_weights) {
@@ -232,7 +260,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
         for (cgltf_size v = 0; v < accessor->count; ++v) {
           vec4 weights;
           cgltf_accessor_read_float(accessor, v, &weights.x, 4);
-          printf("Weights affecting %f %f %f %f\n", weights.x, weights.y, weights.z, weights.w);
+          // printf("Weights affecting %f %f %f %f\n", weights.x, weights.y, weights.z, weights.w);
           vec4_darray_push(tmp_weights, weights);
         }
       } else {
@@ -240,7 +268,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
       }
     }
 
-    mesh mesh = {0};
+    mesh mesh = { 0 };
     mesh.vertices = vertex_darray_new(10);
 
     cgltf_accessor *indices = primitive.indices;
@@ -282,7 +310,30 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
       }
     }
 
+    if (is_skinned) {
+      mesh.vertex_bone_data = vertex_bone_data_darray_new(tmp_joint_indices->len);
+      mesh.bones = joint_darray_new(tmp_joints->len);
+      for (int i = 0; i < tmp_joint_indices->len; i++) {
+        vertex_bone_data data;
+        data.joints = tmp_joint_indices->data[i];
+        data.weights =tmp_weights->data[i];
+        vertex_bone_data_darray_push(mesh.vertex_bone_data, data);
+      } 
+      for (int i = 0; i < tmp_joints->len; i++) {
+        joint data = tmp_joints->data[i];
+        joint_darray_push(mesh.bones, data);
+      } 
+    }
+
     mesh_darray_push(out_model->meshes, mesh);
+
+    // clear data for each mesh
+    vec3_darray_clear(tmp_positions);
+    vec3_darray_clear(tmp_normals);
+    vec2_darray_free(tmp_uvs);
+    vec4i_darray_clear(tmp_joint_indices);
+    vec4_darray_clear(tmp_weights);
+    joint_darray_clear(tmp_joints);
   }
 
   for (int i = 0; i < out_model->meshes->len; i++) {

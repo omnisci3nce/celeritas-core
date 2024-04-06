@@ -46,6 +46,7 @@ typedef struct renderer {
   renderer_config config;
   // shaders
   shader blinn_phong;
+  shader skinned;
 } renderer;
 
 // --- Lighting & Materials
@@ -118,24 +119,25 @@ typedef struct vertex {
   vec2 uv;
 } vertex;
 
-typedef struct skinned_vertex {
-  vec3 position;
-  vec3 normal;
-  vec2 uv;
+typedef struct vertex_bone_data {
   vec4i joints; /** @brief 4 indices of joints that influence vectors position */
   vec4 weights; /** @brief weight (0,1) of each joint */
-} skinned_vertex;
+} vertex_bone_data;
 
+#include "animation.h"
 #ifndef TYPED_VERTEX_ARRAY
 KITC_DECL_TYPED_ARRAY(vertex)  // creates "vertex_darray"
-KITC_DECL_TYPED_ARRAY(skinned_vertex)  // creates "skinned_vertex_darray"
+KITC_DECL_TYPED_ARRAY(vertex_bone_data)  // creates "skinned_vertex_darray"
+KITC_DECL_TYPED_ARRAY(joint)
 #define TYPED_VERTEX_ARRAY
 #endif
 
+
 typedef struct mesh {
   vertex_darray* vertices;
-  // skinned_vertex_darray* skinned_vertices; // only used if model needs it
-  // bool is_skinned;
+  vertex_bone_data_darray* vertex_bone_data; // only used if model needs it
+  joint_darray* bones;
+  bool is_skinned;
   u32 vertex_size; /** size in bytes of each vertex including necessary padding */
   bool has_indices;
   u32 *indices;

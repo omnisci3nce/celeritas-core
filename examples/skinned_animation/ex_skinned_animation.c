@@ -37,7 +37,7 @@ int main() {
 
   scene our_scene = make_default_scene();
 
-  vec3 cam_pos = vec3_create(5, 5, 5);
+  vec3 cam_pos = vec3_create(0, 5, 8);
   game_state game = {
     .camera = camera_create(cam_pos, vec3_negate(cam_pos), VEC3_Y, deg_to_rad(45.0)),
     .camera_euler = vec3_create(90, 0, 0),
@@ -86,7 +86,7 @@ int main() {
     quat rot = quat_ident();
     transform tf = transform_create(VEC3_ZERO, rot, 1.0);
 
-    draw_model(&core->renderer, &game.camera, cube, tf, &our_scene);
+    draw_skinned_model(&core->renderer, &game.camera, cube, tf, &our_scene);
 
     // gfx_backend_draw_frame(&core->renderer, &game.camera, model, NULL);
 

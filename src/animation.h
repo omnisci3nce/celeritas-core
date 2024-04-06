@@ -28,6 +28,12 @@ typedef struct keyframes {
   size_t count;
 } keyframes;
 
+typedef struct joint {
+  char* name; // optional
+  transform transform_components;
+  mat4 local_transform;
+} joint;
+
 typedef struct animation_spline {
   f32* timestamps;
   size_t n_timestamps;
