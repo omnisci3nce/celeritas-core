@@ -28,6 +28,7 @@ KITC_DECL_TYPED_ARRAY(vec3)
 KITC_DECL_TYPED_ARRAY(vec2)
 KITC_DECL_TYPED_ARRAY(u32)
 KITC_DECL_TYPED_ARRAY(vec4i)
+KITC_DECL_TYPED_ARRAY(vec4)
 KITC_DECL_TYPED_ARRAY(face)
 
 bool model_load_gltf_str(const char *file_string, const char *filepath, str8 relative_path,
@@ -84,7 +85,8 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
   vec3_darray *tmp_normals = vec3_darray_new(1000);
   vec2_darray *tmp_uvs = vec2_darray_new(1000);
   face_darray *tmp_faces = face_darray_new(1000);
-  vec4i_darray *tmp_joints = face_darray_new(1000);
+  vec4i_darray *tmp_joints = vec4i_darray_new(1000);
+  vec4_darray *tmp_weights = vec4_darray_new(1000);
 
   cgltf_options options = { 0 };
   cgltf_data *data = NULL;
@@ -108,8 +110,8 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     return false;
   }
 
-  {
-    cgltf_skin* gltf_skin = data->skins;
+  if (is_skinned) {
+    cgltf_skin *gltf_skin = data->skins;
     TRACE("loading skin %s", gltf_skin->name);
   }
 
@@ -157,7 +159,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
   for (size_t m = 0; m < num_meshes; m++) {
     cgltf_primitive primitive = data->meshes[m].primitives[0];
     DEBUG("Found %d attributes", primitive.attributes_count);
-    DEBUG("Number of this primitive %d", pri)
+    // DEBUG("Number of this primitive %d", primitive.)
 
     for (int a = 0; a < data->meshes[m].primitives[0].attributes_count; a++) {
       cgltf_attribute attribute = data->meshes[m].primitives[0].attributes[a];
@@ -167,6 +169,8 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
         cgltf_accessor *accessor = attribute.data;
         assert(accessor->component_type == cgltf_component_type_r_32f);
         // CASSERT_MSG(accessor->type == cgltf_type_vec3, "Vertex positions should be a vec3");
+
+        TRACE("Loading %d vec3 components", accessor->count);
 
         for (cgltf_size v = 0; v < accessor->count; ++v) {
           vec3 pos;
@@ -202,19 +206,41 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
           vec2_darray_push(tmp_uvs, tex);
         }
       } else if (attribute.type == cgltf_attribute_type_joints) {
+        TRACE("Load joint indices from accessor");
         cgltf_accessor *accessor = attribute.data;
         assert(accessor->component_type == cgltf_component_type_r_16u);
-        u16 joint_indices[4];
-        // ERROR("Access count %d", accessor.);
+        assert(accessor->type == cgltf_type_vec4);
+        vec4i joint_indices;
+        vec4 joints_as_floats;
         for (cgltf_size v = 0; v < accessor->count; ++v) {
-          // cgltf_accessor_read_uint(accessor, v, cgltf_uint *out, cgltf_size element_size)
+          cgltf_accessor_read_float(accessor, v, &joints_as_floats.x, 4);
+          joint_indices.x = (u32)joints_as_floats.x;
+          joint_indices.y = (u32)joints_as_floats.y;
+          joint_indices.z = (u32)joints_as_floats.z;
+          joint_indices.w = (u32)joints_as_floats.w;
+          printf("Joints affecting %d %d %d %d\n", joint_indices.x, joint_indices.y,
+                 joint_indices.z, joint_indices.w);
+          vec4i_darray_push(tmp_joints, joint_indices);
+        }
+
+      } else if (attribute.type == cgltf_attribute_type_weights) {
+        TRACE("Load joint weights from accessor");
+        cgltf_accessor *accessor = attribute.data;
+        assert(accessor->component_type == cgltf_component_type_r_32f);
+        assert(accessor->type == cgltf_type_vec4);
+
+        for (cgltf_size v = 0; v < accessor->count; ++v) {
+          vec4 weights;
+          cgltf_accessor_read_float(accessor, v, &weights.x, 4);
+          printf("Weights affecting %f %f %f %f\n", weights.x, weights.y, weights.z, weights.w);
+          vec4_darray_push(tmp_weights, weights);
         }
       } else {
         WARN("Unhandled cgltf_attribute_type: %s. skipping..", attribute.name);
       }
     }
 
-    mesh mesh;
+    mesh mesh = {0};
     mesh.vertices = vertex_darray_new(10);
 
     cgltf_accessor *indices = primitive.indices;

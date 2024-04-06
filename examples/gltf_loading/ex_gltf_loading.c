@@ -56,8 +56,6 @@ int main() {
   scene our_scene = { .dir_light = dir_light, .n_point_lights = 4 };
   memcpy(&our_scene.point_lights, &point_lights, sizeof(point_light[4]));
 
-  animation_clip track = cube->animations->data[0];
-  f32 total_time = 0.0;
 
   while (!glfwWindowShouldClose(core->renderer.window)) {
     currentFrame = glfwGetTime();

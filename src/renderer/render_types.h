@@ -128,11 +128,14 @@ typedef struct skinned_vertex {
 
 #ifndef TYPED_VERTEX_ARRAY
 KITC_DECL_TYPED_ARRAY(vertex)  // creates "vertex_darray"
+KITC_DECL_TYPED_ARRAY(skinned_vertex)  // creates "skinned_vertex_darray"
 #define TYPED_VERTEX_ARRAY
 #endif
 
 typedef struct mesh {
-  vertex_darray *vertices;
+  vertex_darray* vertices;
+  // skinned_vertex_darray* skinned_vertices; // only used if model needs it
+  // bool is_skinned;
   u32 vertex_size; /** size in bytes of each vertex including necessary padding */
   bool has_indices;
   u32 *indices;
