@@ -64,8 +64,8 @@ int main() {
   const f32 camera_zoom_speed = 0.10;
 
   // animation
-  // animation_clip track = cube->animations->data[0];
-  // f64 total_time = 0.0;
+  animation_clip track = simple_skin->animations->data[0];
+  f64 total_time = 0.0;
 
   while (!should_exit(core)) {
     input_update(&core->input);
@@ -73,17 +73,21 @@ int main() {
     currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
-    // total_time += deltaTime;
+    total_time += deltaTime;
     // printf("delta time %f\n", deltaTime);
-    // f64 t = fmod(total_time, 1.0);
+    f64 t = fmod(total_time, track.rotation->max);
     // INFO("Total time: %f", t);
 
     vec3 translation = VEC3_ZERO;
-    if (key_is_pressed(KEYCODE_W) || key_is_pressed(KEYCODE_KEY_UP)) {
+    if (key_is_pressed(KEYCODE_W)) {
       translation = vec3_mult(game.camera.front, camera_zoom_speed);
+    } else if (key_is_pressed(KEYCODE_KEY_UP)) {
+      translation = vec3_mult(game.camera.up, camera_lateral_speed);
+    } else if (key_is_pressed(KEYCODE_KEY_DOWN)) {
+      translation = vec3_mult(game.camera.up, -camera_lateral_speed);
     } else if (key_is_pressed(KEYCODE_S) || key_is_pressed(KEYCODE_KEY_DOWN)) {
       translation = vec3_mult(game.camera.front, -camera_zoom_speed);
-    } else if (key_is_pressed(KEYCODE_A) || key_is_pressed(KEYCODE_KEY_LEFT)) {
+    } else if (key_is_pressed(KEYCODE_A)) {
       vec3 lateral = vec3_normalise(vec3_cross(game.camera.front, game.camera.up));
       translation = vec3_mult(lateral, -camera_lateral_speed);
     } else if (key_is_pressed(KEYCODE_D) || key_is_pressed(KEYCODE_KEY_RIGHT)) {
@@ -94,14 +98,15 @@ int main() {
 
     render_frame_begin(&core->renderer);
 
-    mat4 model = mat4_translation(VEC3_ZERO);
-    // quat rot = animation_sample(track.rotation, t).rotation;
-    quat rot = quat_ident();
-    transform tf = transform_create(VEC3_ZERO, rot, 1.0);
+    // bone rotation
+    quat rot = animation_sample(track.rotation, t).rotation;
+
+    m->bones->data[1].transform_components.rotation = rot;
+
+    // quat rot = quat_ident();
+    transform tf = transform_create(VEC3_ZERO, quat_ident(), 1.0);
 
     draw_skinned_model(&core->renderer, &game.camera, simple_skin, tf, &our_scene);
-
-    // gfx_backend_draw_frame(&core->renderer, &game.camera, model, NULL);
 
     render_frame_end(&core->renderer);
   }

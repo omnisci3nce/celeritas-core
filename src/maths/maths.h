@@ -302,7 +302,7 @@ static inline mat4 mat4_look_at(vec3 position, vec3 target, vec3 up) {
 
 #define TRANSFORM_DEFAULT                                                 \
   ((transform){ .position = VEC3_ZERO,                                    \
-                .rotation = (quat){ .x = 0., .y = 0., .z = 0., .w = 0. }, \
+                .rotation = (quat){ .x = 0., .y = 0., .z = 0., .w = 1. }, \
                 .scale = 1.0,                                             \
                 .is_dirty = false })
 
@@ -311,8 +311,10 @@ static transform transform_create(vec3 pos, quat rot, f32 scale) {
 }
 
 static inline mat4 transform_to_mat(transform *tf) {
-  // TODO: rotation
-  return mat4_mult(mat4_translation(tf->position), mat4_scale(tf->scale));
+  mat4 scale = mat4_scale(tf->scale);
+  mat4 rotation = mat4_rotation(tf->rotation);
+  mat4 translation = mat4_translation(tf->position);
+  return mat4_mult(translation, mat4_mult(rotation, scale));
 }
 
 // --- Sizing asserts

@@ -89,7 +89,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
   vec4u_darray *tmp_joint_indices = vec4u_darray_new(1000);
   vec4_darray *tmp_weights = vec4_darray_new(1000);
   joint_darray *tmp_joints = joint_darray_new(256);
-  vertex_bone_data_darray* tmp_vertex_bone_data = vertex_bone_data_darray_new(1000);
+  vertex_bone_data_darray *tmp_vertex_bone_data = vertex_bone_data_darray_new(1000);
 
   cgltf_options options = { 0 };
   cgltf_data *data = NULL;
@@ -276,7 +276,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
 
     mesh mesh = { 0 };
     mesh.vertices = vertex_darray_new(10);
-    mesh.vertex_bone_data =vertex_bone_data_darray_new(1);
+    mesh.vertex_bone_data = vertex_bone_data_darray_new(1);
 
     if (primitive.material != NULL) {
       for (int i = 0; i < material_darray_len(out_model->materials); i++) {
@@ -297,7 +297,8 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
         vertex_bone_data data;
         data.joints = tmp_joint_indices->data[i];
         data.weights = tmp_weights->data[i];
-        vertex_bone_data_darray_push(tmp_vertex_bone_data, data); // Push the temp data that aligns with raw vertices
+        vertex_bone_data_darray_push(tmp_vertex_bone_data,
+                                     data);  // Push the temp data that aligns with raw vertices
       }
       for (int i = 0; i < tmp_joints->len; i++) {
         joint data = tmp_joints->data[i];
@@ -330,7 +331,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
         vertex_darray_push(mesh.vertices, vert);
 
         if (is_skinned) {
-          vertex_bone_data vbd = tmp_vertex_bone_data->data[index]; // create a copy
+          vertex_bone_data vbd = tmp_vertex_bone_data->data[index];  // create a copy
           vertex_bone_data_darray_push(mesh.vertex_bone_data, vbd);
         }
         // for each vertex do the bone data

@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include "animation.h"
 #include "maths_types.h"
 #include "mem.h"
 #define STB_IMAGE_IMPLEMENTATION
@@ -192,8 +193,19 @@ void draw_skinned_mesh(renderer* ren, mesh* mesh, transform tf, material* mat, m
 
   // for now assume correct ordering
   mat4* bone_transforms = malloc(n_bones * sizeof(mat4));
+  mat4 parent = mat4_ident();
   for (int bone_i = 0; bone_i < n_bones; bone_i++) {
-    bone_transforms[bone_i] = mat4_ident();
+    transform tf = mesh->bones->data[bone_i].transform_components;
+    mat4 local = transform_to_mat(&mesh->bones->data[bone_i].transform_components);
+    bone_transforms[bone_i] = mat4_mult(parent, local);
+    parent = bone_transforms[bone_i];
+  }
+
+  // premultiply the inverses
+  for (int bone_i = 0; bone_i < n_bones; bone_i++) {
+    joint j = mesh->bones->data[bone_i];
+    // bone_transforms[bone_i] = mat4_mult(bone_transforms[bone_i], j.inverse_bind_matrix);
+    bone_transforms[bone_i] = mat4_mult(bone_transforms[bone_i], j.inverse_bind_matrix);
   }
 
   glUniformMatrix4fv(glGetUniformLocation(lighting_shader.program_id, "boneMatrices"), n_bones,
