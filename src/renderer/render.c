@@ -97,6 +97,7 @@ void default_material_init() {
 }
 
 void model_destroy(model* model) {
+  TRACE("Freeing all data for model %s", model->name);
   arena_free_all(&model->animation_data_arena);
   arena_free_storage(&model->animation_data_arena);
   mesh_darray_free(model->meshes);
@@ -175,18 +176,30 @@ void draw_skinned_mesh(renderer* ren, mesh* mesh, transform tf, material* mat, m
   // bind textures
   bind_texture(lighting_shader, &mat->diffuse_texture, 0);   // bind to slot 0
   bind_texture(lighting_shader, &mat->specular_texture, 1);  // bind to slot 1
-  uniform_f32(lighting_shader.program_id, "material.shininess", 32.);
 
-  // upload model transform
+  // Uniforms
+  uniform_f32(lighting_shader.program_id, "material.shininess", 32.);
   mat4 trans = mat4_translation(tf.position);
   mat4 rot = mat4_rotation(tf.rotation);
   mat4 scale = mat4_scale(tf.scale);
   mat4 model_tf = mat4_mult(trans, mat4_mult(rot, scale));
-
   uniform_mat4f(lighting_shader.program_id, "model", &model_tf);
-  // upload view & projection matrices
   uniform_mat4f(lighting_shader.program_id, "view", view);
   uniform_mat4f(lighting_shader.program_id, "projection", proj);
+
+  // bone transforms
+  size_t n_bones = mesh->bones->len;
+
+  // for now assume correct ordering
+  mat4* bone_transforms = malloc(n_bones * sizeof(mat4));
+  for (int bone_i = 0; bone_i < n_bones; bone_i++) {
+    bone_transforms[bone_i] = mat4_ident();
+  }
+
+  glUniformMatrix4fv(glGetUniformLocation(lighting_shader.program_id, "boneMatrices"), n_bones,
+                     GL_FALSE, &bone_transforms->data[0]);
+
+  free(bone_transforms);
 
   // draw triangles
   u32 num_vertices = vertex_darray_len(mesh->vertices);
@@ -201,11 +214,11 @@ void draw_skinned_model(renderer* ren, camera* cam, model* model, transform tf, 
   set_shader(ren->skinned);
 
   // set camera uniform
-  uniform_vec3f(ren->blinn_phong.program_id, "viewPos", &cam->position);
+  uniform_vec3f(ren->skinned.program_id, "viewPos", &cam->position);
   // set light uniforms
-  dir_light_upload_uniforms(ren->blinn_phong, &scene->dir_light);
+  dir_light_upload_uniforms(ren->skinned, &scene->dir_light);
   for (int i = 0; i < scene->n_point_lights; i++) {
-    point_light_upload_uniforms(ren->blinn_phong, &scene->point_lights[i], '0' + i);
+    point_light_upload_uniforms(ren->skinned, &scene->point_lights[i], '0' + i);
   }
 
   for (size_t i = 0; i < mesh_darray_len(model->meshes); i++) {
@@ -213,7 +226,8 @@ void draw_skinned_model(renderer* ren, camera* cam, model* model, transform tf, 
     if (vertex_darray_len(m->vertices) == 0) {
       continue;
     }
-    material* mat = &model->materials->data[m->material_index];
+    // material* mat = &model->materials->data[m->material_index];
+    material* mat = &DEFAULT_MATERIAL;
     draw_skinned_mesh(ren, m, tf, mat, &view, &proj);
   }
 }
@@ -272,21 +286,28 @@ void model_upload_meshes(renderer* ren, model* model) {
     //     + j].uv.y;
     //   }
     // }
-    size_t vertex_size = mesh.is_skinned
-                             ? sizeof(vec3) * 2 + sizeof(vec2) + sizeof(u32) * 4 + sizeof(vec4)
-                             : sizeof(vec3) * 2 + sizeof(vec2);
-    if (!mesh.is_skinned) {
-      printf("sizeof(vertex) -> %ld, vertex_size -> %ld\n", sizeof(vertex), vertex_size);
+    size_t static_vertex_size = 2 * sizeof(vec3) + sizeof(vec2);
+    size_t skinned_vertex_size = 2 * sizeof(vec3) + sizeof(vec2) + 4 * sizeof(u32) + sizeof(vec4);
+    size_t vertex_size = mesh.is_skinned ? skinned_vertex_size : static_vertex_size;
+
+    TRACE("sizeof(vertex) -> %ld, vertex_size -> %ld\n", sizeof(vertex), vertex_size);
+    if (mesh.is_skinned) {
+      assert(vertex_size == (12 + 12 + 8 + 16 + 16));
+    } else {
       assert(vertex_size == sizeof(vertex));
+      assert(vertex_size == 8 * sizeof(float));
     }
     size_t buffer_size = vertex_size * num_vertices;
     u8* bytes = malloc(buffer_size);
 
     for (int i = 0; i < num_vertices; i++) {
       u8* p = bytes + vertex_size * i;
-      u8* bone_data_offset = p + sizeof(u32) * 4 + sizeof(vec4);
+      u8* bone_data_offset = p + static_vertex_size;
       memcpy(p, &mesh.vertices->data[i], sizeof(vertex));
-      memcpy(bone_data_offset, &mesh.vertex_bone_data->data[i], sizeof(vertex_bone_data));
+      if (mesh.is_skinned) {
+        // printf("")
+        memcpy(bone_data_offset, &mesh.vertex_bone_data->data[i], sizeof(vertex_bone_data));
+      }
     }
 
     // 4. upload data
@@ -295,17 +316,22 @@ void model_upload_meshes(renderer* ren, model* model) {
     // 5. cont. set mesh vertex layout
     glBindVertexArray(model->meshes->data[mesh_i].vao);
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vertex_size, (void*)0);
     glEnableVertexAttribArray(0);
     // normal vector attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vertex_size, (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     // tex coords
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vertex_size, (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
     // skinning (optional)
     if (mesh.is_skinned) {
+      glEnableVertexAttribArray(3);
+      glVertexAttribIPointer(3, 4, GL_INT, vertex_size, (void*)(8 * sizeof(float)));
+
+      glEnableVertexAttribArray(4);
+      glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, vertex_size, (void*)(12 * sizeof(float)));
     }
   }
 

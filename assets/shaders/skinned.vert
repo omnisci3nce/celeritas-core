@@ -13,7 +13,7 @@ uniform mat4 lightSpaceMatrix;
 
 const int MAX_BONES = 100;
 const int MAX_BONE_INFLUENCES = 4;
-uniform mat4 finalBoneMatrices[MAX_BONES];
+uniform mat4 boneMatrices[MAX_BONES]; // TODO!
 
 // Output
 out VS_OUT {
@@ -21,27 +21,39 @@ out VS_OUT {
   vec3 Normal;
   vec2 TexCoords;
   vec4 FragPosLightSpace;
+  vec4 Color;
 } vs_out;
 
 void main() {
-  vec4 totalPosition = vec4(0.0f);
-  for(int i = 0 ; i < MAX_BONE_INFLUENCES ; i++) {
-      if(inBoneIndices[i] == -1) 
-          continue;
-      if(inBoneIndices[i] >=MAX_BONES) 
-      {
-          totalPosition = vec4(inPos,1.0f);
-          break;
-      }
-      vec4 localPosition = finalBoneMatrices[inBoneIndices[i]] * vec4(inPos,1.0f);
-      totalPosition += localPosition * inWeights[i];
-      vec3 localNormal = mat3(finalBoneMatrices[inBoneIndices[i]]) * inNormal;
-      vs_out.Normal = localNormal;
-  }
+  // vec4 totalPosition = vec4(0.0f);
+  // for(int i = 0 ; i < MAX_BONE_INFLUENCES ; i++) {
+  //     if(inBoneIndices[i] == 0) 
+  //         continue;
+  //     if(inBoneIndices[i] >=MAX_BONES) 
+  //     {
+  //         totalPosition = vec4(inPos,1.0f);
+  //         break;
+  //     }
+  //     vec4 localPosition = finalBoneMatrices[inBoneIndices[i]] * vec4(inPos,1.0f);
+  //     totalPosition += localPosition * inWeights[i];
+  //     vec3 localNormal = mat3(finalBoneMatrices[inBoneIndices[i]]) * inNormal;
+  //     vs_out.Normal = localNormal;
+  // }
 
-  vs_out.FragPos = vec3(model * vec4(inPos, 1.0));
+
+  mat4 skinMatrix = // mat4(1.0)
+        //  boneMatrices[int(inBoneIndices.z)]; // should just be the identtiy
+        inWeights.x * boneMatrices[int(inBoneIndices.x)] +
+        inWeights.y * boneMatrices[int(inBoneIndices.y)] +
+        inWeights.z * boneMatrices[int(inBoneIndices.z)] +
+        inWeights.w * boneMatrices[int(inBoneIndices.w)];
+
+  vec4 totalPosition = skinMatrix * vec4(inPos, 1.0);
+
+  vs_out.FragPos = vec3(model * totalPosition);
   // vs_out.Normal = inNormal;
   vs_out.TexCoords = inTexCoords;
   vs_out.FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
+  vs_out.Color = inWeights;
   gl_Position =  projection * view * model * totalPosition;
 }

@@ -33,6 +33,7 @@ in VS_OUT {
   vec3 Normal;
   vec2 TexCoords;
   vec4 FragPosLightSpace;
+  vec4 Color;
 } fs_in;
 
 // --- Uniforms
@@ -55,7 +56,8 @@ void main() {
     result += CalcPointLight(pointLights[i], norm, fs_in.FragPos, viewDir);
   }
 
-  FragColor = vec4(result, 1.0);
+  // FragColor = vec4(result, 1.0);
+  FragColor = fs_in.Color + 0.5;
 }
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)

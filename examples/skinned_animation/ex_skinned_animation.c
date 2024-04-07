@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <glfw3.h>
 
 #include "../example_scene.h"
@@ -30,10 +31,22 @@ int main() {
 
   core* core = core_bringup();
 
-  model_handle animated_cube_handle =
+  model_handle handle =
       model_load_gltf(core, "assets/models/gltf/SimpleSkin/glTF/SimpleSkin.gltf", false);
-  model* cube = &core->models->data[animated_cube_handle.raw];
-  model_upload_meshes(&core->renderer, cube);
+
+  model* simple_skin = &core->models->data[handle.raw];
+
+  // Okay, right here we've loaded the model. let's assert some facts
+  assert(simple_skin->animations->len == 1);
+  assert(simple_skin->animations->data[0].rotation != NULL);
+  assert(simple_skin->animations->data[0].translation == NULL);
+  assert(simple_skin->animations->data[0].scale == NULL);
+
+  mesh* m = &simple_skin->meshes->data[0];
+  assert(m->is_skinned);
+  assert(m->bones->len == 2);  // 1 root and 1 extra joint
+
+  model_upload_meshes(&core->renderer, simple_skin);
 
   scene our_scene = make_default_scene();
 
@@ -48,7 +61,7 @@ int main() {
 
   // Main loop
   const f32 camera_lateral_speed = 0.2;
-  const f32 camera_zoom_speed = 0.15;
+  const f32 camera_zoom_speed = 0.10;
 
   // animation
   // animation_clip track = cube->animations->data[0];
@@ -86,7 +99,7 @@ int main() {
     quat rot = quat_ident();
     transform tf = transform_create(VEC3_ZERO, rot, 1.0);
 
-    draw_skinned_model(&core->renderer, &game.camera, cube, tf, &our_scene);
+    draw_skinned_model(&core->renderer, &game.camera, simple_skin, tf, &our_scene);
 
     // gfx_backend_draw_frame(&core->renderer, &game.camera, model, NULL);
 
@@ -94,7 +107,7 @@ int main() {
   }
 
   INFO("Shutting down");
-  model_destroy(cube);
+  model_destroy(simple_skin);
 
   core_shutdown(core);
 

@@ -120,7 +120,7 @@ typedef struct vertex {
 } vertex;
 
 typedef struct vertex_bone_data {
-  vec4i joints; /** @brief 4 indices of joints that influence vectors position */
+  vec4u joints; /** @brief 4 indices of joints that influence vectors position */
   vec4 weights; /** @brief weight (0,1) of each joint */
 } vertex_bone_data;
 

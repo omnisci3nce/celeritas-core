@@ -28,7 +28,7 @@ typedef struct face face;
 KITC_DECL_TYPED_ARRAY(vec3)
 KITC_DECL_TYPED_ARRAY(vec2)
 KITC_DECL_TYPED_ARRAY(u32)
-KITC_DECL_TYPED_ARRAY(vec4i)
+KITC_DECL_TYPED_ARRAY(vec4u)
 KITC_DECL_TYPED_ARRAY(vec4)
 KITC_DECL_TYPED_ARRAY(face)
 // KITC_DECL_TYPED_ARRAY(joint)
@@ -86,9 +86,10 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
   vec3_darray *tmp_positions = vec3_darray_new(1000);
   vec3_darray *tmp_normals = vec3_darray_new(1000);
   vec2_darray *tmp_uvs = vec2_darray_new(1000);
-  vec4i_darray *tmp_joint_indices = vec4i_darray_new(1000);
+  vec4u_darray *tmp_joint_indices = vec4u_darray_new(1000);
   vec4_darray *tmp_weights = vec4_darray_new(1000);
   joint_darray *tmp_joints = joint_darray_new(256);
+  vertex_bone_data_darray* tmp_vertex_bone_data = vertex_bone_data_darray_new(1000);
 
   cgltf_options options = { 0 };
   cgltf_data *data = NULL;
@@ -118,6 +119,8 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     size_t num_joints = gltf_skin->joints_count;
     DEBUG("# Joints %d", num_joints);
 
+    cgltf_accessor *gltf_inverse_bind_matrices = gltf_skin->inverse_bind_matrices;
+
     // for each one we'll spit out a joint
     for (size_t i = 0; i < num_joints; i++) {
       cgltf_node *joint_node = gltf_skin->joints[i];
@@ -139,6 +142,8 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
         // TODO: support scaling as vec instead of float
       }
       joint_i.local_transform = transform_to_mat(&joint_i.transform_components);
+      cgltf_accessor_read_float(gltf_inverse_bind_matrices, i, &joint_i.inverse_bind_matrix.data[0],
+                                16);
       joint_darray_push(tmp_joints, joint_i);
     }
   }
@@ -238,7 +243,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
         cgltf_accessor *accessor = attribute.data;
         assert(accessor->component_type == cgltf_component_type_r_16u);
         assert(accessor->type == cgltf_type_vec4);
-        vec4i joint_indices;
+        vec4u joint_indices;
         vec4 joints_as_floats;
         for (cgltf_size v = 0; v < accessor->count; ++v) {
           cgltf_accessor_read_float(accessor, v, &joints_as_floats.x, 4);
@@ -246,9 +251,9 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
           joint_indices.y = (u32)joints_as_floats.y;
           joint_indices.z = (u32)joints_as_floats.z;
           joint_indices.w = (u32)joints_as_floats.w;
-          // printf("Joints affecting %d %d %d %d\n", joint_indices.x, joint_indices.y,
-          //        joint_indices.z, joint_indices.w);
-          vec4i_darray_push(tmp_joint_indices, joint_indices);
+          printf("Joints affecting vertex %d :  %d %d %d %d\n", v, joint_indices.x, joint_indices.y,
+                 joint_indices.z, joint_indices.w);
+          vec4u_darray_push(tmp_joint_indices, joint_indices);
         }
 
       } else if (attribute.type == cgltf_attribute_type_weights) {
@@ -260,7 +265,8 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
         for (cgltf_size v = 0; v < accessor->count; ++v) {
           vec4 weights;
           cgltf_accessor_read_float(accessor, v, &weights.x, 4);
-          // printf("Weights affecting %f %f %f %f\n", weights.x, weights.y, weights.z, weights.w);
+          printf("Weights affecting vertex %d : %f %f %f %f\n", v, weights.x, weights.y, weights.z,
+                 weights.w);
           vec4_darray_push(tmp_weights, weights);
         }
       } else {
@@ -270,9 +276,38 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
 
     mesh mesh = { 0 };
     mesh.vertices = vertex_darray_new(10);
+    mesh.vertex_bone_data =vertex_bone_data_darray_new(1);
+
+    if (primitive.material != NULL) {
+      for (int i = 0; i < material_darray_len(out_model->materials); i++) {
+        printf("%s vs %s \n", primitive.material->name, out_model->materials->data[i].name);
+        if (strcmp(primitive.material->name, out_model->materials->data[i].name) == 0) {
+          TRACE("Found material");
+          mesh.material_index = i;
+          break;
+        }
+      }
+    }
+
+    if (is_skinned) {
+      mesh.is_skinned = true;
+      // mesh.vertex_bone_data = vertex_bone_data_darray_new(tmp_joint_indices->len);
+      mesh.bones = joint_darray_new(tmp_joints->len);
+      for (int i = 0; i < tmp_joint_indices->len; i++) {
+        vertex_bone_data data;
+        data.joints = tmp_joint_indices->data[i];
+        data.weights = tmp_weights->data[i];
+        vertex_bone_data_darray_push(tmp_vertex_bone_data, data); // Push the temp data that aligns with raw vertices
+      }
+      for (int i = 0; i < tmp_joints->len; i++) {
+        joint data = tmp_joints->data[i];
+        joint_darray_push(mesh.bones, data);
+      }
+    }
 
     cgltf_accessor *indices = primitive.indices;
     if (primitive.indices > 0) {
+      WARN("indices!");
       mesh.has_indices = true;
 
       mesh.indices = malloc(indices->count * sizeof(u32));
@@ -293,36 +328,16 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
         vert.normal = tmp_normals->data[index];
         vert.uv = tmp_uvs->data[index];
         vertex_darray_push(mesh.vertices, vert);
+
+        if (is_skinned) {
+          vertex_bone_data vbd = tmp_vertex_bone_data->data[index]; // create a copy
+          vertex_bone_data_darray_push(mesh.vertex_bone_data, vbd);
+        }
+        // for each vertex do the bone data
       }
     } else {
       mesh.has_indices = false;
       return false;  // TODO
-    }
-
-    if (primitive.material != NULL) {
-      for (int i = 0; i < material_darray_len(out_model->materials); i++) {
-        printf("%s vs %s \n", primitive.material->name, out_model->materials->data[i].name);
-        if (strcmp(primitive.material->name, out_model->materials->data[i].name) == 0) {
-          TRACE("Found material");
-          mesh.material_index = i;
-          break;
-        }
-      }
-    }
-
-    if (is_skinned) {
-      mesh.vertex_bone_data = vertex_bone_data_darray_new(tmp_joint_indices->len);
-      mesh.bones = joint_darray_new(tmp_joints->len);
-      for (int i = 0; i < tmp_joint_indices->len; i++) {
-        vertex_bone_data data;
-        data.joints = tmp_joint_indices->data[i];
-        data.weights =tmp_weights->data[i];
-        vertex_bone_data_darray_push(mesh.vertex_bone_data, data);
-      } 
-      for (int i = 0; i < tmp_joints->len; i++) {
-        joint data = tmp_joints->data[i];
-        joint_darray_push(mesh.bones, data);
-      } 
     }
 
     mesh_darray_push(out_model->meshes, mesh);
@@ -331,7 +346,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     vec3_darray_clear(tmp_positions);
     vec3_darray_clear(tmp_normals);
     vec2_darray_free(tmp_uvs);
-    vec4i_darray_clear(tmp_joint_indices);
+    vec4u_darray_clear(tmp_joint_indices);
     vec4_darray_clear(tmp_weights);
     joint_darray_clear(tmp_joints);
   }

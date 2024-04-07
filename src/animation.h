@@ -31,6 +31,7 @@ typedef struct keyframes {
 typedef struct joint {
   char* name; // optional
   transform transform_components;
+  mat4 inverse_bind_matrix;
   mat4 local_transform;
 } joint;
 
@@ -60,5 +61,12 @@ typedef struct animation_clip {
   animation_sampler* scale;
   animation_sampler* weights;
 } animation_clip;
+
+typedef struct skinned_animation {
+  mat4* joint_matrices;
+  size_t n_joints;
+} skinned_animation;
+
+// void animation_update_joint_matrices(animation_clip* )
 
 void animation_play(animation_clip* clip);
