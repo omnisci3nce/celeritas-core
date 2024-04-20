@@ -46,6 +46,8 @@ int main() {
   assert(m->is_skinned);
   assert(m->bones->len == 2);  // 1 root and 1 extra joint
 
+  // assert(false);
+
   model_upload_meshes(&core->renderer, simple_skin);
 
   scene our_scene = make_default_scene();

@@ -195,18 +195,24 @@ void draw_skinned_mesh(renderer* ren, mesh* mesh, transform tf, material* mat, m
   mat4* bone_transforms = malloc(n_bones * sizeof(mat4));
   mat4 parent = mat4_ident();
   for (int bone_i = 0; bone_i < n_bones; bone_i++) {
+    joint j = mesh->bones->data[bone_i];
     transform tf = mesh->bones->data[bone_i].transform_components;
-    mat4 local = transform_to_mat(&mesh->bones->data[bone_i].transform_components);
-    bone_transforms[bone_i] = mat4_mult(parent, local);
+    tf.position.y = -tf.position.y;
+    mat4 local = transform_to_mat(&tf);
+    mat4 inverse = j.inverse_bind_matrix;
+    inverse.data[13] = -inverse.data[13];
+    mat4 intemediate = mat4_mult(local, inverse);
+
+    bone_transforms[bone_i] = intemediate;
     parent = bone_transforms[bone_i];
   }
 
   // premultiply the inverses
-  for (int bone_i = 0; bone_i < n_bones; bone_i++) {
-    joint j = mesh->bones->data[bone_i];
-    // bone_transforms[bone_i] = mat4_mult(bone_transforms[bone_i], j.inverse_bind_matrix);
-    bone_transforms[bone_i] = mat4_mult(bone_transforms[bone_i], j.inverse_bind_matrix);
-  }
+  // for (int bone_i = 0; bone_i < n_bones; bone_i++) {
+  //   joint j = mesh->bones->data[bone_i];
+  //   // bone_transforms[bone_i] = mat4_mult(bone_transforms[bone_i], j.inverse_bind_matrix);
+  //   bone_transforms[bone_i] = mat4_mult(bone_transforms[bone_i], j.inverse_bind_matrix);
+  // }
 
   glUniformMatrix4fv(glGetUniformLocation(lighting_shader.program_id, "boneMatrices"), n_bones,
                      GL_FALSE, &bone_transforms->data[0]);
