@@ -28,7 +28,7 @@ int main() {
   // 2. upload vertex data to gpu
   model_upload_meshes(&core->renderer, backpack);
   // 3. create a camera
-  vec3 camera_pos = vec3(3., 4., 10.);
+  vec3 camera_pos = vec3(3., 2., 10.);
   vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
   camera cam = camera_create(camera_pos, camera_front, VEC3_Y, deg_to_rad(45.0));
   // 4. create lights
@@ -60,9 +60,10 @@ int main() {
     render_frame_begin(&core->renderer);
 
     // Draw the backpack
-    transform model_tf =
-        transform_create(VEC3_ZERO, quat_ident(), 2.0);  // make the backpack a bit bigger
-    draw_model(&core->renderer, &cam, backpack, model_tf, &our_scene);
+    transform model_tf = transform_create(vec3(0.0, -0.4, 0.0), quat_ident(),
+                                          1.8);  // make the backpack a bit bigger
+    mat4 model_matrix = transform_to_mat(&model_tf);
+    draw_model(&core->renderer, &cam, backpack, &model_matrix, &our_scene);
 
     render_frame_end(&core->renderer);
   }
