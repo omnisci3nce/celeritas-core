@@ -59,12 +59,24 @@ static inline vec2 vec2_create(f32 x, f32 y) { return (vec2){ x, y }; }
 static inline f32 quat_dot(quat a, quat b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
 
 static inline quat quat_normalise(quat a) {
-  f32 length = sqrtf(quat_dot(a, a)  // same as len squared
-  );
+  f32 length = sqrtf(quat_dot(a, a));  // same as len squared
+
   return (quat){ a.x / length, a.y / length, a.z / length, a.w / length };
 }
 
 static inline quat quat_ident() { return (quat){ .x = 0.0, .y = 0.0, .z = 0.0, .w = 1.0 }; }
+
+static quat quat_from_axis_angle(vec3 axis, f32 angle, bool normalize) {
+  const f32 half_angle = 0.5f * angle;
+  f32 s = sinf(half_angle);
+  f32 c = cosf(half_angle);
+
+  quat q = (quat){ s * axis.x, s * axis.y, s * axis.z, c };
+  if (normalize) {
+    return quat_normalise(q);
+  }
+  return q;
+}
 
 // --- Matrix Implementations
 

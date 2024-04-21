@@ -57,6 +57,8 @@ bool renderer_init(renderer* ren) {
   ren->blinn_phong =
       shader_create_separate("assets/shaders/blinn_phong.vert", "assets/shaders/blinn_phong.frag");
 
+  default_material_init();
+
   return true;
 }
 
