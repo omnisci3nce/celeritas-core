@@ -64,8 +64,8 @@ static inline vec4 vec4_create(f32 x, f32 y, f32 z, f32 w) { return (vec4){ x, y
 static inline f32 quat_dot(quat a, quat b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
 
 static inline quat quat_normalise(quat a) {
-  f32 length = sqrtf(quat_dot(a, a)  // same as len squared
-  );
+  f32 length = sqrtf(quat_dot(a, a));  // same as len squared
+
   return (quat){ a.x / length, a.y / length, a.z / length, a.w / length };
 }
 
@@ -307,7 +307,7 @@ static inline mat4 mat4_look_at(vec3 position, vec3 target, vec3 up) {
                 .is_dirty = false })
 
 static transform transform_create(vec3 pos, quat rot, f32 scale) {
-  return (transform){ .position = pos, .rotation = rot, .scale = scale, .is_dirty = false };
+  return (transform){ .position = pos, .rotation = rot, .scale = scale, .is_dirty = true };
 }
 
 static inline mat4 transform_to_mat(transform *tf) {
