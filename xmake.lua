@@ -126,6 +126,13 @@ target("gltf")
     add_files("examples/gltf_loading/ex_gltf_loading.c")
     set_rundir("$(projectdir)")
 
+target("transforms")
+    set_kind("binary")
+    set_group("examples")
+    add_deps("core_shared")
+    add_files("examples/transforms/ex_transforms.c")
+    set_rundir("$(projectdir)")
+
 target("demo")
     set_kind("binary")
     set_group("examples")

@@ -11,7 +11,7 @@
 void* arena_alloc_align(arena* a, size_t size, size_t align) {
   ptrdiff_t padding = -(uintptr_t)a->curr & (align - 1);
   ptrdiff_t available = a->end - a->curr - padding;
-  TRACE("Padding %td available %td", padding, available);
+  // TRACE("Padding %td available %td", padding, available);
   if (available < 0 || (ptrdiff_t)size > available) {
     ERROR_EXIT("Arena ran out of memory\n");
   }
