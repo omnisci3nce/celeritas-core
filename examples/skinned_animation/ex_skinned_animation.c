@@ -52,7 +52,7 @@ int main() {
 
   scene our_scene = make_default_scene();
 
-  vec3 cam_pos = vec3_create(0, 5, 8);
+  vec3 cam_pos = vec3_create(0, 5, -8);
   game_state game = {
     .camera = camera_create(cam_pos, vec3_negate(cam_pos), VEC3_Y, deg_to_rad(45.0)),
     .camera_euler = vec3_create(90, 0, 0),
@@ -89,7 +89,7 @@ int main() {
       translation = vec3_mult(game.camera.up, -camera_lateral_speed);
     } else if (key_is_pressed(KEYCODE_S) || key_is_pressed(KEYCODE_KEY_DOWN)) {
       translation = vec3_mult(game.camera.front, -camera_zoom_speed);
-    } else if (key_is_pressed(KEYCODE_A)) {
+    } else if (key_is_pressed(KEYCODE_A) || key_is_pressed(KEYCODE_KEY_LEFT)) {
       vec3 lateral = vec3_normalise(vec3_cross(game.camera.front, game.camera.up));
       translation = vec3_mult(lateral, -camera_lateral_speed);
     } else if (key_is_pressed(KEYCODE_D) || key_is_pressed(KEYCODE_KEY_RIGHT)) {
