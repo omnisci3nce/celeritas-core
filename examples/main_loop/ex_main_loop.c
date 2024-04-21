@@ -22,7 +22,7 @@ int main() {
     x += 0.01;
     mat4 model = mat4_translation(vec3(x, 0, 0));
 
-    gfx_backend_draw_frame(&core->renderer, &camera, model);
+    gfx_backend_draw_frame(&core->renderer, &camera, model, NULL);
 
     // insert work here
 

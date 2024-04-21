@@ -83,12 +83,11 @@ int main() {
 
     render_frame_begin(&core->renderer);
 
-    mat4 model = mat4_translation(VEC3_ZERO);
     quat rot = animation_sample(track.rotation, t).rotation;
     // quat rot = quat_ident();
     transform tf = transform_create(VEC3_ZERO, rot, 1.0);
-
-    draw_model(&core->renderer, &game.camera, cube, tf, &our_scene);
+    mat4 model_tf = transform_to_mat(&tf);
+    draw_model(&core->renderer, &game.camera, cube, &model_tf, &our_scene);
 
     // gfx_backend_draw_frame(&core->renderer, &game.camera, model, NULL);
 
