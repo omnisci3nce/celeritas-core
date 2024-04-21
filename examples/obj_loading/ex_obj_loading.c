@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <glfw3.h>
 #include <string.h>
 
@@ -25,6 +26,7 @@ int main() {
   model_handle backpack_handle =
       model_load_obj(core, "assets/models/obj/backpack/backpack.obj", true);
   model* backpack = &core->models->data[backpack_handle.raw];
+  assert(backpack->meshes->data->is_skinned == false);
   // 2. upload vertex data to gpu
   model_upload_meshes(&core->renderer, backpack);
   // 3. create a camera
