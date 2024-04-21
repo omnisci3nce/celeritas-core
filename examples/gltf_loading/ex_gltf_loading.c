@@ -70,7 +70,8 @@ int main() {
     angle += (rot_speed * deltaTime);
     transform model_tf = transform_create(vec3(0.0, 0.1, -0.1), rot,
                                           1.8);  // make the backpack a bit bigger
-    draw_model(&core->renderer, &cam, cube, model_tf, &our_scene);
+    mat4 model = transform_to_mat(&model_tf);
+    draw_model(&core->renderer, &cam, cube, &model, &our_scene);
 
     render_frame_end(&core->renderer);
   }
