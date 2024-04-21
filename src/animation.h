@@ -29,7 +29,7 @@ typedef struct keyframes {
 } keyframes;
 
 typedef struct joint {
-  char* name; // optional
+  char* name;  // optional
   transform transform_components;
   mat4 inverse_bind_matrix;
   mat4 local_transform;

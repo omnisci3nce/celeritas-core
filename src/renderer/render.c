@@ -176,7 +176,6 @@ void draw_mesh(renderer* ren, mesh* mesh, mat4* model_tf, material* mat, mat4* v
   bind_texture(lighting_shader, &mat->specular_texture, 1);  // bind to slot 1
   uniform_f32(lighting_shader.program_id, "material.shininess", 32.);
 
-
   // upload model, view, and projection matrices
   uniform_mat4f(lighting_shader.program_id, "model", model_tf);
   uniform_mat4f(lighting_shader.program_id, "view", view);
@@ -295,35 +294,6 @@ void model_upload_meshes(renderer* ren, model* model) {
     // TRACE("Uploading vertex array data: %d verts", num_vertices);
     total_verts += num_vertices;
 
-    // TODO: convert this garbage into a function
-    f32 verts[num_vertices * 8];
-    // for each face
-    // for (int i = 0; i < (num_vertices / 3); i++) {
-    //   // for each vert in face
-    //   for (int j = 0; j < 3; j++) {
-    //     size_t stride = (i * 24) + j * 8;
-    //     // printf("i: %d, stride: %ld, loc %d\n", i, stride, i * 3 + j);
-    //     vertex vert = model->meshes->data[mesh_i].vertices->data[i];
-    //     // printf("pos %f %f %f\n", vert.position.x, vert.position.y, vert.position.z);
-    //     // printf("norm %f %f %f\n", vert.normal.x, vert.normal.y, vert.normal.z);
-    //     // printf("tex %f %f\n", vert.uv.x, vert.uv.y);
-    //     verts[stride + 0] =
-    //         ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].position.x;
-    //     verts[stride + 1] =
-    //         ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].position.y;
-    //     verts[stride + 2] =
-    //         ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].position.z;
-    //     verts[stride + 3] =
-    //         ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].normal.x;
-    //     verts[stride + 4] =
-    //         ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].normal.y;
-    //     verts[stride + 5] =
-    //         ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].normal.z;
-    //     verts[stride + 6] = ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 +
-    //     j].uv.x; verts[stride + 7] = ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3
-    //     + j].uv.y;
-    //   }
-    // }
     size_t static_vertex_size = 2 * sizeof(vec3) + sizeof(vec2);
     size_t skinned_vertex_size = 2 * sizeof(vec3) + sizeof(vec2) + 4 * sizeof(u32) + sizeof(vec4);
     size_t vertex_size = mesh.is_skinned ? skinned_vertex_size : static_vertex_size;
@@ -335,6 +305,7 @@ void model_upload_meshes(renderer* ren, model* model) {
       assert(vertex_size == sizeof(vertex));
       assert(vertex_size == 8 * sizeof(float));
     }
+
     size_t buffer_size = vertex_size * num_vertices;
     u8* bytes = malloc(buffer_size);
 

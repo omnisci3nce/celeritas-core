@@ -127,17 +127,16 @@ typedef struct vertex_bone_data {
 
 #include "animation.h"
 #ifndef TYPED_VERTEX_ARRAY
-KITC_DECL_TYPED_ARRAY(vertex)  // creates "vertex_darray"
+KITC_DECL_TYPED_ARRAY(vertex)            // creates "vertex_darray"
 KITC_DECL_TYPED_ARRAY(vertex_bone_data)  // creates "skinned_vertex_darray"
 KITC_DECL_TYPED_ARRAY(joint)
 #define TYPED_VERTEX_ARRAY
 #endif
 
-
 typedef struct mesh {
-  vertex_darray* vertices;
-  vertex_bone_data_darray* vertex_bone_data; // only used if model needs it
-  joint_darray* bones;
+  vertex_darray *vertices;
+  vertex_bone_data_darray *vertex_bone_data;  // only used if model needs it
+  joint_darray *bones;
   bool is_skinned;
   u32 vertex_size; /** size in bytes of each vertex including necessary padding */
   bool has_indices;

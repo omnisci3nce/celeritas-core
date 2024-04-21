@@ -91,45 +91,42 @@ static inline quat quat_slerp(quat a, quat b, f32 percentage) {
   quat q1 = quat_normalise(b);
 
   // Compute the cosine of the angle between the two vectors.
-    f32 dot = quat_dot(q0, q1);
+  f32 dot = quat_dot(q0, q1);
 
-    // If the dot product is negative, slerp won't take
-    // the shorter path. Note that v1 and -v1 are equivalent when
-    // the negation is applied to all four components. Fix by
-    // reversing one quaternion.
-    if (dot < 0.0f) {
-        q1.x = -q1.x;
-        q1.y = -q1.y;
-        q1.z = -q1.z;
-        q1.w = -q1.w;
-        dot = -dot;
-    }
+  // If the dot product is negative, slerp won't take
+  // the shorter path. Note that v1 and -v1 are equivalent when
+  // the negation is applied to all four components. Fix by
+  // reversing one quaternion.
+  if (dot < 0.0f) {
+    q1.x = -q1.x;
+    q1.y = -q1.y;
+    q1.z = -q1.z;
+    q1.w = -q1.w;
+    dot = -dot;
+  }
 
-    const f32 DOT_THRESHOLD = 0.9995f;
-    if (dot > DOT_THRESHOLD) {
-        // If the inputs are too close for comfort, linearly interpolate
-        // and normalize the result.
-        out_quaternion = (quat){q0.x + ((q1.x - q0.x) * percentage),
-                                q0.y + ((q1.y - q0.y) * percentage),
-                                q0.z + ((q1.z - q0.z) * percentage),
-                                q0.w + ((q1.w - q0.w) * percentage)};
+  const f32 DOT_THRESHOLD = 0.9995f;
+  if (dot > DOT_THRESHOLD) {
+    // If the inputs are too close for comfort, linearly interpolate
+    // and normalize the result.
+    out_quaternion =
+        (quat){ q0.x + ((q1.x - q0.x) * percentage), q0.y + ((q1.y - q0.y) * percentage),
+                q0.z + ((q1.z - q0.z) * percentage), q0.w + ((q1.w - q0.w) * percentage) };
 
-        return quat_normalise(out_quaternion);
-    }
+    return quat_normalise(out_quaternion);
+  }
 
-    // Since dot is in range [0, DOT_THRESHOLD], acos is safe
-    f32 theta_0 = cos(dot);          // theta_0 = angle between input vectors
-    f32 theta = theta_0 * percentage;  // theta = angle between v0 and result
-    f32 sin_theta = sin(theta);       // compute this value only once
-    f32 sin_theta_0 = sin(theta_0);   // compute this value only once
+  // Since dot is in range [0, DOT_THRESHOLD], acos is safe
+  f32 theta_0 = cos(dot);            // theta_0 = angle between input vectors
+  f32 theta = theta_0 * percentage;  // theta = angle between v0 and result
+  f32 sin_theta = sin(theta);        // compute this value only once
+  f32 sin_theta_0 = sin(theta_0);    // compute this value only once
 
-    f32 s0 =
-        cos(theta) -
-        dot * sin_theta / sin_theta_0;  // == sin(theta_0 - theta) / sin(theta_0)
-    f32 s1 = sin_theta / sin_theta_0;
+  f32 s0 = cos(theta) - dot * sin_theta / sin_theta_0;  // == sin(theta_0 - theta) / sin(theta_0)
+  f32 s1 = sin_theta / sin_theta_0;
 
-    return (quat){(q0.x * s0) + (q1.x * s1), (q0.y * s0) + (q1.y * s1),
-                  (q0.z * s0) + (q1.z * s1), (q0.w * s0) + (q1.w * s1)};
+  return (quat){ (q0.x * s0) + (q1.x * s1), (q0.y * s0) + (q1.y * s1), (q0.z * s0) + (q1.z * s1),
+                 (q0.w * s0) + (q1.w * s1) };
 }
 
 // --- Matrix Implementations

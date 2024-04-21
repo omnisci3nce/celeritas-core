@@ -56,7 +56,7 @@ void main() {
     result += CalcPointLight(pointLights[i], norm, fs_in.FragPos, viewDir);
   }
 
-  // FragColor = vec4(result, 1.0);
+//   FragColor = vec4(result, 1.0);
   FragColor = fs_in.Color + 0.5;
 }
 

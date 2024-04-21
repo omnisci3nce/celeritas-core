@@ -56,7 +56,7 @@ int main() {
   scene our_scene = { .dir_light = dir_light, .n_point_lights = 4 };
   memcpy(&our_scene.point_lights, &point_lights, sizeof(point_light[4]));
 
-  while (!glfwWindowShouldClose(core->renderer.window)) {
+  while (!should_exit(core)) {
     currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;

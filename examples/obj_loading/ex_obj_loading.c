@@ -55,7 +55,7 @@ int main() {
   memcpy(&our_scene.point_lights, &point_lights, sizeof(point_light[4]));
 
   // --- Enter Main loop
-  while (!glfwWindowShouldClose(core->renderer.window)) {
+  while (!should_exit(core)) {
     input_update(&core->input);
     threadpool_process_results(&core->threadpool, 1);
 
