@@ -23,12 +23,10 @@ int main() {
 
   core* core = core_bringup();
 
-  model_handle cube_handle =
+  model_handle helmet_handle =
       model_load_gltf(core, "assets/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf", false);
-  // model_handle cube_handle = model_load_gltf(core, "assets/models/gltf/scifi_girl/scene.gltf",
-  // false);
-  model* cube = &core->models->data[cube_handle.raw];
-  model_upload_meshes(&core->renderer, cube);
+  model* helmet = &core->models->data[helmet_handle.raw];
+  model_upload_meshes(&core->renderer, helmet);
 
   vec3 camera_pos = vec3(5., 0., 0.);
   vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
@@ -59,7 +57,6 @@ int main() {
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
     input_update(&core->input);
-    // threadpool_process_results(&core->threadpool, 1);
 
     render_frame_begin(&core->renderer);
 
@@ -68,10 +65,9 @@ int main() {
     static f32 rot_speed = 0.5;
     quat rot = quat_from_axis_angle(VEC3_Z, fmod(angle, TAU), true);
     angle += (rot_speed * deltaTime);
-    transform model_tf = transform_create(vec3(0.0, 0.1, -0.1), rot,
-                                          1.8);  // make the backpack a bit bigger
+    transform model_tf = transform_create(vec3(0.0, 0.1, -0.1), rot, 1.8);
     mat4 model = transform_to_mat(&model_tf);
-    draw_model(&core->renderer, &cam, cube, &model, &our_scene);
+    draw_model(&core->renderer, &cam, helmet, &model, &our_scene);
 
     render_frame_end(&core->renderer);
   }
