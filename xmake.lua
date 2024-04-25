@@ -74,6 +74,7 @@ target("core_config")
     add_includedirs("deps/stb_image", {public = true})
     add_includedirs("deps/stb_image_write", {public = true})
     add_includedirs("deps/stb_truetype", {public = true})
+    add_includedirs("include/", {public = true})
     add_includedirs("src/", {public = true})
     add_includedirs("src/logos/", {public = true})
     add_includedirs("src/maths/", {public = true})
@@ -85,7 +86,6 @@ target("core_config")
     add_includedirs("src/std/containers", {public = true})
     add_includedirs("src/systems/", {public = true})
     add_files("src/empty.c") -- for some reason we need this on Mac so it doesnt call 'ar' with no files and error
-    set_default(false) -- prevents standalone building of this target
 
 target("core_static")
     set_kind("static")
