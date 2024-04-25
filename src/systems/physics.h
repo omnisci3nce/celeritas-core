@@ -8,6 +8,20 @@ typedef struct physics_settings {
   f32 gravity_strength;
 } physics_settings;
 
+enum collider_type {
+  cuboid_collider,
+  sphere_collider,
+};
+
+/** @brief generic collider structure */
+typedef struct physics_collider {
+  u64 id; // ? Replace with handle?
+  enum collider_type shape;
+  transform transform;
+  u8 layer;
+  bool on_ground;
+} physics_collider;
+
 typedef struct physics_world {
   physics_settings settings;
 } physics_world;
