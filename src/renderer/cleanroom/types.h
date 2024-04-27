@@ -96,7 +96,10 @@ typedef struct geometry_data {
   vertex_darray vertices;
   bool has_indices;
   u32_darray indices;
+  vec3 colour; /** Optional: set vertex colours */
 } geometry_data;
+
+void geo_set_vertex_colours(geometry_data* geo, vec4 colour);
 
 typedef struct mesh {
   buffer_handle vertex_buffer;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "geometry.h"
 #include "maths_types.h"
 
 // 'system' means that it gets called per frame
@@ -17,10 +18,17 @@ enum collider_type {
 typedef struct physics_collider {
   u64 id;  // ? Replace with handle?
   enum collider_type shape;
+  union collider_data {
+    cuboid cuboid;
+    sphere sphere;
+  } geometry;
   transform transform;
   u8 layer;
   bool on_ground;
 } physics_collider;
+
+// What else do I need?
+// intersection methods
 
 typedef struct physics_world {
   physics_settings settings;
