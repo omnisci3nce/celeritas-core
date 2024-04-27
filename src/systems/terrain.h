@@ -8,3 +8,12 @@
  * @copyright Copyright (c) 2024
  * 
  */
+
+#include "defines.h"
+
+typedef struct terrain_state {
+
+} terrain_state;
+
+bool terrain_system_init(terrain_state* state);
+void terrain_system_shutdown(terrain_state* state);
