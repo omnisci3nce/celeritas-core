@@ -10,7 +10,8 @@ CORE_DEFINE_HANDLE(sampler_handle);
 CORE_DEFINE_HANDLE(shader_handle);
 CORE_DEFINE_HANDLE(model_handle);
 
-typedef struct transform_hierarchy {} transform_hierarchy;
+typedef struct transform_hierarchy {
+} transform_hierarchy;
 
 /** @brief Texture Description - used by texture creation functions */
 typedef struct texture_desc {
@@ -56,7 +57,12 @@ typedef struct model bp_material;  // blinn-phong
 
 #include "maths_types.h"
 
-typedef enum vertex_format { VERTEX_STATIC_3D, VERTEX_SPRITE, VERTEX_SKINNED, VERTEX_COUNT } vertex_format;
+typedef enum vertex_format {
+  VERTEX_STATIC_3D,
+  VERTEX_SPRITE,
+  VERTEX_SKINNED,
+  VERTEX_COUNT
+} vertex_format;
 
 typedef union vertex {
   struct {
@@ -79,7 +85,7 @@ typedef union vertex {
     vec3 normal;
     vec4i bone_ids;     // Integer vector for bone IDs
     vec4 bone_weights;  // Weight of each bone's influence
-  } skinned_3d; /** @brief vertex format for skeletal (animated) geometry in 3D */
+  } skinned_3d;         /** @brief vertex format for skeletal (animated) geometry in 3D */
 } vertex;
 
 KITC_DECL_TYPED_ARRAY(vertex)
@@ -127,7 +133,6 @@ typedef struct model {
 // 1 - you need to understand graphics API specifics
 
 /* ral.h */
-
 
 // command buffer gubbins
 

@@ -3,7 +3,8 @@
 
 #define GPU_SWAPCHAIN_IMG_COUNT 2
 
-typedef struct gpu_swapchain {} gpu_swapchain;
+typedef struct gpu_swapchain {
+} gpu_swapchain;
 typedef struct gpu_device {
   // In Vulkan we store both physical and logical device here
   VkPhysicalDevice physical_device;
@@ -13,14 +14,14 @@ typedef struct gpu_device {
   VkPhysicalDeviceMemoryProperties memory;
   VkCommandPool pool;
 } gpu_device;
-typedef struct gpu_pipeline {} gpu_pipeline;
+typedef struct gpu_pipeline {
+} gpu_pipeline;
 
 typedef struct gpu_renderpass {
   VkRenderPass vk_handle;
   VkFramebuffer framebuffers[GPU_SWAPCHAIN_IMG_COUNT];
   u32
 } gpu_renderpass;
-
 
 typedef struct gpu_cmd_encoder {
   VkCommandBuffer cmd_buffer;

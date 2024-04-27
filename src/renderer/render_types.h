@@ -76,7 +76,8 @@ typedef struct texture {
 //   bool is_loaded;
 //   bool is_uploaded;
 // } blinn_phong_material;
-// typedef blinn_phong_material material;  // when we start using PBR, this will no longer be the case
+// typedef blinn_phong_material material;  // when we start using PBR, this will no longer be the
+// case
 
 // // the default blinn-phong material. MUST be initialised with the function below
 // extern material DEFAULT_MATERIAL;

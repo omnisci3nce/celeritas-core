@@ -3,8 +3,8 @@
 #include "defines.h"
 #include "input.h"
 #include "ral.h"
-#include "terrain.h"
 #include "screenspace.h"
+#include "terrain.h"
 #include "text.h"
 #include "threadpool.h"
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "cleanroom/ral.h"
 #include "cleanroom/backend_vulkan.h"
+#include "cleanroom/ral.h"
 
 typedef struct renderer2 {
   void* backend_state;

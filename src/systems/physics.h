@@ -15,7 +15,7 @@ enum collider_type {
 
 /** @brief generic collider structure */
 typedef struct physics_collider {
-  u64 id; // ? Replace with handle?
+  u64 id;  // ? Replace with handle?
   enum collider_type shape;
   transform transform;
   u8 layer;

@@ -4,6 +4,6 @@
 // TODO: implement in terms of pthreads
 #endif
 
-#if defined (CEL_PLATFORM_WINDOWS)
+#if defined(CEL_PLATFORM_WINDOWS)
 // TODO: implement using win32 api
 #endif

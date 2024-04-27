@@ -5,9 +5,9 @@
  * @details API that a graphics backend *must* implement
  * @version 0.1
  * @date 2024-03-31
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 #pragma once
 
@@ -19,8 +19,8 @@ typedef struct gpu_swapchain gpu_swapchain;
 typedef struct gpu_device gpu_device;
 typedef struct gpu_pipeline gpu_pipeline;
 typedef struct gpu_renderpass gpu_renderpass;
-typedef struct gpu_cmd_encoder gpu_cmd_encoder; // Recording
-typedef struct gpu_cmd_buffer gpu_cmd_buffer;  // Ready for submission
+typedef struct gpu_cmd_encoder gpu_cmd_encoder;  // Recording
+typedef struct gpu_cmd_buffer gpu_cmd_buffer;    // Ready for submission
 
 enum pipeline_kind {
   GRAPHICS,
@@ -29,8 +29,8 @@ enum pipeline_kind {
 
 typedef struct shader_desc {
   const char* debug_name;
-  str8 filepath; // where it came from
-  str8 glsl; // contents
+  str8 filepath;  // where it came from
+  str8 glsl;      // contents
 } shader_desc;
 
 struct pipeline_desc {

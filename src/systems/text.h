@@ -8,8 +8,8 @@
 #include "cleanroom/types.h"
 #include "darray.h"
 #include "defines.h"
-#include "render_types.h"
 #include "ral.h"
+#include "render_types.h"
 
 struct core;
 

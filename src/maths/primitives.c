@@ -13,20 +13,10 @@ geometry_data geo_create_plane(f32x2 extents) {
   vertex_format format = VERTEX_STATIC_3D;
   vertex_darray* vertices = vertex_darray_new(4);
 
-  vertex_darray_push(
-    vertices,
-    (vertex) {.static_3d = {
-      .position = 
-    }}
-  );
+  vertex_darray_push(vertices, (vertex){ .static_3d = { .position = } });
 
-  return (geometry_data) {
-    .format = format,
-    .vertices = 
-    .has_indices = true,
-  } 
+  return (geometry_data) { .format = format, .vertices =.has_indices = true, }
 }
-
 
 // OLD
 
