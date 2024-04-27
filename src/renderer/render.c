@@ -247,29 +247,6 @@ texture texture_data_load(const char* path, bool invert_y) {
                     .image_data = data };
 }
 
-void texture_data_upload(texture* tex) {
-  printf("Texture name %s\n", tex->name);
-  TRACE("Upload texture data");
-  u32 texture_id;
-  glGenTextures(1, &texture_id);
-  glBindTexture(GL_TEXTURE_2D, texture_id);
-  tex->texture_id = texture_id;
-
-  // set the texture wrapping parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                  GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  // set texture filtering parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex->width, tex->height, 0, tex->channel_type,
-               GL_UNSIGNED_BYTE, tex->image_data);
-  glGenerateMipmap(GL_TEXTURE_2D);
-  DEBUG("Freeing texture image data after uploading to GPU");
-  // stbi_image_free(tex->image_data);  // data is on gpu now so we dont need it around
-}
-
 void dir_light_upload_uniforms(shader shader, directional_light* light) {
   uniform_vec3f(shader.program_id, "dirLight.direction", &light->direction);
   uniform_vec3f(shader.program_id, "dirLight.ambient", &light->ambient);

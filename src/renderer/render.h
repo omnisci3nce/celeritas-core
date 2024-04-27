@@ -37,4 +37,3 @@ void draw_mesh(renderer* ren, mesh* mesh, transform tf, material* mat, mat4* vie
 
 // ---
 texture texture_data_load(const char* path, bool invert_y);  // #frontend
-void texture_data_upload(texture* tex);                      // #backend
