@@ -4,8 +4,6 @@ set_config("cc", "gcc")
 
 add_rules("mode.debug", "mode.release") -- we have two modes: debug & release
 
-add_syslinks("m") -- these are must have when compiling
-
 -- -Wall     : base set of warnings
 -- -Wextra   : additional warnings not covered by -Wall
 -- -Wundef   : undefined macros
@@ -26,6 +24,8 @@ if is_plat("linux") then
     add_syslinks("vulkan", "dl", "X11", "pthread")
 elseif is_plat("windows") then
     add_defines("CEL_PLATFORM_WINDOWS")
+    add_syslinks("user32", "gdi32", "kernel32", "shell32")
+    add_links("pthreadVC2-w64")
 elseif is_plat("macosx") then
     add_defines("CEL_PLATFORM_MAC")
     add_frameworks("Cocoa", "IOKit", "CoreVideo", "OpenGL")
@@ -88,7 +88,6 @@ end)
 -- common configuration for both static and shared libraries
 target("core_config")
     set_kind("static") -- kind is required but you can ignore it since it's just for common settings
-    add_syslinks("dl")
     add_packages("local_glfw")
     add_includedirs("deps/cgltf", {public = true})
     add_includedirs("deps/glfw-3.3.8/include/GLFW", {public = true})
@@ -120,11 +119,22 @@ target("core_static")
     add_deps("core_config") -- inherit common configurations
     set_policy("build.merge_archive", true)
     add_files(core_sources)
+     -- Link against static CRT
+    if is_plat("windows") then
+        add_links("libcmt", "legacy_stdio_definitions") -- for release builds
+        add_links("libcmtd", "legacy_stdio_definitions") -- for debug builds
+    end
 
 target("core_shared")
     set_kind("shared")
     add_deps("core_config") -- inherit common configurations
     add_files(core_sources)
+    -- Link against dynamic CRT
+    if is_plat("windows") then
+        add_links("msvcrt", "legacy_stdio_definitions") -- for release builds
+        add_links("msvcrtd", "legacy_stdio_definitions") -- for debug builds
+        add_links("pthreadVC2-w64")
+    end
 
 target("main_loop")
     set_kind("binary")
