@@ -8,12 +8,11 @@
 #include "log.h"
 #include "path.h"
 #include "render.h"
-#include "render_types.h"
+// #include "render_types.h"
 #include "str.h"
 
 #define CGLTF_IMPLEMENTATION
 #include <cgltf.h>
-// TODO: Port code from old repo
 
 struct face {
   cgltf_uint indices[3];

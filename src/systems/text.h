@@ -5,9 +5,11 @@
 
 #include <stb_truetype.h>
 
+#include "cleanroom/types.h"
 #include "darray.h"
 #include "defines.h"
 #include "render_types.h"
+#include "ral.h"
 
 struct core;
 
@@ -29,7 +31,7 @@ KITC_DECL_TYPED_ARRAY(draw_text_packet)
 
 typedef struct text_system_state {
   font default_font;
-  shader glyph_shader;
+  shader_handle glyph_shader;
   u32 glyph_vbo;
   u32 glyph_vao;
   draw_text_packet_darray *draw_cmd_buf;

@@ -867,15 +867,10 @@ void vulkan_image_view_create(vulkan_context* context, VkFormat format, vulkan_i
                     &image->view);
 }
 
-void vulkan_image_transition_layout(
-  vulkan_context* context,
-  vulkan_command_buffer* command_buffer,
-  vulkan_image* image,
-  VkFormat format,
-  VkImageLayout old_layout,
-  VkImageLayout new_layout
-) {
-  VkImageMemoryBarrier barrier = {VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+void vulkan_image_transition_layout(vulkan_context* context, vulkan_command_buffer* command_buffer,
+                                    vulkan_image* image, VkFormat format, VkImageLayout old_layout,
+                                    VkImageLayout new_layout) {
+  VkImageMemoryBarrier barrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
   barrier.oldLayout = old_layout;
   barrier.newLayout = new_layout;
   barrier.srcQueueFamilyIndex = context->device.graphics_queue_index;
@@ -892,12 +887,14 @@ void vulkan_image_transition_layout(
   VkPipelineStageFlags source_stage;
   VkPipelineStageFlags dest_stage;
 
-  if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+  if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED &&
+      new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
     barrier.srcAccessMask = 0;
     barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
     source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     dest_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-  } else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+  } else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+             new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
     barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
     source_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -907,14 +904,12 @@ void vulkan_image_transition_layout(
     return;
   }
 
-  vkCmdPipelineBarrier(command_buffer->handle, source_stage, dest_stage, 0, 0, 0, 0, 0, 1, &barrier);
+  vkCmdPipelineBarrier(command_buffer->handle, source_stage, dest_stage, 0, 0, 0, 0, 0, 1,
+                       &barrier);
 }
 
-void vulkan_image_copy_from_buffer(
-  vulkan_image* image,
-  VkBuffer buffer,
-  vulkan_command_buffer* command_buffer
-) {
+void vulkan_image_copy_from_buffer(vulkan_image* image, VkBuffer buffer,
+                                   vulkan_command_buffer* command_buffer) {
   VkBufferImageCopy region;
   region.bufferOffset = 0;
   region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -925,7 +920,8 @@ void vulkan_image_copy_from_buffer(
   region.imageExtent.height = image->height;
   region.imageExtent.depth = 1;
 
-  vkCmdCopyBufferToImage(command_buffer->handle, buffer, image->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+  vkCmdCopyBufferToImage(command_buffer->handle, buffer, image->handle,
+                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 }
 
 void vulkan_image_create(vulkan_context* context, VkImageType image_type, u32 width, u32 height,
@@ -1755,27 +1751,35 @@ void texture_data_upload(texture* tex) {
   VkFormat image_format = VK_FORMAT_R8G8B8A8_SNORM;
 
   VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-  VkMemoryPropertyFlags memory_prop_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+  VkMemoryPropertyFlags memory_prop_flags =
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
   vulkan_buffer staging;
   vulkan_buffer_create(&context, image_size, usage, memory_prop_flags, true, &staging);
   vulkan_buffer_load_data(&context, &staging, 0, image_size, 0, tex->image_data);
 
-  vulkan_image_create(&context, VK_IMAGE_TYPE_2D, tex->width, tex->height, image_format, VK_IMAGE_TILING_OPTIMAL, 
-    VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
-  , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, true, VK_IMAGE_ASPECT_COLOR_BIT, &data->image);
+  vulkan_image_create(
+      &context, VK_IMAGE_TYPE_2D, tex->width, tex->height, image_format, VK_IMAGE_TILING_OPTIMAL,
+      VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+          VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, true, VK_IMAGE_ASPECT_COLOR_BIT, &data->image);
 
   vulkan_command_buffer temp_buffer;
-  vulkan_command_buffer_allocate_and_begin_oneshot(&context, context.device.gfx_command_pool, &temp_buffer);
+  vulkan_command_buffer_allocate_and_begin_oneshot(&context, context.device.gfx_command_pool,
+                                                   &temp_buffer);
 
-  vulkan_image_transition_layout(&context, &temp_buffer, &data->image, image_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+  vulkan_image_transition_layout(&context, &temp_buffer, &data->image, image_format,
+                                 VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
   vulkan_image_copy_from_buffer(&data->image, staging.handle, &temp_buffer);
 
-  vulkan_image_transition_layout(&context, &temp_buffer, &data->image, image_format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  vulkan_image_transition_layout(&context, &temp_buffer, &data->image, image_format,
+                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  vulkan_command_buffer_end_oneshot(&context, context.device.gfx_command_pool, &temp_buffer, context.device.graphics_queue);
+  vulkan_command_buffer_end_oneshot(&context, context.device.gfx_command_pool, &temp_buffer,
+                                    context.device.graphics_queue);
 
-  VkSamplerCreateInfo sampler_info = {VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+  VkSamplerCreateInfo sampler_info = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
   sampler_info.magFilter = VK_FILTER_LINEAR;
   sampler_info.minFilter = VK_FILTER_LINEAR;
   sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
@@ -1792,12 +1796,12 @@ void texture_data_upload(texture* tex) {
   sampler_info.minLod = 0.0;
   sampler_info.maxLod = 0.0;
 
-  VkResult res = vkCreateSampler(context.device.logical_device, &sampler_info, context.allocator, &data->sampler);
+  VkResult res = vkCreateSampler(context.device.logical_device, &sampler_info, context.allocator,
+                                 &data->sampler);
   if (res != VK_SUCCESS) {
     ERROR("Error creating texture sampler for image %s", tex->name);
     return;
   }
-  
 }
 
 // TODO: destroy texture

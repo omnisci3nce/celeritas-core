@@ -8,3 +8,7 @@ typedef struct renderer2 {
   gpu_device* device;
   gpu_pipeline* static_opaque_pipeline;
 } renderer2;
+
+// mesh
+// model
+// material

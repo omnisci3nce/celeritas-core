@@ -2,7 +2,8 @@
 
 #include "defines.h"
 #include "input.h"
-#include "render_types.h"
+#include "ral.h"
+// #include "render_types.h"
 #include "screenspace.h"
 #include "text.h"
 #include "threadpool.h"

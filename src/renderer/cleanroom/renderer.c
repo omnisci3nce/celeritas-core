@@ -1,6 +1,4 @@
-#include "render_types.h"
 #include "defines.h"
+#include "render_types.h"
 
-bool renderer_init() {
-
-}
+bool renderer_init() {}

@@ -11,7 +11,7 @@
 #include "log.h"
 #include "maths.h"
 #include "maths_types.h"
-#include "render_types.h"
+// #include "render_types.h"
 
 struct transform_hierarchy {
   transform_node root;

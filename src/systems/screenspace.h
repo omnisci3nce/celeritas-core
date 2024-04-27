@@ -37,7 +37,7 @@ KITC_DECL_TYPED_ARRAY(draw_cmd)
 typedef struct screenspace_state {
   u32 rect_vbo;
   u32 rect_vao;
-  shader rect_shader;
+  // shader rect_shader;
   draw_cmd_darray* draw_cmd_buf;
 } screenspace_state;
 

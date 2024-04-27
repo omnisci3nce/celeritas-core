@@ -4,11 +4,11 @@
 #include "maths_types.h"
 #include "str.h"
 
-// TODO: Replace with handle defines
-typedef int buffer_handle;
-typedef int texture_handle;
-typedef int sampler_handle;
-typedef int model_handle;
+CORE_DEFINE_HANDLE(buffer_handle);
+CORE_DEFINE_HANDLE(texture_handle);
+CORE_DEFINE_HANDLE(sampler_handle);
+CORE_DEFINE_HANDLE(shader_handle);
+CORE_DEFINE_HANDLE(model_handle);
 
 typedef struct transform_hierarchy {} transform_hierarchy;
 
@@ -56,7 +56,7 @@ typedef struct model bp_material;  // blinn-phong
 
 #include "maths_types.h"
 
-typedef enum vertex_format { VERTEX_STATIC_3D, VERTEX_SPRITE, VERTEX_COUNT } vertex_format;
+typedef enum vertex_format { VERTEX_STATIC_3D, VERTEX_SPRITE, VERTEX_SKINNED, VERTEX_COUNT } vertex_format;
 
 typedef union vertex {
   struct {
@@ -70,7 +70,7 @@ typedef union vertex {
     vec2 position;
     vec4 colour;
     vec2 tex_coords;
-  } sprite;
+  } sprite; /** @brief vertex format for 2D sprites or quads */
 
   struct {
     vec3 position;
@@ -79,7 +79,7 @@ typedef union vertex {
     vec3 normal;
     vec4i bone_ids;     // Integer vector for bone IDs
     vec4 bone_weights;  // Weight of each bone's influence
-  } skinned_3d;        /** @brief vertex format for skeletal (animated) geometry in 3D */
+  } skinned_3d; /** @brief vertex format for skeletal (animated) geometry in 3D */
 } vertex;
 
 KITC_DECL_TYPED_ARRAY(vertex)
@@ -88,6 +88,7 @@ KITC_DECL_TYPED_ARRAY(u32)
 typedef struct geometry_data {
   vertex_format format;
   vertex_darray vertices;
+  bool has_indices;
   u32_darray indices;
 } geometry_data;
 
@@ -107,6 +108,7 @@ C side - reload_model():
 
 */
 
+// TODO: move to some sort of render layer (not inside the abstraction layer)
 typedef struct model {
   str8 debug_name;
   mesh* meshes;
@@ -125,12 +127,6 @@ typedef struct model {
 // 1 - you need to understand graphics API specifics
 
 /* ral.h */
-
-// enum pipeline_type {
-//   GRAPHICS,
-//   COMPUTE,
-// } pipeline_type;
-
 
 
 // command buffer gubbins
