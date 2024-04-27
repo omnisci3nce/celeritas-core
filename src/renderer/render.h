@@ -13,6 +13,7 @@
 #include "camera.h"
 #include "loaders.h"
 #include "render_types.h"
+#include "transform_hierarchy.h"
 
 // --- Lifecycle
 /** @brief initialise the render system frontend */
@@ -32,8 +33,10 @@ void render_frame_draw(renderer* ren);
 
 // --- models meshes
 void model_upload_meshes(renderer* ren, model* model);
-void draw_model(renderer* ren, camera* camera, model* model, transform tf, scene* scene);
-void draw_mesh(renderer* ren, mesh* mesh, transform tf, material* mat, mat4* view, mat4* proj);
+void draw_model(renderer* ren, camera* camera, model* model, mat4* tf, scene* scene);
+void draw_mesh(renderer* ren, mesh* mesh, mat4* tf, material* mat, mat4* view, mat4* proj);
+void draw_scene(arena* frame, model_darray* models, renderer* ren, camera* camera,
+                transform_hierarchy* tfh, scene* scene);
 
 // ---
 texture texture_data_load(const char* path, bool invert_y);  // #frontend
