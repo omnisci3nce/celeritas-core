@@ -16,7 +16,5 @@ path_opt path_parent(arena* a, const char* path) {
 }
 #endif
 #ifdef CEL_PLATFORM_WINDOWS
-// TODO: path_opt path_parent(const char* path)
-#endif
-
 path_opt path_parent(arena* a, const char* path) {}
+#endif

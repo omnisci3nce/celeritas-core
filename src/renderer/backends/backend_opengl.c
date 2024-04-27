@@ -39,7 +39,7 @@ bool gfx_backend_init(renderer *ren) {
   glEnable(GL_DEPTH_TEST);
 
   opengl_state *internal = malloc(sizeof(opengl_state));
-  ren->backend_state = (void *)internal;
+  ren->backend_context = (void *)internal;
 
   return true;
 }
