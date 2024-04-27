@@ -26,6 +26,8 @@ int main() {
     // insert work here
 
     render_frame_end(&core->renderer);
+    glfwSwapBuffers(core->renderer.window);
+    glfwPollEvents();
   }
 
   return 0;

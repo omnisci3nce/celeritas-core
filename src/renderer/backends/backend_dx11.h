@@ -1,4 +1,7 @@
 #pragma once
+#include <d3d11.h>
+#include <d3dcompiler.h>
+
 #include "ral.h"
 
 #define GPU_SWAPCHAIN_IMG_COUNT 2
@@ -6,6 +9,7 @@
 typedef struct gpu_swapchain {
 } gpu_swapchain;
 typedef struct gpu_device {
+    
   // VkPhysicalDevice physical_device;
   // VkDevice logical_device;
   // VkPhysicalDeviceProperties properties;

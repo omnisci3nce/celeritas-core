@@ -1,8 +1,8 @@
 #include "immediate.h"
 #include "maths.h"
 #include "primitives.h"
+#include "ral_types.h"
 #include "render.h"
-#include "types.h"
 
 void imm_draw_sphere(vec3 pos, f32 radius, vec4 colour) {
   // Create the vertices

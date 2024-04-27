@@ -1,5 +1,5 @@
 #pragma once
-#include "cleanroom/ral.h"
+#include "defines.h"
 
 #define GPU_SWAPCHAIN_IMG_COUNT 2
 
@@ -20,7 +20,6 @@ typedef struct gpu_pipeline {
 typedef struct gpu_renderpass {
   VkRenderPass vk_handle;
   VkFramebuffer framebuffers[GPU_SWAPCHAIN_IMG_COUNT];
-  u32
 } gpu_renderpass;
 
 typedef struct gpu_cmd_encoder {

@@ -41,8 +41,6 @@ typedef struct geometry_data {
   vec3 colour; /** Optional: set vertex colours */
 } geometry_data;
 
-void geo_set_vertex_colours(geometry_data* geo, vec4 colour);
-
 typedef struct mesh {
   buffer_handle vertex_buffer;
   buffer_handle index_buffer;

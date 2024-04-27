@@ -1,6 +1,6 @@
 set_project("celeritas")
 set_version("0.1.0")
-set_config("cc", "clang")
+set_config("cc", "clang-cl")
 
 add_rules("mode.debug", "mode.release") -- we have two modes: debug & release
 
@@ -25,6 +25,8 @@ if is_plat("linux") then
 elseif is_plat("windows") then
     add_defines("CEL_PLATFORM_WINDOWS")
     add_syslinks("user32", "gdi32", "kernel32", "shell32")
+    add_requires("vulkansdk", {system=true})
+
     -- add_links("pthreadVC2-w64")
 elseif is_plat("macosx") then
     add_defines("CEL_PLATFORM_MAC")
@@ -55,6 +57,7 @@ local core_sources = {
     "deps/glad/src/glad.c",
     "src/*.c",
     -- "src/logos/*.c",
+    "src/maths/*.c",
     "src/platform/*.c",
     "src/renderer/*.c",
     "src/renderer/backends/*.c",
@@ -84,6 +87,8 @@ rule("compile_glsl_frag_shaders")
 end)
 -- TODO: Metal shaders compilation
 
+--
+
 -- common configuration for both static and shared libraries
 target("core_config")
     set_kind("static") -- kind is required but you can ignore it since it's just for common settings
@@ -100,7 +105,6 @@ target("core_config")
     add_includedirs("src/platform/", {public = true})
     add_includedirs("src/renderer/", {public = true})
     add_includedirs("src/renderer/backends/", {public = true})
-    -- add_includedirs("src/renderer/cleanroom/", {public = true})
     add_includedirs("src/resources/", {public = true})
     add_includedirs("src/std/", {public = true})
     add_includedirs("src/std/containers", {public = true})
@@ -111,6 +115,11 @@ target("core_config")
     -- add_files("assets/shaders/object.vert")
     -- add_files("assets/shaders/object.frag")
     -- add_files("assets/shaders/*.frag")
+    if is_plat("windows") then
+        add_includedirs("$(env VULKAN_SDK)/Include", {public = true})
+        add_linkdirs("$(env VULKAN_SDK)/Lib", {public = true})
+        add_links("vulkan-1")
+    end
     set_default(false) -- prevents standalone building of this target
 
 target("core_static")
@@ -132,7 +141,6 @@ target("core_shared")
     if is_plat("windows") then
         add_links("msvcrt", "legacy_stdio_definitions") -- for release builds
         add_links("msvcrtd", "legacy_stdio_definitions") -- for debug builds
-        -- add_links("pthreadVC2-w64")
     end
 
 target("main_loop")

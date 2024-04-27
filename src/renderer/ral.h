@@ -23,10 +23,10 @@ typedef struct gpu_renderpass gpu_renderpass;
 typedef struct gpu_cmd_encoder gpu_cmd_encoder;  // Recording
 typedef struct gpu_cmd_buffer gpu_cmd_buffer;    // Ready for submission
 
-enum pipeline_kind {
-  GRAPHICS,
-  COMPUTE,
-};
+typedef enum pipeline_kind {
+  PIPELINE_GRAPHICS,
+  PIPELINE_COMPUTE,
+} pipeline_kind;
 
 typedef struct shader_desc {
   const char* debug_name;
@@ -40,7 +40,7 @@ struct pipeline_desc {
 };
 
 // lifecycle functions
-gpu_device* gpu_device_create();
+gpu_device gpu_device_create();
 void gpu_device_destroy();
 
 gpu_renderpass* gpu_renderpass_create();

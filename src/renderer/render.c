@@ -53,3 +53,5 @@ void render_frame_end(renderer* ren) {}
 void render_frame_draw(renderer* ren) {}
 
 void gfx_backend_draw_frame(renderer* ren, camera* camera, mat4 model, texture* tex) {}
+
+void geo_set_vertex_colours(geometry_data* geo, vec4 colour) {}

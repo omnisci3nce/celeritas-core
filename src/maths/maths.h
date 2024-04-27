@@ -53,6 +53,7 @@ static inline void print_vec3(vec3 v) { printf("{ x: %f, y: %f, z: %f )\n", v.x,
 
 // TODO: Dimension 2
 static inline vec2 vec2_create(f32 x, f32 y) { return (vec2){ x, y }; }
+static inline vec2 vec2_div(vec2 a, f32 s) { return (vec2){ a.x / s, a.y / s }; }
 
 // TODO: Dimension 4
 static inline vec4 vec4_create(f32 x, f32 y, f32 z, f32 w) { return (vec4){ x, y, z, w }; }

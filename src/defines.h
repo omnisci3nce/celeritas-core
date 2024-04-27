@@ -71,7 +71,8 @@ Renderer backend defines:
 #endif
 
 #if defined(CEL_PLATFORM_WINDOWS)
-#define CEL_REND_BACKEND_DX11 1
+// #define CEL_REND_BACKEND_DX11 1
+#define CEL_REND_BACKEND_VULKAN 1
 #endif
 
 #if defined(CEL_PLATFORM_MAC)
