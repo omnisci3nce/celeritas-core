@@ -1,5 +1,5 @@
-#include <glfw3.h>
 #include "render.h"
+#include <glfw3.h>
 #include "camera.h"
 
 bool renderer_init(renderer* ren) {
@@ -31,12 +31,13 @@ bool renderer_init(renderer* ren) {
 
   // DEBUG("init graphics api backend");
   // if (!gfx_backend_init(ren)) {
-    // FATAL("Couldnt load graphics api backend");
-    // return false;
+  // FATAL("Couldnt load graphics api backend");
+  // return false;
   // }
 
   // ren->blinn_phong =
-  //     shader_create_separate("assets/shaders/blinn_phong.vert", "assets/shaders/blinn_phong.frag");
+  //     shader_create_separate("assets/shaders/blinn_phong.vert",
+  //     "assets/shaders/blinn_phong.frag");
 
   // ren->skinned =
   //     shader_create_separate("assets/shaders/skinned.vert", "assets/shaders/blinn_phong.frag");
