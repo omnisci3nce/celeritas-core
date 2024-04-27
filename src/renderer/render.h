@@ -38,5 +38,9 @@ void draw_mesh(renderer* ren, mesh* mesh, mat4* tf, material* mat, mat4* view, m
 void draw_scene(arena* frame, model_darray* models, renderer* ren, camera* camera,
                 transform_hierarchy* tfh, scene* scene);
 
+void draw_skinned_model(renderer* ren, camera* cam, model* model, transform tf, scene* scene);
+
+void model_destroy(model* model);
+
 // ---
 texture texture_data_load(const char* path, bool invert_y);  // #frontend

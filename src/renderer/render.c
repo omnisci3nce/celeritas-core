@@ -1,4 +1,8 @@
+#include <assert.h>
 #include <stdlib.h>
+#include <string.h>
+#include "animation.h"
+#include "maths_types.h"
 #include "mem.h"
 #include "transform_hierarchy.h"
 #define STB_IMAGE_IMPLEMENTATION
@@ -61,6 +65,9 @@ bool renderer_init(renderer* ren) {
   ren->blinn_phong =
       shader_create_separate("assets/shaders/blinn_phong.vert", "assets/shaders/blinn_phong.frag");
 
+  ren->skinned =
+      shader_create_separate("assets/shaders/skinned.vert", "assets/shaders/blinn_phong.frag");
+
   default_material_init();
 
   return true;
@@ -89,6 +96,22 @@ void default_material_init() {
   strcpy(DEFAULT_MATERIAL.name, "Default");
   texture_data_upload(&DEFAULT_MATERIAL.diffuse_texture);
   texture_data_upload(&DEFAULT_MATERIAL.specular_texture);
+}
+
+void model_destroy(model* model) {
+  TRACE("Freeing all data for model %s", model->name);
+  arena_free_all(&model->animation_data_arena);
+  arena_free_storage(&model->animation_data_arena);
+  mesh_darray_free(model->meshes);
+  material_darray_free(model->materials);
+  if (model->is_uploaded) {
+    // Delete gpu buffer data
+    for (u32 i = 0; i < mesh_darray_len(model->meshes); i++) {
+      // FIXME: dont leak Opengl
+      glDeleteBuffers(1, &model->meshes->data[i].vbo);
+      glDeleteVertexArrays(1, &model->meshes->data[i].vao);
+    }
+  }
 }
 
 typedef struct draw_ctx {
@@ -153,20 +176,97 @@ void draw_mesh(renderer* ren, mesh* mesh, mat4* model_tf, material* mat, mat4* v
   bind_texture(lighting_shader, &mat->specular_texture, 1);  // bind to slot 1
   uniform_f32(lighting_shader.program_id, "material.shininess", 32.);
 
-  // upload model transform
-  // mat4 trans = mat4_translation(tf.position);
-  // mat4 rot = mat4_rotation(tf.rotation);
-  // mat4 scale = mat4_scale(tf.scale);
-  // mat4 model_tf = mat4_mult(trans, mat4_mult(rot, scale));
-
+  // upload model, view, and projection matrices
   uniform_mat4f(lighting_shader.program_id, "model", model_tf);
-  // upload view & projection matrices
   uniform_mat4f(lighting_shader.program_id, "view", view);
   uniform_mat4f(lighting_shader.program_id, "projection", proj);
 
   // draw triangles
   u32 num_vertices = vertex_darray_len(mesh->vertices);
   draw_primitives(CEL_PRIMITIVE_TOPOLOGY_TRIANGLE, 0, num_vertices);
+}
+
+void draw_skinned_mesh(renderer* ren, mesh* mesh, transform tf, material* mat, mat4* view,
+                       mat4* proj) {
+  shader lighting_shader = ren->skinned;
+
+  // bind buffer
+  bind_mesh_vertex_buffer(ren->backend_state, mesh);
+
+  // bind textures
+  bind_texture(lighting_shader, &mat->diffuse_texture, 0);   // bind to slot 0
+  bind_texture(lighting_shader, &mat->specular_texture, 1);  // bind to slot 1
+
+  // Uniforms
+  uniform_f32(lighting_shader.program_id, "material.shininess", 32.);
+  mat4 trans = mat4_translation(tf.position);
+  mat4 rot = mat4_rotation(tf.rotation);
+  mat4 scale = mat4_scale(tf.scale);
+  mat4 model_tf = mat4_mult(trans, mat4_mult(rot, scale));
+  uniform_mat4f(lighting_shader.program_id, "model", &model_tf);
+  uniform_mat4f(lighting_shader.program_id, "view", view);
+  uniform_mat4f(lighting_shader.program_id, "projection", proj);
+
+  // bone transforms
+  size_t n_bones = mesh->bones->len;
+
+  // for now assume correct ordering
+  mat4* bone_transforms = malloc(n_bones * sizeof(mat4));
+  mat4 parent = mat4_ident();
+  for (int bone_i = 0; bone_i < n_bones; bone_i++) {
+    joint j = mesh->bones->data[bone_i];
+    transform tf = mesh->bones->data[bone_i].transform_components;
+    tf.position.y = -tf.position.y;
+    mat4 local = transform_to_mat(&tf);
+    mat4 inverse = j.inverse_bind_matrix;
+    inverse.data[13] = -inverse.data[13];
+    mat4 intemediate = mat4_mult(local, inverse);
+
+    bone_transforms[bone_i] = intemediate;
+    parent = bone_transforms[bone_i];
+  }
+
+  // premultiply the inverses
+  // for (int bone_i = 0; bone_i < n_bones; bone_i++) {
+  //   joint j = mesh->bones->data[bone_i];
+  //   // bone_transforms[bone_i] = mat4_mult(bone_transforms[bone_i], j.inverse_bind_matrix);
+  //   bone_transforms[bone_i] = mat4_mult(bone_transforms[bone_i], j.inverse_bind_matrix);
+  // }
+
+  glUniformMatrix4fv(glGetUniformLocation(lighting_shader.program_id, "boneMatrices"), n_bones,
+                     GL_FALSE, &bone_transforms->data[0]);
+
+  free(bone_transforms);
+
+  // draw triangles
+  u32 num_vertices = vertex_darray_len(mesh->vertices);
+  draw_primitives(CEL_PRIMITIVE_TOPOLOGY_TRIANGLE, 0, num_vertices);
+}
+
+void draw_skinned_model(renderer* ren, camera* cam, model* model, transform tf, scene* scene) {
+  mat4 view;
+  mat4 proj;
+  camera_view_projection(cam, SCR_HEIGHT, SCR_WIDTH, &view, &proj);
+
+  set_shader(ren->skinned);
+
+  // set camera uniform
+  uniform_vec3f(ren->skinned.program_id, "viewPos", &cam->position);
+  // set light uniforms
+  dir_light_upload_uniforms(ren->skinned, &scene->dir_light);
+  for (int i = 0; i < scene->n_point_lights; i++) {
+    point_light_upload_uniforms(ren->skinned, &scene->point_lights[i], '0' + i);
+  }
+
+  for (size_t i = 0; i < mesh_darray_len(model->meshes); i++) {
+    mesh* m = &model->meshes->data[i];
+    if (vertex_darray_len(m->vertices) == 0) {
+      continue;
+    }
+    // material* mat = &model->materials->data[m->material_index];
+    material* mat = &DEFAULT_MATERIAL;
+    draw_skinned_mesh(ren, m, tf, mat, &view, &proj);
+  }
 }
 
 void model_upload_meshes(renderer* ren, model* model) {
@@ -184,6 +284,7 @@ void model_upload_meshes(renderer* ren, model* model) {
 
   // upload each mesh to the GPU
   for (int mesh_i = 0; mesh_i < num_meshes; mesh_i++) {
+    mesh mesh = model->meshes->data[mesh_i];
     model->meshes->data[mesh_i].vao = VAOs[mesh_i];
     model->meshes->data[mesh_i].vbo = VBOs[mesh_i];
     // 3. bind buffers
@@ -193,49 +294,53 @@ void model_upload_meshes(renderer* ren, model* model) {
     // TRACE("Uploading vertex array data: %d verts", num_vertices);
     total_verts += num_vertices;
 
-    // TODO: convert this garbage into a function
-    f32 verts[num_vertices * 8];
-    // for each face
-    for (int i = 0; i < (num_vertices / 3); i++) {
-      // for each vert in face
-      for (int j = 0; j < 3; j++) {
-        size_t stride = (i * 24) + j * 8;
-        // printf("i: %d, stride: %ld, loc %d\n", i, stride, i * 3 + j);
-        vertex vert = model->meshes->data[mesh_i].vertices->data[i];
-        // printf("pos %f %f %f\n", vert.position.x, vert.position.y, vert.position.z);
-        // printf("norm %f %f %f\n", vert.normal.x, vert.normal.y, vert.normal.z);
-        // printf("tex %f %f\n", vert.uv.x, vert.uv.y);
-        verts[stride + 0] =
-            ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].position.x;
-        verts[stride + 1] =
-            ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].position.y;
-        verts[stride + 2] =
-            ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].position.z;
-        verts[stride + 3] =
-            ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].normal.x;
-        verts[stride + 4] =
-            ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].normal.y;
-        verts[stride + 5] =
-            ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].normal.z;
-        verts[stride + 6] = ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].uv.x;
-        verts[stride + 7] = ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].uv.y;
+    size_t static_vertex_size = 2 * sizeof(vec3) + sizeof(vec2);
+    size_t skinned_vertex_size = 2 * sizeof(vec3) + sizeof(vec2) + 4 * sizeof(u32) + sizeof(vec4);
+    size_t vertex_size = mesh.is_skinned ? skinned_vertex_size : static_vertex_size;
+
+    // TRACE("sizeof(vertex) -> %ld, vertex_size -> %ld\n", sizeof(vertex), vertex_size);
+    if (mesh.is_skinned) {
+      assert(vertex_size == (12 + 12 + 8 + 16 + 16));
+    } else {
+      assert(vertex_size == sizeof(vertex));
+      assert(vertex_size == 8 * sizeof(float));
+    }
+
+    size_t buffer_size = vertex_size * num_vertices;
+    u8* bytes = malloc(buffer_size);
+
+    for (int i = 0; i < num_vertices; i++) {
+      u8* p = bytes + vertex_size * i;
+      memcpy(p, &mesh.vertices->data[i], static_vertex_size);
+      if (mesh.is_skinned) {
+        u8* bone_data_offset = p + static_vertex_size;
+        memcpy(bone_data_offset, &mesh.vertex_bone_data->data[i], sizeof(vertex_bone_data));
       }
     }
 
     // 4. upload data
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, buffer_size, bytes, GL_STATIC_DRAW);
 
     // 5. cont. set mesh vertex layout
     glBindVertexArray(model->meshes->data[mesh_i].vao);
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vertex_size, (void*)0);
     glEnableVertexAttribArray(0);
     // normal vector attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vertex_size, (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     // tex coords
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vertex_size, (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
+
+    // skinning (optional)
+    if (mesh.is_skinned) {
+      glEnableVertexAttribArray(3);
+      glVertexAttribIPointer(3, 4, GL_INT, vertex_size, (void*)(8 * sizeof(float)));
+
+      glEnableVertexAttribArray(4);
+      glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, vertex_size, (void*)(12 * sizeof(float)));
+    }
   }
 
   INFO("Uploaded %d submeshes with a total of %d vertices\n", num_meshes, total_verts);
@@ -253,7 +358,7 @@ texture texture_data_load(const char* path, bool invert_y) {
   stbi_set_flip_vertically_on_load(invert_y);
 
 #pragma GCC diagnostic ignored "-Wpointer-sign"
-  char* data = stbi_load(path, &width, &height, &num_channels, 0);
+  char* data = stbi_load(path, &width, &height, &num_channels, 0);  // STBI_rgb_alpha);
   if (data) {
     DEBUG("loaded texture: %s", path);
   } else {

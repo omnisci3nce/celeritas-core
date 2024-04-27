@@ -1,9 +1,12 @@
 #include <glfw3.h>
 
+#include "../example_scene.h"
+#include "animation.h"
 #include "camera.h"
 #include "core.h"
 #include "input.h"
 #include "keys.h"
+#include "log.h"
 #include "maths.h"
 #include "maths_types.h"
 #include "primitives.h"
@@ -21,7 +24,18 @@ typedef struct game_state {
 void update_camera_rotation(input_state* input, game_state* game, camera* cam);
 
 int main() {
+  double currentFrame = glfwGetTime();
+  double lastFrame = currentFrame;
+  double deltaTime;
+
   core* core = core_bringup();
+
+  model_handle animated_cube_handle =
+      model_load_gltf(core, "assets/models/gltf/AnimatedCube/glTF/AnimatedCube.gltf", false);
+  model* cube = &core->models->data[animated_cube_handle.raw];
+  model_upload_meshes(&core->renderer, cube);
+
+  scene our_scene = make_default_scene();
 
   vec3 cam_pos = vec3_create(5, 5, 5);
   game_state game = {
@@ -30,91 +44,60 @@ int main() {
     .first_mouse_update = true,
   };
 
-  // load a texture
-  texture tex = texture_data_load("assets/models/obj/cube/container.jpg", false);
-  texture_data_upload(&tex);
-
-  printf("Starting look direction: ");
   print_vec3(game.camera.front);
 
   // Main loop
   const f32 camera_lateral_speed = 0.2;
   const f32 camera_zoom_speed = 0.15;
 
+  // animation
+  animation_clip track = cube->animations->data[0];
+  f64 total_time = 0.0;
+
   while (!should_exit(core)) {
     input_update(&core->input);
 
+    currentFrame = glfwGetTime();
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+    total_time += deltaTime;
+    printf("delta time %f\n", deltaTime);
+    f64 t = fmod(total_time, 1.0);
+    INFO("Total time: %f", t);
+
     vec3 translation = VEC3_ZERO;
     if (key_is_pressed(KEYCODE_W) || key_is_pressed(KEYCODE_KEY_UP)) {
-      printf("Move Forwards\n");
       translation = vec3_mult(game.camera.front, camera_zoom_speed);
     } else if (key_is_pressed(KEYCODE_S) || key_is_pressed(KEYCODE_KEY_DOWN)) {
-      printf("Move Backwards\n");
       translation = vec3_mult(game.camera.front, -camera_zoom_speed);
     } else if (key_is_pressed(KEYCODE_A) || key_is_pressed(KEYCODE_KEY_LEFT)) {
-      printf("Move Left\n");
       vec3 lateral = vec3_normalise(vec3_cross(game.camera.front, game.camera.up));
       translation = vec3_mult(lateral, -camera_lateral_speed);
     } else if (key_is_pressed(KEYCODE_D) || key_is_pressed(KEYCODE_KEY_RIGHT)) {
-      printf("Move Right\n");
       vec3 lateral = vec3_normalise(vec3_cross(game.camera.front, game.camera.up));
       translation = vec3_mult(lateral, camera_lateral_speed);
     }
     game.camera.position = vec3_add(game.camera.position, translation);
-    // update_camera_rotation(&core->input, &game, &game.camera);
 
     // UNUSED: threadpool_process_results(&core->threadpool, 1);
 
     render_frame_begin(&core->renderer);
 
-    mat4 model = mat4_translation(VEC3_ZERO);
+    quat rot = animation_sample(track.rotation, t).rotation;
+    // quat rot = quat_ident();
+    transform tf = transform_create(VEC3_ZERO, rot, 1.0);
+    mat4 model_tf = transform_to_mat(&tf);
+    draw_model(&core->renderer, &game.camera, cube, &model_tf, &our_scene);
 
-    gfx_backend_draw_frame(&core->renderer, &game.camera, model, &tex);
+    // gfx_backend_draw_frame(&core->renderer, &game.camera, model, NULL);
 
     render_frame_end(&core->renderer);
   }
 
+  INFO("Shutting down");
+  model_destroy(cube);
+
   core_shutdown(core);
 
   return 0;
-}
-
-void update_camera_rotation(input_state* input, game_state* game, camera* cam) {
-  float xoffset = -input->mouse.x_delta;  // xpos - lastX;
-  float yoffset = -input->mouse.y_delta;  // reversed since y-coordinates go from bottom to top
-  if (game->first_mouse_update) {
-    xoffset = 0.0;
-    yoffset = 0.0;
-    game->first_mouse_update = false;
-  }
-
-  float sensitivity = 0.2f;  // change this value to your liking
-  xoffset *= sensitivity;
-  yoffset *= sensitivity;
-
-  // x = yaw
-  game->camera_euler.x += xoffset;
-  // y = pitch
-  game->camera_euler.y += yoffset;
-  // we dont update roll
-
-  f32 yaw = game->camera_euler.x;
-  f32 pitch = game->camera_euler.y;
-
-  // make sure that when pitch is out of bounds, screen doesn't get flipped
-  if (game->camera_euler.y > 89.0f) game->camera_euler.y = 89.0f;
-  if (game->camera_euler.y < -89.0f) game->camera_euler.y = -89.0f;
-
-  vec3 front = cam->front;
-  front.x = cos(deg_to_rad(yaw) * cos(deg_to_rad(pitch)));
-  front.y = sin(deg_to_rad(pitch));
-  front.z = sin(deg_to_rad(yaw)) * cos(deg_to_rad(pitch));
-
-  front = vec3_normalise(front);
-  // save it back
-  cam->front.x = front.x;
-  cam->front.y = front.y;
-  // roll is static
-
-  print_vec3(cam->front);
 }

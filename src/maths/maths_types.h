@@ -65,3 +65,7 @@ typedef struct transform {
 typedef struct vec4i {
   i32 x, y, z, w;
 } vec4i;
+
+typedef struct vec4u {
+  u32 x, y, z, w;
+} vec4u;

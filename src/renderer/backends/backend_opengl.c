@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "camera.h"
 #define CEL_PLATFORM_LINUX
 
 #include "defines.h"
@@ -42,6 +43,9 @@ bool gfx_backend_init(renderer *ren) {
 
   return true;
 }
+
+void gfx_backend_draw_frame(renderer *ren, camera *cam, mat4 model, texture *tex) {}
+
 void gfx_backend_shutdown(renderer *ren) {}
 
 void uniform_vec3f(u32 program_id, const char *uniform_name, vec3 *value) {

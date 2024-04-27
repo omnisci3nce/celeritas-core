@@ -1,14 +1,19 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include "animation.h"
 #include "core.h"
 #include "defines.h"
 #include "file.h"
 #include "loaders.h"
 #include "log.h"
+#include "maths.h"
+#include "maths_types.h"
+#include "mem.h"
 #include "path.h"
 #include "render.h"
-// #include "render_types.h"
+#include "render_backend.h"
+#include "render_types.h"
 #include "str.h"
 
 #define CGLTF_IMPLEMENTATION
@@ -22,7 +27,10 @@ typedef struct face face;
 KITC_DECL_TYPED_ARRAY(vec3)
 KITC_DECL_TYPED_ARRAY(vec2)
 KITC_DECL_TYPED_ARRAY(u32)
+KITC_DECL_TYPED_ARRAY(vec4u)
+KITC_DECL_TYPED_ARRAY(vec4)
 KITC_DECL_TYPED_ARRAY(face)
+// KITC_DECL_TYPED_ARRAY(joint)
 
 bool model_load_gltf_str(const char *file_string, const char *filepath, str8 relative_path,
                          model *out_model, bool invert_textures_y);
@@ -59,6 +67,14 @@ model_handle model_load_gltf(struct core *core, const char *path, bool invert_te
   return (model_handle){ .raw = index };
 }
 
+void assert_path_type_matches_component_type(cgltf_animation_path_type target_path,
+                                             cgltf_accessor *output) {
+  if (target_path == cgltf_animation_path_type_rotation) {
+    assert(output->component_type == cgltf_component_type_r_32f);
+    assert(output->type == cgltf_type_vec4);
+  }
+}
+
 // TODO: Brainstorm how I can make this simpler and break it up into more testable pieces
 
 bool model_load_gltf_str(const char *file_string, const char *filepath, str8 relative_path,
@@ -69,7 +85,10 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
   vec3_darray *tmp_positions = vec3_darray_new(1000);
   vec3_darray *tmp_normals = vec3_darray_new(1000);
   vec2_darray *tmp_uvs = vec2_darray_new(1000);
-  face_darray *tmp_faces = face_darray_new(1000);
+  vec4u_darray *tmp_joint_indices = vec4u_darray_new(1000);
+  vec4_darray *tmp_weights = vec4_darray_new(1000);
+  joint_darray *tmp_joints = joint_darray_new(256);
+  vertex_bone_data_darray *tmp_vertex_bone_data = vertex_bone_data_darray_new(1000);
 
   cgltf_options options = { 0 };
   cgltf_data *data = NULL;
@@ -82,6 +101,51 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
 
   cgltf_load_buffers(&options, data, filepath);
   DEBUG("loaded buffers");
+
+  // --- Skin
+  size_t num_skins = data->skins_count;
+  bool is_skinned = false;
+  if (num_skins == 1) {
+    is_skinned = true;
+  } else if (num_skins > 1) {
+    WARN("GLTF files with more than 1 skin are not supported");
+    return false;
+  }
+
+  if (is_skinned) {
+    cgltf_skin *gltf_skin = data->skins;
+    DEBUG("loading skin %s", gltf_skin->name);
+    size_t num_joints = gltf_skin->joints_count;
+    DEBUG("# Joints %d", num_joints);
+
+    cgltf_accessor *gltf_inverse_bind_matrices = gltf_skin->inverse_bind_matrices;
+
+    // for each one we'll spit out a joint
+    for (size_t i = 0; i < num_joints; i++) {
+      cgltf_node *joint_node = gltf_skin->joints[i];
+
+      joint joint_i = { .name = "testjoint" };
+      if (joint_node->children_count > 0 && !joint_node->has_translation &&
+          !joint_node->has_rotation) {
+        WARN("joint Node with index %d is the root node", i);
+        joint_i.transform_components = TRANSFORM_DEFAULT;
+      } else {
+        TRACE("Storing joint transform");
+        joint_i.transform_components = TRANSFORM_DEFAULT;
+        if (joint_node->has_translation) {
+          memcpy(&joint_i.transform_components.position, &joint_node->translation, 3 * sizeof(f32));
+        }
+        if (joint_node->has_rotation) {
+          memcpy(&joint_i.transform_components.rotation, &joint_node->rotation, 4 * sizeof(f32));
+        }
+        // TODO: support scaling as vec instead of float
+      }
+      joint_i.local_transform = transform_to_mat(&joint_i.transform_components);
+      cgltf_accessor_read_float(gltf_inverse_bind_matrices, i, &joint_i.inverse_bind_matrix.data[0],
+                                16);
+      joint_darray_push(tmp_joints, joint_i);
+    }
+  }
 
   // --- Materials
   TRACE("Num materials %d", data->materials_count);
@@ -127,6 +191,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
   for (size_t m = 0; m < num_meshes; m++) {
     cgltf_primitive primitive = data->meshes[m].primitives[0];
     DEBUG("Found %d attributes", primitive.attributes_count);
+    // DEBUG("Number of this primitive %d", primitive.)
 
     for (int a = 0; a < data->meshes[m].primitives[0].attributes_count; a++) {
       cgltf_attribute attribute = data->meshes[m].primitives[0].attributes[a];
@@ -136,6 +201,8 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
         cgltf_accessor *accessor = attribute.data;
         assert(accessor->component_type == cgltf_component_type_r_32f);
         // CASSERT_MSG(accessor->type == cgltf_type_vec3, "Vertex positions should be a vec3");
+
+        TRACE("Loading %d vec3 components", accessor->count);
 
         for (cgltf_size v = 0; v < accessor->count; ++v) {
           vec3 pos;
@@ -171,17 +238,76 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
           vec2_darray_push(tmp_uvs, tex);
         }
       } else if (attribute.type == cgltf_attribute_type_joints) {
-        // TODO: handle joints
+        TRACE("Load joint indices from accessor");
+        cgltf_accessor *accessor = attribute.data;
+        assert(accessor->component_type == cgltf_component_type_r_16u);
+        assert(accessor->type == cgltf_type_vec4);
+        vec4u joint_indices;
+        vec4 joints_as_floats;
+        for (cgltf_size v = 0; v < accessor->count; ++v) {
+          cgltf_accessor_read_float(accessor, v, &joints_as_floats.x, 4);
+          joint_indices.x = (u32)joints_as_floats.x;
+          joint_indices.y = (u32)joints_as_floats.y;
+          joint_indices.z = (u32)joints_as_floats.z;
+          joint_indices.w = (u32)joints_as_floats.w;
+          printf("Joints affecting vertex %d :  %d %d %d %d\n", v, joint_indices.x, joint_indices.y,
+                 joint_indices.z, joint_indices.w);
+          vec4u_darray_push(tmp_joint_indices, joint_indices);
+        }
+
+      } else if (attribute.type == cgltf_attribute_type_weights) {
+        TRACE("Load joint weights from accessor");
+        cgltf_accessor *accessor = attribute.data;
+        assert(accessor->component_type == cgltf_component_type_r_32f);
+        assert(accessor->type == cgltf_type_vec4);
+
+        for (cgltf_size v = 0; v < accessor->count; ++v) {
+          vec4 weights;
+          cgltf_accessor_read_float(accessor, v, &weights.x, 4);
+          printf("Weights affecting vertex %d : %f %f %f %f\n", v, weights.x, weights.y, weights.z,
+                 weights.w);
+          vec4_darray_push(tmp_weights, weights);
+        }
       } else {
         WARN("Unhandled cgltf_attribute_type: %s. skipping..", attribute.name);
       }
     }
 
-    mesh mesh;
+    mesh mesh = { 0 };
     mesh.vertices = vertex_darray_new(10);
+    mesh.vertex_bone_data = vertex_bone_data_darray_new(1);
+
+    if (primitive.material != NULL) {
+      for (int i = 0; i < material_darray_len(out_model->materials); i++) {
+        printf("%s vs %s \n", primitive.material->name, out_model->materials->data[i].name);
+        if (strcmp(primitive.material->name, out_model->materials->data[i].name) == 0) {
+          TRACE("Found material");
+          mesh.material_index = i;
+          break;
+        }
+      }
+    }
+
+    if (is_skinned) {
+      mesh.is_skinned = true;
+      // mesh.vertex_bone_data = vertex_bone_data_darray_new(tmp_joint_indices->len);
+      mesh.bones = joint_darray_new(tmp_joints->len);
+      for (int i = 0; i < tmp_joint_indices->len; i++) {
+        vertex_bone_data data;
+        data.joints = tmp_joint_indices->data[i];
+        data.weights = tmp_weights->data[i];
+        vertex_bone_data_darray_push(tmp_vertex_bone_data,
+                                     data);  // Push the temp data that aligns with raw vertices
+      }
+      for (int i = 0; i < tmp_joints->len; i++) {
+        joint data = tmp_joints->data[i];
+        joint_darray_push(mesh.bones, data);
+      }
+    }
 
     cgltf_accessor *indices = primitive.indices;
     if (primitive.indices > 0) {
+      WARN("indices!");
       mesh.has_indices = true;
 
       mesh.indices = malloc(indices->count * sizeof(u32));
@@ -202,23 +328,27 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
         vert.normal = tmp_normals->data[index];
         vert.uv = tmp_uvs->data[index];
         vertex_darray_push(mesh.vertices, vert);
+
+        if (is_skinned) {
+          vertex_bone_data vbd = tmp_vertex_bone_data->data[index];  // create a copy
+          vertex_bone_data_darray_push(mesh.vertex_bone_data, vbd);
+        }
+        // for each vertex do the bone data
       }
     } else {
       mesh.has_indices = false;
       return false;  // TODO
     }
 
-    if (primitive.material != NULL) {
-      for (int i = 0; i < material_darray_len(out_model->materials); i++) {
-        if (strcmp(primitive.material->name, out_model->materials->data[i].name)) {
-          TRACE("Found material");
-          mesh.material_index = i;
-          break;
-        }
-      }
-    }
-
     mesh_darray_push(out_model->meshes, mesh);
+
+    // clear data for each mesh
+    vec3_darray_clear(tmp_positions);
+    vec3_darray_clear(tmp_normals);
+    vec2_darray_free(tmp_uvs);
+    vec4u_darray_clear(tmp_joint_indices);
+    vec4_darray_clear(tmp_weights);
+    joint_darray_clear(tmp_joints);
   }
 
   for (int i = 0; i < out_model->meshes->len; i++) {
@@ -226,6 +356,125 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     printf("Mesh %d Mat index %d Mat name %s\n", i, mat_idx,
            out_model->materials->data[mat_idx].name);
   }
+
+  // Animations
+  TRACE("Num animations %d", data->animations_count);
+  size_t num_animations = data->animations_count;
+  if (num_animations > 0) {
+// Create an arena for all animation related data
+#define ANIMATION_STORAGE_ARENA_SIZE (1024 * 1024 * 1024)
+    char *animation_backing_storage = malloc(ANIMATION_STORAGE_ARENA_SIZE);
+    // We'll store data on this arena so we can easily free it all at once later
+    out_model->animation_data_arena =
+        arena_create(animation_backing_storage, ANIMATION_STORAGE_ARENA_SIZE);
+    arena *arena = &out_model->animation_data_arena;
+
+    if (!out_model->animations) {
+      out_model->animations = animation_clip_darray_new(num_animations);
+    }
+
+    for (int anim_idx = 0; anim_idx < data->animations_count; anim_idx++) {
+      cgltf_animation animation = data->animations[anim_idx];
+      animation_clip clip = { 0 };
+
+      for (size_t c = 0; c < animation.channels_count; c++) {
+        cgltf_animation_channel channel = animation.channels[c];
+
+        animation_sampler *sampler = arena_alloc(arena, sizeof(animation_sampler));
+
+        animation_sampler **target_property;
+        keyframe_kind data_type;
+
+        switch (channel.target_path) {
+          case cgltf_animation_path_type_rotation:
+            target_property = &clip.rotation;
+            data_type = KEYFRAME_ROTATION;
+            break;
+          case cgltf_animation_path_type_translation:
+            target_property = &clip.translation;
+            data_type = KEYFRAME_TRANSLATION;
+            break;
+          case cgltf_animation_path_type_scale:
+            target_property = &clip.scale;
+            data_type = KEYFRAME_SCALE;
+            break;
+          case cgltf_animation_path_type_weights:
+            target_property = &clip.weights;
+            data_type = KEYFRAME_WEIGHTS;
+            WARN("Morph target weights arent supported yet");
+            return false;
+          default:
+            WARN("unsupported animation type");
+            return false;
+        }
+        *target_property = sampler;
+
+        sampler->current_index = 0;
+        printf("1 %d index\n", sampler->current_index);
+        sampler->animation.interpolation = INTERPOLATION_LINEAR;
+
+        // keyframe times
+        size_t n_frames = channel.sampler->input->count;
+        assert(channel.sampler->input->component_type == cgltf_component_type_r_32f);
+        // FIXME: CASSERT_MSG function "Expected animation sampler input component to be type f32
+        // (keyframe times)");
+        f32 *times = arena_alloc(arena, n_frames * sizeof(f32));
+        sampler->animation.n_timestamps = n_frames;
+        sampler->animation.timestamps = times;
+        cgltf_accessor_unpack_floats(channel.sampler->input, times, n_frames);
+
+        assert_path_type_matches_component_type(channel.target_path, channel.sampler->output);
+
+        // keyframe values
+        size_t n_values = channel.sampler->output->count;
+        assert(n_frames == n_values);
+
+        keyframes keyframes = { 0 };
+        keyframes.kind = KEYFRAME_ROTATION;
+        keyframes.count = n_values;
+        keyframes.values = arena_alloc(arena, n_values * sizeof(keyframe));
+        for (cgltf_size v = 0; v < channel.sampler->output->count; ++v) {
+          switch (data_type) {
+            case KEYFRAME_ROTATION: {
+              quat rot;
+              cgltf_accessor_read_float(channel.sampler->output, v, &rot.x, 4);
+              // printf("Quat %f %f %f %f\n", rot.x, rot.y, rot.z, rot.w);
+              keyframes.values[v].rotation = rot;
+              break;
+            }
+            case KEYFRAME_TRANSLATION: {
+              vec3 trans;
+              cgltf_accessor_read_float(channel.sampler->output, v, &trans.x, 3);
+              keyframes.values[v].translation = trans;
+              break;
+            }
+            case KEYFRAME_SCALE: {
+              vec3 scale;
+              cgltf_accessor_read_float(channel.sampler->output, v, &scale.x, 3);
+              keyframes.values[v].scale = scale;
+              break;
+            }
+            case KEYFRAME_WEIGHTS: {
+              // TODO
+              break;
+            }
+          }
+        }
+        sampler->animation.values = keyframes;
+
+        sampler->min = channel.sampler->input->min[0];
+        sampler->max = channel.sampler->input->max[0];
+
+        // clip.rotation = sampler;
+        // printf("%d timestamps\n", sampler->animation.n_timestamps);
+        // printf("%d index\n", sampler->current_index);
+      }
+
+      WARN("stuff %ld", clip.rotation->animation.n_timestamps);
+      animation_clip_darray_push(out_model->animations, clip);
+    }
+  }
+
   return true;
 }
 

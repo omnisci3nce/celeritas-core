@@ -7,10 +7,11 @@
 //  */
 // #pragma once
 
-// #include "darray.h"
-// #include "maths.h"
-// #include "maths_types.h"
-// #include "str.h"
+#include "animation.h"
+#include "darray.h"
+#include "maths.h"
+#include "maths_types.h"
+#include "str.h"
 
 // struct GLFWwindow;
 
@@ -40,26 +41,27 @@
 //   u64 last_time;
 // } frame_stats;
 
-// typedef struct renderer {
-//   struct GLFWwindow *window; /** Currently all platforms use GLFW*/
-//   void *backend_state;       /** Graphics API-specific state */
-//   renderer_config config;
-//   // shaders
-//   shader blinn_phong;
-// } renderer;
+typedef struct renderer {
+  struct GLFWwindow *window; /** Currently all platforms use GLFW*/
+  void *backend_state;       /** Graphics API-specific state */
+  renderer_config config;
+  // shaders
+  shader blinn_phong;
+  shader skinned;
+} renderer;
 
 // // --- Lighting & Materials
 
-// typedef struct texture {
-//   u32 texture_id;
-//   char name[MAX_TEXTURE_NAME_LEN];
-//   void* image_data;
-//   void* backend_data;
-//   u32 width;
-//   u32 height;
-//   u8 channel_count;
-//   u32 channel_type;
-// } texture;
+typedef struct texture {
+  u32 texture_id;
+  char name[MAX_TEXTURE_NAME_LEN];
+  void *image_data;
+  void *backend_data;
+  u32 width;
+  u32 height;
+  u8 channel_count;
+  u32 channel_type;
+} texture;
 
 // typedef struct blinn_phong_material {
 //   char name[MAX_MATERIAL_NAME_LEN];
@@ -80,10 +82,15 @@
 // extern material DEFAULT_MATERIAL;
 // void default_material_init();
 
-// #ifndef TYPED_MATERIAL_ARRAY
-// KITC_DECL_TYPED_ARRAY(material)  // creates "material_darray"
-// #define TYPED_MATERIAL_ARRAY
-// #endif
+#ifndef TYPED_MATERIAL_ARRAY
+KITC_DECL_TYPED_ARRAY(material)  // creates "material_darray"
+#define TYPED_MATERIAL_ARRAY
+#endif
+
+#ifndef TYPED_ANIMATION_CLIP_ARRAY
+KITC_DECL_TYPED_ARRAY(animation_clip)  // creates "material_darray"
+#define TYPED_ANIMATION_CLIP_ARRAY
+#endif
 
 // // lights
 // typedef struct point_light {
@@ -113,34 +120,47 @@
 //   vec2 uv;
 // } vertex;
 
-// #ifndef TYPED_VERTEX_ARRAY
-// KITC_DECL_TYPED_ARRAY(vertex)  // creates "vertex_darray"
-// #define TYPED_VERTEX_ARRAY
-// #endif
+typedef struct vertex_bone_data {
+  vec4u joints; /** @brief 4 indices of joints that influence vectors position */
+  vec4 weights; /** @brief weight (0,1) of each joint */
+} vertex_bone_data;
 
-// typedef struct mesh {
-//   vertex_darray *vertices;
-//   u32 vertex_size; /** size in bytes of each vertex including necessary padding */
-//   bool has_indices;
-//   u32 *indices;
-//   u32 indices_len;
-//   size_t material_index;
-//   u32 vbo, vao; /** OpenGL data. TODO: dont leak OpenGL details */
-// } mesh;
+#include "animation.h"
+#ifndef TYPED_VERTEX_ARRAY
+KITC_DECL_TYPED_ARRAY(vertex)            // creates "vertex_darray"
+KITC_DECL_TYPED_ARRAY(vertex_bone_data)  // creates "skinned_vertex_darray"
+KITC_DECL_TYPED_ARRAY(joint)
+#define TYPED_VERTEX_ARRAY
+#endif
+
+typedef struct mesh {
+  vertex_darray *vertices;
+  vertex_bone_data_darray *vertex_bone_data;  // only used if model needs it
+  joint_darray *bones;
+  bool is_skinned;
+  u32 vertex_size; /** size in bytes of each vertex including necessary padding */
+  bool has_indices;
+  u32 *indices;
+  u32 indices_len;
+  size_t material_index;
+  u32 vbo, vao; /** OpenGL data. TODO: dont leak OpenGL details */
+} mesh;
 
 // #ifndef TYPED_MESH_ARRAY
 // KITC_DECL_TYPED_ARRAY(mesh)  // creates "mesh_darray"
 // #define TYPED_MESH_ARRAY
 // #endif
 
-// typedef struct model {
-//   str8 name;
-//   mesh_darray *meshes;
-//   aabb_3d bbox;
-//   material_darray *materials;
-//   bool is_loaded;
-//   bool is_uploaded;
-// } model;
+typedef struct model {
+  str8 name;
+  mesh_darray *meshes;
+  aabb_3d bbox;
+  material_darray *materials;
+  animation_clip_darray *animations;
+  arena animation_data_arena;
+  bool is_loaded;
+  bool is_uploaded;
+} model;
 
 // #ifndef TYPED_MODEL_ARRAY
 // KITC_DECL_TYPED_ARRAY(model)  // creates "model_darray"

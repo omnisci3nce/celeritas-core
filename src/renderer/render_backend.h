@@ -13,7 +13,7 @@
 bool gfx_backend_init(renderer* ren);
 void gfx_backend_shutdown(renderer* ren);
 
-void gfx_backend_draw_frame(renderer* ren, camera* camera, mat4 model);
+void gfx_backend_draw_frame(renderer* ren, camera* camera, mat4 model, texture* tex);
 void gfx_backend_update_global_state(mat4 projection, mat4 view, vec3 view_pos, vec4 ambient_colour,
                                      i32 mode);
 

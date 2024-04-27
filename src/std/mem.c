@@ -15,7 +15,7 @@ void* arena_alloc_align(arena* a, size_t size, size_t align) {
   if (available < 0 || (ptrdiff_t)size > available) {
     ERROR_EXIT("Arena ran out of memory\n");
   }
-  void* p = a->begin + padding;
+  void* p = a->curr + padding;
   a->curr += padding + size;
   return memset(p, 0, size);
 }
