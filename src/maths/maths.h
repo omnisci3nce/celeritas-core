@@ -320,26 +320,3 @@ _Static_assert(alignof(vec3) == 4, "vec3 is 4 byte aligned");
 _Static_assert(sizeof(vec3) == 12, "vec3 is 12 bytes so has no padding");
 
 _Static_assert(alignof(vec4) == 4, "vec4 is 4 byte aligned");
-
-// --- Some other types
-typedef struct u32x3 {
-  union {
-    struct {
-      u32 x;
-      u32 y;
-      u32 z;
-    };
-    struct {
-      u32 r;
-      u32 g;
-      u32 b;
-    };
-  };
-} u32x3;
-#define u32x3(x, y, z) ((u32x3){ x, y, z })
-
-typedef struct u32x2 {
-  u32 x;
-  u32 y;
-} u32x2;
-#define u32x2(x, y) ((u32x3){ x, y })
