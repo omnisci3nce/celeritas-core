@@ -10,37 +10,34 @@
  */
 #pragma once
 
-#include "camera.h"
-#include "loaders.h"
 #include "render_types.h"
-#include "transform_hierarchy.h"
+#include "ral_types.h"
 
-// --- Lifecycle
-/** @brief initialise the render system frontend */
 bool renderer_init(renderer* ren);
-/** @brief shutdown the render system frontend */
 void renderer_shutdown(renderer* ren);
-
-void renderer_on_resize(renderer* ren);
-
-struct render_packet;
-
-// --- Frame
 
 void render_frame_begin(renderer* ren);
 void render_frame_end(renderer* ren);
 void render_frame_draw(renderer* ren);
 
-// --- models meshes
-void model_upload_meshes(renderer* ren, model* model);
-void draw_model(renderer* ren, camera* camera, model* model, mat4* tf, scene* scene);
-void draw_mesh(renderer* ren, mesh* mesh, mat4* tf, material* mat, mat4* view, mat4* proj);
-void draw_scene(arena* frame, model_darray* models, renderer* ren, camera* camera,
-                transform_hierarchy* tfh, scene* scene);
+// ! TEMP
+typedef struct camera camera;
+void gfx_backend_draw_frame(renderer* ren, camera* camera, mat4 model, texture* tex);
 
-void draw_skinned_model(renderer* ren, camera* cam, model* model, transform tf, scene* scene);
+// frontend -- these can be called from say a loop in an example, or via FFI
+texture_handle texture_create(const char* debug_name, texture_desc description, const u8* data);
 
-void model_destroy(model* model);
+// Frontend Resources
+// TODO: void texture_data_upload(texture_handle texture);
+void texture_data_upload(texture* tex);
+texture texture_data_load(const char* path, bool invert_y);
+buffer_handle buffer_create(const char* debug_name, u64 size);
+bool buffer_destroy(buffer_handle buffer);
+sampler_handle sampler_create();
 
-// ---
-texture texture_data_load(const char* path, bool invert_y);  // #frontend
+void shader_hot_reload(const char* filepath);
+
+// models and meshes are implemented **in terms of the above**
+mesh mesh_create(geometry_data* geometry);
+
+model_handle model_load(const char* debug_name, const char* filepath);

@@ -8,7 +8,7 @@
 #include "log.h"
 #include "render.h"
 #include "render_types.h"
-#include "threadpool.h"
+// #include "threadpool.h"
 
 #define SCR_WIDTH 1000
 #define SCR_HEIGHT 1000
@@ -21,10 +21,10 @@ core* core_bringup() {
                            .scr_height = SCR_HEIGHT,
                            .clear_colour = (vec3){ .08, .08, .1 } };
   c->renderer.config = conf;
-  c->renderer.backend_state = NULL;
+  c->renderer.backend_context = NULL;
 
-  threadpool_create(&c->threadpool, 6, 256);
-  threadpool_set_ctx(&c->threadpool, c);  // Gives the threadpool access to the core
+  // threadpool_create(&c->threadpool, 6, 256);
+  // threadpool_set_ctx(&c->threadpool, c);  // Gives the threadpool access to the core
 
   // initialise all subsystems
   if (!renderer_init(&c->renderer)) {

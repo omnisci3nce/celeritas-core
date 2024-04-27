@@ -6,13 +6,13 @@
 #include "screenspace.h"
 #include "terrain.h"
 #include "text.h"
-#include "threadpool.h"
+// #include "threadpool.h"
 
 typedef struct core {
   const char* app_name;
   // foundations
   renderer renderer;
-  threadpool threadpool;
+  // threadpool threadpool;
   // systems
   input_state input;
   text_system_state text;

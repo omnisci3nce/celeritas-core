@@ -11,8 +11,9 @@
  */
 #pragma once
 
-#include "cleanroom/types.h"
+#include "ral_types.h"
 #include "defines.h"
+#include "str.h"
 
 // Forward declare structs
 typedef struct gpu_swapchain gpu_swapchain;
@@ -25,7 +26,7 @@ typedef struct gpu_cmd_buffer gpu_cmd_buffer;    // Ready for submission
 enum pipeline_kind {
   GRAPHICS,
   COMPUTE,
-} pipeline_kind;
+};
 
 typedef struct shader_desc {
   const char* debug_name;

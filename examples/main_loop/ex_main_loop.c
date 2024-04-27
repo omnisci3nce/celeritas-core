@@ -4,7 +4,6 @@
 #include "core.h"
 #include "maths.h"
 #include "render.h"
-#include "render_backend.h"
 
 int main() {
   core* core = core_bringup();
@@ -14,7 +13,7 @@ int main() {
   // Main loop
   while (!glfwWindowShouldClose(core->renderer.window)) {
     input_update(&core->input);
-    threadpool_process_results(&core->threadpool, 1);
+    // threadpool_process_results(&core->threadpool, 1);
 
     render_frame_begin(&core->renderer);
 
