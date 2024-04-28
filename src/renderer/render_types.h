@@ -29,8 +29,9 @@ typedef struct renderer {
   struct GLFWwindow* window;
   void* backend_context;
   renderer_config config;
-  gpu_device* device;
-  gpu_pipeline* static_opaque_pipeline;
+  gpu_device device;
+  gpu_swapchain swapchain;
+  gpu_pipeline static_opaque_pipeline;
 } renderer;
 
 typedef struct geometry_data {

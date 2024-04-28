@@ -1,6 +1,12 @@
 #include "render.h"
 #include <glfw3.h>
 #include "camera.h"
+#include "log.h"
+#include "ral.h"
+
+/** @brief Creates the pipelines built into Celeritas such as rendering static opaque geometry,
+           debug visualisations, immediate mode UI, etc */
+void default_pipelines_init(renderer* ren);
 
 bool renderer_init(renderer* ren) {
   // INFO("Renderer init");
@@ -29,11 +35,19 @@ bool renderer_init(renderer* ren) {
 
   glfwMakeContextCurrent(ren->window);
 
+  DEBUG("Start backend init");
+
+  gpu_backend_init("Celeritas Engine - Vulkan", window);
+  gpu_device_create(&ren->device);  // TODO: handle errors
+  gpu_swapchain_create(&ren->swapchain);
+
   // DEBUG("init graphics api backend");
   // if (!gfx_backend_init(ren)) {
   // FATAL("Couldnt load graphics api backend");
   // return false;
   // }
+
+  default_pipelines_init(ren);
 
   // ren->blinn_phong =
   //     shader_create_separate("assets/shaders/blinn_phong.vert",
@@ -46,7 +60,16 @@ bool renderer_init(renderer* ren) {
 
   return true;
 }
-void renderer_shutdown(renderer* ren) {}
+void renderer_shutdown(renderer* ren) {
+  // gpu_device_destroy(ren->device);
+}
+
+void default_pipelines_init(renderer* ren) {
+  // Static opaque geometry
+  // graphics_pipeline_desc gfx = {
+  // };
+  // ren->static_opaque_pipeline = gpu_graphics_pipeline_create();
+}
 
 void render_frame_begin(renderer* ren) {}
 void render_frame_end(renderer* ren) {}

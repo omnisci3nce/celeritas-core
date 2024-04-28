@@ -14,6 +14,11 @@
 #include "ral_types.h"
 #include "defines.h"
 #include "str.h"
+#include "buf.h"
+
+// Unrelated forward declares
+typedef struct arena arena;
+struct GLFWwindow;
 
 // Forward declare structs
 typedef struct gpu_swapchain gpu_swapchain;
@@ -34,20 +39,27 @@ typedef struct shader_desc {
   str8 glsl;      // contents
 } shader_desc;
 
-struct pipeline_desc {
+struct graphics_pipeline_desc {
   shader_desc vs; /** @brief Vertex shader stage */
   shader_desc fs; /** @brief Fragment shader stage */
 };
 
-// lifecycle functions
-gpu_device gpu_device_create();
+// --- Lifecycle functions
+
+bool gpu_backend_init(const char* window_name, struct GLFWwindow* window);
+void gpu_backend_shutdown();
+
+bool gpu_device_create(gpu_device* out_device);
 void gpu_device_destroy();
 
 gpu_renderpass* gpu_renderpass_create();
 void gpu_renderpass_destroy(gpu_renderpass* pass);
 
-gpu_pipeline* gpu_pipeline_create(enum pipeline_kind kind, struct pipeline_desc description);
+gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description);
 void gpu_pipeline_destroy(gpu_pipeline* pipeline);
+
+bool gpu_swapchain_create(gpu_swapchain* out_swapchain);
+void gpu_swapchain_destroy();
 
 void gpu_cmd_encoder_begin();
 void gpu_cmd_encoder_begin_render();
@@ -58,6 +70,10 @@ void encode_buffer_copy(gpu_cmd_encoder* encoder, buffer_handle src, u64 src_off
                         buffer_handle dst, u64 dst_offset, u64 copy_size);
 void encode_clear_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 void encode_set_pipeline(gpu_cmd_encoder* encoder, gpu_pipeline* pipeline);
+
+/** @brief Upload CPU-side data as array of bytes to a GPU buffer */
+void buffer_upload_bytes(buffer_handle gpu_buf, bytebuffer cpu_buf, u64 offset, u64 size);
+
 // render pass
 void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
@@ -85,3 +101,8 @@ void gpu_texture_upload();
 
 // Samplers
 void gpu_sampler_create();
+
+// --- Vertex formats
+bytebuffer vertices_as_bytebuffer(arena* a, vertex_format format, vertex_darray* vertices);
+
+// TODO: Bindgroup texture samplers / shader resources

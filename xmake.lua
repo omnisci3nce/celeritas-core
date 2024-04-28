@@ -143,11 +143,18 @@ target("core_shared")
         add_links("msvcrtd", "legacy_stdio_definitions") -- for debug builds
     end
 
-target("main_loop")
+-- target("main_loop")
+--     set_kind("binary")
+--     set_group("examples")
+--     add_deps("core_static")
+--     add_files("examples/main_loop/ex_main_loop.c")
+--     set_rundir("$(projectdir)")
+
+target("tri")
     set_kind("binary")
     set_group("examples")
     add_deps("core_static")
-    add_files("examples/main_loop/ex_main_loop.c")
+    add_files("examples/triangle/ex_triangle.c")
     set_rundir("$(projectdir)")
 
 -- target("std")

@@ -50,9 +50,9 @@ typedef enum gpu_texture_format {
 
 /** @brief Texture Description - used by texture creation functions */
 typedef struct texture_desc {
-  // gpu_texture_type tex_type;
-  // gpu_texture_format format;
-  // u32x2 extents;
+  gpu_texture_type tex_type;
+  gpu_texture_format format;
+  u32x2 extents;
 } texture_desc;
 
 typedef enum vertex_format {
@@ -65,7 +65,6 @@ typedef enum vertex_format {
 typedef union vertex {
   struct {
     vec3 position;
-    vec4 colour;
     vec2 tex_coords;
     vec3 normal;
   } static_3d; /** @brief standard vertex format for static geometry in 3D */
@@ -84,6 +83,13 @@ typedef union vertex {
     vec4i bone_ids;     // Integer vector for bone IDs
     vec4 bone_weights;  // Weight of each bone's influence
   } skinned_3d;         /** @brief vertex format for skeletal (animated) geometry in 3D */
+
+  struct {
+    vec3 position;
+    vec2 tex_coords;
+    vec3 normal;
+    vec4 colour;
+  } coloured_static_3d; /** @brief vertex format used for debugging */
 } vertex;
 
 #ifndef TYPED_VERTEX_ARRAY
