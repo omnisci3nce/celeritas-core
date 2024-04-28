@@ -17,6 +17,7 @@ bool renderer_init(renderer* ren);
 void renderer_shutdown(renderer* ren);
 
 void render_frame_begin(renderer* ren);
+void render_frame_update_globals(renderer* ren);
 void render_frame_end(renderer* ren);
 void render_frame_draw(renderer* ren);
 

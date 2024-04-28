@@ -99,6 +99,12 @@ KITC_DECL_TYPED_ARRAY(u32)
 #define TYPED_VERTEX_ARRAY
 #endif
 
+typedef enum gpu_cull_mode {
+  CULL_BACK_FACE,
+  CULL_FRONT_FACE,
+  CULL_COUNT
+} gpu_cull_mode;
+
 // ? How to tie together materials and shaders
 
 // Three registers

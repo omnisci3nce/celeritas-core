@@ -23,10 +23,19 @@ struct GLFWwindow;
 // Forward declare structs
 typedef struct gpu_swapchain gpu_swapchain;
 typedef struct gpu_device gpu_device;
+typedef struct gpu_pipeline_layout gpu_pipeline_layout;
 typedef struct gpu_pipeline gpu_pipeline;
 typedef struct gpu_renderpass gpu_renderpass;
 typedef struct gpu_cmd_encoder gpu_cmd_encoder;  // Recording
 typedef struct gpu_cmd_buffer gpu_cmd_buffer;    // Ready for submission
+
+/** @brief A*/
+// typedef struct gpu_bind_group
+
+// Pools
+typedef struct gpu_backend_pools {
+  // pools for each gpu structure
+} gpu_backend_pools;
 
 typedef enum pipeline_kind {
   PIPELINE_GRAPHICS,
@@ -40,9 +49,19 @@ typedef struct shader_desc {
 } shader_desc;
 
 struct graphics_pipeline_desc {
+  const char* debug_name;
   shader_desc vs; /** @brief Vertex shader stage */
   shader_desc fs; /** @brief Fragment shader stage */
+  // gpu_pipeline_layout* layout;
+  gpu_renderpass* renderpass;
+
+  bool wireframe;
+  bool depth_test;
 };
+
+typedef struct gpu_renderpass_desc {
+
+} gpu_renderpass_desc;
 
 // --- Lifecycle functions
 
@@ -52,7 +71,7 @@ void gpu_backend_shutdown();
 bool gpu_device_create(gpu_device* out_device);
 void gpu_device_destroy();
 
-gpu_renderpass* gpu_renderpass_create();
+gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description);
 void gpu_renderpass_destroy(gpu_renderpass* pass);
 
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description);
@@ -75,6 +94,7 @@ void encode_set_pipeline(gpu_cmd_encoder* encoder, gpu_pipeline* pipeline);
 void buffer_upload_bytes(buffer_handle gpu_buf, bytebuffer cpu_buf, u64 offset, u64 size);
 
 // render pass
+void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipeline* pipeline);
 void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 void encode_set_bind_group(); // TODO

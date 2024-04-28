@@ -6,8 +6,7 @@
 
 #define GPU_SWAPCHAIN_IMG_COUNT 2
 
-typedef struct gpu_swapchain {
-} gpu_swapchain;
+// typedef struct gpu_swapchain gpu_swapchain;
 typedef struct gpu_device {
     
   // VkPhysicalDevice physical_device;

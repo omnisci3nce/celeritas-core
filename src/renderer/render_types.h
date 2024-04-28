@@ -13,7 +13,8 @@
 #include "ral_types.h"
 #include "ral.h"
 #if defined(CEL_PLATFORM_WINDOWS)
-#include "backend_dx11.h"
+// #include "backend_dx11.h"
+#include "backend_vulkan.h"
 #endif
 
 struct GLFWwindow;
@@ -36,7 +37,7 @@ typedef struct renderer {
 
 typedef struct geometry_data {
   vertex_format format;
-  vertex_darray* vertices; // TODO: make it not a pointe
+  vertex_darray* vertices; // TODO: make it not a pointer
   bool has_indices;
   u32_darray indices;
   vec3 colour; /** Optional: set vertex colours */

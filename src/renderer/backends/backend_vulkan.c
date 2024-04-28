@@ -141,7 +141,7 @@ bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {
 
   VkSwapchainCreateInfoKHR swapchain_create_info = { VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
 
-  // swapchain_create_info.minImageCount = 
+  // swapchain_create_info.minImageCount =
 
   VK_CHECK(vkCreateSwapchainKHR(context.device->logical_device, &swapchain_create_info,
                                 context.allocator, &out_swapchain->handle));
@@ -149,6 +149,11 @@ bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {
 }
 
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {
+  // Allocate
+  gpu_pipeline_layout* layout = malloc(sizeof(gpu_pipeline_layout));
+  gpu_pipeline* pipeline = malloc(sizeof(gpu_pipeline));
+
+  // Viewport
   VkViewport viewport = { .x = 0,
                           .y = 0,
                           .width = (f32)context.screen_width,
@@ -158,11 +163,6 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   VkRect2D scissor = { .offset = { .x = 0, .y = 0 },
                        .extent = { .width = context.screen_width,
                                    .height = context.screen_height } };
-
-  // TODO: Attributes
-
-  // TODO: layouts
-
   VkPipelineViewportStateCreateInfo viewport_state = {
     VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO
   };
@@ -170,12 +170,136 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   viewport_state.pViewports = &viewport;
   viewport_state.scissorCount = 1;
   viewport_state.pScissors = &scissor;
+
+  // Rasterizer
+  VkPipelineRasterizationStateCreateInfo rasterizer_create_info = {
+    VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO
+  };
+  rasterizer_create_info.depthClampEnable = VK_FALSE;
+  rasterizer_create_info.rasterizerDiscardEnable = VK_FALSE;
+  rasterizer_create_info.polygonMode =
+      description.wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
+  rasterizer_create_info.lineWidth = 1.0f;
+  rasterizer_create_info.cullMode = VK_CULL_MODE_BACK_BIT;
+  rasterizer_create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  rasterizer_create_info.depthBiasEnable = VK_FALSE;
+  rasterizer_create_info.depthBiasConstantFactor = 0.0;
+  rasterizer_create_info.depthBiasClamp = 0.0;
+  rasterizer_create_info.depthBiasSlopeFactor = 0.0;
+
+  // Multisampling
+  VkPipelineMultisampleStateCreateInfo ms_create_info = {
+    VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO
+  };
+  ms_create_info.sampleShadingEnable = VK_FALSE;
+  ms_create_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+  ms_create_info.minSampleShading = 1.0;
+  ms_create_info.pSampleMask = 0;
+  ms_create_info.alphaToCoverageEnable = VK_FALSE;
+  ms_create_info.alphaToOneEnable = VK_FALSE;
+
+  // Depth and stencil testing
+  VkPipelineDepthStencilStateCreateInfo depth_stencil = {
+    VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO
+  };
+  depth_stencil.depthTestEnable = description.depth_test ? VK_TRUE : VK_FALSE;
+  depth_stencil.depthWriteEnable = description.depth_test ? VK_TRUE : VK_FALSE;
+  depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
+  depth_stencil.depthBoundsTestEnable = VK_FALSE;
+  depth_stencil.stencilTestEnable = VK_FALSE;
+  depth_stencil.pNext = 0;
+
+  // TODO: Blending
+
+  // TODO: Vertex Input
+
+  // TODO: Attributes
+
+  // TODO: layouts
+  VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
+    VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
+  };
+  pipeline_layout_create_info.setLayoutCount = 0;
+  pipeline_layout_create_info.pSetLayouts = NULL;
+  pipeline_layout_create_info.pushConstantRangeCount = 0;
+  pipeline_layout_create_info.pPushConstantRanges = NULL;
+  VK_CHECK(vkCreatePipelineLayout(context.device->logical_device, &pipeline_layout_create_info,
+                                  context.allocator, &layout->handle));
+  pipeline->layout_handle = layout->handle;  // keep a copy of the layout on the pipeline object
+
+  VkGraphicsPipelineCreateInfo pipeline_create_info = {
+    VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO
+  };
+  // pipeline_create_info.stageCount = stage_count;
+  // pipeline_create_info.pStages = stages;
+  // pipeline_create_info.pVertexInputState = &vertex_input_info;
+  // pipeline_create_info.pInputAssemblyState = &input_assembly;
+
+  // pipeline_create_info.pViewportState = &viewport_state;
+  // pipeline_create_info.pRasterizationState = &rasterizer_create_info;
+  // pipeline_create_info.pMultisampleState = &ms_create_info;
+  // pipeline_create_info.pDepthStencilState = &depth_stencil;
+  // pipeline_create_info.pColorBlendState = &color_blend;
+  // pipeline_create_info.pDynamicState = &dynamic_state;
+  // pipeline_create_info.pTessellationState = 0;
+
+  // pipeline_create_info.layout = out_pipeline->layout;
+
+  // pipeline_create_info.renderPass = renderpass->handle;
+  // pipeline_create_info.subpass = 0;
+  // pipeline_create_info.basePipelineHandle = VK_NULL_HANDLE;
+  // pipeline_create_info.basePipelineIndex = -1;
+
+  VkResult result =
+      vkCreateGraphicsPipelines(context.device->logical_device, VK_NULL_HANDLE, 1,
+                                &pipeline_create_info, context.allocator, &pipeline->handle);
+  if (result != VK_SUCCESS) {
+    FATAL("graphics pipeline creation failed. its fked mate");
+    ERROR_EXIT("Doomed");
+  }
+
+  return pipeline;
 }
 
-gpu_renderpass* gpu_renderpass_create() {
-  // Allocate it
+gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
+  // TEMP: allocate with malloc. in the future we will have a pool allocator on the context
+  gpu_renderpass* renderpass = malloc(sizeof(gpu_renderpass));
+
+  // Colour attachment
+  VkAttachmentDescription color_attachment;
+  // color_attachment.format = context->swapchain.image_format.format;
+  color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  color_attachment.flags = 0;
+
+  // attachment_descriptions[0] = color_attachment;
+
+  VkAttachmentReference color_attachment_reference;
+  color_attachment_reference.attachment = 0;
+  color_attachment_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  // subpass.colorAttachmentCount = 1;
+  // subpass.pColorAttachments = &color_attachment_reference;
+
+  // TODO: Depth attachment
+
+  // main subpass
+  VkSubpassDescription subpass = { 0 };
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &color_attachment_reference;
+
   // sets everything up
-  // return pointer to it
+
+  // Finally, create the RenderPass
+  VkRenderPassCreateInfo render_pass_create_info = { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
+
+  return renderpass;
 }
 
 void encode_set_pipeline(gpu_cmd_encoder* encoder, gpu_pipeline* pipeline) {

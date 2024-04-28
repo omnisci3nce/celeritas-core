@@ -1,27 +1,52 @@
 #include <glfw3.h>
 
+#include "backend_vulkan.h"
 #include "camera.h"
 #include "core.h"
+#include "file.h"
+#include "log.h"
 #include "maths.h"
+#include "mem.h"
+#include "ral.h"
 #include "render.h"
+
+// Example setting up a renderer
 
 int main() {
   core* core = core_bringup();
+  arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
 
-  camera camera = camera_create(vec3_create(0, 0, 20), VEC3_NEG_Z, VEC3_Y, deg_to_rad(45.0));
+  gpu_renderpass_desc pass_description = {};
+  gpu_renderpass* renderpass = gpu_renderpass_create(&pass_description);
+
+  str8_opt vertex_shader = str8_from_file(&scratch, str8lit("assets/shaders/triangle.vert"));
+  str8_opt fragment_shader = str8_from_file(&scratch, str8lit("assets/shaders/triangle.frag"));
+  if (!vertex_shader.has_value || !fragment_shader.has_value) {
+    ERROR_EXIT("Failed to load shaders from disk")
+  }
+
+  struct graphics_pipeline_desc pipeline_description = {
+    .debug_name = "Basic Pipeline",
+    .vs = { .debug_name = "Triangle Vertex Shader",
+            .filepath = str8lit("assets/shaders/triangle.vert"),
+            .glsl = vertex_shader.contents },
+    .fs = { .debug_name = "Triangle Fragment Shader",
+            .filepath = str8lit("assets/shaders/triangle.frag"),
+            .glsl = fragment_shader.contents },
+    .renderpass = renderpass,
+    .wireframe = false,
+    .depth_test = false
+  };
+  gpu_pipeline* gfx_pipeline = gpu_graphics_pipeline_create(pipeline_description);
 
   // Main loop
-  while (!glfwWindowShouldClose(core->renderer.window)) {
+  while (!should_exit(core)) {
     input_update(&core->input);
-    // threadpool_process_results(&core->threadpool, 1);
 
     render_frame_begin(&core->renderer);
 
-    static f32 x = 0.0;
+    static f64 x = 0.0;
     x += 0.01;
-    mat4 model = mat4_translation(vec3(x, 0, 0));
-
-    gfx_backend_draw_frame(&core->renderer, &camera, model, NULL);
 
     // insert work here
 
