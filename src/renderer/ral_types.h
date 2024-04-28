@@ -59,6 +59,7 @@ typedef enum vertex_format {
   VERTEX_STATIC_3D,
   VERTEX_SPRITE,
   VERTEX_SKINNED,
+  VERTEX_COLOURED_STATIC_3D,
   VERTEX_COUNT
 } vertex_format;
 

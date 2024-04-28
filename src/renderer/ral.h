@@ -77,7 +77,7 @@ void buffer_upload_bytes(buffer_handle gpu_buf, bytebuffer cpu_buf, u64 offset, 
 // render pass
 void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
-void encode_set_bind_group();
+void encode_set_bind_group(); // TODO
 void encode_draw(gpu_cmd_encoder* encoder);
 void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count);
 
