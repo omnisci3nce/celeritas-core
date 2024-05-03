@@ -1,6 +1,5 @@
 #pragma once
 
-#include <assert.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
@@ -29,17 +28,6 @@ static void plat_get_required_extension_names(cstr_darray* extensions) {
   } while (0)
 
 // TODO: typedef struct vk_debugger {} vk_debugger;
-
-typedef struct queue_family_indices {
-  u32 graphics_queue_index;
-  u32 present_queue_index;
-  u32 compute_queue_index;
-  u32 transfer_queue_index;
-  bool has_graphics;
-  bool has_present;
-  bool has_compute;
-  bool has_transfer;
-} queue_family_indices;
 
 typedef struct vulkan_physical_device_requirements {
   bool graphics;

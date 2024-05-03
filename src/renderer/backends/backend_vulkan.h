@@ -5,6 +5,7 @@
 
 #include "defines.h"
 #include "ral.h"
+// #include "vulkan_helpers.h"
 
 #define GPU_SWAPCHAIN_IMG_COUNT 2
 
@@ -13,6 +14,17 @@ Conventions:
   - Place the 'handle' as the first field of a struct
   - Vulkan specific data goes at the top, followed by our internal data
 */
+
+typedef struct queue_family_indices {
+  u32 graphics_family_index;
+  u32 present_family_index;
+  u32 compute_family_index;
+  u32 transfer_family_index;
+  bool has_graphics;
+  bool has_present;
+  bool has_compute;
+  bool has_transfer;
+} queue_family_indices;
 
 typedef struct gpu_swapchain {
   VkSwapchainKHR handle;
@@ -25,6 +37,11 @@ typedef struct gpu_device {
   VkPhysicalDeviceProperties properties;
   VkPhysicalDeviceFeatures features;
   VkPhysicalDeviceMemoryProperties memory;
+  queue_family_indices queue_family_indicies;
+  VkQueue graphics_queue;
+  VkQueue present_queue;
+  VkQueue compute_queue;
+  VkQueue transfer_queue;
   VkCommandPool pool;
 } gpu_device;
 

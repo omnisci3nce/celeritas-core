@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <glfw3.h>
 #include <stdlib.h>
 #include <vulkan/vk_platform.h>
@@ -163,7 +164,11 @@ bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
   return true;
 }
 
-void gpu_backend_shutdown() { arena_free_storage(&context.temp_arena); }
+void gpu_backend_shutdown() {
+  arena_free_storage(&context.temp_arena);
+  vkDestroySurfaceKHR(context.instance, context.surface, context.allocator);
+  vkDestroyInstance(context.instance, context.allocator);
+}
 
 bool gpu_device_create(gpu_device* out_device) {
   // First things first store this poitner from the renderer
@@ -214,8 +219,18 @@ bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {
   VkPresentModeKHR present_mode = VK_PRESENT_MODE_FIFO_KHR;  // guaranteed to be implemented
 
   VkSwapchainCreateInfoKHR swapchain_create_info = { VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
+  swapchain_create_info.surface = context.surface;
+  swapchain_create_info.minImageCount = 2;
+  // TODO: image_ fields
+  swapchain_create_info.queueFamilyIndexCount = 0;
+  swapchain_create_info.pQueueFamilyIndices = 0;
 
-  // swapchain_create_info.minImageCount =
+  // TODO: preTransform
+  swapchain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+  swapchain_create_info.presentMode = present_mode;
+
+  swapchain_create_info.clipped = VK_TRUE;
+  swapchain_create_info.oldSwapchain = 0;
 
   VK_CHECK(vkCreateSwapchainKHR(context.device->logical_device, &swapchain_create_info,
                                 context.allocator, &out_swapchain->handle));
@@ -434,7 +449,7 @@ bool is_physical_device_suitable(VkPhysicalDevice device) {
 
   queue_family_indices indices = find_queue_families(device);
 
-  return indices.has_graphics;
+  return indices.has_graphics && indices.has_present;
 }
 
 queue_family_indices find_queue_families(VkPhysicalDevice device) {
@@ -447,11 +462,18 @@ queue_family_indices find_queue_families(VkPhysicalDevice device) {
       arena_alloc(&context.temp_arena, queue_family_count * sizeof(VkQueueFamilyProperties));
   vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, queue_families);
 
-  for (u32 queue_i = 0; queue_i < queue_family_count; queue_i++) {
+  for (u32 q_fam_i = 0; q_fam_i < queue_family_count; q_fam_i++) {
     // Graphics queue
-    if (queue_families[queue_i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-      indices.graphics_queue_index = queue_i;
+    if (queue_families[q_fam_i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+      indices.graphics_family_index = q_fam_i;
       indices.has_graphics = true;
+    }
+
+    VkBool32 present_support = false;
+    vkGetPhysicalDeviceSurfaceSupportKHR(device, q_fam_i, context.surface, &present_support);
+    if (present_support) {
+      indices.present_family_index = q_fam_i;
+      indices.has_present = true;
     }
   }
 
@@ -461,13 +483,22 @@ queue_family_indices find_queue_families(VkPhysicalDevice device) {
 bool create_logical_device(gpu_device* out_device) {
   queue_family_indices indices = find_queue_families(out_device->physical_device);
 
+  // Queues
   f32 prio_one = 1.0;
-  VkDeviceQueueCreateInfo queue_create_info = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
-  queue_create_info.queueFamilyIndex = indices.graphics_queue_index;
-  queue_create_info.queueCount = 1;
-  queue_create_info.pQueuePriorities = &prio_one;
-  queue_create_info.flags = 0;
-  queue_create_info.pNext = 0;
+  VkDeviceQueueCreateInfo queue_create_infos[2] = { 0 };
+  queue_create_infos[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+  queue_create_infos[0].queueFamilyIndex = indices.graphics_family_index;
+  queue_create_infos[0].queueCount = 1;
+  queue_create_infos[0].pQueuePriorities = &prio_one;
+  queue_create_infos[0].flags = 0;
+  queue_create_infos[0].pNext = 0;
+
+  queue_create_infos[1].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+  queue_create_infos[1].queueFamilyIndex = indices.present_family_index;
+  queue_create_infos[1].queueCount = 1;
+  queue_create_infos[1].pQueuePriorities = &prio_one;
+  queue_create_infos[1].flags = 0;
+  queue_create_infos[1].pNext = 0;
 
   // Features
   VkPhysicalDeviceFeatures device_features = { 0 };
@@ -475,8 +506,8 @@ bool create_logical_device(gpu_device* out_device) {
 
   // Device itself
   VkDeviceCreateInfo device_create_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
-  device_create_info.queueCreateInfoCount = 1;
-  device_create_info.pQueueCreateInfos = &queue_create_info;
+  device_create_info.queueCreateInfoCount = 2;
+  device_create_info.pQueueCreateInfos = queue_create_infos;
   device_create_info.pEnabledFeatures = &device_features;
   device_create_info.enabledExtensionCount = 1;
   const char* extension_names = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
@@ -493,6 +524,14 @@ bool create_logical_device(gpu_device* out_device) {
     ERROR_EXIT("Unable to create vulkan logical device. Exiting..");
   }
   TRACE("Logical device created");
+
+  context.device->queue_family_indicies = indices;
+
+  // Retrieve queue handles
+  vkGetDeviceQueue(context.device->logical_device, indices.graphics_family_index, 0,
+                   &context.device->graphics_queue);
+  vkGetDeviceQueue(context.device->logical_device, indices.present_family_index, 0,
+                   &context.device->present_queue);
 
   return true;
 }
