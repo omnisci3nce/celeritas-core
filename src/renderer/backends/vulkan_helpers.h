@@ -20,15 +20,26 @@ static void plat_get_required_extension_names(cstr_darray* extensions) {
 }
 
 // TODO(omni): port to using internal assert functions
-#define VK_CHECK(vulkan_expr) \
-  do {                        \
-    VkResult res = vulkan_expr; \
-    if (res != VK_SUCCESS) { \
+#define VK_CHECK(vulkan_expr)              \
+  do {                                     \
+    VkResult res = vulkan_expr;            \
+    if (res != VK_SUCCESS) {               \
       ERROR_EXIT("Vulkan error: %u", res); \
-    } \
+    }                                      \
   } while (0)
 
 // TODO: typedef struct vk_debugger {} vk_debugger;
+
+typedef struct queue_family_indices {
+  u32 graphics_queue_index;
+  u32 present_queue_index;
+  u32 compute_queue_index;
+  u32 transfer_queue_index;
+  bool has_graphics;
+  bool has_present;
+  bool has_compute;
+  bool has_transfer;
+} queue_family_indices;
 
 typedef struct vulkan_physical_device_requirements {
   bool graphics;
@@ -168,4 +179,25 @@ static bool physical_device_meets_requirements(
   }
 
   return false;
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT flags,
+    const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void* user_data) {
+  switch (severity) {
+    default:
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+      ERROR("%s", callback_data->pMessage);
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+      WARN("%s", callback_data->pMessage);
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+      INFO("%s", callback_data->pMessage);
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+      TRACE("%s", callback_data->pMessage);
+      break;
+  }
+  return VK_FALSE;
 }

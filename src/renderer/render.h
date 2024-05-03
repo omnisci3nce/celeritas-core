@@ -10,8 +10,8 @@
  */
 #pragma once
 
-#include "render_types.h"
 #include "ral_types.h"
+#include "render_types.h"
 
 bool renderer_init(renderer* ren);
 void renderer_shutdown(renderer* ren);

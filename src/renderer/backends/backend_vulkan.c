@@ -5,6 +5,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include "backend_vulkan.h"
+#include "maths_types.h"
 #include "mem.h"
 #include "vulkan_helpers.h"
 
@@ -31,6 +32,8 @@ typedef struct vulkan_context {
 
   u32 screen_width;
   u32 screen_height;
+
+  VkDebugUtilsMessengerEXT vk_debugger;
 } vulkan_context;
 
 static vulkan_context context;
@@ -39,6 +42,13 @@ static vulkan_context context;
 
 /** @brief Enumerates and selects the most appropriate graphics device */
 bool select_physical_device(gpu_device* out_device);
+
+bool is_physical_device_suitable(VkPhysicalDevice device);
+
+queue_family_indices find_queue_families(VkPhysicalDevice device);
+
+bool create_logical_device(gpu_device* out_device);
+
 /** @brief Helper function for creating array of all extensions we want */
 cstr_darray* get_all_extensions();
 
@@ -49,7 +59,7 @@ bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
 
   // Create an allocator
   size_t temp_arena_size = 1024 * 1024;
-  arena_create(malloc(temp_arena_size), temp_arena_size);
+  context.temp_arena = arena_create(malloc(temp_arena_size), temp_arena_size);
 
   // Setup Vulkan instance
   VkApplicationInfo app_info = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
@@ -63,19 +73,60 @@ bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
   create_info.pApplicationInfo = &app_info;
 
   // Extensions
-  // FIXME: Use my own extension choices
-  // cstr_darray* required_extensions = cstr_darray_new(2);
+  cstr_darray* required_extensions = cstr_darray_new(2);
   // cstr_darray_push(required_extensions, VK_KHR_SURFACE_EXTENSION_NAME);
-  // create_info.enabledExtensionCount = cstr_darray_len(required_extensions);
-  // create_info.ppEnabledExtensionNames = required_extensions->data;
+
   uint32_t count;
   const char** extensions = glfwGetRequiredInstanceExtensions(&count);
-  create_info.enabledExtensionCount = count;
-  create_info.ppEnabledExtensionNames = extensions;
+  for (u32 i = 0; i < count; i++) {
+    cstr_darray_push(required_extensions, extensions[i]);
+  }
+
+  cstr_darray_push(required_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+  DEBUG("Required extensions:");
+  for (u32 i = 0; i < cstr_darray_len(required_extensions); i++) {
+    DEBUG("  %s", required_extensions->data[i]);
+  }
+
+  create_info.enabledExtensionCount = cstr_darray_len(required_extensions);
+  create_info.ppEnabledExtensionNames = required_extensions->data;
 
   // TODO: Validation layers
   create_info.enabledLayerCount = 0;
   create_info.ppEnabledLayerNames = NULL;
+
+  INFO("Validation layers enabled");
+  cstr_darray* desired_validation_layers = cstr_darray_new(1);
+  cstr_darray_push(desired_validation_layers, "VK_LAYER_KHRONOS_validation");
+
+  u32 n_available_layers = 0;
+  VK_CHECK(vkEnumerateInstanceLayerProperties(&n_available_layers, 0));
+  TRACE("%d available layers", n_available_layers);
+  VkLayerProperties* available_layers =
+      arena_alloc(&context.temp_arena, n_available_layers * sizeof(VkLayerProperties));
+  VK_CHECK(vkEnumerateInstanceLayerProperties(&n_available_layers, available_layers));
+
+  for (int i = 0; i < cstr_darray_len(desired_validation_layers); i++) {
+    // look through layers to make sure we can find the ones we want
+    bool found = false;
+    for (int j = 0; j < n_available_layers; j++) {
+      if (str8_equals(str8_cstr_view(desired_validation_layers->data[i]),
+                      str8_cstr_view(available_layers[j].layerName))) {
+        found = true;
+        TRACE("Found layer %s", desired_validation_layers->data[i]);
+        break;
+      }
+    }
+
+    if (!found) {
+      FATAL("Required validation is missing %s", desired_validation_layers->data[i]);
+      return false;
+    }
+  }
+  INFO("All validation layers are present");
+  create_info.enabledLayerCount = cstr_darray_len(desired_validation_layers);
+  create_info.ppEnabledLayerNames = desired_validation_layers->data;
 
   VkResult result = vkCreateInstance(&create_info, NULL, &context.instance);
   if (result != VK_SUCCESS) {
@@ -83,6 +134,25 @@ bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
     return false;
   }
   TRACE("Vulkan Instance created");
+
+  DEBUG("Creating Vulkan debugger");
+  u32 log_severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
+                     VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+  VkDebugUtilsMessengerCreateInfoEXT debug_create_info = {
+    VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT
+  };
+  debug_create_info.messageSeverity = log_severity;
+  debug_create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                  VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
+                                  VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+  debug_create_info.pfnUserCallback = vk_debug_callback;
+
+  PFN_vkCreateDebugUtilsMessengerEXT func =
+      (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(context.instance,
+                                                                "vkCreateDebugUtilsMessengerEXT");
+  assert(func);
+  VK_CHECK(func(context.instance, &debug_create_info, context.allocator, &context.vk_debugger));
+  DEBUG("Vulkan Debugger created");
 
   // Surface creation
   VkSurfaceKHR surface;
@@ -96,39 +166,43 @@ bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
 void gpu_backend_shutdown() { arena_free_storage(&context.temp_arena); }
 
 bool gpu_device_create(gpu_device* out_device) {
+  // First things first store this poitner from the renderer
+  context.device = out_device;
+
+  arena_save savept = arena_savepoint(&context.temp_arena);
   // Physical device
   if (!select_physical_device(out_device)) {
     return false;
   }
   TRACE("Physical device selected");
 
-  // Features
-  VkPhysicalDeviceFeatures device_features = { 0 };
-  device_features.samplerAnisotropy = VK_TRUE;  // request anistrophy
-
   // Logical device
-  VkDeviceQueueCreateInfo queue_create_info[2];
-  //..
-  VkDeviceCreateInfo device_create_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
-  device_create_info.queueCreateInfoCount = VULKAN_QUEUES_COUNT;
-  device_create_info.pQueueCreateInfos = queue_create_info;
-  device_create_info.pEnabledFeatures = &device_features;
-  device_create_info.enabledExtensionCount = 1;
-  const char* extension_names = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
-  device_create_info.ppEnabledExtensionNames = &extension_names;
+  create_logical_device(out_device);
+  // VkDeviceQueueCreateInfo queue_create_info = {};
 
-  VkResult result = vkCreateDevice(out_device->physical_device, &device_create_info,
-                                   context.allocator, &out_device->logical_device);
-  if (result != VK_SUCCESS) {
-    FATAL("Error creating logical device with status %u\n", result);
-    exit(1);
-  }
-  TRACE("Logical device created");
+  // queue_family_indices indices = find_queue_families(context.device->physical_device);
+  // //..
+  // VkDeviceCreateInfo device_create_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+  // device_create_info.queueCreateInfoCount = VULKAN_QUEUES_COUNT;
+  // device_create_info.pQueueCreateInfos = queue_create_info;
+  // device_create_info.pEnabledFeatures = &device_features;
+  // device_create_info.enabledExtensionCount = 1;
+  // const char* extension_names = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+  // device_create_info.ppEnabledExtensionNames = &extension_names;
+
+  // VkResult result = vkCreateDevice(out_device->physical_device, &device_create_info,
+  //                                  context.allocator, &out_device->logical_device);
+  // if (result != VK_SUCCESS) {
+  //   FATAL("Error creating logical device with status %u\n", result);
+  //   exit(1);
+  // }
+  // TRACE("Logical device created");
 
   // Queues
 
   // Create the command pool
 
+  arena_rewind(savept);  // Free any temp data
   return true;
 }
 
@@ -316,4 +390,109 @@ inline void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count) {
   vkCmdDrawIndexed(encoder->cmd_buffer, index_count, 1, 0, 0, 0);
 }
 
-bool select_physical_device(gpu_device* out_device) {}
+bool select_physical_device(gpu_device* out_device) {
+  u32 physical_device_count = 0;
+  VK_CHECK(vkEnumeratePhysicalDevices(context.instance, &physical_device_count, 0));
+  if (physical_device_count == 0) {
+    FATAL("No devices that support vulkan were found");
+    return false;
+  }
+  TRACE("Number of devices found %d", physical_device_count);
+
+  VkPhysicalDevice* physical_devices =
+      arena_alloc(&context.temp_arena, physical_device_count * sizeof(VkPhysicalDevice));
+  VK_CHECK(vkEnumeratePhysicalDevices(context.instance, &physical_device_count, physical_devices));
+
+  bool found = false;
+  for (u32 device_i = 0; device_i < physical_device_count; device_i++) {
+    if (is_physical_device_suitable(physical_devices[device_i])) {
+      out_device->physical_device = physical_devices[device_i];
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) {
+    FATAL("Couldn't find a suitable physical device");
+    return false;
+  }
+
+  return true;
+}
+
+bool is_physical_device_suitable(VkPhysicalDevice device) {
+  VkPhysicalDeviceProperties properties;
+  vkGetPhysicalDeviceProperties(device, &properties);
+
+  VkPhysicalDeviceFeatures features;
+  vkGetPhysicalDeviceFeatures(device, &features);
+
+  VkPhysicalDeviceMemoryProperties memory;
+  vkGetPhysicalDeviceMemoryProperties(device, &memory);
+
+  // TODO: Check against these device properties
+
+  queue_family_indices indices = find_queue_families(device);
+
+  return indices.has_graphics;
+}
+
+queue_family_indices find_queue_families(VkPhysicalDevice device) {
+  queue_family_indices indices = { 0 };
+
+  u32 queue_family_count = 0;
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, 0);
+
+  VkQueueFamilyProperties* queue_families =
+      arena_alloc(&context.temp_arena, queue_family_count * sizeof(VkQueueFamilyProperties));
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, queue_families);
+
+  for (u32 queue_i = 0; queue_i < queue_family_count; queue_i++) {
+    // Graphics queue
+    if (queue_families[queue_i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+      indices.graphics_queue_index = queue_i;
+      indices.has_graphics = true;
+    }
+  }
+
+  return indices;
+}
+
+bool create_logical_device(gpu_device* out_device) {
+  queue_family_indices indices = find_queue_families(out_device->physical_device);
+
+  f32 prio_one = 1.0;
+  VkDeviceQueueCreateInfo queue_create_info = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
+  queue_create_info.queueFamilyIndex = indices.graphics_queue_index;
+  queue_create_info.queueCount = 1;
+  queue_create_info.pQueuePriorities = &prio_one;
+  queue_create_info.flags = 0;
+  queue_create_info.pNext = 0;
+
+  // Features
+  VkPhysicalDeviceFeatures device_features = { 0 };
+  device_features.samplerAnisotropy = VK_TRUE;  // request anistrophy
+
+  // Device itself
+  VkDeviceCreateInfo device_create_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+  device_create_info.queueCreateInfoCount = 1;
+  device_create_info.pQueueCreateInfos = &queue_create_info;
+  device_create_info.pEnabledFeatures = &device_features;
+  device_create_info.enabledExtensionCount = 1;
+  const char* extension_names = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+  device_create_info.ppEnabledExtensionNames = &extension_names;
+
+  // deprecated
+  device_create_info.enabledLayerCount = 0;
+  device_create_info.ppEnabledLayerNames = 0;
+
+  VkResult result = vkCreateDevice(context.device->physical_device, &device_create_info,
+                                   context.allocator, &context.device->logical_device);
+  if (result != VK_SUCCESS) {
+    printf("error creating logical device with status %u\n", result);
+    ERROR_EXIT("Unable to create vulkan logical device. Exiting..");
+  }
+  TRACE("Logical device created");
+
+  return true;
+}

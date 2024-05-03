@@ -29,7 +29,7 @@ typedef struct heightmap {
 
 typedef struct terrain_state {
   arena terrain_allocator;
-  heightmap* heightmap; // NULL = no heightmap
+  heightmap* heightmap;  // NULL = no heightmap
 } terrain_state;
 
 bool terrain_system_init(terrain_state* state);

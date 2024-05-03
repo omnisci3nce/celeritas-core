@@ -1,21 +1,21 @@
 /**
  * @file render_types.h
  * @author your name (you@domain.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-04-27
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 #pragma once
 
-#include "ral_types.h"
 #include "ral.h"
+#include "ral_types.h"
 #if defined(CEL_PLATFORM_WINDOWS)
 // #include "backend_dx11.h"
-#include "backend_vulkan.h"
 #endif
+#include "backend_vulkan.h"
 
 struct GLFWwindow;
 
@@ -37,7 +37,7 @@ typedef struct renderer {
 
 typedef struct geometry_data {
   vertex_format format;
-  vertex_darray* vertices; // TODO: make it not a pointer
+  vertex_darray* vertices;  // TODO: make it not a pointer
   bool has_indices;
   u32_darray indices;
   vec3 colour; /** Optional: set vertex colours */
@@ -66,8 +66,8 @@ typedef struct model {
 typedef struct texture {
   u32 texture_id;
   char name[256];
-  void *image_data;
-  void *backend_data;
+  void* image_data;
+  void* backend_data;
   u32 width;
   u32 height;
   u8 channel_count;

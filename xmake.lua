@@ -1,6 +1,6 @@
 set_project("celeritas")
 set_version("0.1.0")
-set_config("cc", "clang-cl")
+set_config("cc", "gcc")
 
 add_rules("mode.debug", "mode.release") -- we have two modes: debug & release
 

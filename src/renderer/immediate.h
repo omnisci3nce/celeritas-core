@@ -14,7 +14,7 @@ void imm_draw_camera_frustum();
 //     const char* model_filepath);  // tracks internally whether the model is loaded
 
 // static void imm_draw_model(const char* model_filepath) {
-  // check that model is loaded
-  // if not loaded, load model and upload to gpu - LRU cache for models
-  // else submit draw call
+// check that model is loaded
+// if not loaded, load model and upload to gpu - LRU cache for models
+// else submit draw call
 // }

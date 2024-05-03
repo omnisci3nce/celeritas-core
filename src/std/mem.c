@@ -32,3 +32,10 @@ void arena_free_all(arena* a) {
 }
 
 void arena_free_storage(arena* a) { free(a->begin); }
+
+arena_save arena_savepoint(arena* a) {
+  arena_save savept = { .arena = a, .savepoint = a->curr };
+  return savept;
+}
+
+void arena_rewind(arena_save savepoint) { savepoint.arena->curr = savepoint.savepoint; }

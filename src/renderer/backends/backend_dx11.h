@@ -8,7 +8,6 @@
 
 // typedef struct gpu_swapchain gpu_swapchain;
 typedef struct gpu_device {
-    
   // VkPhysicalDevice physical_device;
   // VkDevice logical_device;
   // VkPhysicalDeviceProperties properties;

@@ -11,10 +11,10 @@
  */
 #pragma once
 
-#include "ral_types.h"
-#include "defines.h"
-#include "str.h"
 #include "buf.h"
+#include "defines.h"
+#include "ral_types.h"
+#include "str.h"
 
 // Unrelated forward declares
 typedef struct arena arena;
@@ -60,7 +60,6 @@ struct graphics_pipeline_desc {
 };
 
 typedef struct gpu_renderpass_desc {
-
 } gpu_renderpass_desc;
 
 // --- Lifecycle functions
@@ -97,7 +96,7 @@ void buffer_upload_bytes(buffer_handle gpu_buf, bytebuffer cpu_buf, u64 offset, 
 void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipeline* pipeline);
 void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
-void encode_set_bind_group(); // TODO
+void encode_set_bind_group();  // TODO
 void encode_draw(gpu_cmd_encoder* encoder);
 void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count);
 

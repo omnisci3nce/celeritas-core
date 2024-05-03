@@ -18,9 +18,16 @@ typedef struct arena {
   char* end;
 } arena;
 
+typedef struct arena_save {
+  arena* arena;
+  char* savepoint;
+} arena_save;
+
 arena arena_create(void* backing_buffer, size_t capacity);
 void* arena_alloc(arena* a, size_t size);
 void* arena_alloc_align(arena* a, size_t size, size_t align);
 void arena_free_all(arena* a);
 void arena_free_storage(arena* a);
+arena_save arena_savepoint(arena* a);
+void arena_rewind(arena_save savepoint);
 // TODO: arena_resize
