@@ -40,13 +40,6 @@ typedef struct vulkan_physical_device_requirements {
   bool discrete_gpu;
 } vulkan_physical_device_requirements;
 
-typedef struct vulkan_physical_device_queue_family_info {
-  u32 graphics_family_index;
-  u32 present_family_index;
-  u32 compute_family_index;
-  u32 transfer_family_index;
-} vulkan_physical_device_queue_family_info;
-
 #define VULKAN_MAX_DEFAULT 32
 
 typedef struct vulkan_swapchain_support_info {
@@ -85,89 +78,89 @@ void vulkan_device_query_swapchain_support(VkPhysicalDevice device, VkSurfaceKHR
   }
 }
 
-static bool physical_device_meets_requirements(
-    VkPhysicalDevice device, VkSurfaceKHR surface, const VkPhysicalDeviceProperties* properties,
-    const VkPhysicalDeviceFeatures* features,
-    const vulkan_physical_device_requirements* requirements,
-    vulkan_physical_device_queue_family_info* out_queue_info,
-    vulkan_swapchain_support_info* out_swapchain_support) {
-  // TODO: pass in an arena
+// static bool physical_device_meets_requirements(
+//     VkPhysicalDevice device, VkSurfaceKHR surface, const VkPhysicalDeviceProperties* properties,
+//     const VkPhysicalDeviceFeatures* features,
+//     const vulkan_physical_device_requirements* requirements,
+//     vulkan_physical_device_queue_family_info* out_queue_info,
+//     vulkan_swapchain_support_info* out_swapchain_support) {
+//   // TODO: pass in an arena
 
-  out_queue_info->graphics_family_index = -1;
-  out_queue_info->present_family_index = -1;
-  out_queue_info->compute_family_index = -1;
-  out_queue_info->transfer_family_index = -1;
+//   out_queue_info->graphics_family_index = -1;
+//   out_queue_info->present_family_index = -1;
+//   out_queue_info->compute_family_index = -1;
+//   out_queue_info->transfer_family_index = -1;
 
-  if (requirements->discrete_gpu) {
-    if (properties->deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-      TRACE("Device is not a physical GPU. Skipping.");
-      return false;
-    }
-  }
+//   if (requirements->discrete_gpu) {
+//     if (properties->deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+//       TRACE("Device is not a physical GPU. Skipping.");
+//       return false;
+//     }
+//   }
 
-  u32 queue_family_count = 0;
-  vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, 0);
-  VkQueueFamilyProperties queue_families[queue_family_count];
-  vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, queue_families);
+//   u32 queue_family_count = 0;
+//   vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, 0);
+//   VkQueueFamilyProperties queue_families[queue_family_count];
+//   vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, queue_families);
 
-  INFO("Graphics | Present | Compute | Transfer | Name");
-  u8 min_transfer_score = 255;
-  for (u32 i = 0; i < queue_family_count; i++) {
-    u8 current_transfer_score = 0;
+//   INFO("Graphics | Present | Compute | Transfer | Name");
+//   u8 min_transfer_score = 255;
+//   for (u32 i = 0; i < queue_family_count; i++) {
+//     u8 current_transfer_score = 0;
 
-    // Graphics queue
-    if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-      out_queue_info->graphics_family_index = i;
-      current_transfer_score++;
-    }
+//     // Graphics queue
+//     if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+//       out_queue_info->graphics_family_index = i;
+//       current_transfer_score++;
+//     }
 
-    // Compute queue
-    if (queue_families[i].queueFlags & VK_QUEUE_COMPUTE_BIT) {
-      out_queue_info->compute_family_index = i;
-      current_transfer_score++;
-    }
+//     // Compute queue
+//     if (queue_families[i].queueFlags & VK_QUEUE_COMPUTE_BIT) {
+//       out_queue_info->compute_family_index = i;
+//       current_transfer_score++;
+//     }
 
-    // Transfer queue
-    if (queue_families[i].queueFlags & VK_QUEUE_TRANSFER_BIT) {
-      // always take the lowest score transfer index
-      if (current_transfer_score <= min_transfer_score) {
-        min_transfer_score = current_transfer_score;
-        out_queue_info->transfer_family_index = i;
-      }
-    }
+//     // Transfer queue
+//     if (queue_families[i].queueFlags & VK_QUEUE_TRANSFER_BIT) {
+//       // always take the lowest score transfer index
+//       if (current_transfer_score <= min_transfer_score) {
+//         min_transfer_score = current_transfer_score;
+//         out_queue_info->transfer_family_index = i;
+//       }
+//     }
 
-    // Present Queue
-    VkBool32 supports_present = VK_FALSE;
-    vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &supports_present);
-    if (supports_present) {
-      out_queue_info->present_family_index = i;
-    }
-  }
+//     // Present Queue
+//     VkBool32 supports_present = VK_FALSE;
+//     vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &supports_present);
+//     if (supports_present) {
+//       out_queue_info->present_family_index = i;
+//     }
+//   }
 
-  INFO("       %d |       %d |       %d |        %d | %s",
-       out_queue_info->graphics_family_index != -1, out_queue_info->present_family_index != -1,
-       out_queue_info->compute_family_index != -1, out_queue_info->transfer_family_index != -1,
-       properties->deviceName);
-  TRACE("Graphics Family queue index: %d", out_queue_info->graphics_family_index);
-  TRACE("Present Family queue index: %d", out_queue_info->present_family_index);
-  TRACE("Compute Family queue index: %d", out_queue_info->compute_family_index);
-  TRACE("Transfer Family queue index: %d", out_queue_info->transfer_family_index);
+//   INFO("       %d |       %d |       %d |        %d | %s",
+//        out_queue_info->graphics_family_index != -1, out_queue_info->present_family_index != -1,
+//        out_queue_info->compute_family_index != -1, out_queue_info->transfer_family_index != -1,
+//        properties->deviceName);
+//   TRACE("Graphics Family queue index: %d", out_queue_info->graphics_family_index);
+//   TRACE("Present Family queue index: %d", out_queue_info->present_family_index);
+//   TRACE("Compute Family queue index: %d", out_queue_info->compute_family_index);
+//   TRACE("Transfer Family queue index: %d", out_queue_info->transfer_family_index);
 
-  if ((!requirements->graphics ||
-       (requirements->graphics && out_queue_info->graphics_family_index != -1))) {
-    INFO("Physical device meets our requirements! Proceed.");
+//   if ((!requirements->graphics ||
+//        (requirements->graphics && out_queue_info->graphics_family_index != -1))) {
+//     INFO("Physical device meets our requirements! Proceed.");
 
-    vulkan_device_query_swapchain_support(
-        device, surface, out_swapchain_support
+//     vulkan_device_query_swapchain_support(
+//         device, surface, out_swapchain_support
 
-        // TODO: error handling i.e. format count = 0 or present mode = 0
+//         // TODO: error handling i.e. format count = 0 or present mode = 0
 
-    );
-    return true;
-  }
+//     );
+//     return true;
+//   }
 
-  return false;
-}
+//   return false;
+// }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
     VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT flags,

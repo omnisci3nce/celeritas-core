@@ -5,7 +5,6 @@
 
 #include <stb_truetype.h>
 
-#include "cleanroom/types.h"
 #include "darray.h"
 #include "defines.h"
 #include "ral.h"

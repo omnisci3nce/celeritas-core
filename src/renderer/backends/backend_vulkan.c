@@ -26,6 +26,7 @@ typedef struct vulkan_context {
   VkInstance instance;
   VkAllocationCallbacks* allocator;
   VkSurfaceKHR surface;
+  vulkan_swapchain_support_info swapchain_support;
 
   arena temp_arena;
   gpu_device* device;
@@ -180,6 +181,9 @@ bool gpu_device_create(gpu_device* out_device) {
     return false;
   }
   TRACE("Physical device selected");
+
+  // vulkan_device_query_swapchain_support(out_device->physical_device, context.surface,
+  //                                       &context.swapchain_support);
 
   // Logical device
   create_logical_device(out_device);
@@ -432,6 +436,10 @@ bool select_physical_device(gpu_device* out_device) {
     return false;
   }
 
+  vkGetPhysicalDeviceProperties(out_device->physical_device, &out_device->properties);
+  vkGetPhysicalDeviceFeatures(out_device->physical_device, &out_device->features);
+  vkGetPhysicalDeviceMemoryProperties(out_device->physical_device, &out_device->memory);
+
   return true;
 }
 
@@ -449,7 +457,10 @@ bool is_physical_device_suitable(VkPhysicalDevice device) {
 
   queue_family_indices indices = find_queue_families(device);
 
-  return indices.has_graphics && indices.has_present;
+  vulkan_device_query_swapchain_support(device, context.surface, &context.swapchain_support);
+
+  return indices.has_graphics && indices.has_present && context.swapchain_support.mode_count > 0 &&
+         context.swapchain_support.format_count > 0;
 }
 
 queue_family_indices find_queue_families(VkPhysicalDevice device) {
@@ -480,8 +491,17 @@ queue_family_indices find_queue_families(VkPhysicalDevice device) {
   return indices;
 }
 
+const char* bool_str(bool input) { return input ? "True" : "False"; }
+
 bool create_logical_device(gpu_device* out_device) {
   queue_family_indices indices = find_queue_families(out_device->physical_device);
+  INFO(" %s | %s | %s | %s | %s", bool_str(indices.has_graphics), bool_str(indices.has_present),
+       bool_str(indices.has_compute), bool_str(indices.has_transfer),
+       out_device->properties.deviceName);
+  TRACE("Graphics Family queue index: %d", indices.graphics_family_index);
+  TRACE("Present Family queue index: %d", indices.present_family_index);
+  TRACE("Compute Family queue index: %d", indices.compute_family_index);
+  TRACE("Transfer Family queue index: %d", indices.transfer_family_index);
 
   // Queues
   f32 prio_one = 1.0;

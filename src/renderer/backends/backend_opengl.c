@@ -6,8 +6,6 @@
 #include "file.h"
 #include "log.h"
 #include "maths_types.h"
-// #include "render_types.h"
-#include "cleanroom/types.h"
 #include "ral.h"
 
 #if CEL_REND_BACKEND_OPENGL
