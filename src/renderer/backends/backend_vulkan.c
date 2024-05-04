@@ -14,7 +14,6 @@
 #include "log.h"
 #include "ral.h"
 #include "utils.h"
-#include "utils.h"
 
 // TEMP
 #define SCREEN_WIDTH 1000
