@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assert.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
@@ -54,8 +55,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
     VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT flags,
     const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void* user_data);
 
-void vulkan_device_query_swapchain_support(VkPhysicalDevice device, VkSurfaceKHR surface,
-                                           vulkan_swapchain_support_info* out_support_info) {
+static void vulkan_device_query_swapchain_support(VkPhysicalDevice device, VkSurfaceKHR surface,
+                                                  vulkan_swapchain_support_info* out_support_info) {
   // TODO: add VK_CHECK to these calls!
 
   // Surface capabilities
@@ -76,6 +77,20 @@ void vulkan_device_query_swapchain_support(VkPhysicalDevice device, VkSurfaceKHR
     vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &out_support_info->mode_count,
                                               out_support_info->present_modes);
   }
+}
+
+static VkSurfaceFormatKHR choose_swapchain_format(
+    vulkan_swapchain_support_info* swapchain_support) {
+      assert(swapchain_support->format_count > 0);
+  // find a format
+  for (u32 i = 0; i < swapchain_support->format_count; i++) {
+    VkSurfaceFormatKHR format = swapchain_support->formats[i];
+    if (format.format == VK_FORMAT_B8G8R8A8_SRGB &&
+        format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+      return format;
+    }
+  }
+  return swapchain_support->formats[0];
 }
 
 // static bool physical_device_meets_requirements(

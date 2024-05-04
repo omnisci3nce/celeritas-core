@@ -13,7 +13,7 @@
 #include "defines.h"
 #include "log.h"
 #include "ral.h"
-#include "ral_types.h"
+#include "utils.h"
 
 // TEMP
 #define SCREEN_WIDTH 1000
@@ -182,32 +182,8 @@ bool gpu_device_create(gpu_device* out_device) {
   }
   TRACE("Physical device selected");
 
-  // vulkan_device_query_swapchain_support(out_device->physical_device, context.surface,
-  //                                       &context.swapchain_support);
-
-  // Logical device
+  // Logical device & Queues
   create_logical_device(out_device);
-  // VkDeviceQueueCreateInfo queue_create_info = {};
-
-  // queue_family_indices indices = find_queue_families(context.device->physical_device);
-  // //..
-  // VkDeviceCreateInfo device_create_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
-  // device_create_info.queueCreateInfoCount = VULKAN_QUEUES_COUNT;
-  // device_create_info.pQueueCreateInfos = queue_create_info;
-  // device_create_info.pEnabledFeatures = &device_features;
-  // device_create_info.enabledExtensionCount = 1;
-  // const char* extension_names = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
-  // device_create_info.ppEnabledExtensionNames = &extension_names;
-
-  // VkResult result = vkCreateDevice(out_device->physical_device, &device_create_info,
-  //                                  context.allocator, &out_device->logical_device);
-  // if (result != VK_SUCCESS) {
-  //   FATAL("Error creating logical device with status %u\n", result);
-  //   exit(1);
-  // }
-  // TRACE("Logical device created");
-
-  // Queues
 
   // Create the command pool
 
@@ -216,29 +192,55 @@ bool gpu_device_create(gpu_device* out_device) {
 }
 
 bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {
-  VkExtent2D swapchain_extent = { context.screen_width, context.screen_height };
+  out_swapchain->swapchain_arena = arena_create(malloc(1024), 1024);
+  vulkan_swapchain_support_info swapchain_support = context.swapchain_support;
 
-  // find a format
+  // TODO: custom swapchain extents VkExtent2D swapchain_extent = { width, height };
 
+  VkSurfaceFormatKHR image_format = choose_swapchain_format(&swapchain_support);
+  out_swapchain->image_format = image_format;
   VkPresentModeKHR present_mode = VK_PRESENT_MODE_FIFO_KHR;  // guaranteed to be implemented
+  out_swapchain->present_mode = present_mode;
+
+  u32 image_count = swapchain_support.capabilities.minImageCount + 1;
+  out_swapchain->image_count = image_count;
 
   VkSwapchainCreateInfoKHR swapchain_create_info = { VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
   swapchain_create_info.surface = context.surface;
-  swapchain_create_info.minImageCount = 2;
-  // TODO: image_ fields
+  swapchain_create_info.minImageCount = image_count;
+  swapchain_create_info.imageFormat = image_format.format;
+  swapchain_create_info.imageColorSpace = image_format.colorSpace;
+  swapchain_create_info.imageExtent = swapchain_support.capabilities.currentExtent;
+  swapchain_create_info.imageArrayLayers = 1;
+  swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
   swapchain_create_info.queueFamilyIndexCount = 0;
-  swapchain_create_info.pQueueFamilyIndices = 0;
+  swapchain_create_info.pQueueFamilyIndices = NULL;
 
-  // TODO: preTransform
+  swapchain_create_info.preTransform = swapchain_support.capabilities.currentTransform;
   swapchain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
   swapchain_create_info.presentMode = present_mode;
-
   swapchain_create_info.clipped = VK_TRUE;
-  swapchain_create_info.oldSwapchain = 0;
+  swapchain_create_info.oldSwapchain = VK_NULL_HANDLE;
+
+  out_swapchain->extent = swapchain_support.capabilities.currentExtent;
 
   VK_CHECK(vkCreateSwapchainKHR(context.device->logical_device, &swapchain_create_info,
                                 context.allocator, &out_swapchain->handle));
   TRACE("Vulkan Swapchain created");
+
+  // Retrieve Images
+  out_swapchain->images =
+      arena_alloc(&out_swapchain->swapchain_arena, image_count * sizeof(VkImage));
+  VK_CHECK(vkGetSwapchainImagesKHR(context.device->logical_device, out_swapchain->handle,
+                                   &image_count, out_swapchain->images));
+
+  return true;
+}
+
+void gpu_swapchain_destroy(gpu_swapchain* swapchain) {
+  arena_free_storage(&swapchain->swapchain_arena);
+  vkDestroySwapchainKHR(context.device, swapchain->handle, context.allocator);
 }
 
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {
@@ -482,7 +484,7 @@ queue_family_indices find_queue_families(VkPhysicalDevice device) {
 
     VkBool32 present_support = false;
     vkGetPhysicalDeviceSurfaceSupportKHR(device, q_fam_i, context.surface, &present_support);
-    if (present_support) {
+    if (present_support && !indices.has_present) {
       indices.present_family_index = q_fam_i;
       indices.has_present = true;
     }
@@ -490,8 +492,6 @@ queue_family_indices find_queue_families(VkPhysicalDevice device) {
 
   return indices;
 }
-
-const char* bool_str(bool input) { return input ? "True" : "False"; }
 
 bool create_logical_device(gpu_device* out_device) {
   queue_family_indices indices = find_queue_families(out_device->physical_device);

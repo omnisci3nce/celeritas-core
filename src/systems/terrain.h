@@ -18,8 +18,8 @@ Future:
 #include "defines.h"
 #include "maths_types.h"
 #include "mem.h"
-#include "str.h"
 #include "render_types.h"
+#include "str.h"
 
 typedef struct heightmap {
   str8 filepath;
