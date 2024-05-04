@@ -45,7 +45,8 @@ typedef enum pipeline_kind {
 typedef struct shader_desc {
   const char* debug_name;
   str8 filepath;  // where it came from
-  str8 glsl;      // contents
+  str8 code;      // Either GLSL or SPIRV bytecode
+  bool is_spirv;
 } shader_desc;
 
 struct graphics_pipeline_desc {

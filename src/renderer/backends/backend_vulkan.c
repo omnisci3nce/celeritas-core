@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <glfw3.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan.h>
@@ -8,9 +9,11 @@
 #include "backend_vulkan.h"
 #include "maths_types.h"
 #include "mem.h"
+#include "str.h"
 #include "vulkan_helpers.h"
 
 #include "defines.h"
+#include "file.h"
 #include "log.h"
 #include "ral.h"
 #include "utils.h"
@@ -50,6 +53,8 @@ bool is_physical_device_suitable(VkPhysicalDevice device);
 queue_family_indices find_queue_families(VkPhysicalDevice device);
 
 bool create_logical_device(gpu_device* out_device);
+
+VkShaderModule create_shader_module(str8 spirv);
 
 /** @brief Helper function for creating array of all extensions we want */
 cstr_darray* get_all_extensions();
@@ -192,6 +197,8 @@ bool gpu_device_create(gpu_device* out_device) {
 }
 
 bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {
+  context.swapchain = out_swapchain;
+
   out_swapchain->swapchain_arena = arena_create(malloc(1024), 1024);
   vulkan_swapchain_support_info swapchain_support = context.swapchain_support;
 
@@ -262,7 +269,7 @@ bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {
 
 void gpu_swapchain_destroy(gpu_swapchain* swapchain) {
   arena_free_storage(&swapchain->swapchain_arena);
-  vkDestroySwapchainKHR(context.device, swapchain->handle, context.allocator);
+  vkDestroySwapchainKHR(context.device->logical_device, swapchain->handle, context.allocator);
 }
 
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {
@@ -270,16 +277,55 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   gpu_pipeline_layout* layout = malloc(sizeof(gpu_pipeline_layout));
   gpu_pipeline* pipeline = malloc(sizeof(gpu_pipeline));
 
+  // Shaders
+  VkShaderModule vertex_shader = create_shader_module(description.vs.code);
+  VkShaderModule fragment_shader = create_shader_module(description.fs.code);
+
+  // Vertex
+  VkPipelineShaderStageCreateInfo vert_shader_stage_info = {
+    VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO
+  };
+  vert_shader_stage_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+  vert_shader_stage_info.module = vertex_shader;
+  vert_shader_stage_info.pName = "main";
+  // Fragment
+  VkPipelineShaderStageCreateInfo frag_shader_stage_info = {
+    VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO
+  };
+  frag_shader_stage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+  frag_shader_stage_info.module = fragment_shader;
+  frag_shader_stage_info.pName = "main";
+
+  VkPipelineShaderStageCreateInfo shader_stages[2] = { vert_shader_stage_info,
+                                                       frag_shader_stage_info };
+
+  // Vertex Input
+
+  // TODO: Attributes
+
+  VkPipelineVertexInputStateCreateInfo vertex_input_info = {
+    VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO
+  };
+  vertex_input_info.vertexBindingDescriptionCount = 0;
+  vertex_input_info.pVertexBindingDescriptions = NULL;
+  vertex_input_info.vertexAttributeDescriptionCount = 0;
+  vertex_input_info.pVertexAttributeDescriptions = NULL;
+
+  // Input Assembly
+  VkPipelineInputAssemblyStateCreateInfo input_assembly = {
+    VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO
+  };
+  input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+  input_assembly.primitiveRestartEnable = VK_FALSE;
+
   // Viewport
   VkViewport viewport = { .x = 0,
                           .y = 0,
-                          .width = (f32)context.screen_width,
-                          .height = (f32)context.screen_height,
+                          .width = (f32)context.swapchain->extent.width,
+                          .height = (f32)context.swapchain->extent.height,
                           .minDepth = 0.0,
                           .maxDepth = 1.0 };
-  VkRect2D scissor = { .offset = { .x = 0, .y = 0 },
-                       .extent = { .width = context.screen_width,
-                                   .height = context.screen_height } };
+  VkRect2D scissor = { .offset = { .x = 0, .y = 0 }, .extent = context.swapchain->extent };
   VkPipelineViewportStateCreateInfo viewport_state = {
     VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO
   };
@@ -315,24 +361,52 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   ms_create_info.alphaToCoverageEnable = VK_FALSE;
   ms_create_info.alphaToOneEnable = VK_FALSE;
 
-  // Depth and stencil testing
-  VkPipelineDepthStencilStateCreateInfo depth_stencil = {
-    VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO
+  // TODO: Depth and stencil testing
+  // VkPipelineDepthStencilStateCreateInfo depth_stencil = {
+  //   VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO
+  // };
+  // depth_stencil.depthTestEnable = description.depth_test ? VK_TRUE : VK_FALSE;
+  // depth_stencil.depthWriteEnable = description.depth_test ? VK_TRUE : VK_FALSE;
+  // depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
+  // depth_stencil.depthBoundsTestEnable = VK_FALSE;
+  // depth_stencil.stencilTestEnable = VK_FALSE;
+  // depth_stencil.pNext = 0;
+
+  // Blending
+  VkPipelineColorBlendAttachmentState color_blend_attachment_state;
+  color_blend_attachment_state.blendEnable = VK_TRUE;
+  color_blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+  color_blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+  color_blend_attachment_state.colorBlendOp = VK_BLEND_OP_ADD;
+  color_blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+  color_blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+  color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
+  color_blend_attachment_state.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
+                                                VK_COLOR_COMPONENT_G_BIT |
+                                                VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+
+  VkPipelineColorBlendStateCreateInfo color_blend = {
+    VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO
   };
-  depth_stencil.depthTestEnable = description.depth_test ? VK_TRUE : VK_FALSE;
-  depth_stencil.depthWriteEnable = description.depth_test ? VK_TRUE : VK_FALSE;
-  depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
-  depth_stencil.depthBoundsTestEnable = VK_FALSE;
-  depth_stencil.stencilTestEnable = VK_FALSE;
-  depth_stencil.pNext = 0;
+  color_blend.logicOpEnable = VK_FALSE;
+  color_blend.logicOp = VK_LOGIC_OP_COPY;
+  color_blend.attachmentCount = 1;
+  color_blend.pAttachments = &color_blend_attachment_state;
 
-  // TODO: Blending
+// Dynamic state
+#define DYNAMIC_STATE_COUNT 2
+  VkDynamicState dynamic_states[DYNAMIC_STATE_COUNT] = {
+    VK_DYNAMIC_STATE_VIEWPORT,
+    VK_DYNAMIC_STATE_SCISSOR,
+  };
 
-  // TODO: Vertex Input
+  VkPipelineDynamicStateCreateInfo dynamic_state = {
+    VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO
+  };
+  dynamic_state.dynamicStateCount = DYNAMIC_STATE_COUNT;
+  dynamic_state.pDynamicStates = dynamic_states;
 
-  // TODO: Attributes
-
-  // TODO: layouts
+  // Layout
   VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
     VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
   };
@@ -347,25 +421,26 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   VkGraphicsPipelineCreateInfo pipeline_create_info = {
     VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO
   };
-  // pipeline_create_info.stageCount = stage_count;
-  // pipeline_create_info.pStages = stages;
-  // pipeline_create_info.pVertexInputState = &vertex_input_info;
-  // pipeline_create_info.pInputAssemblyState = &input_assembly;
 
-  // pipeline_create_info.pViewportState = &viewport_state;
-  // pipeline_create_info.pRasterizationState = &rasterizer_create_info;
-  // pipeline_create_info.pMultisampleState = &ms_create_info;
-  // pipeline_create_info.pDepthStencilState = &depth_stencil;
-  // pipeline_create_info.pColorBlendState = &color_blend;
-  // pipeline_create_info.pDynamicState = &dynamic_state;
-  // pipeline_create_info.pTessellationState = 0;
+  pipeline_create_info.stageCount = 2;
+  pipeline_create_info.pStages = shader_stages;
+  pipeline_create_info.pVertexInputState = &vertex_input_info;
+  pipeline_create_info.pInputAssemblyState = &input_assembly;
 
-  // pipeline_create_info.layout = out_pipeline->layout;
+  pipeline_create_info.pViewportState = &viewport_state;
+  pipeline_create_info.pRasterizationState = &rasterizer_create_info;
+  pipeline_create_info.pMultisampleState = &ms_create_info;
+  pipeline_create_info.pDepthStencilState = NULL;  // &depth_stencil;
+  pipeline_create_info.pColorBlendState = &color_blend;
+  pipeline_create_info.pDynamicState = &dynamic_state;
+  pipeline_create_info.pTessellationState = 0;
+
+  pipeline_create_info.layout = layout->handle;
 
   // pipeline_create_info.renderPass = renderpass->handle;
-  // pipeline_create_info.subpass = 0;
-  // pipeline_create_info.basePipelineHandle = VK_NULL_HANDLE;
-  // pipeline_create_info.basePipelineIndex = -1;
+  pipeline_create_info.subpass = 0;
+  pipeline_create_info.basePipelineHandle = VK_NULL_HANDLE;
+  pipeline_create_info.basePipelineIndex = -1;
 
   VkResult result =
       vkCreateGraphicsPipelines(context.device->logical_device, VK_NULL_HANDLE, 1,
@@ -374,6 +449,10 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
     FATAL("graphics pipeline creation failed. its fked mate");
     ERROR_EXIT("Doomed");
   }
+
+  // once the pipeline has been created we can destroy these
+  vkDestroyShaderModule(context.device->logical_device, vertex_shader, context.allocator);
+  vkDestroyShaderModule(context.device->logical_device, fragment_shader, context.allocator);
 
   return pipeline;
 }
@@ -576,4 +655,16 @@ bool create_logical_device(gpu_device* out_device) {
                    &context.device->present_queue);
 
   return true;
+}
+
+VkShaderModule create_shader_module(str8 spirv) {
+  VkShaderModuleCreateInfo create_info = { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
+  create_info.codeSize = spirv.len;
+  create_info.pCode = (uint32_t*)spirv.buf;
+
+  VkShaderModule shader_module;
+  VK_CHECK(vkCreateShaderModule(context.device->logical_device, &create_info, context.allocator,
+                                &shader_module));
+
+  return shader_module;
 }

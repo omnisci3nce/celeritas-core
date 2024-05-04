@@ -81,7 +81,7 @@ static void vulkan_device_query_swapchain_support(VkPhysicalDevice device, VkSur
 
 static VkSurfaceFormatKHR choose_swapchain_format(
     vulkan_swapchain_support_info* swapchain_support) {
-      assert(swapchain_support->format_count > 0);
+  assert(swapchain_support->format_count > 0);
   // find a format
   for (u32 i = 0; i < swapchain_support->format_count; i++) {
     VkSurfaceFormatKHR format = swapchain_support->formats[i];

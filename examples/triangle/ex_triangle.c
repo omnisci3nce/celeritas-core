@@ -19,8 +19,10 @@ int main() {
   gpu_renderpass_desc pass_description = {};
   gpu_renderpass* renderpass = gpu_renderpass_create(&pass_description);
 
-  str8_opt vertex_shader = str8_from_file(&scratch, str8lit("assets/shaders/triangle.vert"));
-  str8_opt fragment_shader = str8_from_file(&scratch, str8lit("assets/shaders/triangle.frag"));
+  str8 vert_path = str8lit("build/linux/x86_64/debug/triangle.vert.spv");
+  str8 frag_path = str8lit("build/linux/x86_64/debug/triangle.frag.spv");
+  str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
+  str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
   if (!vertex_shader.has_value || !fragment_shader.has_value) {
     ERROR_EXIT("Failed to load shaders from disk")
   }
@@ -28,11 +30,13 @@ int main() {
   struct graphics_pipeline_desc pipeline_description = {
     .debug_name = "Basic Pipeline",
     .vs = { .debug_name = "Triangle Vertex Shader",
-            .filepath = str8lit("assets/shaders/triangle.vert"),
-            .glsl = vertex_shader.contents },
+            .filepath = vert_path,
+            .code = vertex_shader.contents,
+            .is_spirv = true },
     .fs = { .debug_name = "Triangle Fragment Shader",
-            .filepath = str8lit("assets/shaders/triangle.frag"),
-            .glsl = fragment_shader.contents },
+            .filepath = frag_path,
+            .code = fragment_shader.contents,
+            .is_spirv = true },
     .renderpass = renderpass,
     .wireframe = false,
     .depth_test = false
