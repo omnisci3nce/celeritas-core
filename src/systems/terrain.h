@@ -15,10 +15,11 @@ Future:
  - Dynamic LOD
 */
 
-#include "cleanroom/types.h"
 #include "defines.h"
 #include "maths_types.h"
 #include "mem.h"
+#include "str.h"
+#include "render_types.h"
 
 typedef struct heightmap {
   str8 filepath;

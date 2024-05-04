@@ -1,1 +1,0 @@
-# Cleanroom / Re-jig of the renderer structure
