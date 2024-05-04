@@ -28,6 +28,11 @@ typedef struct queue_family_indices {
 
 typedef struct gpu_swapchain {
   VkSwapchainKHR handle;
+  arena swapchain_arena;
+  VkSurfaceFormatKHR image_format;
+  VkPresentModeKHR present_mode;
+  VkImage* images;
+  u32 image_count;
 } gpu_swapchain;
 
 typedef struct gpu_device {

@@ -77,7 +77,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
 void gpu_pipeline_destroy(gpu_pipeline* pipeline);
 
 bool gpu_swapchain_create(gpu_swapchain* out_swapchain);
-void gpu_swapchain_destroy();
+void gpu_swapchain_destroy(gpu_swapchain* swapchain);
 
 void gpu_cmd_encoder_begin();
 void gpu_cmd_encoder_begin_render();
