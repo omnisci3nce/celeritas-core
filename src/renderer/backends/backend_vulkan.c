@@ -235,6 +235,28 @@ bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {
   VK_CHECK(vkGetSwapchainImagesKHR(context.device->logical_device, out_swapchain->handle,
                                    &image_count, out_swapchain->images));
 
+  // Create ImageViews
+  // TODO: Move this to a separate function
+  out_swapchain->image_views =
+      arena_alloc(&out_swapchain->swapchain_arena, image_count * sizeof(VkImageView));
+  for (u32 i = 0; i < image_count; i++) {
+    VkImageViewCreateInfo view_create_info = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+    view_create_info.image = out_swapchain->images[i];
+    view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    view_create_info.format = image_format.format;
+    view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    view_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    view_create_info.subresourceRange.baseMipLevel = 0;
+    view_create_info.subresourceRange.levelCount = 1;
+    view_create_info.subresourceRange.baseArrayLayer = 0;
+    view_create_info.subresourceRange.layerCount = 1;
+    vkCreateImageView(context.device->logical_device, &view_create_info, context.allocator,
+                      &out_swapchain->image_views[i]);
+  }
+
   return true;
 }
 
@@ -505,7 +527,7 @@ bool create_logical_device(gpu_device* out_device) {
 
   // Queues
   f32 prio_one = 1.0;
-  VkDeviceQueueCreateInfo queue_create_infos[2] = { 0 };
+  VkDeviceQueueCreateInfo queue_create_infos[1] = { 0 };
   queue_create_infos[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
   queue_create_infos[0].queueFamilyIndex = indices.graphics_family_index;
   queue_create_infos[0].queueCount = 1;
@@ -513,12 +535,12 @@ bool create_logical_device(gpu_device* out_device) {
   queue_create_infos[0].flags = 0;
   queue_create_infos[0].pNext = 0;
 
-  queue_create_infos[1].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-  queue_create_infos[1].queueFamilyIndex = indices.present_family_index;
-  queue_create_infos[1].queueCount = 1;
-  queue_create_infos[1].pQueuePriorities = &prio_one;
-  queue_create_infos[1].flags = 0;
-  queue_create_infos[1].pNext = 0;
+  // queue_create_infos[1].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+  // queue_create_infos[1].queueFamilyIndex = indices.present_family_index;
+  // queue_create_infos[1].queueCount = 1;
+  // queue_create_infos[1].pQueuePriorities = &prio_one;
+  // queue_create_infos[1].flags = 0;
+  // queue_create_infos[1].pNext = 0;
 
   // Features
   VkPhysicalDeviceFeatures device_features = { 0 };
@@ -526,7 +548,7 @@ bool create_logical_device(gpu_device* out_device) {
 
   // Device itself
   VkDeviceCreateInfo device_create_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
-  device_create_info.queueCreateInfoCount = 2;
+  device_create_info.queueCreateInfoCount = 1;
   device_create_info.pQueueCreateInfos = queue_create_infos;
   device_create_info.pEnabledFeatures = &device_features;
   device_create_info.enabledExtensionCount = 1;

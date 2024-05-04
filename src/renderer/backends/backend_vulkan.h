@@ -32,8 +32,9 @@ typedef struct gpu_swapchain {
   VkExtent2D extent;
   VkSurfaceFormatKHR image_format;
   VkPresentModeKHR present_mode;
-  VkImage* images;
   u32 image_count;
+  VkImage* images;
+  VkImageView* image_views;
 } gpu_swapchain;
 
 typedef struct gpu_device {
