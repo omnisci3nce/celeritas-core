@@ -59,5 +59,7 @@ int main() {
     glfwPollEvents();
   }
 
+  gpu_backend_shutdown();
+
   return 0;
 }

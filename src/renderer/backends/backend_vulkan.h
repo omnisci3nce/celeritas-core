@@ -26,6 +26,9 @@ typedef struct queue_family_indices {
   bool has_transfer;
 } queue_family_indices;
 
+// typedef struct vulkan_framebuffer {
+// } vulkan_framebuffer;
+
 typedef struct gpu_swapchain {
   VkSwapchainKHR handle;
   arena swapchain_arena;

@@ -34,6 +34,11 @@ typedef struct vulkan_context {
   arena temp_arena;
   gpu_device* device;
   gpu_swapchain* swapchain;
+  u32 framebuffer_count;
+  VkFramebuffer*
+      swapchain_framebuffers;  // TODO: Move this data into the swapchain as its own struct
+
+  gpu_cmd_encoder main_cmd_buf;
 
   u32 screen_width;
   u32 screen_height;
@@ -171,9 +176,11 @@ bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
 }
 
 void gpu_backend_shutdown() {
-  arena_free_storage(&context.temp_arena);
+  gpu_swapchain_destroy(context.swapchain);
+
   vkDestroySurfaceKHR(context.instance, context.surface, context.allocator);
   vkDestroyInstance(context.instance, context.allocator);
+  arena_free_storage(&context.temp_arena);
 }
 
 bool gpu_device_create(gpu_device* out_device) {
@@ -191,6 +198,12 @@ bool gpu_device_create(gpu_device* out_device) {
   create_logical_device(out_device);
 
   // Create the command pool
+  VkCommandPoolCreateInfo pool_create_info = { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
+  pool_create_info.queueFamilyIndex = out_device->queue_family_indicies.graphics_family_index;
+  pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  vkCreateCommandPool(out_device->logical_device, &pool_create_info, context.allocator,
+                      &out_device->pool);
+  TRACE("Command Pool created");
 
   arena_rewind(savept);  // Free any temp data
   return true;
@@ -268,6 +281,10 @@ bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {
 }
 
 void gpu_swapchain_destroy(gpu_swapchain* swapchain) {
+  for (u32 i = 0; i < swapchain->image_count; i++) {
+    vkDestroyImageView(context.device->logical_device, swapchain->image_views[i],
+                       context.allocator);
+  }
   arena_free_storage(&swapchain->swapchain_arena);
   vkDestroySwapchainKHR(context.device->logical_device, swapchain->handle, context.allocator);
 }
@@ -437,7 +454,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
 
   pipeline_create_info.layout = layout->handle;
 
-  // pipeline_create_info.renderPass = renderpass->handle;
+  pipeline_create_info.renderPass = description.renderpass->handle;
   pipeline_create_info.subpass = 0;
   pipeline_create_info.basePipelineHandle = VK_NULL_HANDLE;
   pipeline_create_info.basePipelineIndex = -1;
@@ -454,6 +471,31 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   vkDestroyShaderModule(context.device->logical_device, vertex_shader, context.allocator);
   vkDestroyShaderModule(context.device->logical_device, fragment_shader, context.allocator);
 
+  // Framebuffers
+  u32 image_count = context.swapchain->image_count;
+  context.swapchain_framebuffers =
+      arena_alloc(&context.swapchain->swapchain_arena, image_count * sizeof(VkFramebuffer));
+  for (u32 i = 0; i < image_count; i++) {
+    VkImageView attachments[1] = { context.swapchain->image_views[i] };
+
+    VkFramebufferCreateInfo framebuffer_create_info = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+    framebuffer_create_info.attachmentCount = 1;
+    framebuffer_create_info.pAttachments = attachments;
+
+    framebuffer_create_info.renderPass = description.renderpass->handle;
+    framebuffer_create_info.width = context.swapchain->extent.width;
+    framebuffer_create_info.height = context.swapchain->extent.height;
+    framebuffer_create_info.layers = 1;
+
+    vkCreateFramebuffer(context.device->logical_device, &framebuffer_create_info, context.allocator,
+                        &context.swapchain_framebuffers[i]);
+  }
+  TRACE("Swapchain Framebuffers created");
+
+  context.main_cmd_buf = gpu_cmd_encoder_create();
+  TRACE("main Command Buffer created");
+
+  TRACE("Graphics pipeline created");
   return pipeline;
 }
 
@@ -463,7 +505,7 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
 
   // Colour attachment
   VkAttachmentDescription color_attachment;
-  // color_attachment.format = context->swapchain.image_format.format;
+  color_attachment.format = context.swapchain->image_format.format;
   color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
   color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -491,9 +533,30 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
   subpass.pColorAttachments = &color_attachment_reference;
 
   // sets everything up
+  // renderpass dependencies
+  VkSubpassDependency dependency;
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstAccessMask =
+      VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dependency.dependencyFlags = 0;
 
   // Finally, create the RenderPass
   VkRenderPassCreateInfo render_pass_create_info = { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
+  render_pass_create_info.attachmentCount = 1;
+  render_pass_create_info.pAttachments = &color_attachment;
+  render_pass_create_info.subpassCount = 1;
+  render_pass_create_info.pSubpasses = &subpass;
+  render_pass_create_info.dependencyCount = 1;
+  render_pass_create_info.pDependencies = &dependency;
+  render_pass_create_info.flags = 0;
+  render_pass_create_info.pNext = 0;
+
+  VK_CHECK(vkCreateRenderPass(context.device->logical_device, &render_pass_create_info,
+                              context.allocator, &renderpass->handle));
 
   return renderpass;
 }
@@ -506,6 +569,29 @@ void encode_set_pipeline(gpu_cmd_encoder* encoder, gpu_pipeline* pipeline) {
   //   // ...
   // }
 }
+
+gpu_cmd_encoder gpu_cmd_encoder_create() {
+  // gpu_cmd_encoder* encoder = malloc(sizeof(gpu_cmd_encoder)); // TODO: fix leaking mem
+  gpu_cmd_encoder encoder = { 0 };
+
+  VkCommandBufferAllocateInfo allocate_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+  allocate_info.commandPool = context.device->pool;
+  allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocate_info.commandBufferCount = 1;
+  allocate_info.pNext = NULL;
+
+  VK_CHECK(vkAllocateCommandBuffers(context.device->logical_device, &allocate_info,
+                                    &encoder.cmd_buffer););
+
+  return encoder;
+}
+
+void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) {
+  VkCommandBufferBeginInfo begin_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+  VK_CHECK(vkBeginCommandBuffer(encoder.cmd_buffer, &begin_info));
+}
+
+void gpu_cmd_encoder_begin_render(gpu_renderpass* renderpass) {}
 
 // --- Drawing
 inline void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count) {

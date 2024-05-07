@@ -80,8 +80,9 @@ void gpu_pipeline_destroy(gpu_pipeline* pipeline);
 bool gpu_swapchain_create(gpu_swapchain* out_swapchain);
 void gpu_swapchain_destroy(gpu_swapchain* swapchain);
 
-void gpu_cmd_encoder_begin();
-void gpu_cmd_encoder_begin_render();
+gpu_cmd_encoder gpu_cmd_encoder_create();
+void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder);
+void gpu_cmd_encoder_begin_render(gpu_renderpass* renderpass);
 void gpu_cmd_encoder_begin_compute();
 
 /* Actual commands that we can encode */
