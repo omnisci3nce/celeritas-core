@@ -12,16 +12,12 @@
 #include "maths_types.h"
 #include "ral.h"
 #include "render.h"
+#include "render_types.h"
 
 // Shadowmap pass
 // Blinn-phong pass
 // Unlit pass
 // Debug visualisations pass
-
-typedef struct render_entity {
-  model* model;
-  transform tf;
-} render_entity;
 
 // Don't need to pass in *anything*.
 gpu_renderpass* renderpass_blinn_phong_create();

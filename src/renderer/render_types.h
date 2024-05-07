@@ -113,3 +113,13 @@ KITC_DECL_TYPED_ARRAY(material)
 KITC_DECL_TYPED_ARRAY(animation_clip)
 #define TYPED_ANIMATION_CLIP_ARRAY
 #endif
+
+/** @brief Describes all the data required for the renderer to start executing draws */
+typedef struct render_entity {
+  buffer_handle index_buffer;
+  u32 index_count;
+  u32 index_offset;
+  buffer_handle vertex_buffer;
+  material* material;
+  transform tf;
+} render_entity;
