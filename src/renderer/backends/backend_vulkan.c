@@ -39,6 +39,10 @@ typedef struct vulkan_context {
       swapchain_framebuffers;  // TODO: Move this data into the swapchain as its own struct
 
   gpu_cmd_encoder main_cmd_buf;
+  u32 current_img_index;
+  VkSemaphore image_available_semaphore;
+  VkSemaphore render_finished_semaphore;
+  VkFence in_flight_fence;
 
   u32 screen_width;
   u32 screen_height;
@@ -59,6 +63,8 @@ queue_family_indices find_queue_families(VkPhysicalDevice device);
 
 bool create_logical_device(gpu_device* out_device);
 
+void create_sync_objects();
+
 VkShaderModule create_shader_module(str8 spirv);
 
 /** @brief Helper function for creating array of all extensions we want */
@@ -68,6 +74,7 @@ bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
   context.allocator = 0;  // TODO: use an allocator
   context.screen_width = SCREEN_WIDTH;
   context.screen_height = SCREEN_HEIGHT;
+  context.current_img_index = 0;
 
   // Create an allocator
   size_t temp_arena_size = 1024 * 1024;
@@ -204,6 +211,10 @@ bool gpu_device_create(gpu_device* out_device) {
   vkCreateCommandPool(out_device->logical_device, &pool_create_info, context.allocator,
                       &out_device->pool);
   TRACE("Command Pool created");
+
+  // Synchronisation objects
+  create_sync_objects();
+  TRACE("Synchronisation primitives created");
 
   arena_rewind(savept);  // Free any temp data
   return true;
@@ -487,8 +498,8 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
     framebuffer_create_info.height = context.swapchain->extent.height;
     framebuffer_create_info.layers = 1;
 
-    vkCreateFramebuffer(context.device->logical_device, &framebuffer_create_info, context.allocator,
-                        &context.swapchain_framebuffers[i]);
+    VK_CHECK(vkCreateFramebuffer(context.device->logical_device, &framebuffer_create_info,
+                                 context.allocator, &context.swapchain_framebuffers[i]));
   }
   TRACE("Swapchain Framebuffers created");
 
@@ -498,6 +509,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   TRACE("Graphics pipeline created");
   return pipeline;
 }
+gpu_cmd_encoder* gpu_get_default_cmd_encoder() { return &context.main_cmd_buf; }
 
 gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
   // TEMP: allocate with malloc. in the future we will have a pool allocator on the context
@@ -591,9 +603,116 @@ void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) {
   VK_CHECK(vkBeginCommandBuffer(encoder.cmd_buffer, &begin_info));
 }
 
-void gpu_cmd_encoder_begin_render(gpu_renderpass* renderpass) {}
+void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass) {
+  VkRenderPassBeginInfo begin_info = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+  begin_info.renderPass = renderpass->handle;
+  begin_info.framebuffer = context.swapchain_framebuffers[context.current_img_index];
+  begin_info.renderArea.offset = (VkOffset2D){ 0, 0 };
+  begin_info.renderArea.extent = context.swapchain->extent;
+
+  // VkClearValue clear_values[2];
+  VkClearValue clear_color = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
+  // clear_values[1].depthStencil.depth = renderpass->depth;
+  // clear_values[1].depthStencil.stencil = renderpass->stencil;
+
+  begin_info.clearValueCount = 1;
+  begin_info.pClearValues = &clear_color;
+
+  vkCmdBeginRenderPass(encoder->cmd_buffer, &begin_info, VK_SUBPASS_CONTENTS_INLINE);
+  // command_buffer->state = COMMAND_BUFFER_STATE_IN_RENDER_PASS;
+}
+
+void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder) {
+  vkCmdEndRenderPass(encoder->cmd_buffer);
+}
+
+gpu_cmd_buffer gpu_cmd_encoder_finish(gpu_cmd_encoder* encoder) {
+  vkEndCommandBuffer(encoder->cmd_buffer);
+  // TEMP: submit
+  return (gpu_cmd_buffer){ .cmd_buffer = encoder->cmd_buffer };
+}
+
+// --- Binding
+void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipeline* pipeline) {
+  vkCmdBindPipeline(encoder->cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->handle);
+}
+
+// TEMP
+void encode_set_default_settings(gpu_cmd_encoder* encoder) {
+  VkViewport viewport = { 0 };
+  viewport.x = 0.0f;
+  viewport.y = 0.0f;
+  viewport.width = context.swapchain->extent.width;
+  viewport.height = context.swapchain->extent.height;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+  vkCmdSetViewport(encoder->cmd_buffer, 0, 1, &viewport);
+
+  VkRect2D scissor = { 0 };
+  scissor.offset = (VkOffset2D){ 0, 0 };
+  scissor.extent = context.swapchain->extent;
+  vkCmdSetScissor(encoder->cmd_buffer, 0, 1, &scissor);
+}
 
 // --- Drawing
+
+void gpu_backend_begin_frame() {
+  TRACE("gpu_backend_begin_frame");
+  vkWaitForFences(context.device->logical_device, 1, &context.in_flight_fence, VK_TRUE, UINT64_MAX);
+  vkResetFences(context.device->logical_device, 1, &context.in_flight_fence);
+
+  u32 image_index;
+  vkAcquireNextImageKHR(context.device->logical_device, context.swapchain->handle, UINT64_MAX,
+                        context.image_available_semaphore, VK_NULL_HANDLE, &image_index);
+  context.current_img_index = image_index;
+  DEBUG("Current image_index = %d", image_index);
+  vkResetCommandBuffer(context.main_cmd_buf.cmd_buffer, 0);
+}
+
+void gpu_temp_draw() {
+  gpu_cmd_encoder* encoder = &context.main_cmd_buf;
+
+  vkCmdDraw(encoder->cmd_buffer, 3, 1, 0, 0);
+}
+
+void gpu_backend_end_frame() {
+  VkPresentInfoKHR present_info = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
+  present_info.waitSemaphoreCount = 1;
+  present_info.pWaitSemaphores = &context.render_finished_semaphore;
+
+  VkSwapchainKHR swapchains[] = { context.swapchain->handle };
+  present_info.swapchainCount = 1;
+  present_info.pSwapchains = swapchains;
+  present_info.pImageIndices = &context.current_img_index;
+
+  vkQueuePresentKHR(context.device->present_queue, &present_info);
+  vkDeviceWaitIdle(context.device->logical_device);
+}
+
+// TODO: Move into better order in file
+void gpu_queue_submit(gpu_cmd_buffer* buffer) {
+  VkSubmitInfo submit_info = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+
+  // Specify semaphore to wait on
+  VkSemaphore wait_semaphores[] = { context.image_available_semaphore };
+  VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+  submit_info.waitSemaphoreCount = 1;
+  submit_info.pWaitSemaphores = wait_semaphores;
+  submit_info.pWaitDstStageMask = wait_stages;
+
+  // Specify semaphore to signal when finished executing buffer
+  VkSemaphore signal_semaphores[] = { context.render_finished_semaphore };
+  submit_info.signalSemaphoreCount = 1;
+  submit_info.pSignalSemaphores = signal_semaphores;
+
+  submit_info.commandBufferCount = 1;
+  submit_info.pCommandBuffers = &buffer->cmd_buffer;
+
+  VK_CHECK(
+      vkQueueSubmit(context.device->graphics_queue, 1, &submit_info, context.in_flight_fence););
+}
+
 inline void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count) {
   vkCmdDrawIndexed(encoder->cmd_buffer, index_count, 1, 0, 0, 0);
 }
@@ -753,4 +872,17 @@ VkShaderModule create_shader_module(str8 spirv) {
                                 &shader_module));
 
   return shader_module;
+}
+
+void create_sync_objects() {
+  VkSemaphoreCreateInfo semaphore_info = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+  VK_CHECK(vkCreateSemaphore(context.device->logical_device, &semaphore_info, context.allocator,
+                             &context.image_available_semaphore););
+  VK_CHECK(vkCreateSemaphore(context.device->logical_device, &semaphore_info, context.allocator,
+                             &context.render_finished_semaphore););
+
+  VkFenceCreateInfo fence_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+  fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+  VK_CHECK(vkCreateFence(context.device->logical_device, &fence_info, context.allocator,
+                         &context.in_flight_fence));
 }

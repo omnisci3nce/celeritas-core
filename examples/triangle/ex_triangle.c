@@ -52,7 +52,24 @@ int main() {
     static f64 x = 0.0;
     x += 0.01;
 
-    // insert work here
+    gpu_backend_begin_frame();
+    gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
+    // begin recording
+    gpu_cmd_encoder_begin(*enc);
+    gpu_cmd_encoder_begin_render(enc, renderpass);
+    encode_bind_pipeline(enc, PIPELINE_GRAPHICS, gfx_pipeline);
+    encode_set_default_settings(enc);
+
+    // Record draw calls
+    gpu_temp_draw();
+
+    // End recording
+    gpu_cmd_encoder_end_render(enc);
+
+    gpu_cmd_buffer buf = gpu_cmd_encoder_finish(enc);
+    gpu_queue_submit(&buf);
+    // Submit
+    gpu_backend_end_frame();
 
     render_frame_end(&core->renderer);
     glfwSwapBuffers(core->renderer.window);

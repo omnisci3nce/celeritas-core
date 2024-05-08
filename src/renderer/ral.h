@@ -68,6 +68,10 @@ typedef struct gpu_renderpass_desc {
 bool gpu_backend_init(const char* window_name, struct GLFWwindow* window);
 void gpu_backend_shutdown();
 
+// TEMP
+void gpu_backend_begin_frame();
+void gpu_backend_end_frame();
+
 bool gpu_device_create(gpu_device* out_device);
 void gpu_device_destroy();
 
@@ -82,8 +86,10 @@ void gpu_swapchain_destroy(gpu_swapchain* swapchain);
 
 gpu_cmd_encoder gpu_cmd_encoder_create();
 void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder);
-void gpu_cmd_encoder_begin_render(gpu_renderpass* renderpass);
+void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass);
+void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder);
 void gpu_cmd_encoder_begin_compute();
+gpu_cmd_encoder* gpu_get_default_cmd_encoder();
 
 /* Actual commands that we can encode */
 void encode_buffer_copy(gpu_cmd_encoder* encoder, buffer_handle src, u64 src_offset,
@@ -96,6 +102,7 @@ void buffer_upload_bytes(buffer_handle gpu_buf, bytebuffer cpu_buf, u64 offset, 
 
 // render pass
 void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipeline* pipeline);
+void encode_set_default_settings(gpu_cmd_encoder* encoder);
 void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 void encode_set_bind_group();  // TODO
@@ -127,3 +134,7 @@ void gpu_sampler_create();
 bytebuffer vertices_as_bytebuffer(arena* a, vertex_format format, vertex_darray* vertices);
 
 // TODO: Bindgroup texture samplers / shader resources
+
+// TEMP
+
+void gpu_temp_draw();

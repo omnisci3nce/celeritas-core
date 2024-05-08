@@ -66,9 +66,13 @@ typedef struct gpu_pipeline {
 
 typedef struct gpu_renderpass {
   VkRenderPass handle;
-  VkFramebuffer framebuffers[GPU_SWAPCHAIN_IMG_COUNT];
+  // TODO: Where to store framebuffers? VkFramebuffer framebuffers[GPU_SWAPCHAIN_IMG_COUNT];
 } gpu_renderpass;
 
 typedef struct gpu_cmd_encoder {
   VkCommandBuffer cmd_buffer;
 } gpu_cmd_encoder;
+
+typedef struct gpu_cmd_buffer {
+  VkCommandBuffer cmd_buffer;
+} gpu_cmd_buffer;
