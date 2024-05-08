@@ -261,15 +261,16 @@ bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {
   TRACE("Vulkan Swapchain created");
 
   // Retrieve Images
-  out_swapchain->images =
-      arena_alloc(&out_swapchain->swapchain_arena, image_count * sizeof(VkImage));
+  // out_swapchain->images =
+  //     arena_alloc(&out_swapchain->swapchain_arena, image_count * sizeof(VkImage));
+  out_swapchain->images = malloc(image_count * sizeof(VkImage));
   VK_CHECK(vkGetSwapchainImagesKHR(context.device->logical_device, out_swapchain->handle,
                                    &image_count, out_swapchain->images));
 
   // Create ImageViews
   // TODO: Move this to a separate function
-  out_swapchain->image_views =
-      arena_alloc(&out_swapchain->swapchain_arena, image_count * sizeof(VkImageView));
+  out_swapchain->image_views = malloc(image_count * sizeof(VkImageView));
+  // arena_alloc(&out_swapchain->swapchain_arena, image_count * sizeof(VkImageView));
   for (u32 i = 0; i < image_count; i++) {
     VkImageViewCreateInfo view_create_info = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
     view_create_info.image = out_swapchain->images[i];
@@ -306,6 +307,8 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   gpu_pipeline* pipeline = malloc(sizeof(gpu_pipeline));
 
   // Shaders
+  printf("Vertex shader: %s\n", description.vs.filepath.buf);
+  printf("Fragment shader: %s\n", description.fs.filepath.buf);
   VkShaderModule vertex_shader = create_shader_module(description.vs.code);
   VkShaderModule fragment_shader = create_shader_module(description.fs.code);
 
@@ -358,9 +361,9 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
     VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO
   };
   viewport_state.viewportCount = 1;
-  viewport_state.pViewports = &viewport;
+  // viewport_state.pViewports = &viewport;
   viewport_state.scissorCount = 1;
-  viewport_state.pScissors = &scissor;
+  // viewport_state.pScissors = &scissor;
 
   // Rasterizer
   VkPipelineRasterizationStateCreateInfo rasterizer_create_info = {
@@ -402,13 +405,13 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
 
   // Blending
   VkPipelineColorBlendAttachmentState color_blend_attachment_state;
-  color_blend_attachment_state.blendEnable = VK_TRUE;
-  color_blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-  color_blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-  color_blend_attachment_state.colorBlendOp = VK_BLEND_OP_ADD;
-  color_blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-  color_blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-  color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
+  color_blend_attachment_state.blendEnable = VK_FALSE;
+  // color_blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+  // color_blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+  // color_blend_attachment_state.colorBlendOp = VK_BLEND_OP_ADD;
+  // color_blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+  // color_blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+  // color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
   color_blend_attachment_state.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
                                                 VK_COLOR_COMPONENT_G_BIT |
                                                 VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -606,12 +609,13 @@ void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) {
 void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass) {
   VkRenderPassBeginInfo begin_info = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
   begin_info.renderPass = renderpass->handle;
+  printf("Current img: %d\n", context.current_img_index);
   begin_info.framebuffer = context.swapchain_framebuffers[context.current_img_index];
   begin_info.renderArea.offset = (VkOffset2D){ 0, 0 };
   begin_info.renderArea.extent = context.swapchain->extent;
 
   // VkClearValue clear_values[2];
-  VkClearValue clear_color = { { { 0.0f, 0.0f, 0.0f, 1.0f } } };
+  VkClearValue clear_color = { { { 0.2f, 0.2f, 0.2f, 1.0f } } };
   // clear_values[1].depthStencil.depth = renderpass->depth;
   // clear_values[1].depthStencil.stencil = renderpass->stencil;
 
@@ -657,21 +661,22 @@ void encode_set_default_settings(gpu_cmd_encoder* encoder) {
 // --- Drawing
 
 void gpu_backend_begin_frame() {
-  TRACE("gpu_backend_begin_frame");
+  // TRACE("gpu_backend_begin_frame");
   vkWaitForFences(context.device->logical_device, 1, &context.in_flight_fence, VK_TRUE, UINT64_MAX);
   vkResetFences(context.device->logical_device, 1, &context.in_flight_fence);
 
   u32 image_index;
-  vkAcquireNextImageKHR(context.device->logical_device, context.swapchain->handle, UINT64_MAX,
-                        context.image_available_semaphore, VK_NULL_HANDLE, &image_index);
+  VK_CHECK(vkAcquireNextImageKHR(context.device->logical_device, context.swapchain->handle,
+                                 UINT64_MAX, context.image_available_semaphore, VK_NULL_HANDLE,
+                                 &image_index));
   context.current_img_index = image_index;
-  DEBUG("Current image_index = %d", image_index);
-  vkResetCommandBuffer(context.main_cmd_buf.cmd_buffer, 0);
+  printf("Current img: %d\n", context.current_img_index);
+  VK_CHECK(vkResetCommandBuffer(context.main_cmd_buf.cmd_buffer, 0));
 }
 
 void gpu_temp_draw() {
   gpu_cmd_encoder* encoder = &context.main_cmd_buf;
-
+  TRACE("Draw call");
   vkCmdDraw(encoder->cmd_buffer, 3, 1, 0, 0);
 }
 
@@ -709,8 +714,7 @@ void gpu_queue_submit(gpu_cmd_buffer* buffer) {
   submit_info.commandBufferCount = 1;
   submit_info.pCommandBuffers = &buffer->cmd_buffer;
 
-  VK_CHECK(
-      vkQueueSubmit(context.device->graphics_queue, 1, &submit_info, context.in_flight_fence););
+  VK_CHECK(vkQueueSubmit(context.device->graphics_queue, 1, &submit_info, context.in_flight_fence));
 }
 
 inline void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count) {

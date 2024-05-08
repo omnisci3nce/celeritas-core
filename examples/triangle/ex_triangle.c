@@ -45,6 +45,7 @@ int main() {
 
   // Main loop
   while (!should_exit(core)) {
+    glfwPollEvents();
     input_update(&core->input);
 
     render_frame_begin(&core->renderer);
@@ -72,8 +73,7 @@ int main() {
     gpu_backend_end_frame();
 
     render_frame_end(&core->renderer);
-    glfwSwapBuffers(core->renderer.window);
-    glfwPollEvents();
+    // glfwSwapBuffers(core->renderer.window);
   }
 
   gpu_backend_shutdown();
