@@ -1,11 +1,12 @@
 #include <stdlib.h>
+#include "camera.h"
 #define CEL_PLATFORM_LINUX
 
 #include "defines.h"
 #include "file.h"
 #include "log.h"
 #include "maths_types.h"
-#include "render_types.h"
+#include "ral.h"
 
 #if CEL_REND_BACKEND_OPENGL
 
@@ -36,10 +37,13 @@ bool gfx_backend_init(renderer *ren) {
   glEnable(GL_DEPTH_TEST);
 
   opengl_state *internal = malloc(sizeof(opengl_state));
-  ren->backend_state = (void *)internal;
+  ren->backend_context = (void *)internal;
 
   return true;
 }
+
+void gfx_backend_draw_frame(renderer *ren, camera *cam, mat4 model, texture *tex) {}
+
 void gfx_backend_shutdown(renderer *ren) {}
 
 void uniform_vec3f(u32 program_id, const char *uniform_name, vec3 *value) {
@@ -58,6 +62,29 @@ void uniform_mat4f(u32 program_id, const char *uniform_name, mat4 *value) {
 void clear_screen(vec3 colour) {
   glClearColor(colour.x, colour.y, colour.z, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void texture_data_upload(texture *tex) {
+  printf("Texture name %s\n", tex->name);
+  TRACE("Upload texture data");
+  u32 texture_id;
+  glGenTextures(1, &texture_id);
+  glBindTexture(GL_TEXTURE_2D, texture_id);
+  tex->texture_id = texture_id;
+
+  // set the texture wrapping parameters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                  GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  // set texture filtering parameters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex->width, tex->height, 0, tex->channel_type,
+               GL_UNSIGNED_BYTE, tex->image_data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  DEBUG("Freeing texture image data after uploading to GPU");
+  // stbi_image_free(tex->image_data);  // data is on gpu now so we dont need it around
 }
 
 void bind_texture(shader s, texture *tex, u32 slot) {

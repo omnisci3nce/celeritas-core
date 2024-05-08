@@ -25,7 +25,7 @@ struct draw_circle {
 
 /** @brief Tagged union that represents a UI shape to be drawn. */
 typedef struct draw_cmd {
-  enum { RECT, CIRCLE } draw_cmd_type;
+  enum { DRAW_RECT, CIRCLE } draw_cmd_type;
   union {
     struct draw_rect rect;
     struct draw_circle circle;
@@ -37,7 +37,7 @@ KITC_DECL_TYPED_ARRAY(draw_cmd)
 typedef struct screenspace_state {
   u32 rect_vbo;
   u32 rect_vao;
-  shader rect_shader;
+  // shader rect_shader;
   draw_cmd_darray* draw_cmd_buf;
 } screenspace_state;
 

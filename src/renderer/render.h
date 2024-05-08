@@ -1,36 +1,46 @@
+/**
+ * @file render.h
+ * @author your name (you@domain.com)
+ * @brief Renderer frontend
+ * @version 0.1
+ * @date 2024-03-21
+ *
+ * @copyright Copyright (c) 2024
+ *
+ */
 #pragma once
 
-#include "camera.h"
-#include "loaders.h"
+#include "ral_types.h"
 #include "render_types.h"
 
-// --- Lifecycle
-/** @brief initialise the render system frontend */
 bool renderer_init(renderer* ren);
-/** @brief shutdown the render system frontend */
 void renderer_shutdown(renderer* ren);
 
-// --- Frame
-
 void render_frame_begin(renderer* ren);
+void render_frame_update_globals(renderer* ren);
 void render_frame_end(renderer* ren);
+void render_frame_draw(renderer* ren);
 
-// --- models meshes
-void model_upload_meshes(renderer* ren, model* model);
-void draw_model(renderer* ren, camera* camera, model* model, transform tf, scene* scene);
-void draw_mesh(renderer* ren, mesh* mesh, transform tf, material* mat, mat4* view, mat4* proj);
+// ! TEMP
+typedef struct camera camera;
+void gfx_backend_draw_frame(renderer* ren, camera* camera, mat4 model, texture* tex);
 
-// ---
-texture texture_data_load(const char* path, bool invert_y);  // #frontend
-void texture_data_upload(texture* tex);                      // #backend
+// frontend -- these can be called from say a loop in an example, or via FFI
+texture_handle texture_create(const char* debug_name, texture_desc description, const u8* data);
 
-// --- Uniforms
+// Frontend Resources
+// TODO: void texture_data_upload(texture_handle texture);
+void texture_data_upload(texture* tex);
+texture texture_data_load(const char* path, bool invert_y);
+buffer_handle buffer_create(const char* debug_name, u64 size);
+bool buffer_destroy(buffer_handle buffer);
+sampler_handle sampler_create();
 
-/** @brief upload a vec3 of f32 to a uniform */
-void uniform_vec3f(u32 program_id, const char* uniform_name, vec3* value);
-/** @brief upload a single f32 to a uniform */
-void uniform_f32(u32 program_id, const char* uniform_name, f32 value);
-/** @brief upload a integer to a uniform */
-void uniform_i32(u32 program_id, const char* uniform_name, i32 value);
-/** @brief upload a mat4 of f32 to a uniform */
-void uniform_mat4f(u32 program_id, const char* uniform_name, mat4* value);
+void shader_hot_reload(const char* filepath);
+
+// models and meshes are implemented **in terms of the above**
+mesh mesh_create(geometry_data* geometry);
+
+model_handle model_load(const char* debug_name, const char* filepath);
+
+void geo_set_vertex_colours(geometry_data* geo, vec4 colour);

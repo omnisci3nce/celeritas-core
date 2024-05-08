@@ -15,6 +15,7 @@ out VS_OUT {
   vec3 Normal;
   vec2 TexCoords;
   vec4 FragPosLightSpace;
+  vec4 Color;
 } vs_out;
 
 void main() {
@@ -22,5 +23,6 @@ void main() {
   vs_out.Normal = inNormal;
   vs_out.TexCoords = inTexCoords;
   vs_out.FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
+  vs_out.Color = vec4(1.0);
   gl_Position =  projection * view * model * vec4(inPos, 1.0);
 }

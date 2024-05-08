@@ -13,4 +13,4 @@ typedef struct path_opt {
   bool has_value;
 } path_opt;
 
-path_opt path_parent(const char* path);  // TODO: convert to using str8
+path_opt path_parent(arena* a, const char* path);  // TODO: convert to using str8

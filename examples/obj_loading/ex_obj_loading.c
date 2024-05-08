@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <glfw3.h>
 #include <string.h>
 
@@ -25,6 +26,7 @@ int main() {
   model_handle backpack_handle =
       model_load_obj(core, "assets/models/obj/backpack/backpack.obj", true);
   model* backpack = &core->models->data[backpack_handle.raw];
+  assert(backpack->meshes->data->is_skinned == false);
   // 2. upload vertex data to gpu
   model_upload_meshes(&core->renderer, backpack);
   // 3. create a camera
@@ -53,16 +55,17 @@ int main() {
   memcpy(&our_scene.point_lights, &point_lights, sizeof(point_light[4]));
 
   // --- Enter Main loop
-  while (!glfwWindowShouldClose(core->renderer.window)) {
+  while (!should_exit(core)) {
     input_update(&core->input);
     threadpool_process_results(&core->threadpool, 1);
 
     render_frame_begin(&core->renderer);
 
     // Draw the backpack
-    transform model_tf =
-        transform_create(vec3(0.0, -0.4, 0.0), quat_ident(), 1.8);  // make the backpack a bit bigger
-    draw_model(&core->renderer, &cam, backpack, model_tf, &our_scene);
+    transform model_tf = transform_create(vec3(0.0, -0.4, 0.0), quat_ident(),
+                                          1.8);  // make the backpack a bit bigger
+    mat4 model_matrix = transform_to_mat(&model_tf);
+    draw_model(&core->renderer, &cam, backpack, &model_matrix, &our_scene);
 
     render_frame_end(&core->renderer);
   }

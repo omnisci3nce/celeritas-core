@@ -61,3 +61,42 @@ typedef struct transform {
   f32 scale;
   bool is_dirty;
 } transform;
+
+typedef struct vec4i {
+  i32 x, y, z, w;
+} vec4i;
+
+typedef struct vec4u {
+  u32 x, y, z, w;
+} vec4u;
+
+// --- Some other types
+typedef struct u32x3 {
+  union {
+    struct {
+      u32 x;
+      u32 y;
+      u32 z;
+    };
+    struct {
+      u32 r;
+      u32 g;
+      u32 b;
+    };
+  };
+} u32x3;
+#define u32x3(x, y, z) ((u32x3){ x, y, z })
+
+typedef struct u32x2 {
+  u32 x;
+  u32 y;
+} u32x2;
+#define u32x2(x, y) ((u32x3){ x, y })
+
+// Type aliass
+
+typedef struct vec2 f32x2;
+#define f32x2(x, y) ((f32x2){ x, y })
+
+typedef struct vec3 f32x3;
+#define f32x3(x, y, z) ((f32x3){ x, y, z })
