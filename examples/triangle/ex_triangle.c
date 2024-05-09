@@ -53,7 +53,9 @@ int main() {
     static f64 x = 0.0;
     x += 0.01;
 
-    gpu_backend_begin_frame();
+    if (!gpu_backend_begin_frame()) {
+      continue;
+    }
     gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
     // begin recording
     gpu_cmd_encoder_begin(*enc);

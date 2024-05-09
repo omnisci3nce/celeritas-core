@@ -51,6 +51,8 @@ typedef struct vulkan_context {
 
   u32 screen_width;
   u32 screen_height;
+  bool is_resizing;
+  GLFWwindow* window;
 
   VkDebugUtilsMessengerEXT vk_debugger;
 } vulkan_context;
@@ -80,6 +82,7 @@ bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
   context.allocator = 0;  // TODO: use an allocator
   context.screen_width = SCREEN_WIDTH;
   context.screen_height = SCREEN_HEIGHT;
+  context.window = window;
   context.current_img_index = 0;
   context.current_frame = 0;
 
@@ -304,7 +307,9 @@ bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {
 
 void gpu_swapchain_destroy(gpu_swapchain* swapchain) {
   // Destroy Framebuffers
+  DEBUG("Image count %d", swapchain->image_count);
   for (u32 i = 0; i < swapchain->image_count; i++) {
+    DEBUG("Framebuffer handle %d", context.swapchain_framebuffers[i]);
     vkDestroyFramebuffer(context.device->logical_device, context.swapchain_framebuffers[i],
                          context.allocator);
   }
@@ -312,11 +317,18 @@ void gpu_swapchain_destroy(gpu_swapchain* swapchain) {
     vkDestroyImageView(context.device->logical_device, swapchain->image_views[i],
                        context.allocator);
   }
-  arena_free_storage(&swapchain->swapchain_arena);
+  arena_free_all(&swapchain->swapchain_arena);
   vkDestroySwapchainKHR(context.device->logical_device, swapchain->handle, context.allocator);
+  TRACE("Vulkan Swapchain destroyed");
 }
 
 static void recreate_swapchain(gpu_swapchain* swapchain) {
+  int width = 0, height = 0;
+  glfwGetFramebufferSize(context.window, &width, &height);
+  while (width == 0 || height == 0) {
+    glfwGetFramebufferSize(context.window, &width, &height);
+    glfwWaitEvents();
+  }
   DEBUG("Recreating swapchain...");
   vkDeviceWaitIdle(context.device->logical_device);
 
@@ -682,27 +694,30 @@ void encode_set_default_settings(gpu_cmd_encoder* encoder) {
 
 // --- Drawing
 
-void gpu_backend_begin_frame() {
+bool gpu_backend_begin_frame() {
   u32 current_frame = context.current_frame;
-  // TRACE("gpu_backend_begin_frame");
   vkWaitForFences(context.device->logical_device, 1, &context.in_flight_fences[current_frame],
                   VK_TRUE, UINT64_MAX);
-  vkResetFences(context.device->logical_device, 1, &context.in_flight_fences[current_frame]);
 
   u32 image_index;
   VkResult result = vkAcquireNextImageKHR(
       context.device->logical_device, context.swapchain->handle, UINT64_MAX,
       context.image_available_semaphores[current_frame], VK_NULL_HANDLE, &image_index);
-  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || context.is_resizing) {
+    ERROR("Acquire next image failure. recreate swapchain");
+    context.is_resizing = false;
     recreate_swapchain(context.swapchain);
-    return;
+    return false;
   } else if (result != VK_SUCCESS) {
     ERROR_EXIT("failed to acquire swapchain image");
   }
 
+  vkResetFences(context.device->logical_device, 1, &context.in_flight_fences[current_frame]);
+
   context.current_img_index = image_index;
   /* printf("Current img: %d\n", context.current_img_index); */
   VK_CHECK(vkResetCommandBuffer(context.main_cmd_bufs[current_frame].cmd_buffer, 0));
+  return true;
 }
 
 void gpu_temp_draw() {
@@ -722,6 +737,7 @@ void gpu_backend_end_frame() {
 
   VkResult result = vkQueuePresentKHR(context.device->present_queue, &present_info);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    ERROR("Queue present error. recreate swapchain");
     recreate_swapchain(context.swapchain);
     return;
   } else if (result != VK_SUCCESS) {
@@ -918,6 +934,7 @@ VkShaderModule create_shader_module(str8 spirv) {
 }
 
 void create_swapchain_framebuffers() {
+  WARN("Recreating framebuffers...");
   u32 image_count = context.swapchain->image_count;
   context.swapchain_framebuffers =
       arena_alloc(&context.swapchain->swapchain_arena, image_count * sizeof(VkFramebuffer));

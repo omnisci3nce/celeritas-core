@@ -57,8 +57,8 @@ core* core_bringup() {
 #include "input.h"
 #include "render.h"
 
-bool should_window_close(core *core) { glfwWindowShouldClose(core->renderer.window); }
-void core_input_update(core *core) { input_update(&core->input); }
+bool should_window_close(core* core) { glfwWindowShouldClose(core->renderer.window); }
+void core_input_update(core* core) { input_update(&core->input); }
 void core_frame_begin(core* core) { render_frame_begin(&core->renderer); }
 void core_frame_end(core* core) { render_frame_end(&core->renderer); }
 

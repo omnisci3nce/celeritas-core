@@ -69,7 +69,7 @@ bool gpu_backend_init(const char* window_name, struct GLFWwindow* window);
 void gpu_backend_shutdown();
 
 // TEMP
-void gpu_backend_begin_frame();
+bool gpu_backend_begin_frame();
 void gpu_backend_end_frame();
 
 bool gpu_device_create(gpu_device* out_device);
