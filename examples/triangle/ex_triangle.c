@@ -76,7 +76,7 @@ int main() {
     // glfwSwapBuffers(core->renderer.window);
   }
 
-  gpu_backend_shutdown();
+  renderer_shutdown(&core->renderer);
 
   return 0;
 }

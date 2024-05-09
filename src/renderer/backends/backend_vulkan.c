@@ -2,6 +2,7 @@
 #include <glfw3.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
@@ -21,7 +22,7 @@
 // TEMP
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 1000
-
+#define MAX_FRAMES_IN_FLIGHT 2
 #define VULKAN_QUEUES_COUNT 2
 const char* queue_names[VULKAN_QUEUES_COUNT] = { "GRAPHICS", "TRANSFER" };
 
@@ -38,11 +39,15 @@ typedef struct vulkan_context {
   VkFramebuffer*
       swapchain_framebuffers;  // TODO: Move this data into the swapchain as its own struct
 
-  gpu_cmd_encoder main_cmd_buf;
   u32 current_img_index;
-  VkSemaphore image_available_semaphore;
-  VkSemaphore render_finished_semaphore;
-  VkFence in_flight_fence;
+  u32 current_frame;  // super important
+  gpu_cmd_encoder main_cmd_bufs[MAX_FRAMES_IN_FLIGHT];
+  VkSemaphore image_available_semaphores[MAX_FRAMES_IN_FLIGHT];
+  VkSemaphore render_finished_semaphores[MAX_FRAMES_IN_FLIGHT];
+  VkFence in_flight_fences[MAX_FRAMES_IN_FLIGHT];
+
+  // HACK
+  VkRenderPass main_renderpass;
 
   u32 screen_width;
   u32 screen_height;
@@ -62,7 +67,7 @@ bool is_physical_device_suitable(VkPhysicalDevice device);
 queue_family_indices find_queue_families(VkPhysicalDevice device);
 
 bool create_logical_device(gpu_device* out_device);
-
+void create_swapchain_framebuffers();
 void create_sync_objects();
 
 VkShaderModule create_shader_module(str8 spirv);
@@ -71,10 +76,12 @@ VkShaderModule create_shader_module(str8 spirv);
 cstr_darray* get_all_extensions();
 
 bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
+  memset(&context, 0, sizeof(vulkan_context));
   context.allocator = 0;  // TODO: use an allocator
   context.screen_width = SCREEN_WIDTH;
   context.screen_height = SCREEN_HEIGHT;
   context.current_img_index = 0;
+  context.current_frame = 0;
 
   // Create an allocator
   size_t temp_arena_size = 1024 * 1024;
@@ -224,6 +231,9 @@ bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {
   context.swapchain = out_swapchain;
 
   out_swapchain->swapchain_arena = arena_create(malloc(1024), 1024);
+
+  vulkan_device_query_swapchain_support(context.device->physical_device, context.surface,
+                                        &context.swapchain_support);
   vulkan_swapchain_support_info swapchain_support = context.swapchain_support;
 
   // TODO: custom swapchain extents VkExtent2D swapchain_extent = { width, height };
@@ -293,12 +303,26 @@ bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {
 }
 
 void gpu_swapchain_destroy(gpu_swapchain* swapchain) {
+  // Destroy Framebuffers
+  for (u32 i = 0; i < swapchain->image_count; i++) {
+    vkDestroyFramebuffer(context.device->logical_device, context.swapchain_framebuffers[i],
+                         context.allocator);
+  }
   for (u32 i = 0; i < swapchain->image_count; i++) {
     vkDestroyImageView(context.device->logical_device, swapchain->image_views[i],
                        context.allocator);
   }
   arena_free_storage(&swapchain->swapchain_arena);
   vkDestroySwapchainKHR(context.device->logical_device, swapchain->handle, context.allocator);
+}
+
+static void recreate_swapchain(gpu_swapchain* swapchain) {
+  DEBUG("Recreating swapchain...");
+  vkDeviceWaitIdle(context.device->logical_device);
+
+  gpu_swapchain_destroy(swapchain);
+  gpu_swapchain_create(swapchain);
+  create_swapchain_framebuffers();
 }
 
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {
@@ -406,12 +430,12 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   // Blending
   VkPipelineColorBlendAttachmentState color_blend_attachment_state;
   color_blend_attachment_state.blendEnable = VK_FALSE;
-  // color_blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-  // color_blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-  // color_blend_attachment_state.colorBlendOp = VK_BLEND_OP_ADD;
-  // color_blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-  // color_blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-  // color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
+  color_blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+  color_blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+  color_blend_attachment_state.colorBlendOp = VK_BLEND_OP_ADD;
+  color_blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+  color_blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+  color_blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
   color_blend_attachment_state.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
                                                 VK_COLOR_COMPONENT_G_BIT |
                                                 VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -486,33 +510,27 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   vkDestroyShaderModule(context.device->logical_device, fragment_shader, context.allocator);
 
   // Framebuffers
-  u32 image_count = context.swapchain->image_count;
-  context.swapchain_framebuffers =
-      arena_alloc(&context.swapchain->swapchain_arena, image_count * sizeof(VkFramebuffer));
-  for (u32 i = 0; i < image_count; i++) {
-    VkImageView attachments[1] = { context.swapchain->image_views[i] };
-
-    VkFramebufferCreateInfo framebuffer_create_info = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-    framebuffer_create_info.attachmentCount = 1;
-    framebuffer_create_info.pAttachments = attachments;
-
-    framebuffer_create_info.renderPass = description.renderpass->handle;
-    framebuffer_create_info.width = context.swapchain->extent.width;
-    framebuffer_create_info.height = context.swapchain->extent.height;
-    framebuffer_create_info.layers = 1;
-
-    VK_CHECK(vkCreateFramebuffer(context.device->logical_device, &framebuffer_create_info,
-                                 context.allocator, &context.swapchain_framebuffers[i]));
-  }
+  create_swapchain_framebuffers();
   TRACE("Swapchain Framebuffers created");
 
-  context.main_cmd_buf = gpu_cmd_encoder_create();
+  for (u32 frame_i = 0; frame_i < MAX_FRAMES_IN_FLIGHT; frame_i++) {
+    context.main_cmd_bufs[frame_i] = gpu_cmd_encoder_create();
+  }
   TRACE("main Command Buffer created");
 
   TRACE("Graphics pipeline created");
   return pipeline;
 }
-gpu_cmd_encoder* gpu_get_default_cmd_encoder() { return &context.main_cmd_buf; }
+
+void gpu_pipeline_destroy(gpu_pipeline* pipeline) {
+  vkDestroyPipeline(context.device->logical_device, pipeline->handle, context.allocator);
+  vkDestroyPipelineLayout(context.device->logical_device, pipeline->layout_handle,
+                          context.allocator);
+}
+
+gpu_cmd_encoder* gpu_get_default_cmd_encoder() {
+  return &context.main_cmd_bufs[context.current_frame];
+}
 
 gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
   // TEMP: allocate with malloc. in the future we will have a pool allocator on the context
@@ -573,6 +591,9 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
   VK_CHECK(vkCreateRenderPass(context.device->logical_device, &render_pass_create_info,
                               context.allocator, &renderpass->handle));
 
+  // HACK
+  context.main_renderpass = renderpass->handle;
+
   return renderpass;
 }
 
@@ -609,13 +630,14 @@ void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) {
 void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass) {
   VkRenderPassBeginInfo begin_info = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
   begin_info.renderPass = renderpass->handle;
-  printf("Current img: %d\n", context.current_img_index);
+  /* printf("Current img: %d Current frame %d\n", context.current_img_index, context.current_frame);
+   */
   begin_info.framebuffer = context.swapchain_framebuffers[context.current_img_index];
   begin_info.renderArea.offset = (VkOffset2D){ 0, 0 };
   begin_info.renderArea.extent = context.swapchain->extent;
 
   // VkClearValue clear_values[2];
-  VkClearValue clear_color = { { { 0.2f, 0.2f, 0.2f, 1.0f } } };
+  VkClearValue clear_color = { { { 0.02f, 0.02f, 0.02f, 1.0f } } };
   // clear_values[1].depthStencil.depth = renderpass->depth;
   // clear_values[1].depthStencil.stencil = renderpass->stencil;
 
@@ -661,37 +683,53 @@ void encode_set_default_settings(gpu_cmd_encoder* encoder) {
 // --- Drawing
 
 void gpu_backend_begin_frame() {
+  u32 current_frame = context.current_frame;
   // TRACE("gpu_backend_begin_frame");
-  vkWaitForFences(context.device->logical_device, 1, &context.in_flight_fence, VK_TRUE, UINT64_MAX);
-  vkResetFences(context.device->logical_device, 1, &context.in_flight_fence);
+  vkWaitForFences(context.device->logical_device, 1, &context.in_flight_fences[current_frame],
+                  VK_TRUE, UINT64_MAX);
+  vkResetFences(context.device->logical_device, 1, &context.in_flight_fences[current_frame]);
 
   u32 image_index;
-  VK_CHECK(vkAcquireNextImageKHR(context.device->logical_device, context.swapchain->handle,
-                                 UINT64_MAX, context.image_available_semaphore, VK_NULL_HANDLE,
-                                 &image_index));
+  VkResult result = vkAcquireNextImageKHR(
+      context.device->logical_device, context.swapchain->handle, UINT64_MAX,
+      context.image_available_semaphores[current_frame], VK_NULL_HANDLE, &image_index);
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    recreate_swapchain(context.swapchain);
+    return;
+  } else if (result != VK_SUCCESS) {
+    ERROR_EXIT("failed to acquire swapchain image");
+  }
+
   context.current_img_index = image_index;
-  printf("Current img: %d\n", context.current_img_index);
-  VK_CHECK(vkResetCommandBuffer(context.main_cmd_buf.cmd_buffer, 0));
+  /* printf("Current img: %d\n", context.current_img_index); */
+  VK_CHECK(vkResetCommandBuffer(context.main_cmd_bufs[current_frame].cmd_buffer, 0));
 }
 
 void gpu_temp_draw() {
-  gpu_cmd_encoder* encoder = &context.main_cmd_buf;
-  TRACE("Draw call");
+  gpu_cmd_encoder* encoder = gpu_get_default_cmd_encoder();  // &context.main_cmd_buf;
   vkCmdDraw(encoder->cmd_buffer, 3, 1, 0, 0);
 }
 
 void gpu_backend_end_frame() {
   VkPresentInfoKHR present_info = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
   present_info.waitSemaphoreCount = 1;
-  present_info.pWaitSemaphores = &context.render_finished_semaphore;
+  present_info.pWaitSemaphores = &context.render_finished_semaphores[context.current_frame];
 
   VkSwapchainKHR swapchains[] = { context.swapchain->handle };
   present_info.swapchainCount = 1;
   present_info.pSwapchains = swapchains;
   present_info.pImageIndices = &context.current_img_index;
 
-  vkQueuePresentKHR(context.device->present_queue, &present_info);
-  vkDeviceWaitIdle(context.device->logical_device);
+  VkResult result = vkQueuePresentKHR(context.device->present_queue, &present_info);
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    recreate_swapchain(context.swapchain);
+    return;
+  } else if (result != VK_SUCCESS) {
+    ERROR_EXIT("failed to present swapchain image");
+  }
+  context.current_frame = (context.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
+
+  /* vkDeviceWaitIdle(context.device->logical_device); */
 }
 
 // TODO: Move into better order in file
@@ -699,7 +737,7 @@ void gpu_queue_submit(gpu_cmd_buffer* buffer) {
   VkSubmitInfo submit_info = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
 
   // Specify semaphore to wait on
-  VkSemaphore wait_semaphores[] = { context.image_available_semaphore };
+  VkSemaphore wait_semaphores[] = { context.image_available_semaphores[context.current_frame] };
   VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
   submit_info.waitSemaphoreCount = 1;
@@ -707,14 +745,15 @@ void gpu_queue_submit(gpu_cmd_buffer* buffer) {
   submit_info.pWaitDstStageMask = wait_stages;
 
   // Specify semaphore to signal when finished executing buffer
-  VkSemaphore signal_semaphores[] = { context.render_finished_semaphore };
+  VkSemaphore signal_semaphores[] = { context.render_finished_semaphores[context.current_frame] };
   submit_info.signalSemaphoreCount = 1;
   submit_info.pSignalSemaphores = signal_semaphores;
 
   submit_info.commandBufferCount = 1;
   submit_info.pCommandBuffers = &buffer->cmd_buffer;
 
-  VK_CHECK(vkQueueSubmit(context.device->graphics_queue, 1, &submit_info, context.in_flight_fence));
+  VK_CHECK(vkQueueSubmit(context.device->graphics_queue, 1, &submit_info,
+                         context.in_flight_fences[context.current_frame]));
 }
 
 inline void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count) {
@@ -878,15 +917,40 @@ VkShaderModule create_shader_module(str8 spirv) {
   return shader_module;
 }
 
+void create_swapchain_framebuffers() {
+  u32 image_count = context.swapchain->image_count;
+  context.swapchain_framebuffers =
+      arena_alloc(&context.swapchain->swapchain_arena, image_count * sizeof(VkFramebuffer));
+  for (u32 i = 0; i < image_count; i++) {
+    VkImageView attachments[1] = { context.swapchain->image_views[i] };
+
+    VkFramebufferCreateInfo framebuffer_create_info = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+    framebuffer_create_info.attachmentCount = 1;
+    framebuffer_create_info.pAttachments = attachments;
+
+    framebuffer_create_info.renderPass =
+        context.main_renderpass;  // TODO:  description.renderpass->handle;
+    framebuffer_create_info.width = context.swapchain->extent.width;
+    framebuffer_create_info.height = context.swapchain->extent.height;
+    framebuffer_create_info.layers = 1;
+
+    VK_CHECK(vkCreateFramebuffer(context.device->logical_device, &framebuffer_create_info,
+                                 context.allocator, &context.swapchain_framebuffers[i]));
+  }
+}
+
 void create_sync_objects() {
   VkSemaphoreCreateInfo semaphore_info = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
-  VK_CHECK(vkCreateSemaphore(context.device->logical_device, &semaphore_info, context.allocator,
-                             &context.image_available_semaphore););
-  VK_CHECK(vkCreateSemaphore(context.device->logical_device, &semaphore_info, context.allocator,
-                             &context.render_finished_semaphore););
-
   VkFenceCreateInfo fence_info = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
   fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-  VK_CHECK(vkCreateFence(context.device->logical_device, &fence_info, context.allocator,
-                         &context.in_flight_fence));
+
+  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    VK_CHECK(vkCreateSemaphore(context.device->logical_device, &semaphore_info, context.allocator,
+                               &context.image_available_semaphores[i]););
+    VK_CHECK(vkCreateSemaphore(context.device->logical_device, &semaphore_info, context.allocator,
+                               &context.render_finished_semaphores[i]););
+
+    VK_CHECK(vkCreateFence(context.device->logical_device, &fence_info, context.allocator,
+                           &context.in_flight_fences[i]));
+  }
 }

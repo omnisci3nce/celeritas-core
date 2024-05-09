@@ -61,7 +61,9 @@ bool renderer_init(renderer* ren) {
   return true;
 }
 void renderer_shutdown(renderer* ren) {
-  // gpu_device_destroy(ren->device);
+  gpu_swapchain_destroy(&ren->swapchain);
+  gpu_pipeline_destroy(&ren->static_opaque_pipeline);
+  gpu_backend_shutdown();
 }
 
 void default_pipelines_init(renderer* ren) {
