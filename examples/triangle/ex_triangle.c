@@ -18,6 +18,8 @@ int main() {
   core_bringup();
   arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
 
+  DEBUG("render capacity %d", g_core.default_scene.renderables->capacity);
+
   gpu_renderpass_desc pass_description = {};
   gpu_renderpass* renderpass = gpu_renderpass_create(&pass_description);
 

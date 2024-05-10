@@ -8,6 +8,7 @@
 #include "log.h"
 #include "render.h"
 #include "render_types.h"
+#include "scene.h"
 // #include "threadpool.h"
 
 #define SCR_WIDTH 1000
@@ -51,7 +52,8 @@ void core_bringup() {
   }
   */
 
-  g_core.models = model_darray_new(10);
+  INFO("Creating default scene");
+  scene_init(&g_core.default_scene);
 }
 
 #include <glfw3.h>
