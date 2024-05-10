@@ -19,9 +19,10 @@ extern core g_core;
 const custom_vertex vertices[] = {
   (custom_vertex){ .pos = vec2(-0.5, 0.5), .color = vec3(0.0, 0.0, 1.0) },
   (custom_vertex){ .pos = vec2(0.5, 0.5), .color = vec3(0.0, 1.0, 0.0) },
-  (custom_vertex){ .pos = vec2(0.0, -0.5), .color = vec3(1.0, 0.0, 0.0) },
+  (custom_vertex){ .pos = vec2(0.5, -0.5), .color = vec3(1.0, 0.0, 0.0) },
+  (custom_vertex){ .pos = vec2(-0.5, -0.5), .color = vec3(1.0, 1.0, 1.0) },
 };
-_Static_assert(sizeof(vertices) == (5 * 3 * sizeof(float)), "");
+const u16 indices[] = { 0, 1, 2, 2, 3, 0 };
 
 int main() {
   core_bringup();
@@ -56,12 +57,11 @@ int main() {
   };
   gpu_pipeline* gfx_pipeline = gpu_graphics_pipeline_create(pipeline_description);
 
-  buffer_handle triangle_vert_buf = gpu_buffer_create(
-      3 * sizeof(custom_vertex), CEL_BUFFER_VERTEX, CEL_BUFFER_FLAG_GPU,
-      vertices);  // gpu_buffer_create(3 * sizeof(custom_vertex), CEL_BUFFER_VERTEX);
-  /* buffer_upload_bytes(triangle_vert_buf, (bytebuffer){ .buf = vertices, .size = sizeof(vertices)
-   * }, */
-  /*                     0, sizeof(vertices)); */
+  buffer_handle triangle_vert_buf =
+      gpu_buffer_create(sizeof(vertices), CEL_BUFFER_VERTEX, CEL_BUFFER_FLAG_GPU, vertices);
+
+  buffer_handle triangle_index_buf =
+      gpu_buffer_create(sizeof(indices), CEL_BUFFER_INDEX, CEL_BUFFER_FLAG_GPU, indices);
 
   // Main loop
   while (!should_exit(&g_core)) {
@@ -85,7 +85,8 @@ int main() {
 
     // Record draw calls
     encode_set_vertex_buffer(enc, triangle_vert_buf);
-    gpu_temp_draw(3);
+    encode_set_index_buffer(enc, triangle_index_buf);
+    gpu_temp_draw(6);
 
     // End recording
     gpu_cmd_encoder_end_render(enc);

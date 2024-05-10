@@ -706,6 +706,11 @@ void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
   vkCmdBindVertexBuffers(encoder->cmd_buffer, 0, 1, vbs, offsets);
 }
 
+void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
+  gpu_buffer buffer = context.buffers[buf.raw];
+  vkCmdBindIndexBuffer(encoder->cmd_buffer, buffer.handle, 0, VK_INDEX_TYPE_UINT16);
+}
+
 // TEMP
 void encode_set_default_settings(gpu_cmd_encoder* encoder) {
   VkViewport viewport = { 0 };
@@ -751,9 +756,10 @@ bool gpu_backend_begin_frame() {
   return true;
 }
 
-void gpu_temp_draw(size_t n_verts) {
+void gpu_temp_draw(size_t n_indices) {
   gpu_cmd_encoder* encoder = gpu_get_default_cmd_encoder();  // &context.main_cmd_buf;
-  vkCmdDraw(encoder->cmd_buffer, n_verts, 1, 0, 0);
+  /* vkCmdDraw(encoder->cmd_buffer, n_verts, 1, 0, 0); */
+  vkCmdDrawIndexed(encoder->cmd_buffer, n_indices, 1, 0, 0, 0);
 }
 
 void gpu_backend_end_frame() {
@@ -1032,6 +1038,9 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
     case CEL_BUFFER_VERTEX:
       buffer_info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
       break;
+    case CEL_BUFFER_INDEX:
+      buffer_info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+      break;
     case CEL_BUFFER_COUNT:
       WARN("Incorrect gpu_buffer_type provided. using default");
       break;
@@ -1075,15 +1084,22 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
   context.buffer_count++;
 
   if (data) {
+    TRACE("Upload data as part of buffer creation");
     if (flags & CEL_BUFFER_FLAG_CPU) {
+      // map memory -> copy data in -> unmap memory
       buffer_upload_bytes(handle, (bytebuffer){ .buf = (u8*)data, .size = size }, 0, size);
     } else if (flags & CEL_BUFFER_FLAG_GPU) {
       TRACE("Uploading data to buffer using staging buffer");
-      buffer_handle staging =
-          gpu_buffer_create(size, CEL_BUFFER_DEFAULT, CEL_BUFFER_FLAG_CPU, data);
+      // Create a staging buffer
+      buffer_handle staging = gpu_buffer_create(size, buf_type, CEL_BUFFER_FLAG_CPU, NULL);
+
+      // Copy data into it
+      buffer_upload_bytes(staging, (bytebuffer){ .buf = (u8*)data, .size = size }, 0, size);
+
+      // Enqueue a copy from the staging buffer into the DEVICE_LOCAL buffer
       gpu_cmd_encoder temp_encoder = gpu_cmd_encoder_create();
       gpu_cmd_encoder_begin(temp_encoder);
-      encode_buffer_copy(&temp_encoder, handle, 0, staging, 0, size);
+      encode_buffer_copy(&temp_encoder, staging, 0, handle, 0, size);
       gpu_cmd_buffer copy_cmd_buffer = gpu_cmd_encoder_finish(&temp_encoder);
 
       VkSubmitInfo submit_info = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
@@ -1091,6 +1107,7 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
       submit_info.pCommandBuffers = &temp_encoder.cmd_buffer;
       vkQueueSubmit(context.device->graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
 
+      // Cleanup
       vkQueueWaitIdle(context.device->graphics_queue);
       gpu_cmd_encoder_destroy(&temp_encoder);
       gpu_buffer_destroy(staging);
@@ -1111,6 +1128,7 @@ void buffer_upload_bytes(buffer_handle gpu_buf, bytebuffer cpu_buf, u64 offset, 
   gpu_buffer buffer = context.buffers[gpu_buf.raw];
   void* data_ptr;
   vkMapMemory(context.device->logical_device, buffer.memory, 0, size, 0, &data_ptr);
+  DEBUG("Uploading %d bytes to buffer", size);
   memcpy(data_ptr, cpu_buf.buf, size);
   vkUnmapMemory(context.device->logical_device, buffer.memory);
 }
