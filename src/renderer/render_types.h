@@ -32,7 +32,9 @@ typedef struct renderer {
   renderer_config config;
   gpu_device device;
   gpu_swapchain swapchain;
+  gpu_renderpass default_renderpass;
   gpu_pipeline static_opaque_pipeline;
+  bool frame_aborted;
 } renderer;
 
 typedef struct geometry_data {

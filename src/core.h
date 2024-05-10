@@ -31,4 +31,8 @@ void core_bringup();
 void core_shutdown();
 bool should_exit();
 
+void frame_begin();
+void frame_draw();
+void frame_end();
+
 void core_input_update();

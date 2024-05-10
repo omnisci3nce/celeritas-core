@@ -58,7 +58,7 @@ void core_bringup() {
 
 #include <glfw3.h>
 
-bool should_window_close(core* core) { glfwWindowShouldClose(core->renderer.window); }
+/* bool should_window_close(core* core) { glfwWindowShouldClose(core->renderer.window); } */
 void core_input_update() { input_update(&g_core.input); }
 void core_frame_begin(core* core) { render_frame_begin(&core->renderer); }
 void core_frame_end(core* core) { render_frame_end(&core->renderer); }
@@ -72,3 +72,7 @@ void core_shutdown() {
 bool should_exit() {
   return key_just_released(KEYCODE_ESCAPE) || glfwWindowShouldClose(g_core.renderer.window);
 }
+
+void frame_begin() { render_frame_begin(&g_core.renderer); }
+void frame_draw() {}
+void frame_end() { render_frame_end(&g_core.renderer); }

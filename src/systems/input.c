@@ -25,6 +25,7 @@ bool input_system_init(input_state *input, GLFWwindow *window) {
   assert(input->mouse.x_delta == 0);
   assert(input->mouse.y_delta == 0);
 
+  INFO("Finish input init");
   return true;
 }
 

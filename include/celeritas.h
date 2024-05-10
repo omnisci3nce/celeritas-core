@@ -33,9 +33,9 @@ void core_bringup();
 void core_shutdown();
 bool should_window_close();
 
-void render_frame_begin();
-void render_frame_draw();
-void render_frame_end();
+void frame_begin();
+void frame_draw();
+void frame_end();
 
 // Assets
 model_handle model_load(const char* filepath);
@@ -46,6 +46,8 @@ typedef struct render_entity {
   // TODO: material
   transform3d transform;
 } render_entity;
+
+void render_frame_begin();
 
 // Scene
 typedef struct directional_light {} directional_light;
