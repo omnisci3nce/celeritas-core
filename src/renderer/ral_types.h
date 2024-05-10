@@ -55,6 +55,20 @@ typedef struct texture_desc {
   u32x2 extents;
 } texture_desc;
 
+typedef enum gpu_buffer_type {
+  CEL_BUFFER_DEFAULT,  // on Vulkan this would be a storage buffer?
+  CEL_BUFFER_VERTEX,
+  CEL_BUFFER_COUNT
+} gpu_buffer_type;
+
+typedef enum gpu_buffer_flag {
+  CEL_BUFFER_FLAG_CPU = 1 << 0,
+  CEL_BUFFER_FLAG_GPU = 1 << 1,
+  CEL_BUFFER_FLAG_STORAGE = 1 << 2,
+  CEL_BUFFER_FLAG_COUNT
+} gpu_buffer_flag;
+typedef u32 gpu_buffer_flags;
+
 typedef enum vertex_format {
   VERTEX_STATIC_3D,
   VERTEX_SPRITE,
@@ -98,6 +112,12 @@ KITC_DECL_TYPED_ARRAY(vertex)
 KITC_DECL_TYPED_ARRAY(u32)
 #define TYPED_VERTEX_ARRAY
 #endif
+
+// TEMP
+typedef struct custom_vertex {
+  vec2 pos;
+  vec3 color;
+} custom_vertex;
 
 typedef enum gpu_cull_mode { CULL_BACK_FACE, CULL_FRONT_FACE, CULL_COUNT } gpu_cull_mode;
 

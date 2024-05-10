@@ -55,7 +55,7 @@ bool renderer_init(renderer* ren) {
   // default_material_init();
 
   // Create default rendering pipeline
-  default_pipelines_init(ren);
+  /* default_pipelines_init(ren); */
 
   return true;
 }
@@ -67,9 +67,6 @@ void renderer_shutdown(renderer* ren) {
 
 void default_pipelines_init(renderer* ren) {
   // Static opaque geometry
-  // graphics_pipeline_desc gfx = {
-  // };
-  // ren->static_opaque_pipeline = gpu_graphics_pipeline_create();
   arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
 
   gpu_renderpass_desc pass_description = {};
@@ -77,8 +74,8 @@ void default_pipelines_init(renderer* ren) {
 
   ren->default_renderpass = *renderpass;
 
-  str8 vert_path = str8lit("celeritas-core/build/linux/x86_64/debug/triangle.vert.spv");
-  str8 frag_path = str8lit("celeritas-core/build/linux/x86_64/debug/triangle.frag.spv");
+  str8 vert_path = str8lit("build/linux/x86_64/debug/triangle.vert.spv");
+  str8 frag_path = str8lit("build/linux/x86_64/debug/triangle.frag.spv");
   str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
   str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
   if (!vertex_shader.has_value || !fragment_shader.has_value) {
@@ -104,28 +101,28 @@ void default_pipelines_init(renderer* ren) {
 }
 
 void render_frame_begin(renderer* ren) {
-    ren->frame_aborted = false;
-    if (!gpu_backend_begin_frame()) {
-      ren->frame_aborted = true;
-      return;
-    }
-    gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
-    // begin recording
-    gpu_cmd_encoder_begin(*enc);
-    gpu_cmd_encoder_begin_render(enc, &ren->default_renderpass);
-    encode_bind_pipeline(enc, PIPELINE_GRAPHICS, &ren->static_opaque_pipeline);
-    encode_set_default_settings(enc);
+  ren->frame_aborted = false;
+  if (!gpu_backend_begin_frame()) {
+    ren->frame_aborted = true;
+    return;
+  }
+  gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
+  // begin recording
+  gpu_cmd_encoder_begin(*enc);
+  gpu_cmd_encoder_begin_render(enc, &ren->default_renderpass);
+  encode_bind_pipeline(enc, PIPELINE_GRAPHICS, &ren->static_opaque_pipeline);
+  encode_set_default_settings(enc);
 }
 void render_frame_end(renderer* ren) {
   if (ren->frame_aborted) {
     return;
   }
-    gpu_temp_draw();
-    gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
-    gpu_cmd_encoder_end_render(enc);
-    gpu_cmd_buffer buf = gpu_cmd_encoder_finish(enc);
-    gpu_queue_submit(&buf);
-    gpu_backend_end_frame();
+  gpu_temp_draw(3);
+  gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
+  gpu_cmd_encoder_end_render(enc);
+  gpu_cmd_buffer buf = gpu_cmd_encoder_finish(enc);
+  gpu_queue_submit(&buf);
+  gpu_backend_end_frame();
 }
 void render_frame_draw(renderer* ren) {}
 

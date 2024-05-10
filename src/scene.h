@@ -11,8 +11,8 @@
 #pragma once
 #include "camera.h"
 #include "defines.h"
-#include "render_types.h"
 #include "maths_types.h"
+#include "render_types.h"
 
 typedef struct scene {
   // camera

@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <glfw3.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,8 +9,10 @@
 #include <vulkan/vulkan_core.h>
 
 #include "backend_vulkan.h"
+#include "buf.h"
 #include "maths_types.h"
 #include "mem.h"
+#include "ral_types.h"
 #include "str.h"
 #include "vulkan_helpers.h"
 
@@ -53,6 +56,10 @@ typedef struct vulkan_context {
   u32 screen_height;
   bool is_resizing;
   GLFWwindow* window;
+
+  // Storage
+  gpu_buffer buffers[1024];
+  size_t buffer_count;
 
   VkDebugUtilsMessengerEXT vk_debugger;
 } vulkan_context;
@@ -366,17 +373,31 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   VkPipelineShaderStageCreateInfo shader_stages[2] = { vert_shader_stage_info,
                                                        frag_shader_stage_info };
 
-  // Vertex Input
-
   // TODO: Attributes
+  VkVertexInputAttributeDescription attribute_descs[2];
+  attribute_descs[0].binding = 0;
+  attribute_descs[0].location = 0;
+  attribute_descs[0].format = VK_FORMAT_R32G32_SFLOAT;
+  attribute_descs[0].offset = offsetof(custom_vertex, pos);
+
+  attribute_descs[1].binding = 0;
+  attribute_descs[1].location = 1;
+  attribute_descs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+  attribute_descs[1].offset = offsetof(custom_vertex, color);
+
+  // Vertex input
+  VkVertexInputBindingDescription binding_desc;
+  binding_desc.binding = 0;
+  binding_desc.stride = sizeof(custom_vertex);
+  binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
   VkPipelineVertexInputStateCreateInfo vertex_input_info = {
     VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO
   };
-  vertex_input_info.vertexBindingDescriptionCount = 0;
-  vertex_input_info.pVertexBindingDescriptions = NULL;
-  vertex_input_info.vertexAttributeDescriptionCount = 0;
-  vertex_input_info.pVertexAttributeDescriptions = NULL;
+  vertex_input_info.vertexBindingDescriptionCount = 1;
+  vertex_input_info.pVertexBindingDescriptions = &binding_desc;
+  vertex_input_info.vertexAttributeDescriptionCount = 2;
+  vertex_input_info.pVertexAttributeDescriptions = attribute_descs;
 
   // Input Assembly
   VkPipelineInputAssemblyStateCreateInfo input_assembly = {
@@ -633,6 +654,10 @@ gpu_cmd_encoder gpu_cmd_encoder_create() {
 
   return encoder;
 }
+void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder) {
+  vkFreeCommandBuffers(context.device->logical_device, context.device->pool, 1,
+                       &encoder->cmd_buffer);
+}
 
 void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) {
   VkCommandBufferBeginInfo begin_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
@@ -673,6 +698,12 @@ gpu_cmd_buffer gpu_cmd_encoder_finish(gpu_cmd_encoder* encoder) {
 // --- Binding
 void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipeline* pipeline) {
   vkCmdBindPipeline(encoder->cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->handle);
+}
+void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
+  gpu_buffer buffer = context.buffers[buf.raw];
+  VkBuffer vbs[] = { buffer.handle };
+  VkDeviceSize offsets[] = { 0 };
+  vkCmdBindVertexBuffers(encoder->cmd_buffer, 0, 1, vbs, offsets);
 }
 
 // TEMP
@@ -720,9 +751,9 @@ bool gpu_backend_begin_frame() {
   return true;
 }
 
-void gpu_temp_draw() {
+void gpu_temp_draw(size_t n_verts) {
   gpu_cmd_encoder* encoder = gpu_get_default_cmd_encoder();  // &context.main_cmd_buf;
-  vkCmdDraw(encoder->cmd_buffer, 3, 1, 0, 0);
+  vkCmdDraw(encoder->cmd_buffer, n_verts, 1, 0, 0);
 }
 
 void gpu_backend_end_frame() {
@@ -970,4 +1001,127 @@ void create_sync_objects() {
     VK_CHECK(vkCreateFence(context.device->logical_device, &fence_info, context.allocator,
                            &context.in_flight_fences[i]));
   }
+}
+
+static i32 find_memory_index(u32 type_filter, u32 property_flags) {
+  VkPhysicalDeviceMemoryProperties memory_properties;
+  vkGetPhysicalDeviceMemoryProperties(context.device->physical_device, &memory_properties);
+
+  for (u32 i = 0; i < memory_properties.memoryTypeCount; ++i) {
+    // Check each memory type to see if its bit is set to 1.
+    if (type_filter & (1 << i) &&
+        (memory_properties.memoryTypes[i].propertyFlags & property_flags) == property_flags) {
+      return i;
+    }
+  }
+
+  WARN("Unable to find suitable memory type!");
+  return -1;
+}
+
+buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_flags flags,
+                                const void* data) {
+  VkBufferCreateInfo buffer_info = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+  buffer_info.size = size;
+  buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+
+  switch (buf_type) {
+    case CEL_BUFFER_DEFAULT:
+      buffer_info.usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+      break;
+    case CEL_BUFFER_VERTEX:
+      buffer_info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+      break;
+    case CEL_BUFFER_COUNT:
+      WARN("Incorrect gpu_buffer_type provided. using default");
+      break;
+  }
+
+  buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  // "allocating" the cpu-side buffer struct
+  gpu_buffer buffer;
+  buffer.size = size;
+  buffer_handle handle = { .raw = (u32)context.buffer_count };
+
+  VK_CHECK(vkCreateBuffer(context.device->logical_device, &buffer_info, context.allocator,
+                          &buffer.handle));
+
+  VkMemoryRequirements requirements;
+  vkGetBufferMemoryRequirements(context.device->logical_device, buffer.handle, &requirements);
+
+  // Just make them always need all of them for now
+  i32 memory_index =
+      find_memory_index(requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT |
+                                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                                         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+  // Allocate the actual VRAM
+  VkMemoryAllocateInfo allocate_info = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
+  allocate_info.allocationSize = requirements.size;
+  allocate_info.memoryTypeIndex = (u32)memory_index;
+
+  vkAllocateMemory(context.device->logical_device, &allocate_info, context.allocator,
+                   &buffer.memory);
+  vkBindBufferMemory(context.device->logical_device, buffer.handle, buffer.memory, 0);
+
+  /* Now there are two options:
+   *   1. create CPU-accessible memory -> map memory -> memcpy -> unmap
+   *   2. use a staging buffer thats CPU-accessible and copy its contents to a
+   *      GPU-only buffer
+   */
+
+  context.buffers[context.buffer_count] = buffer;
+  context.buffer_count++;
+
+  if (data) {
+    if (flags & CEL_BUFFER_FLAG_CPU) {
+      buffer_upload_bytes(handle, (bytebuffer){ .buf = (u8*)data, .size = size }, 0, size);
+    } else if (flags & CEL_BUFFER_FLAG_GPU) {
+      TRACE("Uploading data to buffer using staging buffer");
+      buffer_handle staging =
+          gpu_buffer_create(size, CEL_BUFFER_DEFAULT, CEL_BUFFER_FLAG_CPU, data);
+      gpu_cmd_encoder temp_encoder = gpu_cmd_encoder_create();
+      gpu_cmd_encoder_begin(temp_encoder);
+      encode_buffer_copy(&temp_encoder, handle, 0, staging, 0, size);
+      gpu_cmd_buffer copy_cmd_buffer = gpu_cmd_encoder_finish(&temp_encoder);
+
+      VkSubmitInfo submit_info = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+      submit_info.commandBufferCount = 1;
+      submit_info.pCommandBuffers = &temp_encoder.cmd_buffer;
+      vkQueueSubmit(context.device->graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
+
+      vkQueueWaitIdle(context.device->graphics_queue);
+      gpu_cmd_encoder_destroy(&temp_encoder);
+      gpu_buffer_destroy(staging);
+    }
+  }
+
+  return handle;
+}
+
+void gpu_buffer_destroy(buffer_handle buffer) {
+  gpu_buffer b = context.buffers[buffer.raw];
+  vkDestroyBuffer(context.device->logical_device, b.handle, context.allocator);
+  vkFreeMemory(context.device->logical_device, b.memory, context.allocator);
+}
+
+// Upload data to a
+void buffer_upload_bytes(buffer_handle gpu_buf, bytebuffer cpu_buf, u64 offset, u64 size) {
+  gpu_buffer buffer = context.buffers[gpu_buf.raw];
+  void* data_ptr;
+  vkMapMemory(context.device->logical_device, buffer.memory, 0, size, 0, &data_ptr);
+  memcpy(data_ptr, cpu_buf.buf, size);
+  vkUnmapMemory(context.device->logical_device, buffer.memory);
+}
+
+void encode_buffer_copy(gpu_cmd_encoder* encoder, buffer_handle src, u64 src_offset,
+                        buffer_handle dst, u64 dst_offset, u64 copy_size) {
+  VkBufferCopy copy_region;
+  copy_region.srcOffset = src_offset;
+  copy_region.dstOffset = dst_offset;
+  copy_region.size = copy_size;
+
+  vkCmdCopyBuffer(encoder->cmd_buffer, context.buffers[src.raw].handle,
+                  context.buffers[dst.raw].handle, 1, &copy_region);
 }

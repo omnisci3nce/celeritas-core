@@ -28,6 +28,7 @@ typedef struct gpu_pipeline gpu_pipeline;
 typedef struct gpu_renderpass gpu_renderpass;
 typedef struct gpu_cmd_encoder gpu_cmd_encoder;  // Recording
 typedef struct gpu_cmd_buffer gpu_cmd_buffer;    // Ready for submission
+typedef struct gpu_buffer gpu_buffer;
 
 /** @brief A*/
 // typedef struct gpu_bind_group
@@ -85,6 +86,7 @@ bool gpu_swapchain_create(gpu_swapchain* out_swapchain);
 void gpu_swapchain_destroy(gpu_swapchain* swapchain);
 
 gpu_cmd_encoder gpu_cmd_encoder_create();
+void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder);
 void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder);
 void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass);
 void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder);
@@ -117,7 +119,8 @@ gpu_cmd_buffer gpu_cmd_encoder_finish(gpu_cmd_encoder* encoder);
 void gpu_queue_submit(gpu_cmd_buffer* buffer);
 
 // Buffers
-void gpu_buffer_create(u64 size);
+buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_flags flags,
+                                const void* data);
 void gpu_buffer_destroy(buffer_handle buffer);
 void gpu_buffer_upload();
 void gpu_buffer_bind(buffer_handle buffer);
@@ -137,4 +140,4 @@ bytebuffer vertices_as_bytebuffer(arena* a, vertex_format format, vertex_darray*
 
 // TEMP
 
-void gpu_temp_draw();
+void gpu_temp_draw(size_t n_verts);

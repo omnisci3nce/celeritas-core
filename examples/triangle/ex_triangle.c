@@ -1,6 +1,7 @@
 #include <glfw3.h>
 
 #include "backend_vulkan.h"
+#include "buf.h"
 #include "camera.h"
 #include "core.h"
 #include "file.h"
@@ -8,11 +9,19 @@
 #include "maths.h"
 #include "mem.h"
 #include "ral.h"
+#include "ral_types.h"
 #include "render.h"
 
 // Example setting up a renderer
 
 extern core g_core;
+
+const custom_vertex vertices[] = {
+  (custom_vertex){ .pos = vec2(-0.5, 0.5), .color = vec3(0.0, 0.0, 1.0) },
+  (custom_vertex){ .pos = vec2(0.5, 0.5), .color = vec3(0.0, 1.0, 0.0) },
+  (custom_vertex){ .pos = vec2(0.0, -0.5), .color = vec3(1.0, 0.0, 0.0) },
+};
+_Static_assert(sizeof(vertices) == (5 * 3 * sizeof(float)), "");
 
 int main() {
   core_bringup();
@@ -47,12 +56,19 @@ int main() {
   };
   gpu_pipeline* gfx_pipeline = gpu_graphics_pipeline_create(pipeline_description);
 
+  buffer_handle triangle_vert_buf = gpu_buffer_create(
+      3 * sizeof(custom_vertex), CEL_BUFFER_VERTEX, CEL_BUFFER_FLAG_GPU,
+      vertices);  // gpu_buffer_create(3 * sizeof(custom_vertex), CEL_BUFFER_VERTEX);
+  /* buffer_upload_bytes(triangle_vert_buf, (bytebuffer){ .buf = vertices, .size = sizeof(vertices)
+   * }, */
+  /*                     0, sizeof(vertices)); */
+
   // Main loop
   while (!should_exit(&g_core)) {
     glfwPollEvents();
     input_update(&g_core.input);
 
-    render_frame_begin(&g_core.renderer);
+    // render_frame_begin(&g_core.renderer);
 
     static f64 x = 0.0;
     x += 0.01;
@@ -68,7 +84,8 @@ int main() {
     encode_set_default_settings(enc);
 
     // Record draw calls
-    gpu_temp_draw();
+    encode_set_vertex_buffer(enc, triangle_vert_buf);
+    gpu_temp_draw(3);
 
     // End recording
     gpu_cmd_encoder_end_render(enc);
@@ -78,7 +95,7 @@ int main() {
     // Submit
     gpu_backend_end_frame();
 
-    render_frame_end(&g_core.renderer);
+    // render_frame_end(&g_core.renderer);
     // glfwSwapBuffers(core->renderer.window);
   }
 

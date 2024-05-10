@@ -76,3 +76,9 @@ typedef struct gpu_cmd_encoder {
 typedef struct gpu_cmd_buffer {
   VkCommandBuffer cmd_buffer;
 } gpu_cmd_buffer;
+
+typedef struct gpu_buffer {
+  VkBuffer handle;
+  VkDeviceMemory memory;
+  u64 size;
+} gpu_buffer;
