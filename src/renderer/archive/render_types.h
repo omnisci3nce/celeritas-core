@@ -94,20 +94,20 @@ KITC_DECL_TYPED_ARRAY(animation_clip)  // creates "material_darray"
 #endif
 
 // // lights
-// typedef struct point_light {
-//   vec3 position;
-//   f32 constant, linear, quadratic;
-//   vec3 ambient;
-//   vec3 diffuse;
-//   vec3 specular;
-// } point_light;
+typedef struct point_light {
+  vec3 position;
+  f32 constant, linear, quadratic;
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+} point_light;
 
-// typedef struct directional_light {
-//   vec3 direction;
-//   vec3 ambient;
-//   vec3 diffuse;
-//   vec3 specular;
-// } directional_light;
+typedef struct directional_light {
+  vec3 direction;
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+} directional_light;
 
 // void point_light_upload_uniforms(shader shader, point_light *light, char index);
 // void dir_light_upload_uniforms(shader shader, directional_light *light);

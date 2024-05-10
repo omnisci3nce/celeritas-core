@@ -12,8 +12,10 @@
 
 // Example setting up a renderer
 
+extern core g_core;
+
 int main() {
-  core* core = core_bringup();
+  core_bringup();
   arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
 
   gpu_renderpass_desc pass_description = {};
@@ -44,11 +46,11 @@ int main() {
   gpu_pipeline* gfx_pipeline = gpu_graphics_pipeline_create(pipeline_description);
 
   // Main loop
-  while (!should_exit(core)) {
+  while (!should_exit(&g_core)) {
     glfwPollEvents();
-    input_update(&core->input);
+    input_update(&g_core.input);
 
-    render_frame_begin(&core->renderer);
+    render_frame_begin(&g_core.renderer);
 
     static f64 x = 0.0;
     x += 0.01;
@@ -74,11 +76,11 @@ int main() {
     // Submit
     gpu_backend_end_frame();
 
-    render_frame_end(&core->renderer);
+    render_frame_end(&g_core.renderer);
     // glfwSwapBuffers(core->renderer.window);
   }
 
-  renderer_shutdown(&core->renderer);
+  renderer_shutdown(&g_core.renderer);
 
   return 0;
 }

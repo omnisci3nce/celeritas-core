@@ -116,10 +116,31 @@ KITC_DECL_TYPED_ARRAY(animation_clip)
 
 /** @brief Describes all the data required for the renderer to start executing draws */
 typedef struct render_entity {
-  buffer_handle index_buffer;
-  u32 index_count;
-  u32 index_offset;
-  buffer_handle vertex_buffer;
-  material* material;
+  /* buffer_handle index_buffer; */
+  /* u32 index_count; */
+  /* u32 index_offset; */
+  /* buffer_handle vertex_buffer; */
+  model_handle model;
   transform tf;
 } render_entity;
+
+#ifndef TYPED_RENDER_ENTITY_ARRAY
+KITC_DECL_TYPED_ARRAY(render_entity)
+#define TYPED_RENDER_ENTITY_ARRAY
+#endif
+
+// --- Lights
+typedef struct point_light {
+  vec3 position;
+  f32 constant, linear, quadratic;
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+} point_light;
+
+typedef struct directional_light {
+  vec3 direction;
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+} directional_light;

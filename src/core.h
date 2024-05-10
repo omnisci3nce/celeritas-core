@@ -1,9 +1,8 @@
 #pragma once
 
-#include "defines.h"
 #include "input.h"
-#include "ral.h"
 #include "screenspace.h"
+#include "scene.h"
 #include "terrain.h"
 #include "text.h"
 // #include "threadpool.h"
@@ -19,12 +18,17 @@ typedef struct core {
   terrain_state terrain;
   screenspace_state screenspace;
   // data storage
+  scene default_scene;
   model_darray* models;
 } core;
 
-// --- Lifecycle
-core* core_bringup();
-void core_shutdown(core* core);
-bool should_exit(core* core);
+core* get_global_core();
 
-void core_input_update(core* core);
+// --- Lifecycle
+
+/** @brief Throws error if the core cannot be instantiated */
+void core_bringup();
+void core_shutdown();
+bool should_exit();
+
+void core_input_update();
