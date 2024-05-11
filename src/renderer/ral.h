@@ -30,6 +30,8 @@ typedef struct gpu_cmd_encoder gpu_cmd_encoder;  // Recording
 typedef struct gpu_cmd_buffer gpu_cmd_buffer;    // Ready for submission
 typedef struct gpu_buffer gpu_buffer;
 
+#define MAX_SHADER_DATA_LAYOUTS 5
+
 /** @brief A*/
 // typedef struct gpu_bind_group
 
@@ -54,6 +56,17 @@ struct graphics_pipeline_desc {
   const char* debug_name;
   shader_desc vs; /** @brief Vertex shader stage */
   shader_desc fs; /** @brief Fragment shader stage */
+
+  /* shader_data_layout data_layouts[MAX_SHADER_DATA_LAYOUTS]; */
+  /* u32 data_layouts_count; */
+
+  // Roughly equivalent to a descriptor set layout each. each layout can have multiple bindings
+  // examples:
+  // - uniform buffer reprensenting view projection matrix
+  // - texture for shadow map ?
+  shader_data data_layouts[MAX_SHADER_DATA_LAYOUTS];
+  u32 data_layouts_count;
+
   // gpu_pipeline_layout* layout;
   gpu_renderpass* renderpass;
 

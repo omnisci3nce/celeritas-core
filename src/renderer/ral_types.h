@@ -59,6 +59,7 @@ typedef enum gpu_buffer_type {
   CEL_BUFFER_DEFAULT,  // on Vulkan this would be a storage buffer?
   CEL_BUFFER_VERTEX,
   CEL_BUFFER_INDEX,
+  CEL_BUFFER_UNIFORM,
   CEL_BUFFER_COUNT
 } gpu_buffer_type;
 
@@ -75,6 +76,7 @@ typedef enum vertex_format {
   VERTEX_SPRITE,
   VERTEX_SKINNED,
   VERTEX_COLOURED_STATIC_3D,
+  VERTEX_RAW_POS_COLOUR,
   VERTEX_COUNT
 } vertex_format;
 
@@ -106,6 +108,11 @@ typedef union vertex {
     vec3 normal;
     vec4 colour;
   } coloured_static_3d; /** @brief vertex format used for debugging */
+
+  struct {
+    vec2 position;
+    vec3 colour;
+  } raw_pos_colour;
 } vertex;
 
 #ifndef TYPED_VERTEX_ARRAY
@@ -136,6 +143,12 @@ typedef enum vertex_attrib_type {
   ATTR_I32x4,
 } vertex_attrib_type;
 
+typedef enum shader_visibility {
+  VISIBILITY_VERTEX = 1 << 0,
+  VISIBILITY_FRAGMENT = 1 << 1 ,
+  VISIBILITY_COMPUTE = 1 << 2,
+} shader_visibility;
+
 typedef enum shader_binding_type {
   SHADER_BINDING_BUFFER,
   SHADER_BINDING_TEXTURE,
@@ -146,6 +159,7 @@ typedef enum shader_binding_type {
 typedef struct shader_binding {
   const char* label;
   shader_binding_type type;
+  shader_visibility vis;
   bool stores_data; /** @brief if this is true then the shader binding has references to live data,
                                if false then its just being used to describe a layout and .data
                        should be zeroed */
@@ -168,6 +182,7 @@ typedef struct shader_binding {
 typedef struct shader_data_layout {
   char* name;
   shader_binding bindings[MAX_LAYOUT_BINDINGS];
+  u32 bindings_count;
 } shader_data_layout;
 
 typedef struct shader_data {

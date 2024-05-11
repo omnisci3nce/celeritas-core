@@ -11,6 +11,7 @@
 #include "ral.h"
 #include "ral_types.h"
 #include "render.h"
+#include "render_types.h"
 
 extern core g_core;
 
@@ -53,6 +54,7 @@ int main() {
   };
   gpu_pipeline* gfx_pipeline = gpu_graphics_pipeline_create(pipeline_description);
 
+  // Load triangle vertex and index data
   buffer_handle triangle_vert_buf =
       gpu_buffer_create(sizeof(vertices), CEL_BUFFER_VERTEX, CEL_BUFFER_FLAG_GPU, vertices);
 

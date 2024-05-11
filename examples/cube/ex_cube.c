@@ -13,6 +13,14 @@
 
 extern core g_core;
 
+const custom_vertex vertices[] = {
+  (custom_vertex){ .pos = vec2(-0.5, 0.5), .color = vec3(0.0, 0.0, 1.0) },
+  (custom_vertex){ .pos = vec2(0.5, 0.5), .color = vec3(0.0, 1.0, 0.0) },
+  (custom_vertex){ .pos = vec2(0.5, -0.5), .color = vec3(1.0, 0.0, 0.0) },
+  (custom_vertex){ .pos = vec2(-0.5, -0.5), .color = vec3(1.0, 1.0, 1.0) },
+};
+const u16 indices[] = { 0, 1, 2, 2, 3, 0 };
+
 // Define the shader data
 typedef struct mvp_uniforms {
   mat4 model;
@@ -23,33 +31,15 @@ typedef struct mvp_uniforms {
 shader_data_layout mvp_uniforms_layout(void* data) {
   mvp_uniforms* d = (mvp_uniforms*)data;
   bool has_data = data != NULL;
-  
-  shader_binding b1 = {
-    .label = "model",
-    .type = SHADER_BINDING_BYTES,
-    .stores_data = has_data,
-    .data = {.bytes = { .size = sizeof(mat4) }}
-  };
-  shader_binding b2 = {
-    .label = "view",
-    .type = SHADER_BINDING_BYTES,
-    .stores_data = has_data,
-    .data = {.bytes = { .size = sizeof(mat4) }}
-  };
-  shader_binding b3 = {
-    .label = "projection",
-    .type = SHADER_BINDING_BYTES,
-    .stores_data = has_data,
-    .data = {.bytes = { .size = sizeof(mat4) }}
-  };
+
+  shader_binding b1 = { .label = "mvp_uniforms",
+                        .type = SHADER_BINDING_BYTES,
+                        .stores_data = has_data,
+                        .data = { .bytes = { .size = sizeof(mvp_uniforms) } } };
   if (has_data) {
-     b1.data.bytes.data = &d->model;
-     b2.data.bytes.data = &d->view;
-     b3.data.bytes.data = &d->projection;
+    b1.data.bytes.data = d;
   }
-  return (shader_data_layout ){.name = "mvp_uniforms", .bindings = {
-    b1, b2, b3
-  }};
+  return (shader_data_layout){ .name = "global_ubo", .bindings = { b1 } };
 }
 
 int main() {
@@ -58,18 +48,7 @@ int main() {
 
   DEBUG("render capacity %d", g_core.default_scene.renderables->capacity);
 
-  shader_data_layout mvp_layout = mvp_uniforms_layout(NULL);
-
-  mvp_uniforms mvp_data = {
-    .model = mat4_ident(),
-    .view = mat4_ident(),
-    .projection = mat4_ident()
-  };
-
-  shader_data mvp_uniforms_data = {
-    .data = &mvp_data,
-    .shader_data_get_layout = &mvp_uniforms_layout
-  };
+  shader_data mvp_uniforms_data = { .data = NULL, .shader_data_get_layout = &mvp_uniforms_layout };
 
   gpu_renderpass_desc pass_description = {};
   gpu_renderpass* renderpass = gpu_renderpass_create(&pass_description);
@@ -84,6 +63,8 @@ int main() {
 
   struct graphics_pipeline_desc pipeline_description = {
     .debug_name = "Basic Pipeline",
+    .data_layouts = { mvp_uniforms_data },
+    .data_layouts_count = 1,
     .vs = { .debug_name = "Triangle Vertex Shader",
             .filepath = vert_path,
             .code = vertex_shader.contents,
@@ -120,6 +101,13 @@ int main() {
     gpu_cmd_encoder_begin_render(enc, renderpass);
     encode_bind_pipeline(enc, PIPELINE_GRAPHICS, gfx_pipeline);
     encode_set_default_settings(enc);
+
+    /* shader_data_layout mvp_layout = mvp_uniforms_layout(NULL); */
+
+    mvp_uniforms mvp_data = { .model = mat4_ident(),
+                              .view = mat4_ident(),
+                              .projection = mat4_ident() };
+    mvp_uniforms_data.data = &mvp_data;
 
     // Record draw calls
     encode_set_vertex_buffer(enc, triangle_vert_buf);

@@ -25,8 +25,9 @@
 // TEMP
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 1000
-#define MAX_FRAMES_IN_FLIGHT 2
 #define VULKAN_QUEUES_COUNT 2
+#define MAX_DESCRIPTOR_SETS 100
+
 const char* queue_names[VULKAN_QUEUES_COUNT] = { "GRAPHICS", "TRANSFER" };
 
 typedef struct vulkan_context {
@@ -78,6 +79,7 @@ queue_family_indices find_queue_families(VkPhysicalDevice device);
 bool create_logical_device(gpu_device* out_device);
 void create_swapchain_framebuffers();
 void create_sync_objects();
+void create_descriptor_pools();
 
 VkShaderModule create_shader_module(str8 spirv);
 
@@ -494,6 +496,83 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   dynamic_state.dynamicStateCount = DYNAMIC_STATE_COUNT;
   dynamic_state.pDynamicStates = dynamic_states;
 
+  // Descriptor Set layouts
+
+  VkDescriptorSetLayout* desc_set_layouts =
+      malloc(description.data_layouts_count * sizeof(VkDescriptorSetLayout));
+  pipeline->desc_set_layouts = desc_set_layouts;
+  pipeline->desc_set_layouts_count = description.data_layouts_count;
+  pipeline->uniform_pointers =
+      malloc(description.data_layouts_count * sizeof(desc_set_uniform_buffer));
+
+  for (u32 i = 0; i < description.data_layouts_count; i++) {
+    shader_data_layout sdl = description.data_layouts[i].shader_data_get_layout(NULL);
+
+    // NOTE: is using VLA generally ok?
+    VkDescriptorSetLayoutBinding desc_set_bindings[description.data_layouts_count];
+
+    // Bindings
+    for (u32 j = 0; j < sdl.bindings_count; j++) {
+      desc_set_bindings[j].binding = j;
+      desc_set_bindings[j].descriptorCount = 1;
+      switch (sdl.bindings[j].type) {
+        case SHADER_BINDING_BUFFER:
+        case SHADER_BINDING_BYTES:
+          desc_set_bindings[j].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+          u64 buffer_size = sdl.bindings[j].data.bytes.size;
+          VkDeviceSize uniform_buf_size = buffer_size;
+          // TODO: Create backing buffer
+
+          VkBuffer buffers[MAX_FRAMES_IN_FLIGHT];
+          VkDeviceMemory uniform_buf_memorys[MAX_FRAMES_IN_FLIGHT];
+          void* uniform_buf_mem_mappings[MAX_FRAMES_IN_FLIGHT];
+          // void* s?
+          for (size_t frame_i = 0; frame_i < MAX_FRAMES_IN_FLIGHT; frame_i++) {
+            buffer_handle uniform_buf_handle =
+                gpu_buffer_create(buffer_size, CEL_BUFFER_UNIFORM, CEL_BUFFER_FLAG_CPU, NULL);
+            buffers[frame_i] = context.buffers[uniform_buf_handle.raw].handle;
+            vkMapMemory(context.device->logical_device, uniform_buf_memorys[frame_i], 0,
+                        uniform_buf_size, 0, &uniform_buf_mem_mappings[frame_i]);
+          }
+
+          desc_set_uniform_buffer uniform_data;
+          memcpy(&uniform_data.buffers, &buffers, sizeof(buffers));
+          memcpy(&uniform_data.uniform_buf_memorys, &uniform_buf_memorys,
+                 sizeof(uniform_buf_memorys));
+          memcpy(&uniform_data.uniform_buf_mem_mappings, &uniform_buf_mem_mappings,
+                 sizeof(uniform_buf_mem_mappings));
+          uniform_data.size = buffer_size;
+
+          pipeline->uniform_pointers[j] = uniform_data;
+
+          break;
+        default:
+          ERROR_EXIT("Unimplemented binding type!! in backend_vulkan");
+      }
+      switch (sdl.bindings[j].vis) {
+        case VISIBILITY_VERTEX:
+          desc_set_bindings[j].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+          break;
+        case VISIBILITY_FRAGMENT:
+          desc_set_bindings[j].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+          break;
+        case VISIBILITY_COMPUTE:
+          WARN("Compute is not implemented yet");
+          break;
+      }
+    }
+
+    VkDescriptorSetLayoutCreateInfo desc_set_layout_info = {
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO
+    };
+    desc_set_layout_info.bindingCount = sdl.bindings_count;
+    desc_set_layout_info.pBindings = desc_set_bindings;
+
+    VK_CHECK(vkCreateDescriptorSetLayout(context.device->logical_device, &desc_set_layout_info,
+                                         context.allocator, &desc_set_layouts[i]));
+  }
+
   // Layout
   VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
     VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
@@ -652,6 +731,18 @@ gpu_cmd_encoder gpu_cmd_encoder_create() {
   VK_CHECK(vkAllocateCommandBuffers(context.device->logical_device, &allocate_info,
                                     &encoder.cmd_buffer););
 
+  VkDescriptorPoolSize uniform_pool_size;
+  uniform_pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uniform_pool_size.descriptorCount = MAX_FRAMES_IN_FLIGHT *  MAX_DESCRIPTOR_SETS;
+
+  VkDescriptorPoolCreateInfo pool_info = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
+  pool_info.poolSizeCount = 1;
+  pool_info.pPoolSizes = &uniform_pool_size;
+  pool_info.maxSets = 10000;
+
+  VK_CHECK(vkCreateDescriptorPool(context.device->logical_device, &pool_info, context.allocator,
+                                  &encoder.descriptor_pool));
+
   return encoder;
 }
 void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder) {
@@ -698,7 +789,27 @@ gpu_cmd_buffer gpu_cmd_encoder_finish(gpu_cmd_encoder* encoder) {
 // --- Binding
 void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipeline* pipeline) {
   vkCmdBindPipeline(encoder->cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->handle);
+  encoder->pipeline = pipeline;
 }
+
+void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* data) {
+  assert(data->data != NULL);
+
+  // Update the local buffer
+  desc_set_uniform_buffer ubo = encoder->pipeline->uniform_pointers[group];
+  memcpy(ubo.uniform_buf_mem_mappings[context.current_frame], data->data, ubo.size);
+
+  VkDescriptorSetAllocateInfo alloc_info = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+  alloc_info.descriptorPool =encoder->descriptor_pool;
+  alloc_info.descriptorSetCount = 1;
+    alloc_info.pSetLayouts = &encoder->pipeline->desc_set_layouts[group];
+
+    VkDescriptorSet sets[1];
+  VK_CHECK(vkAllocateDescriptorSets(context.device->logical_device, &alloc_info,
+                                    sets));
+
+}
+
 void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
   gpu_buffer buffer = context.buffers[buf.raw];
   VkBuffer vbs[] = { buffer.handle };
@@ -969,6 +1080,9 @@ VkShaderModule create_shader_module(str8 spirv) {
 
   return shader_module;
 }
+
+
+void create_descriptor_pools() {}
 
 void create_swapchain_framebuffers() {
   WARN("Recreating framebuffers...");

@@ -7,6 +7,7 @@
 #include "ral.h"
 // #include "vulkan_helpers.h"
 
+#define MAX_FRAMES_IN_FLIGHT 2
 #define GPU_SWAPCHAIN_IMG_COUNT 2
 
 /*
@@ -59,9 +60,26 @@ typedef struct gpu_pipeline_layout {
   VkPipelineLayout handle;
 } gpu_pipeline_layout;
 
+typedef struct desc_set_uniform_buffer {
+  VkBuffer buffers[MAX_FRAMES_IN_FLIGHT];
+  VkDeviceMemory uniform_buf_memorys[MAX_FRAMES_IN_FLIGHT];
+  void* uniform_buf_mem_mappings[MAX_FRAMES_IN_FLIGHT];
+  size_t size;
+} desc_set_uniform_buffer;
+
 typedef struct gpu_pipeline {
   VkPipeline handle;
   VkPipelineLayout layout_handle;
+
+  // Descriptor gubbins
+  shader_data data_layouts[MAX_SHADER_DATA_LAYOUTS];
+  u32 data_layouts_count;
+
+  VkDescriptorSetLayout* desc_set_layouts;
+  // Based on group, we know which data to load
+  desc_set_uniform_buffer* uniform_pointers;
+  u32 desc_set_layouts_count;
+
 } gpu_pipeline;
 
 typedef struct gpu_renderpass {
@@ -71,6 +89,8 @@ typedef struct gpu_renderpass {
 
 typedef struct gpu_cmd_encoder {
   VkCommandBuffer cmd_buffer;
+  VkDescriptorPool descriptor_pool;
+  gpu_pipeline* pipeline;
 } gpu_cmd_encoder;
 
 typedef struct gpu_cmd_buffer {
@@ -82,3 +102,4 @@ typedef struct gpu_buffer {
   VkDeviceMemory memory;
   u64 size;
 } gpu_buffer;
+

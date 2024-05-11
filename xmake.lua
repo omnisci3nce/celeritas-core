@@ -157,6 +157,13 @@ target("tri")
     add_files("examples/triangle/ex_triangle.c")
     set_rundir("$(projectdir)")
 
+target("cube")
+    set_kind("binary")
+    set_group("examples")
+    add_deps("core_static")
+    add_files("examples/cube/ex_cube.c")
+    set_rundir("$(projectdir)")
+
 -- target("std")
 --     set_kind("binary")
 --     set_group("examples")
