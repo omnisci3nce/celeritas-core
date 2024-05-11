@@ -104,6 +104,7 @@ void buffer_upload_bytes(buffer_handle gpu_buf, bytebuffer cpu_buf, u64 offset, 
 
 // render pass
 void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipeline* pipeline);
+void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* data);
 void encode_set_default_settings(gpu_cmd_encoder* encoder);
 void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);

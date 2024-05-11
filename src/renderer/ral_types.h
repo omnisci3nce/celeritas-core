@@ -120,6 +120,67 @@ typedef struct custom_vertex {
   vec3 color;
 } custom_vertex;
 
+// Vertex attributes
+typedef enum vertex_attrib_type {
+  ATTR_F32,
+  ATTR_F32x2,
+  ATTR_F32x3,
+  ATTR_F32x4,
+  ATTR_U32,
+  ATTR_U32x2,
+  ATTR_U32x3,
+  ATTR_U32x4,
+  ATTR_I32,
+  ATTR_I32x2,
+  ATTR_I32x3,
+  ATTR_I32x4,
+} vertex_attrib_type;
+
+typedef enum shader_binding_type {
+  SHADER_BINDING_BUFFER,
+  SHADER_BINDING_TEXTURE,
+  SHADER_BINDING_BYTES,
+  SHADER_BINDING_COUNT
+} shader_binding_type;
+
+typedef struct shader_binding {
+  const char* label;
+  shader_binding_type type;
+  bool stores_data; /** @brief if this is true then the shader binding has references to live data,
+                               if false then its just being used to describe a layout and .data
+                       should be zeroed */
+  union {
+    struct {
+      buffer_handle handle;
+    } buffer;
+    struct {
+      void* data;
+      size_t size;
+    } bytes;
+  } data;
+} shader_binding;
+
+#define MAX_LAYOUT_BINDINGS 8
+
+/** @brief A list of bindings that describe what data a shader / pipeline expects 
+    @note This roughly correlates to a descriptor set layout in Vulkan
+*/
+typedef struct shader_data_layout {
+  char* name;
+  shader_binding bindings[MAX_LAYOUT_BINDINGS];
+} shader_data_layout;
+
+typedef struct shader_data {
+  shader_data_layout (*shader_data_get_layout)(void* data);
+  void* data;
+} shader_data;
+
+/*
+  Usage:
+    1. When we create the pipeline, we must call a function that return a layout without .data fields
+    2. When binding 
+*/
+
 typedef enum gpu_cull_mode { CULL_BACK_FACE, CULL_FRONT_FACE, CULL_COUNT } gpu_cull_mode;
 
 // ? How to tie together materials and shaders
