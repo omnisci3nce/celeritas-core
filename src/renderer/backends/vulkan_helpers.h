@@ -24,7 +24,7 @@ static void plat_get_required_extension_names(cstr_darray* extensions) {
   do {                                     \
     VkResult res = vulkan_expr;            \
     if (res != VK_SUCCESS) {               \
-      ERROR_EXIT("Vulkan error: %u", res); \
+      ERROR_EXIT("Vulkan error: %u (%s:%d)", res, __FILE__, __LINE__); \
     }                                      \
   } while (0)
 

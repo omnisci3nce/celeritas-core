@@ -10,6 +10,7 @@
 
 #include "backend_vulkan.h"
 #include "buf.h"
+#include "darray.h"
 #include "maths_types.h"
 #include "mem.h"
 #include "ral_types.h"
@@ -26,9 +27,11 @@
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 1000
 #define VULKAN_QUEUES_COUNT 2
-#define MAX_DESCRIPTOR_SETS 100
+#define MAX_DESCRIPTOR_SETS 10
 
 const char* queue_names[VULKAN_QUEUES_COUNT] = { "GRAPHICS", "TRANSFER" };
+
+KITC_DECL_TYPED_ARRAY(VkDescriptorSet)
 
 typedef struct vulkan_context {
   VkInstance instance;
@@ -61,6 +64,7 @@ typedef struct vulkan_context {
   // Storage
   gpu_buffer buffers[1024];
   size_t buffer_count;
+  VkDescriptorSet_darray* free_set_queue;
 
   VkDebugUtilsMessengerEXT vk_debugger;
 } vulkan_context;
@@ -94,6 +98,7 @@ bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
   context.window = window;
   context.current_img_index = 0;
   context.current_frame = 0;
+  context.free_set_queue = VkDescriptorSet_darray_new(100);
 
   // Create an allocator
   size_t temp_arena_size = 1024 * 1024;
@@ -505,6 +510,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   pipeline->uniform_pointers =
       malloc(description.data_layouts_count * sizeof(desc_set_uniform_buffer));
 
+  assert(description.data_layouts_count == 1);
   for (u32 i = 0; i < description.data_layouts_count; i++) {
     shader_data_layout sdl = description.data_layouts[i].shader_data_get_layout(NULL);
 
@@ -512,6 +518,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
     VkDescriptorSetLayoutBinding desc_set_bindings[description.data_layouts_count];
 
     // Bindings
+    assert(sdl.bindings_count == 1);
     for (u32 j = 0; j < sdl.bindings_count; j++) {
       desc_set_bindings[j].binding = j;
       desc_set_bindings[j].descriptorCount = 1;
@@ -519,6 +526,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
         case SHADER_BINDING_BUFFER:
         case SHADER_BINDING_BYTES:
           desc_set_bindings[j].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+          desc_set_bindings[j].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;  // FIXME: dont hardcode
 
           u64 buffer_size = sdl.bindings[j].data.bytes.size;
           VkDeviceSize uniform_buf_size = buffer_size;
@@ -531,9 +539,12 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
           for (size_t frame_i = 0; frame_i < MAX_FRAMES_IN_FLIGHT; frame_i++) {
             buffer_handle uniform_buf_handle =
                 gpu_buffer_create(buffer_size, CEL_BUFFER_UNIFORM, CEL_BUFFER_FLAG_CPU, NULL);
-            buffers[frame_i] = context.buffers[uniform_buf_handle.raw].handle;
+            gpu_buffer created_gpu_buffer = context.buffers[uniform_buf_handle.raw];
+            buffers[frame_i] = created_gpu_buffer.handle;
+            uniform_buf_memorys[frame_i] = created_gpu_buffer.memory;
             vkMapMemory(context.device->logical_device, uniform_buf_memorys[frame_i], 0,
                         uniform_buf_size, 0, &uniform_buf_mem_mappings[frame_i]);
+            // now we have a pointer in unifrom_buf_mem_mappings we can write to
           }
 
           desc_set_uniform_buffer uniform_data;
@@ -577,8 +588,8 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
     VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
   };
-  pipeline_layout_create_info.setLayoutCount = 0;
-  pipeline_layout_create_info.pSetLayouts = NULL;
+  pipeline_layout_create_info.setLayoutCount = description.data_layouts_count;
+  pipeline_layout_create_info.pSetLayouts = desc_set_layouts;
   pipeline_layout_create_info.pushConstantRangeCount = 0;
   pipeline_layout_create_info.pPushConstantRanges = NULL;
   VK_CHECK(vkCreatePipelineLayout(context.device->logical_device, &pipeline_layout_create_info,
@@ -733,12 +744,12 @@ gpu_cmd_encoder gpu_cmd_encoder_create() {
 
   VkDescriptorPoolSize uniform_pool_size;
   uniform_pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  uniform_pool_size.descriptorCount = MAX_FRAMES_IN_FLIGHT *  MAX_DESCRIPTOR_SETS;
+  uniform_pool_size.descriptorCount = MAX_FRAMES_IN_FLIGHT * MAX_DESCRIPTOR_SETS;
 
   VkDescriptorPoolCreateInfo pool_info = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
   pool_info.poolSizeCount = 1;
   pool_info.pPoolSizes = &uniform_pool_size;
-  pool_info.maxSets = 10000;
+  pool_info.maxSets = 100;
 
   VK_CHECK(vkCreateDescriptorPool(context.device->logical_device, &pool_info, context.allocator,
                                   &encoder.descriptor_pool));
@@ -751,6 +762,8 @@ void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder) {
 }
 
 void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) {
+  VK_CHECK(vkResetDescriptorPool(context.device->logical_device, encoder.descriptor_pool, 0));
+
   VkCommandBufferBeginInfo begin_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
   VK_CHECK(vkBeginCommandBuffer(encoder.cmd_buffer, &begin_info));
 }
@@ -782,6 +795,7 @@ void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder) {
 
 gpu_cmd_buffer gpu_cmd_encoder_finish(gpu_cmd_encoder* encoder) {
   vkEndCommandBuffer(encoder->cmd_buffer);
+
   // TEMP: submit
   return (gpu_cmd_buffer){ .cmd_buffer = encoder->cmd_buffer };
 }
@@ -800,14 +814,50 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
   memcpy(ubo.uniform_buf_mem_mappings[context.current_frame], data->data, ubo.size);
 
   VkDescriptorSetAllocateInfo alloc_info = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
-  alloc_info.descriptorPool =encoder->descriptor_pool;
+  alloc_info.descriptorPool = encoder->descriptor_pool;
   alloc_info.descriptorSetCount = 1;
-    alloc_info.pSetLayouts = &encoder->pipeline->desc_set_layouts[group];
+  alloc_info.pSetLayouts = &encoder->pipeline->desc_set_layouts[group];
 
-    VkDescriptorSet sets[1];
-  VK_CHECK(vkAllocateDescriptorSets(context.device->logical_device, &alloc_info,
-                                    sets));
+  VkDescriptorSet sets[1];
+  /* VK_CHECK( */
+  vkAllocateDescriptorSets(context.device->logical_device, &alloc_info, sets);
+  /* ); */
+  VkDescriptorSet_darray_push(context.free_set_queue, sets[0]);
 
+  shader_data_layout sdl = data->shader_data_get_layout(NULL);
+  assert(sdl.bindings_count == 1);
+
+  VkWriteDescriptorSet write_sets[1];
+  memset(&write_sets, 0, sizeof(write_sets));
+
+  assert(sdl.bindings_count == 1);
+  for (u32 i = 0; i < sdl.bindings_count; i++) {
+    shader_binding binding = sdl.bindings[i];
+
+    if (binding.type == SHADER_BINDING_BUFFER || binding.type == SHADER_BINDING_BYTES) {
+      VkDescriptorBufferInfo buffer_info;
+      buffer_info.buffer = ubo.buffers[context.current_frame];
+      buffer_info.offset = 0;
+      buffer_info.range = binding.data.bytes.size;
+
+      write_sets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write_sets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      write_sets[0].descriptorCount = 1;
+      write_sets[0].dstSet = sets[0];
+      write_sets[0].dstBinding = 0;
+      write_sets[0].dstArrayElement = 0;
+      write_sets[0].pBufferInfo = &buffer_info;
+    } else {
+      WARN("Unknown binding");
+    }
+  }
+
+  // Update
+  vkUpdateDescriptorSets(context.device->logical_device, 1, write_sets, 0, NULL);
+
+  // Bind
+  vkCmdBindDescriptorSets(encoder->cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          encoder->pipeline->layout_handle, 0, 1, sets, 0, NULL);
 }
 
 void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
@@ -1081,7 +1131,6 @@ VkShaderModule create_shader_module(str8 spirv) {
   return shader_module;
 }
 
-
 void create_descriptor_pools() {}
 
 void create_swapchain_framebuffers() {
@@ -1154,6 +1203,9 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
       break;
     case CEL_BUFFER_INDEX:
       buffer_info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+      break;
+    case CEL_BUFFER_UNIFORM:
+      buffer_info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
       break;
     case CEL_BUFFER_COUNT:
       WARN("Incorrect gpu_buffer_type provided. using default");

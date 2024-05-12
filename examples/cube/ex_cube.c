@@ -6,6 +6,7 @@
 #include "file.h"
 #include "log.h"
 #include "maths.h"
+#include "maths_types.h"
 #include "mem.h"
 #include "ral.h"
 #include "ral_types.h"
@@ -39,7 +40,10 @@ shader_data_layout mvp_uniforms_layout(void* data) {
   if (has_data) {
     b1.data.bytes.data = d;
   }
-  return (shader_data_layout){ .name = "global_ubo", .bindings = { b1 } };
+  /*   char* name; */
+  /*   shader_binding bindings[MAX_LAYOUT_BINDINGS]; */
+  /*   u32 bindings_count; */
+  return (shader_data_layout){ .name = "global_ubo", .bindings = { b1 }, .bindings_count = 1 };
 }
 
 int main() {
@@ -53,7 +57,7 @@ int main() {
   gpu_renderpass_desc pass_description = {};
   gpu_renderpass* renderpass = gpu_renderpass_create(&pass_description);
 
-  str8 vert_path = str8lit("build/linux/x86_64/debug/triangle.vert.spv");
+  str8 vert_path = str8lit("build/linux/x86_64/debug/cube.vert.spv");
   str8 frag_path = str8lit("build/linux/x86_64/debug/triangle.frag.spv");
   str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
   str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
@@ -104,9 +108,11 @@ int main() {
 
     /* shader_data_layout mvp_layout = mvp_uniforms_layout(NULL); */
 
-    mvp_uniforms mvp_data = { .model = mat4_ident(),
-                              .view = mat4_ident(),
-                              .projection = mat4_ident() };
+    static f32 x = 0.0;
+    x += 0.01;
+    quat rotation = quat_from_axis_angle(VEC3_Z, x, true);
+    mat4 model = mat4_rotation(rotation);
+    mvp_uniforms mvp_data = { .model = model, .view = mat4_ident(), .projection = mat4_ident() };
     mvp_uniforms_data.data = &mvp_data;
 
     // Record draw calls
