@@ -393,6 +393,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   attribute_descs[1].offset = offsetof(custom_vertex, color);
 
   // Vertex input
+  // TODO: Generate this from descroiption now
   VkVertexInputBindingDescription binding_desc;
   binding_desc.binding = 0;
   binding_desc.stride = sizeof(custom_vertex);
@@ -819,9 +820,9 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
   alloc_info.pSetLayouts = &encoder->pipeline->desc_set_layouts[group];
 
   VkDescriptorSet sets[1];
-  /* VK_CHECK( */
-  vkAllocateDescriptorSets(context.device->logical_device, &alloc_info, sets);
-  /* ); */
+  VK_CHECK(
+  vkAllocateDescriptorSets(context.device->logical_device, &alloc_info, sets)
+  );
   VkDescriptorSet_darray_push(context.free_set_queue, sets[0]);
 
   shader_data_layout sdl = data->shader_data_get_layout(NULL);

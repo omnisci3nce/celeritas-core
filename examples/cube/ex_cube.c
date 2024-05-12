@@ -52,6 +52,10 @@ int main() {
 
   DEBUG("render capacity %d", g_core.default_scene.renderables->capacity);
 
+  vertex_description vertex_input = {0};
+  vertex_desc_add(&vertex_input, "inPosition", ATTR_F32x2);
+  vertex_desc_add(&vertex_input, "inColor", ATTR_F32x3);
+
   shader_data mvp_uniforms_data = { .data = NULL, .shader_data_get_layout = &mvp_uniforms_layout };
 
   gpu_renderpass_desc pass_description = {};
@@ -67,6 +71,7 @@ int main() {
 
   struct graphics_pipeline_desc pipeline_description = {
     .debug_name = "Basic Pipeline",
+    .vertex_desc = vertex_input,
     .data_layouts = { mvp_uniforms_data },
     .data_layouts_count = 1,
     .vs = { .debug_name = "Triangle Vertex Shader",

@@ -44,3 +44,5 @@ mesh mesh_create(geometry_data* geometry);
 model_handle model_load(const char* debug_name, const char* filepath);
 
 void geo_set_vertex_colours(geometry_data* geo, vec4 colour);
+
+vertex_description static_3d_vertex_description();

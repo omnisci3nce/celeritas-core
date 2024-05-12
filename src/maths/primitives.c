@@ -1,5 +1,6 @@
 #include "primitives.h"
 #include "maths.h"
+#include "ral_types.h"
 
 // vertices
 f32 plane_vertex_positions[] = {
@@ -30,136 +31,148 @@ static const vec3 FRONT_BOT_RIGHT = (vec3){ 1, 0, 1 };
 static const vec3 FRONT_TOP_LEFT = (vec3){ 0, 1, 1 };
 static const vec3 FRONT_TOP_RIGHT = (vec3){ 1, 1, 1 };
 
+#define VERT_3D(arr, pos, norm, uv) \
+  { \
+    vertex v = {
+      .static_3d = { \
+      .position = pos, \
+      .normal = norm, \
+      .tex_coords = uv \
+    }}; \
+    vertex_darray_push(arr, v); \
+  } 
+
 static mesh prim_cube_mesh_create() {
   mesh cube = { 0 };
   cube.vertices = vertex_darray_new(36);
 
-  //   // back faces
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0, 1 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0, 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_NEG_Z, .uv = (vec2){ 1, 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_NEG_Z, .uv = (vec2){ 1, 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_NEG_Z, .uv = (vec2){ 1, 1 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0, 1 } });
+    // back faces
+    VERT_3D(cube.vertices, BACK_BOT_LEFT, VEC3_NEG_Z, (vec2){ 0, 1 }))
+    // vertex_darray_push(
+    //     cube.vertices,
+    //     (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0, 1 } });
+    // vertex_darray_push(
+    //     cube.vertices,
+    //     (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0, 0 } });
+    // vertex_darray_push(
+    //     cube.vertices,
+    //     (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_NEG_Z, .uv = (vec2){ 1, 0 } });
+    // vertex_darray_push(
+    //     cube.vertices,
+    //     (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_NEG_Z, .uv = (vec2){ 1, 0 } });
+    // vertex_darray_push(
+    //     cube.vertices,
+    //     (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_NEG_Z, .uv = (vec2){ 1, 1 } });
+    // vertex_darray_push(
+    //     cube.vertices,
+    //     (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Z, .uv = (vec2){ 0, 1 } });
 
-  //   // front faces
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0, 1 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 1, 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0, 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0, 1 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 1, 1 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 1, 0 } });
+    // front faces
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0, 1 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 1, 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0, 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_Z, .uv = (vec2){ 0, 1 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 1, 1 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Z, .uv = (vec2){ 1, 0 } });
 
-  //   // top faces
-  //   vertex_darray_push(cube.vertices,
-  //                      (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_Y, .uv = (vec2){ 0, 0
-  //                      } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_Y, .uv = (vec2){ 0, 1 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Y, .uv = (vec2){ 1, 1 } });
-  //   vertex_darray_push(cube.vertices,
-  //                      (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_Y, .uv = (vec2){ 0, 0
-  //                      } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Y, .uv = (vec2){ 1, 1 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_Y, .uv = (vec2){ 1, 0 } });
+    // top faces
+    vertex_darray_push(cube.vertices,
+                       (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_Y, .uv = (vec2){ 0, 0
+                       } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_Y, .uv = (vec2){ 0, 1 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Y, .uv = (vec2){ 1, 1 } });
+    vertex_darray_push(cube.vertices,
+                       (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_Y, .uv = (vec2){ 0, 0
+                       } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_Y, .uv = (vec2){ 1, 1 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_Y, .uv = (vec2){ 1, 0 } });
 
-  //   // bottom faces
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
+    // bottom faces
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_NEG_Y, .uv = (vec2){ 0 } });
 
-  //   // right faces
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_X, .uv = (vec2){ 0, 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_X, .uv = (vec2){ 1, 1 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_X, .uv = (vec2){ 1, 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_X, .uv = (vec2){ 1, 1 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_X, .uv = (vec2){ 0, 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_X, .uv = (vec2){ 0, 1 } });
+    // right faces
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_X, .uv = (vec2){ 0, 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_X, .uv = (vec2){ 1, 1 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = BACK_TOP_RIGHT, .normal = VEC3_X, .uv = (vec2){ 1, 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = BACK_BOT_RIGHT, .normal = VEC3_X, .uv = (vec2){ 1, 1 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_TOP_RIGHT, .normal = VEC3_X, .uv = (vec2){ 0, 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_BOT_RIGHT, .normal = VEC3_X, .uv = (vec2){ 0, 1 } });
 
-  //   // left faces
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
-  //   vertex_darray_push(
-  //       cube.vertices,
-  //       (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
+    // left faces
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = BACK_TOP_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = BACK_BOT_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_BOT_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
+    vertex_darray_push(
+        cube.vertices,
+        (vertex){ .position = FRONT_TOP_LEFT, .normal = VEC3_NEG_X, .uv = (vec2){ 0 } });
 
-  //   cube.indices_len = cube.vertices->len;
-  //   cube.indices = malloc(sizeof(u32) * cube.indices_len);
+    cube.indices_len = cube.vertices->len;
+    cube.indices = malloc(sizeof(u32) * cube.indices_len);
 
-  //   for (u32 i = 0; i < cube.indices_len; i++) {
-  //     cube.indices[i] = i;
-  //   }
+    for (u32 i = 0; i < cube.indices_len; i++) {
+      cube.indices[i] = i;
+    }
 
   cube.has_indices = true;
 

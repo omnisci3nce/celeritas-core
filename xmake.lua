@@ -59,6 +59,7 @@ local core_sources = {
     -- "src/logos/*.c",
     "src/maths/*.c",
     "src/platform/*.c",
+    "src/physics/*.c",
     "src/renderer/*.c",
     "src/renderer/backends/*.c",
     "src/resources/*.c",
@@ -103,6 +104,7 @@ target("core_config")
     -- add_includedirs("src/logos/", {public = true})
     add_includedirs("src/maths/", {public = true})
     add_includedirs("src/platform/", {public = true})
+    add_includedirs("src/physics/", {public = true})
     add_includedirs("src/renderer/", {public = true})
     add_includedirs("src/renderer/backends/", {public = true})
     add_includedirs("src/resources/", {public = true})

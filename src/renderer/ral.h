@@ -54,6 +54,7 @@ typedef struct shader_desc {
 
 struct graphics_pipeline_desc {
   const char* debug_name;
+  vertex_description vertex_desc;
   shader_desc vs; /** @brief Vertex shader stage */
   shader_desc fs; /** @brief Fragment shader stage */
 
@@ -150,8 +151,11 @@ void gpu_sampler_create();
 // --- Vertex formats
 bytebuffer vertices_as_bytebuffer(arena* a, vertex_format format, vertex_darray* vertices);
 
+void vertex_desc_add(vertex_description* builder, const char* name, vertex_attrib_type type);
+
 // TODO: Bindgroup texture samplers / shader resources
 
 // TEMP
 
 void gpu_temp_draw(size_t n_verts);
+

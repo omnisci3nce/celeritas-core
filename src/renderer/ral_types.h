@@ -1,7 +1,7 @@
 /**
  * @file ral_types.h
  * @author your name (you@domain.com)
- * @brief
+ * @brief Struct and enum definitions for RAL
  * @version 0.1
  * @date 2024-04-27
  *
@@ -13,6 +13,8 @@
 #include "darray.h"
 #include "defines.h"
 #include "maths_types.h"
+
+#define MAX_VERTEX_ATTRIBUTES 16
 
 #ifndef RENDERER_TYPED_HANDLES
 CORE_DEFINE_HANDLE(buffer_handle);
@@ -143,18 +145,44 @@ typedef enum vertex_attrib_type {
   ATTR_I32x4,
 } vertex_attrib_type;
 
+typedef struct vertex_description {
+  char* debug_label;
+  const char* attr_names[MAX_VERTEX_ATTRIBUTES];
+  vertex_attrib_type attributes[MAX_VERTEX_ATTRIBUTES];
+  size_t stride;
+} vertex_description;
+
+// --- Shaders & Bindings
+
 typedef enum shader_visibility {
   VISIBILITY_VERTEX = 1 << 0,
   VISIBILITY_FRAGMENT = 1 << 1 ,
   VISIBILITY_COMPUTE = 1 << 2,
 } shader_visibility;
 
+/** @brief Describes the kind of binding a `shader_binding` is for. This changes how we create backing data for it. */
 typedef enum shader_binding_type {
+  /**
+   * @brief Binds a buffer to a shader
+   * @note Vulkan: Becomes a Storage Buffer
+   */
   SHADER_BINDING_BUFFER,
+  SHADER_BINDING_BUFFER_ARRAY,
   SHADER_BINDING_TEXTURE,
+  SHADER_BINDING_TEXTURE_ARRAY,
+  SHADER_BINDING_SAMPLER,
+  /**
+   * @brief Binds raw data to a shader
+   * @note Vulkan: Becomes a Uniform Buffer
+   */
   SHADER_BINDING_BYTES,
+  // TODO: Acceleration Structure
   SHADER_BINDING_COUNT
 } shader_binding_type;
+
+// pub trait ShaderBindable: Clone + Copy {
+//     fn bind_to(&self, context: &mut PipelineContext, index: u32);
+// }
 
 typedef struct shader_binding {
   const char* label;
@@ -171,7 +199,7 @@ typedef struct shader_binding {
       void* data;
       size_t size;
     } bytes;
-  } data;
+  } data; /** @brief */
 } shader_binding;
 
 #define MAX_LAYOUT_BINDINGS 8
