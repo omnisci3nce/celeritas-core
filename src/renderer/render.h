@@ -25,6 +25,11 @@ void render_frame_draw(renderer* ren);
 typedef struct camera camera;
 void gfx_backend_draw_frame(renderer* ren, camera* camera, mat4 model, texture* tex);
 
+typedef struct render_ctx {
+    mat4 view;
+    mat4 projection;
+} render_ctx;
+
 // frontend -- these can be called from say a loop in an example, or via FFI
 texture_handle texture_create(const char* debug_name, texture_desc description, const u8* data);
 
@@ -39,10 +44,22 @@ sampler_handle sampler_create();
 void shader_hot_reload(const char* filepath);
 
 // models and meshes are implemented **in terms of the above**
-mesh mesh_create(geometry_data* geometry);
+
+/**
+ * @brief Creates buffers and returns a struct that holds handles to our resources
+ * 
+ * @param geometry 
+ * @param free_on_upload frees the CPU-side vertex/index data stored in geometry_data when we successfully upload
+                         that data to the GPU-side buffer
+ * @return mesh 
+ */
+mesh mesh_create(geometry_data* geometry, bool free_on_upload);
+
+void draw_mesh(mesh* mesh, mat4* model);//, mat4* view, mat4* proj); // TODO: material
 
 model_handle model_load(const char* debug_name, const char* filepath);
 
+void geo_free_data(geometry_data* geo);
 void geo_set_vertex_colours(geometry_data* geo, vec4 colour);
 
 vertex_description static_3d_vertex_description();

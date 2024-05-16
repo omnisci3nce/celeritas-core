@@ -45,12 +45,15 @@ typedef struct geometry_data {
   vec3 colour; /** Optional: set vertex colours */
 } geometry_data;
 
+// 'Upload' a geometry_data (to GPU) -> get back a mesh
 typedef struct mesh {
   buffer_handle vertex_buffer;
   buffer_handle index_buffer;
   u32 index_count;
   bool has_indices;
   geometry_data* vertices;  // NULL means it has been freed
+  bool is_uploaded;
+  bool is_latent;
 } mesh;
 
 /* Hot reloading:

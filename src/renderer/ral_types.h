@@ -85,8 +85,8 @@ typedef enum vertex_format {
 typedef union vertex {
   struct {
     vec3 position;
-    vec2 tex_coords;
     vec3 normal;
+    vec2 tex_coords;
   } static_3d; /** @brief standard vertex format for static geometry in 3D */
 
   struct {
@@ -149,6 +149,7 @@ typedef struct vertex_description {
   char* debug_label;
   const char* attr_names[MAX_VERTEX_ATTRIBUTES];
   vertex_attrib_type attributes[MAX_VERTEX_ATTRIBUTES];
+  u32 attributes_count;
   size_t stride;
 } vertex_description;
 

@@ -84,6 +84,7 @@ bool create_logical_device(gpu_device* out_device);
 void create_swapchain_framebuffers();
 void create_sync_objects();
 void create_descriptor_pools();
+size_t vertex_attrib_size(vertex_attrib_type attr);
 
 VkShaderModule create_shader_module(str8 spirv);
 
@@ -106,7 +107,7 @@ bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
 
   // Setup Vulkan instance
   VkApplicationInfo app_info = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
-  app_info.apiVersion = VK_API_VERSION_1_3;
+  app_info.apiVersion = VK_API_VERSION_1_2;
   app_info.pApplicationName = window_name;
   app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   app_info.pEngineName = "Celeritas Engine";
@@ -351,6 +352,35 @@ static void recreate_swapchain(gpu_swapchain* swapchain) {
   create_swapchain_framebuffers();
 }
 
+VkFormat format_from_vertex_attr(vertex_attrib_type attr) {
+  switch (attr) {
+    case ATTR_F32:
+      return VK_FORMAT_R32_SFLOAT;
+    case ATTR_U32:
+      return VK_FORMAT_R32_UINT;
+    case ATTR_I32:
+      return VK_FORMAT_R32_SINT;
+    case ATTR_F32x2:
+      return VK_FORMAT_R32G32_SFLOAT;
+    case ATTR_U32x2:
+      return VK_FORMAT_R32G32_UINT;
+    case ATTR_I32x2:
+      return VK_FORMAT_R32G32_UINT;
+    case ATTR_F32x3:
+      return VK_FORMAT_R32G32B32_SFLOAT;
+    case ATTR_U32x3:
+      return VK_FORMAT_R32G32B32_UINT;
+    case ATTR_I32x3:
+      return VK_FORMAT_R32G32B32_SINT;
+    case ATTR_F32x4:
+      return VK_FORMAT_R32G32B32A32_SFLOAT;
+    case ATTR_U32x4:
+      return VK_FORMAT_R32G32B32A32_UINT;
+    case ATTR_I32x4:
+      return VK_FORMAT_R32G32B32A32_SINT;
+  }
+}
+
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {
   // Allocate
   gpu_pipeline_layout* layout = malloc(sizeof(gpu_pipeline_layout));
@@ -381,22 +411,35 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
                                                        frag_shader_stage_info };
 
   // TODO: Attributes
-  VkVertexInputAttributeDescription attribute_descs[2];
+  VkVertexInputAttributeDescription attribute_descs[2] = {0};
+  /* u32 offset = 0; */
+  /* for (u32 i = 0; i < description.vertex_desc.attributes_count; i++) { */
+  /*   attribute_descs[i].binding = 0; */
+  /*   attribute_descs[i].location = i; */
+  /*   attribute_descs[i].format = format_from_vertex_attr(description.vertex_desc.attributes[i]); */
+  /*   attribute_descs[i].offset = offset; */
+  /*     size_t this_offset = vertex_attrib_size(description.vertex_desc.attributes[i]); */
+  /*   printf("offset total %d this attr %ld\n", offset, this_offset); */
+  /*   printf("sizeof vertex %ld\n", sizeof(vertex)); */
+  /*   printf("%d \n", offsetof(vertex, static_3d)); */
+  /*   offset += this_offset; */
+  /* } */
+  printf("Vertex attributes\n");
   attribute_descs[0].binding = 0;
   attribute_descs[0].location = 0;
-  attribute_descs[0].format = VK_FORMAT_R32G32_SFLOAT;
-  attribute_descs[0].offset = offsetof(custom_vertex, pos);
+  attribute_descs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+  attribute_descs[0].offset = 0; // offsetof(custom_vertex, pos);
 
   attribute_descs[1].binding = 0;
   attribute_descs[1].location = 1;
   attribute_descs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-  attribute_descs[1].offset = offsetof(custom_vertex, color);
+  attribute_descs[1].offset = 12; // offsetof(custom_vertex, color);
 
   // Vertex input
   // TODO: Generate this from descroiption now
   VkVertexInputBindingDescription binding_desc;
   binding_desc.binding = 0;
-  binding_desc.stride = sizeof(custom_vertex);
+  binding_desc.stride = sizeof(vertex);  // description.vertex_desc.stride;
   binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
   VkPipelineVertexInputStateCreateInfo vertex_input_info = {
@@ -404,7 +447,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   };
   vertex_input_info.vertexBindingDescriptionCount = 1;
   vertex_input_info.pVertexBindingDescriptions = &binding_desc;
-  vertex_input_info.vertexAttributeDescriptionCount = 2;
+  vertex_input_info.vertexAttributeDescriptionCount = 2; // description.vertex_desc.attributes_count;
   vertex_input_info.pVertexAttributeDescriptions = attribute_descs;
 
   // Input Assembly
@@ -441,6 +484,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   rasterizer_create_info.lineWidth = 1.0f;
   rasterizer_create_info.cullMode = VK_CULL_MODE_BACK_BIT;
   rasterizer_create_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  /* rasterizer_create_info.frontFace = VK_FRONT_FACE_CLOCKWISE; */
   rasterizer_create_info.depthBiasEnable = VK_FALSE;
   rasterizer_create_info.depthBiasConstantFactor = 0.0;
   rasterizer_create_info.depthBiasClamp = 0.0;
@@ -584,6 +628,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
     VK_CHECK(vkCreateDescriptorSetLayout(context.device->logical_device, &desc_set_layout_info,
                                          context.allocator, &desc_set_layouts[i]));
   }
+    printf("Descriptor set layouts\n");
 
   // Layout
   VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
@@ -621,13 +666,18 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   pipeline_create_info.basePipelineHandle = VK_NULL_HANDLE;
   pipeline_create_info.basePipelineIndex = -1;
 
+  printf("Here\n");
+
   VkResult result =
       vkCreateGraphicsPipelines(context.device->logical_device, VK_NULL_HANDLE, 1,
                                 &pipeline_create_info, context.allocator, &pipeline->handle);
   if (result != VK_SUCCESS) {
+    printf("BAD\n");
     FATAL("graphics pipeline creation failed. its fked mate");
     ERROR_EXIT("Doomed");
   }
+  printf("Here2\n");
+  TRACE("Vulkan Graphics pipeline created");
 
   // once the pipeline has been created we can destroy these
   vkDestroyShaderModule(context.device->logical_device, vertex_shader, context.allocator);
@@ -820,9 +870,7 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
   alloc_info.pSetLayouts = &encoder->pipeline->desc_set_layouts[group];
 
   VkDescriptorSet sets[1];
-  VK_CHECK(
-  vkAllocateDescriptorSets(context.device->logical_device, &alloc_info, sets)
-  );
+  VK_CHECK(vkAllocateDescriptorSets(context.device->logical_device, &alloc_info, sets));
   VkDescriptorSet_darray_push(context.free_set_queue, sets[0]);
 
   shader_data_layout sdl = data->shader_data_get_layout(NULL);
@@ -870,7 +918,7 @@ void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
 
 void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
   gpu_buffer buffer = context.buffers[buf.raw];
-  vkCmdBindIndexBuffer(encoder->cmd_buffer, buffer.handle, 0, VK_INDEX_TYPE_UINT16);
+  vkCmdBindIndexBuffer(encoder->cmd_buffer, buffer.handle, 0, VK_INDEX_TYPE_UINT32);
 }
 
 // TEMP
@@ -1309,4 +1357,37 @@ void encode_buffer_copy(gpu_cmd_encoder* encoder, buffer_handle src, u64 src_off
 
   vkCmdCopyBuffer(encoder->cmd_buffer, context.buffers[src.raw].handle,
                   context.buffers[dst.raw].handle, 1, &copy_region);
+}
+
+size_t vertex_attrib_size(vertex_attrib_type attr) {
+  switch (attr) {
+    case ATTR_F32:
+    case ATTR_U32:
+    case ATTR_I32:
+      return 4;
+    case ATTR_F32x2:
+    case ATTR_U32x2:
+    case ATTR_I32x2:
+      return 8;
+    case ATTR_F32x3:
+    case ATTR_U32x3:
+    case ATTR_I32x3:
+      return 12;
+    case ATTR_F32x4:
+    case ATTR_U32x4:
+    case ATTR_I32x4:
+      return 16;
+      break;
+  }
+}
+
+void vertex_desc_add(vertex_description* builder, const char* name, vertex_attrib_type type) {
+  u32 i = builder->attributes_count;
+
+  size_t size = vertex_attrib_size(type);
+  builder->attributes[i] = type;
+  builder->stride += size;
+  builder->attr_names[i] = name;
+
+  builder->attributes_count++;
 }

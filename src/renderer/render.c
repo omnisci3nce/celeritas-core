@@ -4,6 +4,7 @@
 #include "file.h"
 #include "log.h"
 #include "ral.h"
+#include "ral_types.h"
 
 /** @brief Creates the pipelines built into Celeritas such as rendering static opaque geometry,
            debug visualisations, immediate mode UI, etc */
@@ -126,6 +127,48 @@ void render_frame_end(renderer* ren) {
 }
 void render_frame_draw(renderer* ren) {}
 
+void draw_mesh(mesh* mesh, mat4* model) {  // , mat4* view, mat4* proj) {
+  gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
+  encode_set_vertex_buffer(enc, mesh->vertex_buffer);
+  if (mesh->has_indices) {
+    encode_set_index_buffer(enc, mesh->index_buffer);
+  }
+  // Assume this has already been done
+  /* encode_bind_shader_data(enc, 0, &mvp_uniforms_data); */
+  encode_draw_indexed(enc, mesh->index_count);
+}
+
 void gfx_backend_draw_frame(renderer* ren, camera* camera, mat4 model, texture* tex) {}
 
 void geo_set_vertex_colours(geometry_data* geo, vec4 colour) {}
+
+// --- NEW
+
+mesh mesh_create(geometry_data* geometry, bool free_on_upload) {
+  mesh m = { 0 };
+
+  // Create and upload vertex buffer
+  size_t vert_bytes = geometry->vertices->len * sizeof(vertex);
+  INFO("Creating vertex buffer with size %d (%d x %d)", vert_bytes, geometry->vertices->len,
+       sizeof(vertex));
+  m.vertex_buffer = gpu_buffer_create(vert_bytes, CEL_BUFFER_VERTEX, CEL_BUFFER_FLAG_GPU,
+                                      geometry->vertices->data);
+
+  // Create and upload index buffer
+  size_t index_bytes = geometry->indices.len * sizeof(u32);
+  INFO("Creating index buffer with size %d (len: %d)", index_bytes, geometry->indices.len);
+  m.index_buffer =
+      gpu_buffer_create(index_bytes, CEL_BUFFER_INDEX, CEL_BUFFER_FLAG_GPU, geometry->indices.data);
+
+  m.is_uploaded = true;
+  m.has_indices = geometry->has_indices;
+  m.index_count = geometry->indices.len;
+  m.vertices = geometry;
+  if (free_on_upload) {
+    geo_free_data(geometry);
+  }
+
+  // TODO: materials?
+
+  return m;
+}

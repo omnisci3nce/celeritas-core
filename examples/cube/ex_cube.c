@@ -8,19 +8,13 @@
 #include "maths.h"
 #include "maths_types.h"
 #include "mem.h"
+#include "primitives.h"
 #include "ral.h"
 #include "ral_types.h"
 #include "render.h"
+#include "render_types.h"
 
 extern core g_core;
-
-const custom_vertex vertices[] = {
-  (custom_vertex){ .pos = vec2(-0.5, 0.5), .color = vec3(0.0, 0.0, 1.0) },
-  (custom_vertex){ .pos = vec2(0.5, 0.5), .color = vec3(0.0, 1.0, 0.0) },
-  (custom_vertex){ .pos = vec2(0.5, -0.5), .color = vec3(1.0, 0.0, 0.0) },
-  (custom_vertex){ .pos = vec2(-0.5, -0.5), .color = vec3(1.0, 1.0, 1.0) },
-};
-const u16 indices[] = { 0, 1, 2, 2, 3, 0 };
 
 // Define the shader data
 typedef struct mvp_uniforms {
@@ -29,6 +23,7 @@ typedef struct mvp_uniforms {
   mat4 projection;
 } mvp_uniforms;
 
+// We also must create a function that knows how to return a `shader_data_layout`
 shader_data_layout mvp_uniforms_layout(void* data) {
   mvp_uniforms* d = (mvp_uniforms*)data;
   bool has_data = data != NULL;
@@ -40,9 +35,6 @@ shader_data_layout mvp_uniforms_layout(void* data) {
   if (has_data) {
     b1.data.bytes.data = d;
   }
-  /*   char* name; */
-  /*   shader_binding bindings[MAX_LAYOUT_BINDINGS]; */
-  /*   u32 bindings_count; */
   return (shader_data_layout){ .name = "global_ubo", .bindings = { b1 }, .bindings_count = 1 };
 }
 
@@ -52,9 +44,15 @@ int main() {
 
   DEBUG("render capacity %d", g_core.default_scene.renderables->capacity);
 
-  vertex_description vertex_input = {0};
-  vertex_desc_add(&vertex_input, "inPosition", ATTR_F32x2);
-  vertex_desc_add(&vertex_input, "inColor", ATTR_F32x3);
+  vec3 camera_pos = vec3(2., 2., 2.);
+  vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
+  camera cam = camera_create(camera_pos, camera_front, VEC3_Y, deg_to_rad(45.0));
+
+  vertex_description vertex_input;
+  vertex_input.debug_label = "Standard Static 3D Vertex Format";
+  vertex_desc_add(&vertex_input, "inPosition", ATTR_F32x3);
+  vertex_desc_add(&vertex_input, "inNormal", ATTR_F32x3);
+  vertex_desc_add(&vertex_input, "inTexCoords", ATTR_F32x2);
 
   shader_data mvp_uniforms_data = { .data = NULL, .shader_data_get_layout = &mvp_uniforms_layout };
 
@@ -88,18 +86,12 @@ int main() {
   };
   gpu_pipeline* gfx_pipeline = gpu_graphics_pipeline_create(pipeline_description);
 
-  buffer_handle triangle_vert_buf =
-      gpu_buffer_create(sizeof(vertices), CEL_BUFFER_VERTEX, CEL_BUFFER_FLAG_GPU, vertices);
-
-  buffer_handle triangle_index_buf =
-      gpu_buffer_create(sizeof(indices), CEL_BUFFER_INDEX, CEL_BUFFER_FLAG_GPU, indices);
+  geometry_data cube_data = geo_create_cuboid(f32x3(1, 1, 1));
+  mesh cube = mesh_create(&cube_data, false);
 
   // Main loop
   while (!should_exit(&g_core)) {
-    glfwPollEvents();
     input_update(&g_core.input);
-
-    // render_frame_begin(&g_core.renderer);
 
     if (!gpu_backend_begin_frame()) {
       continue;
@@ -111,20 +103,26 @@ int main() {
     encode_bind_pipeline(enc, PIPELINE_GRAPHICS, gfx_pipeline);
     encode_set_default_settings(enc);
 
-    /* shader_data_layout mvp_layout = mvp_uniforms_layout(NULL); */
-
     static f32 x = 0.0;
     x += 0.01;
-    quat rotation = quat_from_axis_angle(VEC3_Z, x, true);
+    quat rotation = quat_from_axis_angle(VEC3_Y, x, true);
+    mat4 translation = mat4_translation(vec3(-0.5, -0.5, -0.5));
     mat4 model = mat4_rotation(rotation);
-    mvp_uniforms mvp_data = { .model = model, .view = mat4_ident(), .projection = mat4_ident() };
+    model = mat4_mult(translation, model);
+    mat4 view, proj;
+    camera_view_projection(&cam, g_core.renderer.swapchain.extent.width,
+                           g_core.renderer.swapchain.extent.height, &view, &proj);
+    mvp_uniforms mvp_data = { .model = model, .view = view, .projection = proj };
     mvp_uniforms_data.data = &mvp_data;
+    encode_bind_shader_data(enc, 0, &mvp_uniforms_data);
 
     // Record draw calls
-    encode_set_vertex_buffer(enc, triangle_vert_buf);
-    encode_set_index_buffer(enc, triangle_index_buf);
-    encode_bind_shader_data(enc, 0, &mvp_uniforms_data);
-    gpu_temp_draw(6);
+    // -- NEW
+    draw_mesh(&cube, &model);
+    // -- OLD
+    /* encode_set_vertex_buffer(enc, triangle_vert_buf); */
+    /* encode_set_index_buffer(enc, triangle_index_buf); */
+    /* gpu_temp_draw(6); */
 
     // End recording
     gpu_cmd_encoder_end_render(enc);
