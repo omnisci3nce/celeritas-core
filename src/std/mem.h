@@ -10,6 +10,9 @@
 #pragma once
 
 #include <stddef.h>
+#include "defines.h"
+
+// --- Arena
 
 // Inspired by https://nullprogram.com/blog/2023/09/27/
 typedef struct arena {
@@ -31,3 +34,26 @@ void arena_free_storage(arena* a);
 arena_save arena_savepoint(arena* a);
 void arena_rewind(arena_save savepoint);
 // TODO: arena_resize
+
+// --- Pool
+
+typedef struct void_pool_header void_pool_header;
+struct void_pool_header {
+  void_pool_header* next;
+};
+
+typedef struct void_pool {
+  u64 capacity;
+  u64 entry_size;
+  u64 count;
+  void* backing_buffer;
+  void_pool_header* free_list_head;
+} void_pool;
+
+void_pool void_pool_create(arena* a, u64 capacity, u64 entry_size);
+void void_pool_free_all(void_pool* pool);
+bool void_pool_is_empty(void_pool* pool);
+bool void_pool_is_full(void_pool* pool);
+void* void_pool_get(u32 raw_handle);
+
+// TODO: macro that lets us specialise

@@ -78,6 +78,11 @@ struct graphics_pipeline_desc {
 typedef struct gpu_renderpass_desc {
 } gpu_renderpass_desc;
 
+typedef struct resource_pools {
+ // TODO: buffer pool
+ // TODO: texture pool
+} resource_pools;
+
 // --- Lifecycle functions
 
 bool gpu_backend_init(const char* window_name, struct GLFWwindow* window);

@@ -411,12 +411,13 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
                                                        frag_shader_stage_info };
 
   // TODO: Attributes
-  VkVertexInputAttributeDescription attribute_descs[2] = {0};
+  VkVertexInputAttributeDescription attribute_descs[2] = { 0 };
   /* u32 offset = 0; */
   /* for (u32 i = 0; i < description.vertex_desc.attributes_count; i++) { */
   /*   attribute_descs[i].binding = 0; */
   /*   attribute_descs[i].location = i; */
-  /*   attribute_descs[i].format = format_from_vertex_attr(description.vertex_desc.attributes[i]); */
+  /*   attribute_descs[i].format = format_from_vertex_attr(description.vertex_desc.attributes[i]);
+   */
   /*   attribute_descs[i].offset = offset; */
   /*     size_t this_offset = vertex_attrib_size(description.vertex_desc.attributes[i]); */
   /*   printf("offset total %d this attr %ld\n", offset, this_offset); */
@@ -428,12 +429,12 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   attribute_descs[0].binding = 0;
   attribute_descs[0].location = 0;
   attribute_descs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-  attribute_descs[0].offset = 0; // offsetof(custom_vertex, pos);
+  attribute_descs[0].offset = 0;  // offsetof(custom_vertex, pos);
 
   attribute_descs[1].binding = 0;
   attribute_descs[1].location = 1;
   attribute_descs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-  attribute_descs[1].offset = 12; // offsetof(custom_vertex, color);
+  attribute_descs[1].offset = 12;  // offsetof(custom_vertex, color);
 
   // Vertex input
   // TODO: Generate this from descroiption now
@@ -447,7 +448,8 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   };
   vertex_input_info.vertexBindingDescriptionCount = 1;
   vertex_input_info.pVertexBindingDescriptions = &binding_desc;
-  vertex_input_info.vertexAttributeDescriptionCount = 2; // description.vertex_desc.attributes_count;
+  vertex_input_info.vertexAttributeDescriptionCount =
+      2;  // description.vertex_desc.attributes_count;
   vertex_input_info.pVertexAttributeDescriptions = attribute_descs;
 
   // Input Assembly
@@ -628,7 +630,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
     VK_CHECK(vkCreateDescriptorSetLayout(context.device->logical_device, &desc_set_layout_info,
                                          context.allocator, &desc_set_layouts[i]));
   }
-    printf("Descriptor set layouts\n");
+  printf("Descriptor set layouts\n");
 
   // Layout
   VkPipelineLayoutCreateInfo pipeline_layout_create_info = {

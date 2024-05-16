@@ -8,6 +8,8 @@
 #define DEFAULT_ALIGNMENT (2 * sizeof(void*))
 #endif
 
+// --- Arena
+
 void* arena_alloc_align(arena* a, size_t size, size_t align) {
   ptrdiff_t padding = -(uintptr_t)a->curr & (align - 1);
   ptrdiff_t available = a->end - a->curr - padding;
@@ -39,3 +41,20 @@ arena_save arena_savepoint(arena* a) {
 }
 
 void arena_rewind(arena_save savepoint) { savepoint.arena->curr = savepoint.savepoint; }
+
+// --- Pool
+
+void_pool void_pool_create(arena* a, u64 capacity, u64 entry_size) {
+  size_t memory_requirements = capacity * entry_size;
+  void* backing_buf = arena_alloc(a, memory_requirements);
+
+  void_pool pool = { .capacity = capacity,
+                     .entry_size = entry_size,
+                     .count = 0,
+                     .backing_buffer = backing_buf,
+                     .free_list_head = NULL };
+
+  void_pool_free_all(&pool);
+
+  return pool;
+}
