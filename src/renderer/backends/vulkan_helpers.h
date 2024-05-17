@@ -20,12 +20,12 @@ static void plat_get_required_extension_names(cstr_darray* extensions) {
 }
 
 // TODO(omni): port to using internal assert functions
-#define VK_CHECK(vulkan_expr)              \
-  do {                                     \
-    VkResult res = vulkan_expr;            \
-    if (res != VK_SUCCESS) {               \
+#define VK_CHECK(vulkan_expr)                                          \
+  do {                                                                 \
+    VkResult res = vulkan_expr;                                        \
+    if (res != VK_SUCCESS) {                                           \
       ERROR_EXIT("Vulkan error: %u (%s:%d)", res, __FILE__, __LINE__); \
-    }                                      \
+    }                                                                  \
   } while (0)
 
 // TODO: typedef struct vk_debugger {} vk_debugger;

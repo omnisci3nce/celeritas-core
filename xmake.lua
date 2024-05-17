@@ -68,6 +68,12 @@ local core_sources = {
     "src/systems/*.c",
 }
 
+local unity_sources = {
+    "deps/Unity/src/unity.c",
+    "deps/Unity/extras/fixture/src/unity_fixture.c",
+    "deps/Unity/extras/memory/src/unity_memory.c",
+}
+
 rule("compile_glsl_vert_shaders")
     set_extensions(".vert")
     on_buildcmd_file(function (target, batchcmds, sourcefile, opt) 
@@ -229,3 +235,14 @@ target("cube")
 --     add_deps("core_static")
 --     add_files("examples/demo/demo.c")
 --     set_rundir("$(projectdir)")
+
+target("pool_tests")
+    set_kind("binary")
+    set_group("tests")
+    add_deps("core_static")
+    add_files(unity_sources)
+    add_includedirs("deps/Unity/src", {public = true})
+    add_includedirs("deps/Unity/extras/fixture/src", {public = true})
+    add_includedirs("deps/Unity/extras/memory/src", {public = true})
+    add_files("tests/pool_tests.c")
+    add_files("tests/pool_test_runner.c")

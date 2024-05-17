@@ -16,15 +16,24 @@
 
 #define MAX_VERTEX_ATTRIBUTES 16
 
-#ifndef RENDERER_TYPED_HANDLES
+/* #ifndef RENDERER_TYPED_HANDLES */
 CORE_DEFINE_HANDLE(buffer_handle);
 CORE_DEFINE_HANDLE(texture_handle);
 CORE_DEFINE_HANDLE(sampler_handle);
 CORE_DEFINE_HANDLE(shader_handle);
 CORE_DEFINE_HANDLE(model_handle);
 #define ABSENT_MODEL_HANDLE 999999999
-#define RENDERER_TYPED_HANDLES
-#endif
+
+/* #define RENDERER_TYPED_HANDLES */
+/* #endif */
+
+/* typedef struct gpu_buffer { */
+/* u32 a; */
+/* } gpu_buffer; */
+
+/* #ifndef RAL_TYPED_POOLS */
+/* #define RAL_TYPED_POOLS */
+/* #endif */
 
 // gpu types
 typedef enum gpu_primitive_topology {
@@ -56,6 +65,9 @@ typedef struct texture_desc {
   gpu_texture_format format;
   u32x2 extents;
 } texture_desc;
+
+typedef struct gpu_texture {
+} gpu_texture;
 
 typedef enum gpu_buffer_type {
   CEL_BUFFER_DEFAULT,  // on Vulkan this would be a storage buffer?
@@ -157,11 +169,12 @@ typedef struct vertex_description {
 
 typedef enum shader_visibility {
   VISIBILITY_VERTEX = 1 << 0,
-  VISIBILITY_FRAGMENT = 1 << 1 ,
+  VISIBILITY_FRAGMENT = 1 << 1,
   VISIBILITY_COMPUTE = 1 << 2,
 } shader_visibility;
 
-/** @brief Describes the kind of binding a `shader_binding` is for. This changes how we create backing data for it. */
+/** @brief Describes the kind of binding a `shader_binding` is for. This changes how we create
+ * backing data for it. */
 typedef enum shader_binding_type {
   /**
    * @brief Binds a buffer to a shader
@@ -205,7 +218,7 @@ typedef struct shader_binding {
 
 #define MAX_LAYOUT_BINDINGS 8
 
-/** @brief A list of bindings that describe what data a shader / pipeline expects 
+/** @brief A list of bindings that describe what data a shader / pipeline expects
     @note This roughly correlates to a descriptor set layout in Vulkan
 */
 typedef struct shader_data_layout {
@@ -221,8 +234,9 @@ typedef struct shader_data {
 
 /*
   Usage:
-    1. When we create the pipeline, we must call a function that return a layout without .data fields
-    2. When binding 
+    1. When we create the pipeline, we must call a function that return a layout without .data
+  fields
+    2. When binding
 */
 
 typedef enum gpu_cull_mode { CULL_BACK_FACE, CULL_FRONT_FACE, CULL_COUNT } gpu_cull_mode;

@@ -13,6 +13,7 @@
 
 #include "buf.h"
 #include "defines.h"
+#include "mem.h"
 #include "ral_types.h"
 #include "str.h"
 
@@ -39,6 +40,8 @@ typedef struct gpu_buffer gpu_buffer;
 typedef struct gpu_backend_pools {
   // pools for each gpu structure
 } gpu_backend_pools;
+
+typedef struct resource_pools resource_pools;
 
 typedef enum pipeline_kind {
   PIPELINE_GRAPHICS,
@@ -77,11 +80,6 @@ struct graphics_pipeline_desc {
 
 typedef struct gpu_renderpass_desc {
 } gpu_renderpass_desc;
-
-typedef struct resource_pools {
- // TODO: buffer pool
- // TODO: texture pool
-} resource_pools;
 
 // --- Lifecycle functions
 
@@ -163,4 +161,3 @@ void vertex_desc_add(vertex_description* builder, const char* name, vertex_attri
 // TEMP
 
 void gpu_temp_draw(size_t n_verts);
-
