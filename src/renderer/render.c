@@ -56,7 +56,7 @@ bool renderer_init(renderer* ren) {
   // default_material_init();
 
   // Create default rendering pipeline
-  /* default_pipelines_init(ren); */
+  default_pipelines_init(ren);
 
   return true;
 }
@@ -75,16 +75,28 @@ void default_pipelines_init(renderer* ren) {
 
   ren->default_renderpass = *renderpass;
 
-  str8 vert_path = str8lit("build/linux/x86_64/debug/triangle.vert.spv");
-  str8 frag_path = str8lit("build/linux/x86_64/debug/triangle.frag.spv");
+  // str8 vert_path = str8lit("build/linux/x86_64/debug/triangle.vert.spv");
+  // str8 frag_path = str8lit("build/linux/x86_64/debug/triangle.frag.spv");
+  printf("Load shaders\n");
+  str8 vert_path = str8lit("/home/void/code/celeritas-engine/celeritas-core/build/linux/x86_64/debug/triangle.vert.spv");
+  str8 frag_path = str8lit("/home/void/code/celeritas-engine/celeritas-core/build/linux/x86_64/debug/triangle.frag.spv");
   str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
   str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
   if (!vertex_shader.has_value || !fragment_shader.has_value) {
     ERROR_EXIT("Failed to load shaders from disk")
   }
 
+  vertex_description vertex_input;
+  vertex_input.debug_label = "Standard Static 3D Vertex Format";
+  vertex_desc_add(&vertex_input, "inPosition", ATTR_F32x3);
+  vertex_desc_add(&vertex_input, "inNormal", ATTR_F32x3);
+  vertex_desc_add(&vertex_input, "inTexCoords", ATTR_F32x2);
+
   struct graphics_pipeline_desc pipeline_description = {
     .debug_name = "Basic Pipeline",
+    .vertex_desc = vertex_input,
+    // .data_layouts
+    // .data_layouts_count
     .vs = { .debug_name = "Triangle Vertex Shader",
             .filepath = vert_path,
             .code = vertex_shader.contents,
@@ -118,7 +130,7 @@ void render_frame_end(renderer* ren) {
   if (ren->frame_aborted) {
     return;
   }
-  gpu_temp_draw(3);
+  // gpu_temp_draw(3);
   gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
   gpu_cmd_encoder_end_render(enc);
   gpu_cmd_buffer buf = gpu_cmd_encoder_finish(enc);
