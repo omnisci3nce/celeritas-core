@@ -557,7 +557,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   pipeline->uniform_pointers =
       malloc(description.data_layouts_count * sizeof(desc_set_uniform_buffer));
 
-  assert(description.data_layouts_count == 1);
+  // assert(description.data_layouts_count == 1);
   for (u32 i = 0; i < description.data_layouts_count; i++) {
     shader_data_layout sdl = description.data_layouts[i].shader_data_get_layout(NULL);
 
@@ -963,7 +963,6 @@ bool gpu_backend_begin_frame() {
   vkResetFences(context.device->logical_device, 1, &context.in_flight_fences[current_frame]);
 
   context.current_img_index = image_index;
-  /* printf("Current img: %d\n", context.current_img_index); */
   VK_CHECK(vkResetCommandBuffer(context.main_cmd_bufs[current_frame].cmd_buffer, 0));
   return true;
 }
