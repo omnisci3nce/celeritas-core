@@ -414,37 +414,39 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   VkPipelineShaderStageCreateInfo shader_stages[2] = { vert_shader_stage_info,
                                                        frag_shader_stage_info };
 
-  // TODO: Attributes
-  VkVertexInputAttributeDescription attribute_descs[2] = { 0 };
-  /* u32 offset = 0; */
-  /* for (u32 i = 0; i < description.vertex_desc.attributes_count; i++) { */
-  /*   attribute_descs[i].binding = 0; */
-  /*   attribute_descs[i].location = i; */
-  /*   attribute_descs[i].format = format_from_vertex_attr(description.vertex_desc.attributes[i]);
-   */
-  /*   attribute_descs[i].offset = offset; */
-  /*     size_t this_offset = vertex_attrib_size(description.vertex_desc.attributes[i]); */
-  /*   printf("offset total %d this attr %ld\n", offset, this_offset); */
-  /*   printf("sizeof vertex %ld\n", sizeof(vertex)); */
-  /*   printf("%d \n", offsetof(vertex, static_3d)); */
-  /*   offset += this_offset; */
-  /* } */
-  printf("Vertex attributes\n");
-  attribute_descs[0].binding = 0;
-  attribute_descs[0].location = 0;
-  attribute_descs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-  attribute_descs[0].offset = 0;  // offsetof(custom_vertex, pos);
+  // Attributes
+  u32 attr_count = description.vertex_desc.attributes_count;
+  printf("N attributes %d\n", attr_count);
+  VkVertexInputAttributeDescription attribute_descs[attr_count];
+  memset(attribute_descs, 0, attr_count * sizeof(VkVertexInputAttributeDescription));
+  u32 offset = 0;
+  for (u32 i = 0; i < description.vertex_desc.attributes_count; i++) {
+    attribute_descs[i].binding = 0;
+    attribute_descs[i].location = i;
+    attribute_descs[i].format = format_from_vertex_attr(description.vertex_desc.attributes[i]);
+    attribute_descs[i].offset = offset;
+      size_t this_offset = vertex_attrib_size(description.vertex_desc.attributes[i]);
+    printf("offset total %d this attr %ld\n", offset, this_offset);
+    printf("sizeof vertex %ld\n", sizeof(vertex));
+    /* printf("%d \n", offsetof(vertex, static_3d)); */
+    offset += this_offset;
+  }
+  /* printf("Vertex attributes\n"); */
+  /* attribute_descs[0].binding = 0; */
+  /* attribute_descs[0].location = 0; */
+  /* attribute_descs[0].format = VK_FORMAT_R32G32B32_SFLOAT; */
+  /* attribute_descs[0].offset = 0;  // offsetof(custom_vertex, pos); */
 
-  attribute_descs[1].binding = 0;
-  attribute_descs[1].location = 1;
-  attribute_descs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-  attribute_descs[1].offset = 12;  // offsetof(custom_vertex, color);
+  /* attribute_descs[1].binding = 0; */
+  /* attribute_descs[1].location = 1; */
+  /* attribute_descs[1].format = VK_FORMAT_R32G32B32_SFLOAT; */
+  /* attribute_descs[1].offset = 12;  // offsetof(custom_vertex, color); */
 
   // Vertex input
   // TODO: Generate this from descroiption now
   VkVertexInputBindingDescription binding_desc;
   binding_desc.binding = 0;
-  binding_desc.stride = sizeof(vertex);  // description.vertex_desc.stride;
+  binding_desc.stride = description.vertex_desc.stride;
   binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
   VkPipelineVertexInputStateCreateInfo vertex_input_info = {
@@ -453,7 +455,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   vertex_input_info.vertexBindingDescriptionCount = 1;
   vertex_input_info.pVertexBindingDescriptions = &binding_desc;
   vertex_input_info.vertexAttributeDescriptionCount =
-      2;  // description.vertex_desc.attributes_count;
+      attr_count;  // description.vertex_desc.attributes_count;
   vertex_input_info.pVertexAttributeDescriptions = attribute_descs;
 
   // Input Assembly
@@ -558,10 +560,15 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
       malloc(description.data_layouts_count * sizeof(VkDescriptorSetLayout));
   pipeline->desc_set_layouts = desc_set_layouts;
   pipeline->desc_set_layouts_count = description.data_layouts_count;
+  if (description.data_layouts_count > 0) {
   pipeline->uniform_pointers =
       malloc(description.data_layouts_count * sizeof(desc_set_uniform_buffer));
+  } else {
+    pipeline->uniform_pointers = NULL;
+  }
 
   // assert(description.data_layouts_count == 1);
+  printf("data layouts %d\n", description.data_layouts_count);
   for (u32 i = 0; i < description.data_layouts_count; i++) {
     shader_data_layout sdl = description.data_layouts[i].shader_data_get_layout(NULL);
 
@@ -1343,15 +1350,15 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
 
 void gpu_buffer_destroy(buffer_handle buffer) {
   gpu_buffer* b =
-      buffer_pool_get(&context.resource_pools->buffers, buffer);  // context.buffers[buffer.raw];
+      buffer_pool_get(&context.resource_pools->buffers, buffer);
   vkDestroyBuffer(context.device->logical_device, b->handle, context.allocator);
   vkFreeMemory(context.device->logical_device, b->memory, context.allocator);
+  buffer_pool_dealloc(&context.resource_pools->buffers, buffer);
 }
 
 // Upload data to a
 void buffer_upload_bytes(buffer_handle gpu_buf, bytebuffer cpu_buf, u64 offset, u64 size) {
   gpu_buffer* buffer = buffer_pool_get(&context.resource_pools->buffers, gpu_buf);
-  /* gpu_buffer buffer = context.buffers[gpu_buf.raw]; */
   void* data_ptr;
   vkMapMemory(context.device->logical_device, buffer->memory, 0, size, 0, &data_ptr);
   DEBUG("Uploading %d bytes to buffer", size);
@@ -1371,6 +1378,80 @@ void encode_buffer_copy(gpu_cmd_encoder* encoder, buffer_handle src, u64 src_off
   vkCmdCopyBuffer(encoder->cmd_buffer, src_buf->handle, dst_buf->handle, 1, &copy_region);
 }
 
+// one-shot command buffers
+VkCommandBuffer vulkan_command_buffer_create_oneshot() {
+  VkCommandBufferAllocateInfo alloc_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+  alloc_info.commandPool = context.device->pool;
+  alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  alloc_info.commandBufferCount = 1;
+  alloc_info.pNext = 0;
+
+  VkCommandBuffer cmd_buffer;
+  vkAllocateCommandBuffers(context.device->logical_device, &alloc_info, &cmd_buffer);
+
+  VkCommandBufferBeginInfo begin_info = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+  begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+  vkBeginCommandBuffer(cmd_buffer, &begin_info);
+
+  return cmd_buffer;
+}
+
+void vulkan_command_buffer_finish_oneshot(VkCommandBuffer cmd_buffer) {
+  VK_CHECK(vkEndCommandBuffer(cmd_buffer));
+
+  // submit to queue
+  VkSubmitInfo submit_info = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+  submit_info.commandBufferCount = 1;
+  submit_info.pCommandBuffers = &cmd_buffer;
+  VK_CHECK(vkQueueSubmit(context.device->graphics_queue, 1, &submit_info, 0));
+  VK_CHECK(vkQueueWaitIdle(context.device->graphics_queue));
+
+  vkFreeCommandBuffers(context.device->logical_device, context.device->pool, 1, &cmd_buffer);
+}
+
+void copy_buffer_to_buffer_oneshot(buffer_handle src, u64 src_offset, buffer_handle dst,
+                                   u64 dst_offset, u64 copy_size) {
+  VkBufferCopy copy_region;
+  copy_region.srcOffset = src_offset;
+  copy_region.dstOffset = dst_offset;
+  copy_region.size = copy_size;
+
+  gpu_buffer* src_buf = buffer_pool_get(&context.resource_pools->buffers, src);
+  gpu_buffer* dst_buf = buffer_pool_get(&context.resource_pools->buffers, dst);
+  VkCommandBuffer temp_cmd_buffer = vulkan_command_buffer_create_oneshot();
+  vkCmdCopyBuffer(temp_cmd_buffer, src_buf->handle, dst_buf->handle, 1, &copy_region);
+  vulkan_command_buffer_finish_oneshot(temp_cmd_buffer);
+}
+
+void copy_buffer_to_image_oneshot(buffer_handle src, texture_handle dst) {
+  gpu_buffer* src_buf = buffer_pool_get(&context.resource_pools->buffers, src);
+  gpu_texture* dst_tex = texture_pool_get(&context.resource_pools->textures, dst);
+
+  VkCommandBuffer temp_cmd_buffer = vulkan_command_buffer_create_oneshot();
+
+  VkBufferImageCopy region;
+  region.bufferOffset = 0;
+  region.bufferRowLength = 0;
+  region.bufferImageHeight = 0;
+  region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.imageSubresource.mipLevel = 0;
+  region.imageSubresource.baseArrayLayer = 0;
+  region.imageSubresource.layerCount = 1;
+  printf("Image details width: %d height %d\n", dst_tex->desc.extents.x, dst_tex->desc.extents.y);
+  region.imageOffset.x = 0;
+  region.imageOffset.y = 0;
+  region.imageOffset.z = 0;
+  region.imageExtent.width = dst_tex->desc.extents.x;
+  region.imageExtent.height = dst_tex->desc.extents.y;
+  region.imageExtent.depth = 1;
+
+  vkCmdCopyBufferToImage(temp_cmd_buffer, src_buf->handle, dst_tex->handle,
+                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+  vulkan_command_buffer_finish_oneshot(temp_cmd_buffer);
+}
+
 texture_handle gpu_texture_create(texture_desc desc, const void* data) {
   VkDeviceSize image_size = desc.extents.x * desc.extents.y * 4;
 
@@ -1380,6 +1461,91 @@ texture_handle gpu_texture_create(texture_desc desc, const void* data) {
       gpu_buffer_create(image_size, CEL_BUFFER_DEFAULT, CEL_BUFFER_FLAG_CPU, NULL);
   // Copy data into it
   buffer_upload_bytes(staging, (bytebuffer){ .buf = (u8*)data, .size = image_size }, 0, image_size);
+
+  VkImage image;
+  VkDeviceMemory image_memory;
+
+  VkImageCreateInfo image_create_info = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+  image_create_info.imageType = VK_IMAGE_TYPE_2D;
+  image_create_info.extent.width = desc.extents.x;
+  image_create_info.extent.height = desc.extents.y;
+  image_create_info.extent.depth = 1;
+  image_create_info.mipLevels = 1;
+  image_create_info.arrayLayers = 1;
+  image_create_info.format = VK_FORMAT_R8G8B8A8_SRGB;
+  image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+  image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  image_create_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+  image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+
+  VK_CHECK(
+      vkCreateImage(context.device->logical_device, &image_create_info, context.allocator, &image));
+
+  VkMemoryRequirements memory_reqs;
+  vkGetImageMemoryRequirements(context.device->logical_device, image, &memory_reqs);
+
+  VkMemoryAllocateInfo alloc_info = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
+  alloc_info.allocationSize = memory_reqs.size;
+  alloc_info.memoryTypeIndex =
+      find_memory_index(memory_reqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  vkAllocateMemory(context.device->logical_device, &alloc_info, context.allocator, &image_memory);
+
+  vkBindImageMemory(context.device->logical_device, image, image_memory, 0);
+
+gpu_buffer_destroy(staging);
+
+  texture_handle handle;
+  gpu_texture* texture = texture_pool_alloc(&context.resource_pools->textures, &handle);
+  texture->handle = image;
+  texture->memory = image_memory;
+  texture->size = image_size;
+  return handle;
+}
+
+void vulkan_transition_image_layout(gpu_texture* texture, VkFormat format, VkImageLayout old_layout,
+                                    VkImageLayout new_layout) {
+  VkCommandBuffer temp_cmd_buffer = vulkan_command_buffer_create_oneshot();
+
+  VkImageMemoryBarrier barrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+  barrier.oldLayout = old_layout;
+  barrier.newLayout = new_layout;
+  barrier.srcQueueFamilyIndex = context.device->queue_family_indicies.graphics_family_index;
+  barrier.dstQueueFamilyIndex = context.device->queue_family_indicies.graphics_family_index;
+  barrier.image = texture->handle;
+  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.baseMipLevel = 0;
+  barrier.subresourceRange.levelCount = 1;
+  barrier.subresourceRange.baseArrayLayer = 0;
+  barrier.subresourceRange.layerCount = 1;
+  barrier.srcAccessMask = 0;  // TODO
+  barrier.dstAccessMask = 0;  // TODO
+
+  VkPipelineStageFlags source_stage;
+  VkPipelineStageFlags dest_stage;
+
+  if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED &&
+      new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    dest_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+  } else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+             new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    source_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    dest_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+  } else {
+    FATAL("Unsupported image layout transition");
+    return;
+  }
+
+  vkCmdPipelineBarrier(temp_cmd_buffer, source_stage, dest_stage, 0, 0, 0, 0, 0, 1, &barrier);
+
+  vulkan_command_buffer_finish_oneshot(temp_cmd_buffer);
 }
 
 size_t vertex_attrib_size(vertex_attrib_type attr) {

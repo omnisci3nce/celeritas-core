@@ -16,16 +16,21 @@
 extern core g_core;
 
 const custom_vertex vertices[] = {
+  (custom_vertex){ .pos = vec2(-0.5, -0.5), .color = vec3(1.0, 1.0, 1.0) },
+  (custom_vertex){ .pos = vec2(0.5, -0.5), .color = vec3(1.0, 0.0, 0.0) },
   (custom_vertex){ .pos = vec2(-0.5, 0.5), .color = vec3(0.0, 0.0, 1.0) },
   (custom_vertex){ .pos = vec2(0.5, 0.5), .color = vec3(0.0, 1.0, 0.0) },
-  (custom_vertex){ .pos = vec2(0.5, -0.5), .color = vec3(1.0, 0.0, 0.0) },
-  (custom_vertex){ .pos = vec2(-0.5, -0.5), .color = vec3(1.0, 1.0, 1.0) },
 };
-const u16 indices[] = { 0, 1, 2, 2, 3, 0 };
+const u32 indices[] = { 2, 1, 0, 1, 2, 3};
 
 int main() {
   core_bringup();
   arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
+
+  vertex_description vertex_input = {0};
+  vertex_input.debug_label = "Hello";
+  vertex_desc_add(&vertex_input, "inPos", ATTR_F32x2);
+  vertex_desc_add(&vertex_input, "inColor", ATTR_F32x3);
 
   gpu_renderpass_desc pass_description = {};
   gpu_renderpass* renderpass = gpu_renderpass_create(&pass_description);
@@ -40,6 +45,9 @@ int main() {
 
   struct graphics_pipeline_desc pipeline_description = {
     .debug_name = "Basic Pipeline",
+    .vertex_desc = vertex_input,
+    // .data_layouts = {0},
+    // .data_layouts_count = 0,
     .vs = { .debug_name = "Triangle Vertex Shader",
             .filepath = vert_path,
             .code = vertex_shader.contents,
@@ -56,13 +64,13 @@ int main() {
 
   // Load triangle vertex and index data
   buffer_handle triangle_vert_buf =
-      gpu_buffer_create(sizeof(vertices), CEL_BUFFER_VERTEX, CEL_BUFFER_FLAG_GPU, vertices);
+      gpu_buffer_create(4 * sizeof(vertex) , CEL_BUFFER_VERTEX, CEL_BUFFER_FLAG_GPU, vertices);
 
   buffer_handle triangle_index_buf =
       gpu_buffer_create(sizeof(indices), CEL_BUFFER_INDEX, CEL_BUFFER_FLAG_GPU, indices);
 
   // Main loop
-  while (!should_exit(&g_core)) {
+  while (!should_exit()) {
     input_update(&g_core.input);
 
     if (!gpu_backend_begin_frame()) {

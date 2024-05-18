@@ -30,6 +30,7 @@ typedef struct gpu_renderpass gpu_renderpass;
 typedef struct gpu_cmd_encoder gpu_cmd_encoder;  // Recording
 typedef struct gpu_cmd_buffer gpu_cmd_buffer;    // Ready for submission
 typedef struct gpu_buffer gpu_buffer;
+typedef struct gpu_texture gpu_texture;
 
 #define MAX_SHADER_DATA_LAYOUTS 5
 #define MAX_BUFFERS 256
@@ -174,3 +175,9 @@ struct resource_pools {
 
 // Must be implemented by backends
 void resource_pools_init(arena* a, struct resource_pools* res_pools);
+
+void copy_buffer_to_buffer_oneshot(buffer_handle src, u64 src_offset, buffer_handle dst, u64 dst_offset,
+                         u64 copy_size);
+void copy_buffer_to_image_oneshot(buffer_handle src, texture_handle dst);
+
+// --- Helpers

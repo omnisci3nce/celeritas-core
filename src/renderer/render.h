@@ -34,9 +34,17 @@ typedef struct render_ctx {
 texture_handle texture_create(const char* debug_name, texture_desc description, const u8* data);
 
 // Frontend Resources
-// TODO: void texture_data_upload(texture_handle texture);
-void texture_data_upload(texture* tex);
-texture texture_data_load(const char* path, bool invert_y);
+texture_data texture_data_load(const char* path, bool invert_y);
+
+/**
+ * @brief 
+ * 
+ * @param data 
+ * @param free_on_upload frees the CPU-side pixel data stored in `data` 
+ * @return texture_handle 
+ */
+texture_handle texture_data_upload(texture_data data, bool free_on_upload);
+
 buffer_handle buffer_create(const char* debug_name, u64 size);
 bool buffer_destroy(buffer_handle buffer);
 sampler_handle sampler_create();
@@ -49,7 +57,7 @@ void shader_hot_reload(const char* filepath);
  * @brief Creates buffers and returns a struct that holds handles to our resources
  *
  * @param geometry
- * @param free_on_upload frees the CPU-side vertex/index data stored in geometry_data when we
+ * @param free_on_upload frees the CPU-side vertex/index data stored in `geometry` when we
  successfully upload that data to the GPU-side buffer
  * @return mesh
  */

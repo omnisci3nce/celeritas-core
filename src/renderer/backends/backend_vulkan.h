@@ -6,6 +6,7 @@
 #include "defines.h"
 #include "mem.h"
 #include "ral.h"
+#include "ral_types.h"
 
 #define MAX_FRAMES_IN_FLIGHT 2
 #define GPU_SWAPCHAIN_IMG_COUNT 2
@@ -102,3 +103,10 @@ typedef struct gpu_buffer {
   VkDeviceMemory memory;
   u64 size;
 } gpu_buffer;
+
+typedef struct gpu_texture {
+  VkImage handle;
+  VkDeviceMemory memory;
+  u64 size;
+  texture_desc desc;
+} gpu_texture;

@@ -69,16 +69,13 @@ typedef struct model {
   u32 mesh_count;
 } model;
 
-typedef struct texture {
-  u32 texture_id;
-  char name[256];
+typedef struct texture {} texture;
+
+typedef struct texture_data {
+  texture_desc description;
   void* image_data;
-  void* backend_data;
-  u32 width;
-  u32 height;
-  u8 channel_count;
-  u32 channel_type;
-} texture;
+} texture_data;
+
 
 typedef struct blinn_phong_material {
   char name[256];

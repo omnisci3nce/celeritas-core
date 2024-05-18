@@ -1,11 +1,15 @@
-#include "render.h"
 #include <glfw3.h>
+#include "maths_types.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include "camera.h"
 #include "file.h"
 #include "log.h"
 #include "mem.h"
 #include "ral.h"
 #include "ral_types.h"
+#include "render.h"
 
 /** @brief Creates the pipelines built into Celeritas such as rendering static opaque geometry,
            debug visualisations, immediate mode UI, etc */
@@ -193,4 +197,42 @@ mesh mesh_create(geometry_data* geometry, bool free_on_upload) {
   // TODO: materials?
 
   return m;
+}
+
+// --- Textures
+
+texture_data texture_data_load(const char* path, bool invert_y) {
+  TRACE("Load texture %s", path);
+
+  // load the file data
+  int width, height, num_channels;
+  stbi_set_flip_vertically_on_load(invert_y);
+
+#pragma GCC diagnostic ignored "-Wpointer-sign"
+  char* data = stbi_load(path, &width, &height, &num_channels, 0);  // STBI_rgb_alpha);
+  if (data) {
+    DEBUG("loaded texture: %s", path);
+  } else {
+    WARN("failed to load texture");
+  }
+
+  unsigned int channel_type;
+  if (num_channels == 4) {
+    channel_type = GL_RGBA;
+  } else {
+    channel_type = GL_RGB;
+  }
+  texture_desc desc = { .extents = { width, height },
+                        .format = CEL_TEXTURE_FORMAT_8_8_8_8_RGBA_UNORM,
+                        .tex_type = CEL_TEXTURE_TYPE_2D };
+
+  return (texture_data){ .description = desc, .image_data = data };
+}
+
+texture_handle texture_data_upload(texture_data data, bool free_on_upload) {
+  texture_handle handle = gpu_texture_create(data.description, data.image_data);
+  if (free_on_upload) {
+    stbi_image_free(data.image_data);
+  }
+  return handle;
 }

@@ -86,8 +86,13 @@ int main() {
   };
   gpu_pipeline* gfx_pipeline = gpu_graphics_pipeline_create(pipeline_description);
 
+  // Geometry
   geometry_data cube_data = geo_create_cuboid(f32x3(1, 1, 1));
   mesh cube = mesh_create(&cube_data, false);
+
+  // Texture
+  texture_data tex_data = texture_data_load("assets/textures/texture.jpg", false);
+  texture_handle texture = texture_data_upload(tex_data, true);
 
   // Main loop
   while (!should_exit(&g_core)) {

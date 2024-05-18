@@ -66,9 +66,6 @@ typedef struct texture_desc {
   u32x2 extents;
 } texture_desc;
 
-typedef struct gpu_texture {
-} gpu_texture;
-
 typedef enum gpu_buffer_type {
   CEL_BUFFER_DEFAULT,  // on Vulkan this would be a storage buffer?
   CEL_BUFFER_VERTEX,
