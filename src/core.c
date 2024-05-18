@@ -78,6 +78,4 @@ void frame_begin() {
   render_frame_begin(&g_core.renderer);
 }
 void frame_draw() {}
-void frame_end() {
-  render_frame_end(&g_core.renderer); 
-}
+void frame_end() { render_frame_end(&g_core.renderer); }

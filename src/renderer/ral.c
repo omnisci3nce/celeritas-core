@@ -13,10 +13,10 @@
 /* } buffer_handle; */
 
 /* typedef struct gpu_buffer gpu_buffer; */
-TYPED_POOL(gpu_buffer, buffer);
-TYPED_POOL(gpu_texture, texture);
+/* TYPED_POOL(gpu_buffer, buffer); */
+/* TYPED_POOL(gpu_texture, texture); */
 
-struct resource_pools {
-  buffer_pool buffers;
-  texture_pool textures;
-};
+/* struct resource_pools { */
+/*   buffer_pool buffers; */
+/*   texture_pool textures; */
+/* }; */

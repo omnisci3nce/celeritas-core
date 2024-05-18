@@ -3,6 +3,7 @@
 #include "camera.h"
 #include "file.h"
 #include "log.h"
+#include "mem.h"
 #include "ral.h"
 #include "ral_types.h"
 
@@ -46,6 +47,10 @@ bool renderer_init(renderer* ren) {
   gpu_device_create(&ren->device);  // TODO: handle errors
   gpu_swapchain_create(&ren->swapchain);
 
+  DEBUG("Initialise GPU resource pools");
+  arena pool_arena = arena_create(malloc(1024 * 1024), 1024 * 1024);
+  resource_pools_init(&pool_arena, ren->resource_pools);
+
   // ren->blinn_phong =
   //     shader_create_separate("assets/shaders/blinn_phong.vert",
   //     "assets/shaders/blinn_phong.frag");
@@ -56,7 +61,7 @@ bool renderer_init(renderer* ren) {
   // default_material_init();
 
   // Create default rendering pipeline
-  default_pipelines_init(ren);
+  /* default_pipelines_init(ren); */
 
   return true;
 }
@@ -75,11 +80,15 @@ void default_pipelines_init(renderer* ren) {
 
   ren->default_renderpass = *renderpass;
 
-  // str8 vert_path = str8lit("build/linux/x86_64/debug/triangle.vert.spv");
-  // str8 frag_path = str8lit("build/linux/x86_64/debug/triangle.frag.spv");
   printf("Load shaders\n");
-  str8 vert_path = str8lit("/home/void/code/celeritas-engine/celeritas-core/build/linux/x86_64/debug/triangle.vert.spv");
-  str8 frag_path = str8lit("/home/void/code/celeritas-engine/celeritas-core/build/linux/x86_64/debug/triangle.frag.spv");
+  str8 vert_path = str8lit("build/linux/x86_64/debug/triangle.vert.spv");
+  str8 frag_path = str8lit("build/linux/x86_64/debug/triangle.frag.spv");
+  /* str8 vert_path =
+   * str8lit("/home/void/code/celeritas-engine/celeritas-core/build/linux/x86_64/debug/triangle.vert.spv");
+   */
+  /* str8 frag_path =
+   * str8lit("/home/void/code/celeritas-engine/celeritas-core/build/linux/x86_64/debug/triangle.frag.spv");
+   */
   str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
   str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
   if (!vertex_shader.has_value || !fragment_shader.has_value) {

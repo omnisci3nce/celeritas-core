@@ -35,6 +35,7 @@ typedef struct renderer {
   gpu_renderpass default_renderpass;
   gpu_pipeline static_opaque_pipeline;
   bool frame_aborted;
+  struct resource_pools* resource_pools;
 } renderer;
 
 typedef struct geometry_data {

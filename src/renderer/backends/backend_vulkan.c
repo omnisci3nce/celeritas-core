@@ -65,6 +65,7 @@ typedef struct vulkan_context {
   gpu_buffer buffers[1024];
   size_t buffer_count;
   VkDescriptorSet_darray* free_set_queue;
+  struct resource_pools* resource_pools;
 
   VkDebugUtilsMessengerEXT vk_debugger;
 } vulkan_context;
@@ -1360,6 +1361,17 @@ void encode_buffer_copy(gpu_cmd_encoder* encoder, buffer_handle src, u64 src_off
                   context.buffers[dst.raw].handle, 1, &copy_region);
 }
 
+texture_handle gpu_texture_create(texture_desc desc, const void* data) {
+  VkDeviceSize image_size = desc.extents.x * desc.extents.y * 4;
+
+  TRACE("Uploading pixel data to texture using staging buffer");
+  // Create a staging buffer
+  buffer_handle staging =
+      gpu_buffer_create(image_size, CEL_BUFFER_DEFAULT, CEL_BUFFER_FLAG_CPU, NULL);
+  // Copy data into it
+  buffer_upload_bytes(staging, (bytebuffer){ .buf = (u8*)data, .size = image_size }, 0, image_size);
+}
+
 size_t vertex_attrib_size(vertex_attrib_type attr) {
   switch (attr) {
     case ATTR_F32:
@@ -1391,4 +1403,16 @@ void vertex_desc_add(vertex_description* builder, const char* name, vertex_attri
   builder->attr_names[i] = name;
 
   builder->attributes_count++;
+}
+
+/* TYPED_POOL(gpu_buffer, buffer); */
+/* TYPED_POOL(gpu_texture, texture); */
+
+void resource_pools_init(arena* a, struct resource_pools* res_pools) {
+  buffer_pool buf_pool = buffer_pool_create(a, MAX_BUFFERS, sizeof(gpu_buffer));
+  res_pools->buffers = buf_pool;
+  texture_pool tex_pool = texture_pool_create(a, MAX_TEXTURES, sizeof(gpu_texture));
+  res_pools->textures = tex_pool;
+
+  context.resource_pools = res_pools;
 }

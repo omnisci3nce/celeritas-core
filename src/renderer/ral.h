@@ -32,6 +32,8 @@ typedef struct gpu_cmd_buffer gpu_cmd_buffer;    // Ready for submission
 typedef struct gpu_buffer gpu_buffer;
 
 #define MAX_SHADER_DATA_LAYOUTS 5
+#define MAX_BUFFERS 256
+#define MAX_TEXTURES 256
 
 /** @brief A*/
 // typedef struct gpu_bind_group
@@ -41,7 +43,7 @@ typedef struct gpu_backend_pools {
   // pools for each gpu structure
 } gpu_backend_pools;
 
-typedef struct resource_pools resource_pools;
+/* typedef struct resource_pools resource_pools; */
 
 typedef enum pipeline_kind {
   PIPELINE_GRAPHICS,
@@ -144,7 +146,7 @@ void gpu_buffer_upload();
 void gpu_buffer_bind(buffer_handle buffer);
 
 // Textures
-void gpu_texture_create();
+texture_handle gpu_texture_create(texture_desc desc, const void* data);
 void gpu_texture_destroy();
 void gpu_texture_upload();
 
@@ -161,3 +163,14 @@ void vertex_desc_add(vertex_description* builder, const char* name, vertex_attri
 // TEMP
 
 void gpu_temp_draw(size_t n_verts);
+
+TYPED_POOL(gpu_buffer, buffer);
+TYPED_POOL(gpu_texture, texture);
+
+struct resource_pools {
+  buffer_pool buffers;
+  texture_pool textures;
+};
+
+// Must be implemented by backends
+void resource_pools_init(arena* a, struct resource_pools* res_pools);
