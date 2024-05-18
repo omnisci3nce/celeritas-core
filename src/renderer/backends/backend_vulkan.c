@@ -425,7 +425,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
     attribute_descs[i].location = i;
     attribute_descs[i].format = format_from_vertex_attr(description.vertex_desc.attributes[i]);
     attribute_descs[i].offset = offset;
-      size_t this_offset = vertex_attrib_size(description.vertex_desc.attributes[i]);
+    size_t this_offset = vertex_attrib_size(description.vertex_desc.attributes[i]);
     printf("offset total %d this attr %ld\n", offset, this_offset);
     printf("sizeof vertex %ld\n", sizeof(vertex));
     /* printf("%d \n", offsetof(vertex, static_3d)); */
@@ -446,7 +446,9 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   // TODO: Generate this from descroiption now
   VkVertexInputBindingDescription binding_desc;
   binding_desc.binding = 0;
-  binding_desc.stride = description.vertex_desc.use_full_vertex_size ? sizeof(vertex) : description.vertex_desc.stride;
+  binding_desc.stride = description.vertex_desc.use_full_vertex_size
+                            ? sizeof(vertex)
+                            : description.vertex_desc.stride;
   binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
   VkPipelineVertexInputStateCreateInfo vertex_input_info = {
@@ -561,8 +563,8 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   pipeline->desc_set_layouts = desc_set_layouts;
   pipeline->desc_set_layouts_count = description.data_layouts_count;
   if (description.data_layouts_count > 0) {
-  pipeline->uniform_pointers =
-      malloc(description.data_layouts_count * sizeof(desc_set_uniform_buffer));
+    pipeline->uniform_pointers =
+        malloc(description.data_layouts_count * sizeof(desc_set_uniform_buffer));
   } else {
     pipeline->uniform_pointers = NULL;
   }
@@ -1349,8 +1351,7 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
 }
 
 void gpu_buffer_destroy(buffer_handle buffer) {
-  gpu_buffer* b =
-      buffer_pool_get(&context.resource_pools->buffers, buffer);
+  gpu_buffer* b = buffer_pool_get(&context.resource_pools->buffers, buffer);
   vkDestroyBuffer(context.device->logical_device, b->handle, context.allocator);
   vkFreeMemory(context.device->logical_device, b->memory, context.allocator);
   buffer_pool_dealloc(&context.resource_pools->buffers, buffer);
@@ -1493,7 +1494,7 @@ texture_handle gpu_texture_create(texture_desc desc, const void* data) {
 
   vkBindImageMemory(context.device->logical_device, image, image_memory, 0);
 
-gpu_buffer_destroy(staging);
+  gpu_buffer_destroy(staging);
 
   texture_handle handle;
   gpu_texture* texture = texture_pool_alloc(&context.resource_pools->textures, &handle);

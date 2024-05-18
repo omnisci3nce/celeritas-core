@@ -176,8 +176,8 @@ struct resource_pools {
 // Must be implemented by backends
 void resource_pools_init(arena* a, struct resource_pools* res_pools);
 
-void copy_buffer_to_buffer_oneshot(buffer_handle src, u64 src_offset, buffer_handle dst, u64 dst_offset,
-                         u64 copy_size);
+void copy_buffer_to_buffer_oneshot(buffer_handle src, u64 src_offset, buffer_handle dst,
+                                   u64 dst_offset, u64 copy_size);
 void copy_buffer_to_image_oneshot(buffer_handle src, texture_handle dst);
 
 // --- Helpers

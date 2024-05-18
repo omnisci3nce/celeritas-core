@@ -37,11 +37,11 @@ texture_handle texture_create(const char* debug_name, texture_desc description, 
 texture_data texture_data_load(const char* path, bool invert_y);
 
 /**
- * @brief 
- * 
- * @param data 
- * @param free_on_upload frees the CPU-side pixel data stored in `data` 
- * @return texture_handle 
+ * @brief
+ *
+ * @param data
+ * @param free_on_upload frees the CPU-side pixel data stored in `data`
+ * @return texture_handle
  */
 texture_handle texture_data_upload(texture_data data, bool free_on_upload);
 
