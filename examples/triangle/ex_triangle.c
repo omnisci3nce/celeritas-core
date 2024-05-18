@@ -27,7 +27,7 @@ int main() {
   core_bringup();
   arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
 
-  vertex_description vertex_input = {0};
+  vertex_description vertex_input = {.use_full_vertex_size=false};
   vertex_input.debug_label = "Hello";
   vertex_desc_add(&vertex_input, "inPos", ATTR_F32x2);
   vertex_desc_add(&vertex_input, "inColor", ATTR_F32x3);

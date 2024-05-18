@@ -446,7 +446,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   // TODO: Generate this from descroiption now
   VkVertexInputBindingDescription binding_desc;
   binding_desc.binding = 0;
-  binding_desc.stride = description.vertex_desc.stride;
+  binding_desc.stride = description.vertex_desc.use_full_vertex_size ? sizeof(vertex) : description.vertex_desc.stride;
   binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
   VkPipelineVertexInputStateCreateInfo vertex_input_info = {

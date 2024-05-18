@@ -48,7 +48,7 @@ int main() {
   vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
   camera cam = camera_create(camera_pos, camera_front, VEC3_Y, deg_to_rad(45.0));
 
-  vertex_description vertex_input;
+  vertex_description vertex_input = {.use_full_vertex_size = true};
   vertex_input.debug_label = "Standard Static 3D Vertex Format";
   vertex_desc_add(&vertex_input, "inPosition", ATTR_F32x3);
   vertex_desc_add(&vertex_input, "inNormal", ATTR_F32x3);

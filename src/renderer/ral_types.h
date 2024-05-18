@@ -160,6 +160,7 @@ typedef struct vertex_description {
   vertex_attrib_type attributes[MAX_VERTEX_ATTRIBUTES];
   u32 attributes_count;
   size_t stride;
+  bool use_full_vertex_size;
 } vertex_description;
 
 // --- Shaders & Bindings
