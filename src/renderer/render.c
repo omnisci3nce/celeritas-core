@@ -49,6 +49,7 @@ bool renderer_init(renderer* ren) {
 
   DEBUG("Initialise GPU resource pools");
   arena pool_arena = arena_create(malloc(1024 * 1024), 1024 * 1024);
+  ren->resource_pools = arena_alloc(&pool_arena, sizeof(struct resource_pools));
   resource_pools_init(&pool_arena, ren->resource_pools);
 
   // ren->blinn_phong =

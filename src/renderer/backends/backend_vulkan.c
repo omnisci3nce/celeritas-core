@@ -92,6 +92,9 @@ VkShaderModule create_shader_module(str8 spirv);
 /** @brief Helper function for creating array of all extensions we want */
 cstr_darray* get_all_extensions();
 
+// --- Handy macros
+#define BUFFER_GET(h) (buffer_pool_get(&context.resource_pools->buffers, h))
+
 bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
   memset(&context, 0, sizeof(vulkan_context));
   context.allocator = 0;  // TODO: use an allocator
@@ -587,9 +590,11 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
           for (size_t frame_i = 0; frame_i < MAX_FRAMES_IN_FLIGHT; frame_i++) {
             buffer_handle uniform_buf_handle =
                 gpu_buffer_create(buffer_size, CEL_BUFFER_UNIFORM, CEL_BUFFER_FLAG_CPU, NULL);
-            gpu_buffer created_gpu_buffer = context.buffers[uniform_buf_handle.raw];
-            buffers[frame_i] = created_gpu_buffer.handle;
-            uniform_buf_memorys[frame_i] = created_gpu_buffer.memory;
+
+            gpu_buffer* created_gpu_buffer =
+                BUFFER_GET(uniform_buf_handle);  // context.buffers[uniform_buf_handle.raw];
+            buffers[frame_i] = created_gpu_buffer->handle;
+            uniform_buf_memorys[frame_i] = created_gpu_buffer->memory;
             vkMapMemory(context.device->logical_device, uniform_buf_memorys[frame_i], 0,
                         uniform_buf_size, 0, &uniform_buf_mem_mappings[frame_i]);
             // now we have a pointer in unifrom_buf_mem_mappings we can write to
@@ -913,15 +918,15 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
 }
 
 void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
-  gpu_buffer buffer = context.buffers[buf.raw];
-  VkBuffer vbs[] = { buffer.handle };
+  gpu_buffer* buffer = BUFFER_GET(buf);  // context.buffers[buf.raw];
+  VkBuffer vbs[] = { buffer->handle };
   VkDeviceSize offsets[] = { 0 };
   vkCmdBindVertexBuffers(encoder->cmd_buffer, 0, 1, vbs, offsets);
 }
 
 void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
-  gpu_buffer buffer = context.buffers[buf.raw];
-  vkCmdBindIndexBuffer(encoder->cmd_buffer, buffer.handle, 0, VK_INDEX_TYPE_UINT32);
+  gpu_buffer* buffer = BUFFER_GET(buf);  // context.buffers[buf.raw];
+  vkCmdBindIndexBuffer(encoder->cmd_buffer, buffer->handle, 0, VK_INDEX_TYPE_UINT32);
 }
 
 // TEMP
@@ -1266,15 +1271,17 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
   buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
   // "allocating" the cpu-side buffer struct
-  gpu_buffer buffer;
-  buffer.size = size;
-  buffer_handle handle = { .raw = (u32)context.buffer_count };
+  /* gpu_buffer buffer; */
+  /* buffer.size = size; */
+  buffer_handle handle;
+  gpu_buffer* buffer = buffer_pool_alloc(&context.resource_pools->buffers, &handle);
+  buffer->size = size;
 
   VK_CHECK(vkCreateBuffer(context.device->logical_device, &buffer_info, context.allocator,
-                          &buffer.handle));
+                          &buffer->handle));
 
   VkMemoryRequirements requirements;
-  vkGetBufferMemoryRequirements(context.device->logical_device, buffer.handle, &requirements);
+  vkGetBufferMemoryRequirements(context.device->logical_device, buffer->handle, &requirements);
 
   // Just make them always need all of them for now
   i32 memory_index =
@@ -1288,8 +1295,8 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
   allocate_info.memoryTypeIndex = (u32)memory_index;
 
   vkAllocateMemory(context.device->logical_device, &allocate_info, context.allocator,
-                   &buffer.memory);
-  vkBindBufferMemory(context.device->logical_device, buffer.handle, buffer.memory, 0);
+                   &buffer->memory);
+  vkBindBufferMemory(context.device->logical_device, buffer->handle, buffer->memory, 0);
 
   /* Now there are two options:
    *   1. create CPU-accessible memory -> map memory -> memcpy -> unmap
@@ -1297,8 +1304,8 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
    *      GPU-only buffer
    */
 
-  context.buffers[context.buffer_count] = buffer;
-  context.buffer_count++;
+  /* context.buffers[context.buffer_count] = buffer; */
+  /* context.buffer_count++; */
 
   if (data) {
     TRACE("Upload data as part of buffer creation");
@@ -1335,19 +1342,21 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
 }
 
 void gpu_buffer_destroy(buffer_handle buffer) {
-  gpu_buffer b = context.buffers[buffer.raw];
-  vkDestroyBuffer(context.device->logical_device, b.handle, context.allocator);
-  vkFreeMemory(context.device->logical_device, b.memory, context.allocator);
+  gpu_buffer* b =
+      buffer_pool_get(&context.resource_pools->buffers, buffer);  // context.buffers[buffer.raw];
+  vkDestroyBuffer(context.device->logical_device, b->handle, context.allocator);
+  vkFreeMemory(context.device->logical_device, b->memory, context.allocator);
 }
 
 // Upload data to a
 void buffer_upload_bytes(buffer_handle gpu_buf, bytebuffer cpu_buf, u64 offset, u64 size) {
-  gpu_buffer buffer = context.buffers[gpu_buf.raw];
+  gpu_buffer* buffer = buffer_pool_get(&context.resource_pools->buffers, gpu_buf);
+  /* gpu_buffer buffer = context.buffers[gpu_buf.raw]; */
   void* data_ptr;
-  vkMapMemory(context.device->logical_device, buffer.memory, 0, size, 0, &data_ptr);
+  vkMapMemory(context.device->logical_device, buffer->memory, 0, size, 0, &data_ptr);
   DEBUG("Uploading %d bytes to buffer", size);
   memcpy(data_ptr, cpu_buf.buf, size);
-  vkUnmapMemory(context.device->logical_device, buffer.memory);
+  vkUnmapMemory(context.device->logical_device, buffer->memory);
 }
 
 void encode_buffer_copy(gpu_cmd_encoder* encoder, buffer_handle src, u64 src_offset,
@@ -1357,8 +1366,9 @@ void encode_buffer_copy(gpu_cmd_encoder* encoder, buffer_handle src, u64 src_off
   copy_region.dstOffset = dst_offset;
   copy_region.size = copy_size;
 
-  vkCmdCopyBuffer(encoder->cmd_buffer, context.buffers[src.raw].handle,
-                  context.buffers[dst.raw].handle, 1, &copy_region);
+  gpu_buffer* src_buf = buffer_pool_get(&context.resource_pools->buffers, src);
+  gpu_buffer* dst_buf = buffer_pool_get(&context.resource_pools->buffers, dst);
+  vkCmdCopyBuffer(encoder->cmd_buffer, src_buf->handle, dst_buf->handle, 1, &copy_region);
 }
 
 texture_handle gpu_texture_create(texture_desc desc, const void* data) {
