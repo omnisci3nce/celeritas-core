@@ -92,8 +92,12 @@ VkShaderModule create_shader_module(str8 spirv);
 /** @brief Helper function for creating array of all extensions we want */
 cstr_darray* get_all_extensions();
 
+void vulkan_transition_image_layout(gpu_texture* texture, VkFormat format, VkImageLayout old_layout,
+                                    VkImageLayout new_layout);
+
 // --- Handy macros
 #define BUFFER_GET(h) (buffer_pool_get(&context.resource_pools->buffers, h))
+#define TEXTURE_GET(h) (texture_pool_get(&context.resource_pools->textures, h))
 
 bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
   memset(&context, 0, sizeof(vulkan_context));
@@ -571,24 +575,24 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
 
   // assert(description.data_layouts_count == 1);
   printf("data layouts %d\n", description.data_layouts_count);
-  for (u32 i = 0; i < description.data_layouts_count; i++) {
-    shader_data_layout sdl = description.data_layouts[i].shader_data_get_layout(NULL);
+  for (u32 layout_i = 0; layout_i < description.data_layouts_count; layout_i++) {
+    shader_data_layout sdl = description.data_layouts[layout_i].shader_data_get_layout(NULL);
+    TRACE("Got shader data layout %d's bindings! . found %d", layout_i, sdl.bindings_count);
 
-    // NOTE: is using VLA generally ok?
-    VkDescriptorSetLayoutBinding desc_set_bindings[description.data_layouts_count];
+    VkDescriptorSetLayoutBinding desc_set_bindings[sdl.bindings_count];
 
     // Bindings
-    assert(sdl.bindings_count == 1);
-    for (u32 j = 0; j < sdl.bindings_count; j++) {
-      desc_set_bindings[j].binding = j;
-      desc_set_bindings[j].descriptorCount = 1;
-      switch (sdl.bindings[j].type) {
+    assert(sdl.bindings_count == 2);
+    for (u32 binding_j = 0; binding_j < sdl.bindings_count; binding_j++) {
+      desc_set_bindings[binding_j].binding = binding_j;
+      desc_set_bindings[binding_j].descriptorCount = 1;
+      switch (sdl.bindings[binding_j].type) {
         case SHADER_BINDING_BUFFER:
         case SHADER_BINDING_BYTES:
-          desc_set_bindings[j].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-          desc_set_bindings[j].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;  // FIXME: dont hardcode
+          desc_set_bindings[binding_j].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+          desc_set_bindings[binding_j].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;  // FIXME: dont hardcode
 
-          u64 buffer_size = sdl.bindings[j].data.bytes.size;
+          u64 buffer_size = sdl.bindings[binding_j].data.bytes.size;
           VkDeviceSize uniform_buf_size = buffer_size;
           // TODO: Create backing buffer
 
@@ -617,18 +621,24 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
                  sizeof(uniform_buf_mem_mappings));
           uniform_data.size = buffer_size;
 
-          pipeline->uniform_pointers[j] = uniform_data;
+          pipeline->uniform_pointers[binding_j] = uniform_data;
+
+          break;
+        case SHADER_BINDING_TEXTURE:
+          desc_set_bindings[binding_j].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+          desc_set_bindings[binding_j].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;  // FIXME: dont hardcode
+          desc_set_bindings[binding_j].pImmutableSamplers = NULL;
 
           break;
         default:
           ERROR_EXIT("Unimplemented binding type!! in backend_vulkan");
       }
-      switch (sdl.bindings[j].vis) {
+      switch (sdl.bindings[binding_j].vis) {
         case VISIBILITY_VERTEX:
-          desc_set_bindings[j].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+          desc_set_bindings[binding_j].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
           break;
         case VISIBILITY_FRAGMENT:
-          desc_set_bindings[j].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+          desc_set_bindings[binding_j].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
           break;
         case VISIBILITY_COMPUTE:
           WARN("Compute is not implemented yet");
@@ -643,7 +653,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
     desc_set_layout_info.pBindings = desc_set_bindings;
 
     VK_CHECK(vkCreateDescriptorSetLayout(context.device->logical_device, &desc_set_layout_info,
-                                         context.allocator, &desc_set_layouts[i]));
+                                         context.allocator, &desc_set_layouts[layout_i]));
   }
   printf("Descriptor set layouts\n");
 
@@ -683,17 +693,15 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   pipeline_create_info.basePipelineHandle = VK_NULL_HANDLE;
   pipeline_create_info.basePipelineIndex = -1;
 
-  printf("Here\n");
+  printf("About to create graphics pipeline\n");
 
   VkResult result =
       vkCreateGraphicsPipelines(context.device->logical_device, VK_NULL_HANDLE, 1,
                                 &pipeline_create_info, context.allocator, &pipeline->handle);
   if (result != VK_SUCCESS) {
-    printf("BAD\n");
     FATAL("graphics pipeline creation failed. its fked mate");
     ERROR_EXIT("Doomed");
   }
-  printf("Here2\n");
   TRACE("Vulkan Graphics pipeline created");
 
   // once the pipeline has been created we can destroy these
@@ -810,13 +818,17 @@ gpu_cmd_encoder gpu_cmd_encoder_create() {
   VK_CHECK(vkAllocateCommandBuffers(context.device->logical_device, &allocate_info,
                                     &encoder.cmd_buffer););
 
-  VkDescriptorPoolSize uniform_pool_size;
-  uniform_pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  uniform_pool_size.descriptorCount = MAX_FRAMES_IN_FLIGHT * MAX_DESCRIPTOR_SETS;
+  VkDescriptorPoolSize pool_sizes[2];
+  // Uniforms pool
+  pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  pool_sizes[0].descriptorCount = MAX_FRAMES_IN_FLIGHT * MAX_DESCRIPTOR_SETS;
+    // Samplers pool
+  pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  pool_sizes[1].descriptorCount = MAX_FRAMES_IN_FLIGHT * MAX_DESCRIPTOR_SETS;
 
   VkDescriptorPoolCreateInfo pool_info = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
-  pool_info.poolSizeCount = 1;
-  pool_info.pPoolSizes = &uniform_pool_size;
+  pool_info.poolSizeCount = 2;
+  pool_info.pPoolSizes = pool_sizes;
   pool_info.maxSets = 100;
 
   VK_CHECK(vkCreateDescriptorPool(context.device->logical_device, &pool_info, context.allocator,
@@ -875,6 +887,8 @@ void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipe
 }
 
 void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* data) {
+  arena tmp = arena_create(malloc(1024), 1024);
+
   assert(data->data != NULL);
 
   // Update the local buffer
@@ -886,44 +900,62 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
   alloc_info.descriptorSetCount = 1;
   alloc_info.pSetLayouts = &encoder->pipeline->desc_set_layouts[group];
 
-  VkDescriptorSet sets[1];
+  shader_data_layout sdl = data->shader_data_get_layout(data->data);
+  size_t binding_count = sdl.bindings_count;
+  assert(binding_count == 2);
+
+  VkDescriptorSet sets[0];
   VK_CHECK(vkAllocateDescriptorSets(context.device->logical_device, &alloc_info, sets));
+  // FIXME: hardcoded
   VkDescriptorSet_darray_push(context.free_set_queue, sets[0]);
+  /* VkDescriptorSet_darray_push(context.free_set_queue, sets[1]); */
 
-  shader_data_layout sdl = data->shader_data_get_layout(NULL);
-  assert(sdl.bindings_count == 1);
+  VkWriteDescriptorSet write_sets[binding_count];
+  memset(&write_sets, 0, binding_count * sizeof(VkWriteDescriptorSet));
 
-  VkWriteDescriptorSet write_sets[1];
-  memset(&write_sets, 0, sizeof(write_sets));
-
-  assert(sdl.bindings_count == 1);
   for (u32 i = 0; i < sdl.bindings_count; i++) {
     shader_binding binding = sdl.bindings[i];
 
     if (binding.type == SHADER_BINDING_BUFFER || binding.type == SHADER_BINDING_BYTES) {
-      VkDescriptorBufferInfo buffer_info;
-      buffer_info.buffer = ubo.buffers[context.current_frame];
-      buffer_info.offset = 0;
-      buffer_info.range = binding.data.bytes.size;
+      VkDescriptorBufferInfo* buffer_info = arena_alloc(&tmp, sizeof(VkDescriptorBufferInfo));
+      buffer_info->buffer = ubo.buffers[context.current_frame];
+      buffer_info->offset = 0;
+      buffer_info->range = binding.data.bytes.size;
 
-      write_sets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      write_sets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-      write_sets[0].descriptorCount = 1;
-      write_sets[0].dstSet = sets[0];
-      write_sets[0].dstBinding = 0;
-      write_sets[0].dstArrayElement = 0;
-      write_sets[0].pBufferInfo = &buffer_info;
-    } else {
+      write_sets[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write_sets[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      write_sets[i].descriptorCount = 1;
+      write_sets[i].dstSet = sets[0];
+      write_sets[i].dstBinding = i;
+      write_sets[i].dstArrayElement = 0;
+      write_sets[i].pBufferInfo = buffer_info;
+    } else if (binding.type == SHADER_BINDING_TEXTURE) {
+      gpu_texture* texture = TEXTURE_GET(binding.data.texture.handle);
+      VkDescriptorImageInfo* image_info = arena_alloc(&tmp, sizeof(VkDescriptorImageInfo));
+      image_info->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      image_info->imageView = texture->view;
+      image_info->sampler = texture->sampler;
+
+      write_sets[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write_sets[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      write_sets[i].descriptorCount = 1;
+      write_sets[i].dstSet = sets[0];
+      write_sets[i].dstBinding = i;
+      write_sets[i].dstArrayElement = 0;
+      write_sets[i].pImageInfo = image_info;
+    }else {
       WARN("Unknown binding");
     }
   }
 
   // Update
-  vkUpdateDescriptorSets(context.device->logical_device, 1, write_sets, 0, NULL);
+  vkUpdateDescriptorSets(context.device->logical_device, binding_count, write_sets, 0, NULL);
 
   // Bind
   vkCmdBindDescriptorSets(encoder->cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           encoder->pipeline->layout_handle, 0, 1, sets, 0, NULL);
+
+  arena_free_storage(&tmp);
 }
 
 void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
@@ -1453,18 +1485,14 @@ void copy_buffer_to_image_oneshot(buffer_handle src, texture_handle dst) {
   vulkan_command_buffer_finish_oneshot(temp_cmd_buffer);
 }
 
-texture_handle gpu_texture_create(texture_desc desc, const void* data) {
+texture_handle gpu_texture_create(texture_desc desc, bool create_view, const void* data) {
   VkDeviceSize image_size = desc.extents.x * desc.extents.y * 4;
-
-  TRACE("Uploading pixel data to texture using staging buffer");
-  // Create a staging buffer
-  buffer_handle staging =
-      gpu_buffer_create(image_size, CEL_BUFFER_DEFAULT, CEL_BUFFER_FLAG_CPU, NULL);
-  // Copy data into it
-  buffer_upload_bytes(staging, (bytebuffer){ .buf = (u8*)data, .size = image_size }, 0, image_size);
 
   VkImage image;
   VkDeviceMemory image_memory;
+
+  // FIXME: get from desc
+  VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 
   VkImageCreateInfo image_create_info = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
   image_create_info.imageType = VK_IMAGE_TYPE_2D;
@@ -1473,7 +1501,7 @@ texture_handle gpu_texture_create(texture_desc desc, const void* data) {
   image_create_info.extent.depth = 1;
   image_create_info.mipLevels = 1;
   image_create_info.arrayLayers = 1;
-  image_create_info.format = VK_FORMAT_R8G8B8A8_SRGB;
+  image_create_info.format = format;
   image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
   image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   image_create_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -1494,13 +1522,71 @@ texture_handle gpu_texture_create(texture_desc desc, const void* data) {
 
   vkBindImageMemory(context.device->logical_device, image, image_memory, 0);
 
-  gpu_buffer_destroy(staging);
-
   texture_handle handle;
   gpu_texture* texture = texture_pool_alloc(&context.resource_pools->textures, &handle);
+  DEBUG("Allocated texture with handle %d", handle.raw);
   texture->handle = image;
+  texture->debug_label = "Test Texture";
+  texture->desc = desc;
   texture->memory = image_memory;
   texture->size = image_size;
+
+  if (data) {
+    TRACE("Uploading pixel data to texture using staging buffer");
+    // Create a staging buffer
+    buffer_handle staging =
+        gpu_buffer_create(image_size, CEL_BUFFER_DEFAULT, CEL_BUFFER_FLAG_CPU, NULL);
+    // Copy data into it
+    vulkan_transition_image_layout(texture, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    buffer_upload_bytes(staging, (bytebuffer){ .buf = (u8*)data, .size = image_size }, 0, image_size);
+    copy_buffer_to_image_oneshot(staging, handle);
+    vulkan_transition_image_layout(texture, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    gpu_buffer_destroy(staging);
+  }
+
+  // Texture View
+  if (create_view) {
+    VkImageViewCreateInfo view_create_info = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+    view_create_info.image = image;
+    view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    view_create_info.format = format;
+    view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+    view_create_info.subresourceRange.baseMipLevel = 0;
+    view_create_info.subresourceRange.levelCount = 1;
+    view_create_info.subresourceRange.baseArrayLayer = 0;
+    view_create_info.subresourceRange.layerCount = 1;
+
+    VK_CHECK(vkCreateImageView(context.device->logical_device, &view_create_info, context.allocator,
+                               &texture->view));
+  }
+
+  // Sampler
+    VkSamplerCreateInfo sampler_info = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+    sampler_info.magFilter = VK_FILTER_LINEAR;
+    sampler_info.minFilter = VK_FILTER_LINEAR;
+    sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_info.anisotropyEnable = VK_TRUE;
+    sampler_info.maxAnisotropy = 16;
+    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    sampler_info.unnormalizedCoordinates = VK_FALSE;
+    sampler_info.compareEnable = VK_FALSE;
+    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_info.mipLodBias = 0.0;
+    sampler_info.minLod = 0.0;
+    sampler_info.maxLod = 0.0;
+
+    VkResult res = vkCreateSampler(context.device->logical_device, &sampler_info, context.allocator,
+                                   &texture->sampler);
+    if (res != VK_SUCCESS) {
+      ERROR("Error creating texture sampler for image %s", texture->debug_label);
+      return;
+    }
+
   return handle;
 }
 

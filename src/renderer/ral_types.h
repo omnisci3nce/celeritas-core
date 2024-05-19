@@ -139,6 +139,7 @@ typedef struct custom_vertex {
 } custom_vertex;
 
 // Vertex attributes
+/// @strip_prefix(ATTR_)
 typedef enum vertex_attrib_type {
   ATTR_F32,
   ATTR_F32x2,
@@ -211,7 +212,10 @@ typedef struct shader_binding {
       void* data;
       size_t size;
     } bytes;
-  } data; /** @brief */
+    struct {
+      texture_handle handle;
+    } texture;
+  } data; /** @brief can store any kind of data that we can bind to a shader / descriptor set */
 } shader_binding;
 
 #define MAX_LAYOUT_BINDINGS 8

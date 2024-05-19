@@ -109,4 +109,7 @@ typedef struct gpu_texture {
   VkDeviceMemory memory;
   u64 size;
   texture_desc desc;
+  VkImageView view;
+  VkSampler sampler;
+  char* debug_label;
 } gpu_texture;

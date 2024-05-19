@@ -22,20 +22,30 @@ typedef struct mvp_uniforms {
   mat4 view;
   mat4 projection;
 } mvp_uniforms;
+typedef struct my_shader_bind_group {
+  mvp_uniforms mvp;
+  texture_handle tex;
+} my_shader_bind_group;
 
 // We also must create a function that knows how to return a `shader_data_layout`
 shader_data_layout mvp_uniforms_layout(void* data) {
-  mvp_uniforms* d = (mvp_uniforms*)data;
+  my_shader_bind_group* d = (my_shader_bind_group*)data;
   bool has_data = data != NULL;
 
   shader_binding b1 = { .label = "mvp_uniforms",
                         .type = SHADER_BINDING_BYTES,
                         .stores_data = has_data,
                         .data = { .bytes = { .size = sizeof(mvp_uniforms) } } };
+
+  shader_binding b2 = { .label = "texture_sampler",
+                        .type = SHADER_BINDING_TEXTURE,
+                        .stores_data = has_data
+  };
   if (has_data) {
-    b1.data.bytes.data = d;
+    b1.data.bytes.data = &d->mvp;
+    b2.data.texture.handle = d->tex;
   }
-  return (shader_data_layout){ .name = "global_ubo", .bindings = { b1 }, .bindings_count = 1 };
+  return (shader_data_layout){ .name = "global_ubo", .bindings = { b1, b2 }, .bindings_count = 2 };
 }
 
 int main() {
@@ -60,7 +70,7 @@ int main() {
   gpu_renderpass* renderpass = gpu_renderpass_create(&pass_description);
 
   str8 vert_path = str8lit("build/linux/x86_64/debug/cube.vert.spv");
-  str8 frag_path = str8lit("build/linux/x86_64/debug/triangle.frag.spv");
+  str8 frag_path = str8lit("build/linux/x86_64/debug/cube.frag.spv");
   str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
   str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
   if (!vertex_shader.has_value || !fragment_shader.has_value) {
@@ -93,6 +103,7 @@ int main() {
   // Texture
   texture_data tex_data = texture_data_load("assets/textures/texture.jpg", false);
   texture_handle texture = texture_data_upload(tex_data, true);
+  printf("Texture %d", texture.raw);
 
   // Main loop
   while (!should_exit(&g_core)) {
@@ -118,7 +129,11 @@ int main() {
     camera_view_projection(&cam, g_core.renderer.swapchain.extent.width,
                            g_core.renderer.swapchain.extent.height, &view, &proj);
     mvp_uniforms mvp_data = { .model = model, .view = view, .projection = proj };
-    mvp_uniforms_data.data = &mvp_data;
+    my_shader_bind_group shader_bind_data = {
+    .mvp = mvp_data,
+    .tex = texture
+  };
+    mvp_uniforms_data.data = &shader_bind_data;
     encode_bind_shader_data(enc, 0, &mvp_uniforms_data);
 
     // Record draw calls

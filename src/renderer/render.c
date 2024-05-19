@@ -230,8 +230,9 @@ texture_data texture_data_load(const char* path, bool invert_y) {
 }
 
 texture_handle texture_data_upload(texture_data data, bool free_on_upload) {
-  texture_handle handle = gpu_texture_create(data.description, data.image_data);
+  texture_handle handle = gpu_texture_create(data.description, true, data.image_data);
   if (free_on_upload) {
+    TRACE("Freed stb_image data");
     stbi_image_free(data.image_data);
   }
   return handle;

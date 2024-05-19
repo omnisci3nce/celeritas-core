@@ -123,6 +123,7 @@ target("core_config")
     add_files("assets/shaders/triangle.vert")
     add_files("assets/shaders/triangle.frag")
     add_files("assets/shaders/cube.vert")
+    add_files("assets/shaders/cube.frag")
     -- add_files("assets/shaders/*.frag")
     if is_plat("windows") then
         add_includedirs("$(env VULKAN_SDK)/Include", {public = true})

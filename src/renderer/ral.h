@@ -147,7 +147,7 @@ void gpu_buffer_upload();
 void gpu_buffer_bind(buffer_handle buffer);
 
 // Textures
-texture_handle gpu_texture_create(texture_desc desc, const void* data);
+texture_handle gpu_texture_create(texture_desc desc, bool create_view, const void* data);
 void gpu_texture_destroy();
 void gpu_texture_upload();
 
