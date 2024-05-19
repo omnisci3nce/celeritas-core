@@ -92,6 +92,7 @@ VkShaderModule create_shader_module(str8 spirv);
 /** @brief Helper function for creating array of all extensions we want */
 cstr_darray* get_all_extensions();
 
+VkImage vulkan_image_create(u32x2 dimensions, VkImageType image_type, VkFormat format ,VkImageUsageFlags usage);
 void vulkan_transition_image_layout(gpu_texture* texture, VkFormat format, VkImageLayout old_layout,
                                     VkImageLayout new_layout);
 
@@ -432,19 +433,8 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
     size_t this_offset = vertex_attrib_size(description.vertex_desc.attributes[i]);
     printf("offset total %d this attr %ld\n", offset, this_offset);
     printf("sizeof vertex %ld\n", sizeof(vertex));
-    /* printf("%d \n", offsetof(vertex, static_3d)); */
     offset += this_offset;
   }
-  /* printf("Vertex attributes\n"); */
-  /* attribute_descs[0].binding = 0; */
-  /* attribute_descs[0].location = 0; */
-  /* attribute_descs[0].format = VK_FORMAT_R32G32B32_SFLOAT; */
-  /* attribute_descs[0].offset = 0;  // offsetof(custom_vertex, pos); */
-
-  /* attribute_descs[1].binding = 0; */
-  /* attribute_descs[1].location = 1; */
-  /* attribute_descs[1].format = VK_FORMAT_R32G32B32_SFLOAT; */
-  /* attribute_descs[1].offset = 12;  // offsetof(custom_vertex, color); */
 
   // Vertex input
   // TODO: Generate this from descroiption now
@@ -735,6 +725,10 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
   // TEMP: allocate with malloc. in the future we will have a pool allocator on the context
   gpu_renderpass* renderpass = malloc(sizeof(gpu_renderpass));
 
+  // attachments
+  u32 attachment_desc_count = 2;
+  VkAttachmentDescription attachment_descriptions[2];
+
   // Colour attachment
   VkAttachmentDescription color_attachment;
   color_attachment.format = context.swapchain->image_format.format;
@@ -747,16 +741,34 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
   color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
   color_attachment.flags = 0;
 
-  // attachment_descriptions[0] = color_attachment;
+  attachment_descriptions[0] = color_attachment;
 
   VkAttachmentReference color_attachment_reference;
   color_attachment_reference.attachment = 0;
   color_attachment_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-  // subpass.colorAttachmentCount = 1;
-  // subpass.pColorAttachments = &color_attachment_reference;
+  // Depth attachment
+  u32x2 ext = { .x = context.swapchain_support.capabilities.currentExtent.width, .y = context.swapchain_support.capabilities.currentExtent.height};
+  texture_desc depth_desc  = { .extents = ext, .format = CEL_TEXTURE_FORMAT_DEPTH_DEFAULT, .tex_type = CEL_TEXTURE_TYPE_2D};
+  texture_handle depth_texture_handle = gpu_texture_create(depth_desc, true, NULL);
+  gpu_texture* depth = TEXTURE_GET(depth_texture_handle);
 
-  // TODO: Depth attachment
+  VkAttachmentDescription depth_attachment;
+  depth_attachment.format = // TODO: context->device.depth_format;
+  depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  depth_attachment.flags = 0;
+
+  attachment_descriptions[1] = depth_attachment;
+
+  VkAttachmentReference depth_attachment_reference;
+  depth_attachment_reference.attachment = 1;
+  depth_attachment_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
   // main subpass
   VkSubpassDescription subpass = { 0 };
@@ -1485,14 +1497,37 @@ void copy_buffer_to_image_oneshot(buffer_handle src, texture_handle dst) {
   vulkan_command_buffer_finish_oneshot(temp_cmd_buffer);
 }
 
+VkImage vulkan_image_create(u32x2 dimensions, VkImageType image_type, VkFormat format ,VkImageUsageFlags usage) {
+  VkImage image;
+
+  VkImageCreateInfo image_create_info = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+  image_create_info.imageType = VK_IMAGE_TYPE_2D;
+  image_create_info.extent.width = dimensions.x;
+  image_create_info.extent.height = dimensions.y;
+  image_create_info.extent.depth = 1;
+  image_create_info.mipLevels = 1;
+  image_create_info.arrayLayers = 1;
+  image_create_info.format = format;
+  image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+  image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  image_create_info.usage = usage; // VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+  image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+
+  VK_CHECK(
+      vkCreateImage(context.device->logical_device, &image_create_info, context.allocator, &image));
+
+  return image;
+}
+
 texture_handle gpu_texture_create(texture_desc desc, bool create_view, const void* data) {
   VkDeviceSize image_size = desc.extents.x * desc.extents.y * 4;
+  // FIXME: handle this properly
+  VkFormat format = desc.format == CEL_TEXTURE_FORMAT_8_8_8_8_RGBA_UNORM ? VK_FORMAT_R8G8B8A8_SRGB :
+    VK_FORMAT_D32_SFLOAT;
 
-  VkImage image;
+  VkImage image; //vulkan_image_create(desc.extents, VK_IMAGE_TYPE_2D, format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
   VkDeviceMemory image_memory;
-
-  // FIXME: get from desc
-  VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 
   VkImageCreateInfo image_create_info = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
   image_create_info.imageType = VK_IMAGE_TYPE_2D;
@@ -1505,6 +1540,9 @@ texture_handle gpu_texture_create(texture_desc desc, bool create_view, const voi
   image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
   image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   image_create_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+  if (format == VK_FORMAT_D32_SFLOAT) {
+    image_create_info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+  }
   image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
 
@@ -1551,7 +1589,7 @@ texture_handle gpu_texture_create(texture_desc desc, bool create_view, const voi
     view_create_info.image = image;
     view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
     view_create_info.format = format;
-    view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    view_create_info.subresourceRange.aspectMask = format == VK_FORMAT_D32_SFLOAT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 
     view_create_info.subresourceRange.baseMipLevel = 0;
     view_create_info.subresourceRange.levelCount = 1;

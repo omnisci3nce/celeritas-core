@@ -39,8 +39,7 @@ shader_data_layout mvp_uniforms_layout(void* data) {
 
   shader_binding b2 = { .label = "texture_sampler",
                         .type = SHADER_BINDING_TEXTURE,
-                        .stores_data = has_data
-  };
+                        .stores_data = has_data };
   if (has_data) {
     b1.data.bytes.data = &d->mvp;
     b2.data.texture.handle = d->tex;
@@ -129,10 +128,7 @@ int main() {
     camera_view_projection(&cam, g_core.renderer.swapchain.extent.width,
                            g_core.renderer.swapchain.extent.height, &view, &proj);
     mvp_uniforms mvp_data = { .model = model, .view = view, .projection = proj };
-    my_shader_bind_group shader_bind_data = {
-    .mvp = mvp_data,
-    .tex = texture
-  };
+    my_shader_bind_group shader_bind_data = { .mvp = mvp_data, .tex = texture };
     mvp_uniforms_data.data = &shader_bind_data;
     encode_bind_shader_data(enc, 0, &mvp_uniforms_data);
 
