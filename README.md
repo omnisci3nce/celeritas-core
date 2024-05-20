@@ -20,3 +20,9 @@ All third-party dependencies are licensed under their own license.
     * Lint (no change) `find src/ -iname *.h -o -iname *.c | xargs clang-format --style=file --dry-run --Werror`
     * Format (edit in place) `find src/ \( -iname "*.h" -o -iname "*.c" \) | xargs clang-format -i --style=file`
         * `clang-format` must be installed!
+* Documentation
+    * serve mkdocs locally
+        * `docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material`
+
+    * Build docs static site
+        * `docker run --rm -it -v ${PWD}:/docs squidfunk/mkdocs-material build`
