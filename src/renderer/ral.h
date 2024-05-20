@@ -18,10 +18,9 @@
 #include "str.h"
 
 // Unrelated forward declares
-typedef struct arena arena;
 struct GLFWwindow;
 
-// Forward declare structs
+// Forward declare structs - these must be defined in the backend implementation
 typedef struct gpu_swapchain gpu_swapchain;
 typedef struct gpu_device gpu_device;
 typedef struct gpu_pipeline_layout gpu_pipeline_layout;
@@ -36,15 +35,17 @@ typedef struct gpu_texture gpu_texture;
 #define MAX_BUFFERS 256
 #define MAX_TEXTURES 256
 
-/** @brief A*/
-// typedef struct gpu_bind_group
+TYPED_POOL(gpu_buffer, buffer);
+TYPED_POOL(gpu_texture, texture);
 
-// Pools
-typedef struct gpu_backend_pools {
-  // pools for each gpu structure
+// --- Pools
+typedef struct gpu_backend_pools { /* TODO: pools for each gpu structure */
 } gpu_backend_pools;
 
-/* typedef struct resource_pools resource_pools; */
+struct resource_pools {
+  buffer_pool buffers;
+  texture_pool textures;
+};
 
 typedef enum pipeline_kind {
   PIPELINE_GRAPHICS,
@@ -64,13 +65,10 @@ struct graphics_pipeline_desc {
   shader_desc vs; /** @brief Vertex shader stage */
   shader_desc fs; /** @brief Fragment shader stage */
 
-  /* shader_data_layout data_layouts[MAX_SHADER_DATA_LAYOUTS]; */
-  /* u32 data_layouts_count; */
-
   // Roughly equivalent to a descriptor set layout each. each layout can have multiple bindings
   // examples:
   // - uniform buffer reprensenting view projection matrix
-  // - texture for shadow map ?
+  // - texture for shadow map
   shader_data data_layouts[MAX_SHADER_DATA_LAYOUTS];
   u32 data_layouts_count;
 
@@ -81,30 +79,30 @@ struct graphics_pipeline_desc {
   bool depth_test;
 };
 
-typedef struct gpu_renderpass_desc {
+typedef struct gpu_renderpass_desc { /* TODO */
 } gpu_renderpass_desc;
 
 // --- Lifecycle functions
-
 bool gpu_backend_init(const char* window_name, struct GLFWwindow* window);
 void gpu_backend_shutdown();
-
-// TEMP
-bool gpu_backend_begin_frame();
-void gpu_backend_end_frame();
+void resource_pools_init(arena* a, struct resource_pools* res_pools);
 
 bool gpu_device_create(gpu_device* out_device);
 void gpu_device_destroy();
 
-gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description);
-void gpu_renderpass_destroy(gpu_renderpass* pass);
-
+// --- Render Pipeline
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description);
 void gpu_pipeline_destroy(gpu_pipeline* pipeline);
 
+// --- Renderpass
+gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description);
+void gpu_renderpass_destroy(gpu_renderpass* pass);
+
+// --- Swapchain
 bool gpu_swapchain_create(gpu_swapchain* out_swapchain);
 void gpu_swapchain_destroy(gpu_swapchain* swapchain);
 
+// --- Command buffer
 gpu_cmd_encoder gpu_cmd_encoder_create();
 void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder);
 void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder);
@@ -113,16 +111,20 @@ void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder);
 void gpu_cmd_encoder_begin_compute();
 gpu_cmd_encoder* gpu_get_default_cmd_encoder();
 
-/* Actual commands that we can encode */
+// --- Data copy commands
+/** @brief Copy data from one buffer to another */
 void encode_buffer_copy(gpu_cmd_encoder* encoder, buffer_handle src, u64 src_offset,
                         buffer_handle dst, u64 dst_offset, u64 copy_size);
-void encode_clear_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
-void encode_set_pipeline(gpu_cmd_encoder* encoder, gpu_pipeline* pipeline);
-
 /** @brief Upload CPU-side data as array of bytes to a GPU buffer */
 void buffer_upload_bytes(buffer_handle gpu_buf, bytebuffer cpu_buf, u64 offset, u64 size);
 
-// render pass
+/** @brief Copy data from buffer to buffer using a one time submit command buffer and a wait */
+void copy_buffer_to_buffer_oneshot(buffer_handle src, u64 src_offset, buffer_handle dst,
+                                   u64 dst_offset, u64 copy_size);
+/** @brief Copy data from buffer to an image using a one time submit command buffer */
+void copy_buffer_to_image_oneshot(buffer_handle src, texture_handle dst);
+
+// --- Render commands
 void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipeline* pipeline);
 void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* data);
 void encode_set_default_settings(gpu_cmd_encoder* encoder);
@@ -131,53 +133,37 @@ void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 void encode_set_bind_group();  // TODO
 void encode_draw(gpu_cmd_encoder* encoder);
 void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count);
+void encode_clear_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 
-// FUTURE: compute passes
 
 /** @brief Finish recording and return a command buffer that can be submitted to a queue */
 gpu_cmd_buffer gpu_cmd_encoder_finish(gpu_cmd_encoder* encoder);
 
 void gpu_queue_submit(gpu_cmd_buffer* buffer);
 
-// Buffers
+// --- Buffers
 buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_flags flags,
                                 const void* data);
 void gpu_buffer_destroy(buffer_handle buffer);
-void gpu_buffer_upload();
-void gpu_buffer_bind(buffer_handle buffer);
+void gpu_buffer_upload(const void* data);
 
 // Textures
+/** @brief Create a new GPU texture resource.
+ *  @param create_view creates a texture view (with same dimensions) at the same time
+ *  @param data if not NULL then the data stored at the pointer will be uploaded to the GPU texture
+ *  @note automatically creates a sampler for you */
 texture_handle gpu_texture_create(texture_desc desc, bool create_view, const void* data);
-void gpu_texture_destroy();
-void gpu_texture_upload();
-
-// Samplers
-void gpu_sampler_create();
+void gpu_texture_destroy(texture_handle);
+void gpu_texture_upload(texture_handle texture, const void* data);
 
 // --- Vertex formats
 bytebuffer vertices_as_bytebuffer(arena* a, vertex_format format, vertex_darray* vertices);
 
 void vertex_desc_add(vertex_description* builder, const char* name, vertex_attrib_type type);
 
-// TODO: Bindgroup texture samplers / shader resources
-
-// TEMP
-
+// --- TEMP
+bool gpu_backend_begin_frame();
+void gpu_backend_end_frame();
 void gpu_temp_draw(size_t n_verts);
 
-TYPED_POOL(gpu_buffer, buffer);
-TYPED_POOL(gpu_texture, texture);
-
-struct resource_pools {
-  buffer_pool buffers;
-  texture_pool textures;
-};
-
-// Must be implemented by backends
-void resource_pools_init(arena* a, struct resource_pools* res_pools);
-
-void copy_buffer_to_buffer_oneshot(buffer_handle src, u64 src_offset, buffer_handle dst,
-                                   u64 dst_offset, u64 copy_size);
-void copy_buffer_to_image_oneshot(buffer_handle src, texture_handle dst);
-
-// --- Helpers
+// TODO: --- Compute

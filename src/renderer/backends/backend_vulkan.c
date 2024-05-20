@@ -92,7 +92,8 @@ VkShaderModule create_shader_module(str8 spirv);
 /** @brief Helper function for creating array of all extensions we want */
 cstr_darray* get_all_extensions();
 
-VkImage vulkan_image_create(u32x2 dimensions, VkImageType image_type, VkFormat format ,VkImageUsageFlags usage);
+VkImage vulkan_image_create(u32x2 dimensions, VkImageType image_type, VkFormat format,
+                            VkImageUsageFlags usage);
 void vulkan_transition_image_layout(gpu_texture* texture, VkFormat format, VkImageLayout old_layout,
                                     VkImageLayout new_layout);
 
@@ -580,7 +581,8 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
         case SHADER_BINDING_BUFFER:
         case SHADER_BINDING_BYTES:
           desc_set_bindings[binding_j].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-          desc_set_bindings[binding_j].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;  // FIXME: dont hardcode
+          desc_set_bindings[binding_j].stageFlags =
+              VK_SHADER_STAGE_VERTEX_BIT;  // FIXME: dont hardcode
 
           u64 buffer_size = sdl.bindings[binding_j].data.bytes.size;
           VkDeviceSize uniform_buf_size = buffer_size;
@@ -616,7 +618,8 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
           break;
         case SHADER_BINDING_TEXTURE:
           desc_set_bindings[binding_j].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-          desc_set_bindings[binding_j].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;  // FIXME: dont hardcode
+          desc_set_bindings[binding_j].stageFlags =
+              VK_SHADER_STAGE_FRAGMENT_BIT;  // FIXME: dont hardcode
           desc_set_bindings[binding_j].pImmutableSamplers = NULL;
 
           break;
@@ -748,14 +751,17 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
   color_attachment_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
   // Depth attachment
-  u32x2 ext = { .x = context.swapchain_support.capabilities.currentExtent.width, .y = context.swapchain_support.capabilities.currentExtent.height};
-  texture_desc depth_desc  = { .extents = ext, .format = CEL_TEXTURE_FORMAT_DEPTH_DEFAULT, .tex_type = CEL_TEXTURE_TYPE_2D};
+  u32x2 ext = { .x = context.swapchain_support.capabilities.currentExtent.width,
+                .y = context.swapchain_support.capabilities.currentExtent.height };
+  texture_desc depth_desc = { .extents = ext,
+                              .format = CEL_TEXTURE_FORMAT_DEPTH_DEFAULT,
+                              .tex_type = CEL_TEXTURE_TYPE_2D };
   texture_handle depth_texture_handle = gpu_texture_create(depth_desc, true, NULL);
   gpu_texture* depth = TEXTURE_GET(depth_texture_handle);
 
   VkAttachmentDescription depth_attachment;
-  depth_attachment.format = // TODO: context->device.depth_format;
-  depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  depth_attachment.format =  // TODO: context->device.depth_format;
+      depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
   depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -808,15 +814,6 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
   return renderpass;
 }
 
-void encode_set_pipeline(gpu_cmd_encoder* encoder, gpu_pipeline* pipeline) {
-  //                        VK_PIPELINE_BIND_POINT_GRAPHICS, &shader->pipeline);
-  // if (kind == PIPELINE_GRAPHICS) {
-  //   // ...
-  // } else {
-  //   // ...
-  // }
-}
-
 gpu_cmd_encoder gpu_cmd_encoder_create() {
   // gpu_cmd_encoder* encoder = malloc(sizeof(gpu_cmd_encoder)); // TODO: fix leaking mem
   gpu_cmd_encoder encoder = { 0 };
@@ -834,7 +831,7 @@ gpu_cmd_encoder gpu_cmd_encoder_create() {
   // Uniforms pool
   pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   pool_sizes[0].descriptorCount = MAX_FRAMES_IN_FLIGHT * MAX_DESCRIPTOR_SETS;
-    // Samplers pool
+  // Samplers pool
   pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   pool_sizes[1].descriptorCount = MAX_FRAMES_IN_FLIGHT * MAX_DESCRIPTOR_SETS;
 
@@ -955,7 +952,7 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
       write_sets[i].dstBinding = i;
       write_sets[i].dstArrayElement = 0;
       write_sets[i].pImageInfo = image_info;
-    }else {
+    } else {
       WARN("Unknown binding");
     }
   }
@@ -1497,7 +1494,8 @@ void copy_buffer_to_image_oneshot(buffer_handle src, texture_handle dst) {
   vulkan_command_buffer_finish_oneshot(temp_cmd_buffer);
 }
 
-VkImage vulkan_image_create(u32x2 dimensions, VkImageType image_type, VkFormat format ,VkImageUsageFlags usage) {
+VkImage vulkan_image_create(u32x2 dimensions, VkImageType image_type, VkFormat format,
+                            VkImageUsageFlags usage) {
   VkImage image;
 
   VkImageCreateInfo image_create_info = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
@@ -1510,7 +1508,7 @@ VkImage vulkan_image_create(u32x2 dimensions, VkImageType image_type, VkFormat f
   image_create_info.format = format;
   image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
   image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  image_create_info.usage = usage; // VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+  image_create_info.usage = usage;  // VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
   image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
 
@@ -1523,10 +1521,11 @@ VkImage vulkan_image_create(u32x2 dimensions, VkImageType image_type, VkFormat f
 texture_handle gpu_texture_create(texture_desc desc, bool create_view, const void* data) {
   VkDeviceSize image_size = desc.extents.x * desc.extents.y * 4;
   // FIXME: handle this properly
-  VkFormat format = desc.format == CEL_TEXTURE_FORMAT_8_8_8_8_RGBA_UNORM ? VK_FORMAT_R8G8B8A8_SRGB :
-    VK_FORMAT_D32_SFLOAT;
+  VkFormat format = desc.format == CEL_TEXTURE_FORMAT_8_8_8_8_RGBA_UNORM ? VK_FORMAT_R8G8B8A8_SRGB
+                                                                         : VK_FORMAT_D32_SFLOAT;
 
-  VkImage image; //vulkan_image_create(desc.extents, VK_IMAGE_TYPE_2D, format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+  VkImage image;  // vulkan_image_create(desc.extents, VK_IMAGE_TYPE_2D, format,
+                  // VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
   VkDeviceMemory image_memory;
 
   VkImageCreateInfo image_create_info = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
@@ -1575,10 +1574,13 @@ texture_handle gpu_texture_create(texture_desc desc, bool create_view, const voi
     buffer_handle staging =
         gpu_buffer_create(image_size, CEL_BUFFER_DEFAULT, CEL_BUFFER_FLAG_CPU, NULL);
     // Copy data into it
-    vulkan_transition_image_layout(texture, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    buffer_upload_bytes(staging, (bytebuffer){ .buf = (u8*)data, .size = image_size }, 0, image_size);
+    vulkan_transition_image_layout(texture, format, VK_IMAGE_LAYOUT_UNDEFINED,
+                                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    buffer_upload_bytes(staging, (bytebuffer){ .buf = (u8*)data, .size = image_size }, 0,
+                        image_size);
     copy_buffer_to_image_oneshot(staging, handle);
-    vulkan_transition_image_layout(texture, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    vulkan_transition_image_layout(texture, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     gpu_buffer_destroy(staging);
   }
@@ -1589,7 +1591,8 @@ texture_handle gpu_texture_create(texture_desc desc, bool create_view, const voi
     view_create_info.image = image;
     view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
     view_create_info.format = format;
-    view_create_info.subresourceRange.aspectMask = format == VK_FORMAT_D32_SFLOAT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+    view_create_info.subresourceRange.aspectMask =
+        format == VK_FORMAT_D32_SFLOAT ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 
     view_create_info.subresourceRange.baseMipLevel = 0;
     view_create_info.subresourceRange.levelCount = 1;
@@ -1601,29 +1604,29 @@ texture_handle gpu_texture_create(texture_desc desc, bool create_view, const voi
   }
 
   // Sampler
-    VkSamplerCreateInfo sampler_info = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-    sampler_info.magFilter = VK_FILTER_LINEAR;
-    sampler_info.minFilter = VK_FILTER_LINEAR;
-    sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.anisotropyEnable = VK_TRUE;
-    sampler_info.maxAnisotropy = 16;
-    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    sampler_info.unnormalizedCoordinates = VK_FALSE;
-    sampler_info.compareEnable = VK_FALSE;
-    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
-    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    sampler_info.mipLodBias = 0.0;
-    sampler_info.minLod = 0.0;
-    sampler_info.maxLod = 0.0;
+  VkSamplerCreateInfo sampler_info = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+  sampler_info.magFilter = VK_FILTER_LINEAR;
+  sampler_info.minFilter = VK_FILTER_LINEAR;
+  sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_info.anisotropyEnable = VK_TRUE;
+  sampler_info.maxAnisotropy = 16;
+  sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+  sampler_info.unnormalizedCoordinates = VK_FALSE;
+  sampler_info.compareEnable = VK_FALSE;
+  sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+  sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  sampler_info.mipLodBias = 0.0;
+  sampler_info.minLod = 0.0;
+  sampler_info.maxLod = 0.0;
 
-    VkResult res = vkCreateSampler(context.device->logical_device, &sampler_info, context.allocator,
-                                   &texture->sampler);
-    if (res != VK_SUCCESS) {
-      ERROR("Error creating texture sampler for image %s", texture->debug_label);
-      return;
-    }
+  VkResult res = vkCreateSampler(context.device->logical_device, &sampler_info, context.allocator,
+                                 &texture->sampler);
+  if (res != VK_SUCCESS) {
+    ERROR("Error creating texture sampler for image %s", texture->debug_label);
+    return;
+  }
 
   return handle;
 }
@@ -1671,39 +1674,6 @@ void vulkan_transition_image_layout(gpu_texture* texture, VkFormat format, VkIma
   vkCmdPipelineBarrier(temp_cmd_buffer, source_stage, dest_stage, 0, 0, 0, 0, 0, 1, &barrier);
 
   vulkan_command_buffer_finish_oneshot(temp_cmd_buffer);
-}
-
-size_t vertex_attrib_size(vertex_attrib_type attr) {
-  switch (attr) {
-    case ATTR_F32:
-    case ATTR_U32:
-    case ATTR_I32:
-      return 4;
-    case ATTR_F32x2:
-    case ATTR_U32x2:
-    case ATTR_I32x2:
-      return 8;
-    case ATTR_F32x3:
-    case ATTR_U32x3:
-    case ATTR_I32x3:
-      return 12;
-    case ATTR_F32x4:
-    case ATTR_U32x4:
-    case ATTR_I32x4:
-      return 16;
-      break;
-  }
-}
-
-void vertex_desc_add(vertex_description* builder, const char* name, vertex_attrib_type type) {
-  u32 i = builder->attributes_count;
-
-  size_t size = vertex_attrib_size(type);
-  builder->attributes[i] = type;
-  builder->stride += size;
-  builder->attr_names[i] = name;
-
-  builder->attributes_count++;
 }
 
 /* TYPED_POOL(gpu_buffer, buffer); */

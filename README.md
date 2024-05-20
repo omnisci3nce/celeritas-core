@@ -2,9 +2,8 @@
 
 ![Backpack model with lighting](examples/obj_loading/backpack_screenshot.png)
 
-Not all files are fleshed out right now.
 
-**Work-in-progress**: porting over code from old repository.
+**Work-in-progress**: This code is currently in flux as I port from OpenGL to a Vulkan backend with a homemade graphics API abstraction layer I'm developing named **RAL** (render abstraction layer) in the source code.
 
 All third-party dependencies are licensed under their own license.
 
