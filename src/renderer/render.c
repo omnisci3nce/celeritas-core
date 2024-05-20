@@ -1,47 +1,40 @@
-#include <stdlib.h>
-#include "mem.h"
-#include "transform_hierarchy.h"
+#include <glfw3.h>
+#include "maths_types.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#define STB_TRUETYPE_IMPLEMENTATION
-#include <stb_truetype.h>
-
-#include "render.h"
-#include "render_types.h"
-
-#include <glad/glad.h>
-#include <glfw3.h>
-
-#include "defines.h"
+#include "camera.h"
+#include "file.h"
 #include "log.h"
-#include "maths.h"
-#include "render_backend.h"
+#include "mem.h"
+#include "ral.h"
+#include "ral_types.h"
+#include "render.h"
 
-// FIXME: get rid of these and store dynamic screen realestate
-//        in renderer
-#define SCR_WIDTH 1080
-#define SCR_HEIGHT 800
-
-material DEFAULT_MATERIAL = { 0 };
+/** @brief Creates the pipelines built into Celeritas such as rendering static opaque geometry,
+           debug visualisations, immediate mode UI, etc */
+void default_pipelines_init(renderer* ren);
 
 bool renderer_init(renderer* ren) {
-  INFO("Renderer init");
+  // INFO("Renderer init");
 
   // NOTE: all platforms use GLFW at the moment but thats subject to change
   glfwInit();
 
-  DEBUG("init graphics api (OpenGL) backend");
+#if defined(CEL_REND_BACKEND_OPENGL)
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#elif defined(CEL_REND_BACKEND_VULKAN)
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+#endif
 
   // glfw window creation
   GLFWwindow* window = glfwCreateWindow(ren->config.scr_width, ren->config.scr_height,
                                         ren->config.window_name, NULL, NULL);
   if (window == NULL) {
-    printf("Failed to create GLFW window\n");
+    // ERROR("Failed to create GLFW window\n");
     glfwTerminate();
     return false;
   }
@@ -49,205 +42,174 @@ bool renderer_init(renderer* ren) {
 
   glfwMakeContextCurrent(ren->window);
 
-  if (!gfx_backend_init(ren)) {
+  DEBUG("Start gpu backend init");
+
+  if (!gpu_backend_init("Celeritas Engine - Vulkan", window)) {
     FATAL("Couldnt load graphics api backend");
     return false;
   }
+  gpu_device_create(&ren->device);  // TODO: handle errors
+  gpu_swapchain_create(&ren->swapchain);
 
-  ren->blinn_phong =
-      shader_create_separate("assets/shaders/blinn_phong.vert", "assets/shaders/blinn_phong.frag");
+  DEBUG("Initialise GPU resource pools");
+  arena pool_arena = arena_create(malloc(1024 * 1024), 1024 * 1024);
+  ren->resource_pools = arena_alloc(&pool_arena, sizeof(struct resource_pools));
+  resource_pools_init(&pool_arena, ren->resource_pools);
 
-  default_material_init();
+  // ren->blinn_phong =
+  //     shader_create_separate("assets/shaders/blinn_phong.vert",
+  //     "assets/shaders/blinn_phong.frag");
+
+  // ren->skinned =
+  //     shader_create_separate("assets/shaders/skinned.vert", "assets/shaders/blinn_phong.frag");
+
+  // default_material_init();
+
+  // Create default rendering pipeline
+  /* default_pipelines_init(ren); */
 
   return true;
+}
+void renderer_shutdown(renderer* ren) {
+  gpu_swapchain_destroy(&ren->swapchain);
+  gpu_pipeline_destroy(&ren->static_opaque_pipeline);
+  gpu_backend_shutdown();
+}
+
+void default_pipelines_init(renderer* ren) {
+  // Static opaque geometry
+  arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
+
+  gpu_renderpass_desc pass_description = {};
+  gpu_renderpass* renderpass = gpu_renderpass_create(&pass_description);
+
+  ren->default_renderpass = *renderpass;
+
+  printf("Load shaders\n");
+  str8 vert_path = str8lit("build/linux/x86_64/debug/triangle.vert.spv");
+  str8 frag_path = str8lit("build/linux/x86_64/debug/triangle.frag.spv");
+  /* str8 vert_path =
+   * str8lit("/home/void/code/celeritas-engine/celeritas-core/build/linux/x86_64/debug/triangle.vert.spv");
+   */
+  /* str8 frag_path =
+   * str8lit("/home/void/code/celeritas-engine/celeritas-core/build/linux/x86_64/debug/triangle.frag.spv");
+   */
+  str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
+  str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
+  if (!vertex_shader.has_value || !fragment_shader.has_value) {
+    ERROR_EXIT("Failed to load shaders from disk")
+  }
+
+  vertex_description vertex_input;
+  vertex_input.debug_label = "Standard Static 3D Vertex Format";
+  vertex_desc_add(&vertex_input, "inPosition", ATTR_F32x3);
+  vertex_desc_add(&vertex_input, "inNormal", ATTR_F32x3);
+  vertex_desc_add(&vertex_input, "inTexCoords", ATTR_F32x2);
+
+  struct graphics_pipeline_desc pipeline_description = {
+    .debug_name = "Basic Pipeline",
+    .vertex_desc = vertex_input,
+    // .data_layouts
+    // .data_layouts_count
+    .vs = { .debug_name = "Triangle Vertex Shader",
+            .filepath = vert_path,
+            .code = vertex_shader.contents,
+            .is_spirv = true },
+    .fs = { .debug_name = "Triangle Fragment Shader",
+            .filepath = frag_path,
+            .code = fragment_shader.contents,
+            .is_spirv = true },
+    .renderpass = renderpass,
+    .wireframe = false,
+    .depth_test = false
+  };
+  gpu_pipeline* gfx_pipeline = gpu_graphics_pipeline_create(pipeline_description);
+  ren->static_opaque_pipeline = *gfx_pipeline;
 }
 
 void render_frame_begin(renderer* ren) {
-  vec3 color = ren->config.clear_colour;
-  clear_screen(color);
+  ren->frame_aborted = false;
+  if (!gpu_backend_begin_frame()) {
+    ren->frame_aborted = true;
+    return;
+  }
+  gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
+  // begin recording
+  gpu_cmd_encoder_begin(*enc);
+  gpu_cmd_encoder_begin_render(enc, &ren->default_renderpass);
+  encode_bind_pipeline(enc, PIPELINE_GRAPHICS, &ren->static_opaque_pipeline);
+  encode_set_default_settings(enc);
 }
 void render_frame_end(renderer* ren) {
-  // present frame
-  glfwSwapBuffers(ren->window);
-  glfwPollEvents();
+  if (ren->frame_aborted) {
+    return;
+  }
+  // gpu_temp_draw(3);
+  gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
+  gpu_cmd_encoder_end_render(enc);
+  gpu_cmd_buffer buf = gpu_cmd_encoder_finish(enc);
+  gpu_queue_submit(&buf);
+  gpu_backend_end_frame();
+}
+void render_frame_draw(renderer* ren) {}
+
+void draw_mesh(mesh* mesh, mat4* model) {  // , mat4* view, mat4* proj) {
+  gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
+  encode_set_vertex_buffer(enc, mesh->vertex_buffer);
+  if (mesh->has_indices) {
+    encode_set_index_buffer(enc, mesh->index_buffer);
+  }
+  // Assume this has already been done
+  /* encode_bind_shader_data(enc, 0, &mvp_uniforms_data); */
+  encode_draw_indexed(enc, mesh->index_count);
 }
 
-void default_material_init() {
-  INFO("Load default material")
-  DEFAULT_MATERIAL.ambient_colour = (vec3){ 0.5, 0.5, 0.5 };
-  DEFAULT_MATERIAL.diffuse = (vec3){ 0.8, 0.8, 0.8 };
-  DEFAULT_MATERIAL.specular = (vec3){ 1.0, 1.0, 1.0 };
-  DEFAULT_MATERIAL.diffuse_texture = texture_data_load("assets/textures/white1x1.png", false);
-  DEFAULT_MATERIAL.specular_texture = texture_data_load("assets/textures/black1x1.png", false);
-  DEFAULT_MATERIAL.spec_exponent = 32.0;
-  strcpy(DEFAULT_MATERIAL.name, "Default");
-  texture_data_upload(&DEFAULT_MATERIAL.diffuse_texture);
-  texture_data_upload(&DEFAULT_MATERIAL.specular_texture);
-}
+void gfx_backend_draw_frame(renderer* ren, camera* camera, mat4 model, texture* tex) {}
 
-typedef struct draw_ctx {
-  model_darray* models;
-  renderer* ren;
-  camera* cam;
-  scene* scene;
-} draw_ctx;
-bool draw_scene_node(transform_node* node, void* ctx_data) {
-  if (!node || !node->parent) return true;
-  draw_ctx* ctx = ctx_data;
-  model* m = &ctx->models->data[node->model.raw];
-  draw_model(ctx->ren, ctx->cam, m, &node->world_matrix_tf, ctx->scene);
-  return true;
-}
+void geo_set_vertex_colours(geometry_data* geo, vec4 colour) {}
 
-void draw_scene(arena* frame, model_darray* models, renderer* ren, camera* camera,
-                transform_hierarchy* tfh, scene* scene) {
-  draw_ctx* ctx = arena_alloc(frame, sizeof(draw_ctx));
-  ctx->models = models;
-  ctx->ren = ren;
-  ctx->cam = camera;
-  ctx->scene = scene;
-  transform_hierarchy_dfs(transform_hierarchy_root_node(tfh), draw_scene_node, true, ctx);
-}
+// --- NEW
 
-void draw_model(renderer* ren, camera* camera, model* model, mat4* model_tf, scene* scene) {
-  // TRACE("Drawing model: %s", model->name);
-  mat4 view;
-  mat4 proj;
-  camera_view_projection(camera, SCR_HEIGHT, SCR_WIDTH, &view, &proj);
+mesh mesh_create(geometry_data* geometry, bool free_on_upload) {
+  mesh m = { 0 };
 
-  set_shader(ren->blinn_phong);
+  // Create and upload vertex buffer
+  size_t vert_bytes = geometry->vertices->len * sizeof(vertex);
+  INFO("Creating vertex buffer with size %d (%d x %d)", vert_bytes, geometry->vertices->len,
+       sizeof(vertex));
+  m.vertex_buffer = gpu_buffer_create(vert_bytes, CEL_BUFFER_VERTEX, CEL_BUFFER_FLAG_GPU,
+                                      geometry->vertices->data);
 
-  // set camera uniform
-  uniform_vec3f(ren->blinn_phong.program_id, "viewPos", &camera->position);
-  // set light uniforms
-  dir_light_upload_uniforms(ren->blinn_phong, &scene->dir_light);
-  for (int i = 0; i < scene->n_point_lights; i++) {
-    point_light_upload_uniforms(ren->blinn_phong, &scene->point_lights[i], '0' + i);
+  // Create and upload index buffer
+  size_t index_bytes = geometry->indices.len * sizeof(u32);
+  INFO("Creating index buffer with size %d (len: %d)", index_bytes, geometry->indices.len);
+  m.index_buffer =
+      gpu_buffer_create(index_bytes, CEL_BUFFER_INDEX, CEL_BUFFER_FLAG_GPU, geometry->indices.data);
+
+  m.is_uploaded = true;
+  m.has_indices = geometry->has_indices;
+  m.index_count = geometry->indices.len;
+  m.vertices = geometry;
+  if (free_on_upload) {
+    geo_free_data(geometry);
   }
 
-  for (size_t i = 0; i < mesh_darray_len(model->meshes); i++) {
-    mesh* m = &model->meshes->data[i];
-    if (vertex_darray_len(m->vertices) == 0) {
-      continue;
-    }
-    // TRACE("Drawing mesh %d", i);
-    material* mat = &model->materials->data[m->material_index];
-    draw_mesh(ren, m, model_tf, mat, &view, &proj);
-  }
+  // TODO: materials?
+
+  return m;
 }
 
-void draw_mesh(renderer* ren, mesh* mesh, mat4* model_tf, material* mat, mat4* view, mat4* proj) {
-  shader lighting_shader = ren->blinn_phong;
+// --- Textures
 
-  // bind buffer
-  bind_mesh_vertex_buffer(ren->backend_state, mesh);
-
-  // bind textures
-  bind_texture(lighting_shader, &mat->diffuse_texture, 0);   // bind to slot 0
-  bind_texture(lighting_shader, &mat->specular_texture, 1);  // bind to slot 1
-  uniform_f32(lighting_shader.program_id, "material.shininess", 32.);
-
-  // upload model transform
-  // mat4 trans = mat4_translation(tf.position);
-  // mat4 rot = mat4_rotation(tf.rotation);
-  // mat4 scale = mat4_scale(tf.scale);
-  // mat4 model_tf = mat4_mult(trans, mat4_mult(rot, scale));
-
-  uniform_mat4f(lighting_shader.program_id, "model", model_tf);
-  // upload view & projection matrices
-  uniform_mat4f(lighting_shader.program_id, "view", view);
-  uniform_mat4f(lighting_shader.program_id, "projection", proj);
-
-  // draw triangles
-  u32 num_vertices = vertex_darray_len(mesh->vertices);
-  draw_primitives(CEL_PRIMITIVE_TOPOLOGY_TRIANGLE, 0, num_vertices);
-}
-
-void model_upload_meshes(renderer* ren, model* model) {
-  INFO("Upload mesh vertex data to GPU for model %s", model->name);
-
-  size_t num_meshes = mesh_darray_len(model->meshes);
-  u32 VBOs[num_meshes];
-  u32 VAOs[num_meshes];
-  glGenBuffers(num_meshes, VBOs);
-  glGenVertexArrays(num_meshes, VAOs);
-
-  u64 total_verts = 0;
-
-  TRACE("num meshes %d", num_meshes);
-
-  // upload each mesh to the GPU
-  for (int mesh_i = 0; mesh_i < num_meshes; mesh_i++) {
-    model->meshes->data[mesh_i].vao = VAOs[mesh_i];
-    model->meshes->data[mesh_i].vbo = VBOs[mesh_i];
-    // 3. bind buffers
-    glBindBuffer(GL_ARRAY_BUFFER, VBOs[mesh_i]);
-
-    size_t num_vertices = vertex_darray_len(model->meshes->data[mesh_i].vertices);
-    // TRACE("Uploading vertex array data: %d verts", num_vertices);
-    total_verts += num_vertices;
-
-    // TODO: convert this garbage into a function
-    f32 verts[num_vertices * 8];
-    // for each face
-    for (int i = 0; i < (num_vertices / 3); i++) {
-      // for each vert in face
-      for (int j = 0; j < 3; j++) {
-        size_t stride = (i * 24) + j * 8;
-        // printf("i: %d, stride: %ld, loc %d\n", i, stride, i * 3 + j);
-        vertex vert = model->meshes->data[mesh_i].vertices->data[i];
-        // printf("pos %f %f %f\n", vert.position.x, vert.position.y, vert.position.z);
-        // printf("norm %f %f %f\n", vert.normal.x, vert.normal.y, vert.normal.z);
-        // printf("tex %f %f\n", vert.uv.x, vert.uv.y);
-        verts[stride + 0] =
-            ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].position.x;
-        verts[stride + 1] =
-            ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].position.y;
-        verts[stride + 2] =
-            ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].position.z;
-        verts[stride + 3] =
-            ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].normal.x;
-        verts[stride + 4] =
-            ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].normal.y;
-        verts[stride + 5] =
-            ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].normal.z;
-        verts[stride + 6] = ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].uv.x;
-        verts[stride + 7] = ((vertex*)model->meshes->data[mesh_i].vertices->data)[i * 3 + j].uv.y;
-      }
-    }
-
-    // 4. upload data
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
-
-    // 5. cont. set mesh vertex layout
-    glBindVertexArray(model->meshes->data[mesh_i].vao);
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // normal vector attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    // tex coords
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-  }
-
-  INFO("Uploaded %d submeshes with a total of %d vertices\n", num_meshes, total_verts);
-
-  // 6. reset buffer
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-texture texture_data_load(const char* path, bool invert_y) {
+texture_data texture_data_load(const char* path, bool invert_y) {
   TRACE("Load texture %s", path);
 
   // load the file data
-  // texture loading
   int width, height, num_channels;
   stbi_set_flip_vertically_on_load(invert_y);
 
 #pragma GCC diagnostic ignored "-Wpointer-sign"
-  char* data = stbi_load(path, &width, &height, &num_channels, 0);
+  char* data = stbi_load(path, &width, &height, &num_channels, STBI_rgb_alpha);
   if (data) {
     DEBUG("loaded texture: %s", path);
   } else {
@@ -260,66 +222,18 @@ texture texture_data_load(const char* path, bool invert_y) {
   } else {
     channel_type = GL_RGB;
   }
+  texture_desc desc = { .extents = { width, height },
+                        .format = CEL_TEXTURE_FORMAT_8_8_8_8_RGBA_UNORM,
+                        .tex_type = CEL_TEXTURE_TYPE_2D };
 
-  return (texture){ .texture_id = 0,
-                    .width = width,
-                    .height = height,
-                    .channel_count = num_channels,
-                    .channel_type = channel_type,
-                    .name = "TODO: Texture names",
-                    .image_data = data };
+  return (texture_data){ .description = desc, .image_data = data };
 }
 
-void texture_data_upload(texture* tex) {
-  printf("Texture name %s\n", tex->name);
-  TRACE("Upload texture data");
-  u32 texture_id;
-  glGenTextures(1, &texture_id);
-  glBindTexture(GL_TEXTURE_2D, texture_id);
-  tex->texture_id = texture_id;
-
-  // set the texture wrapping parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                  GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  // set texture filtering parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex->width, tex->height, 0, tex->channel_type,
-               GL_UNSIGNED_BYTE, tex->image_data);
-  glGenerateMipmap(GL_TEXTURE_2D);
-  DEBUG("Freeing texture image data after uploading to GPU");
-  // stbi_image_free(tex->image_data);  // data is on gpu now so we dont need it around
-}
-
-void dir_light_upload_uniforms(shader shader, directional_light* light) {
-  uniform_vec3f(shader.program_id, "dirLight.direction", &light->direction);
-  uniform_vec3f(shader.program_id, "dirLight.ambient", &light->ambient);
-  uniform_vec3f(shader.program_id, "dirLight.diffuse", &light->diffuse);
-  uniform_vec3f(shader.program_id, "dirLight.specular", &light->specular);
-}
-
-void point_light_upload_uniforms(shader shader, point_light* light, char index) {
-  char position_str[] = "pointLights[x].position";
-  position_str[12] = (char)index;
-  char ambient_str[] = "pointLights[x].ambient";
-  ambient_str[12] = (char)index;
-  char diffuse_str[] = "pointLights[x].diffuse";
-  diffuse_str[12] = (char)index;
-  char specular_str[] = "pointLights[x].specular";
-  specular_str[12] = (char)index;
-  char constant_str[] = "pointLights[x].constant";
-  constant_str[12] = (char)index;
-  char linear_str[] = "pointLights[x].linear";
-  linear_str[12] = (char)index;
-  char quadratic_str[] = "pointLights[x].quadratic";
-  quadratic_str[12] = (char)index;
-  uniform_vec3f(shader.program_id, position_str, &light->position);
-  uniform_vec3f(shader.program_id, ambient_str, &light->ambient);
-  uniform_vec3f(shader.program_id, diffuse_str, &light->diffuse);
-  uniform_vec3f(shader.program_id, specular_str, &light->specular);
-  uniform_f32(shader.program_id, constant_str, light->constant);
-  uniform_f32(shader.program_id, linear_str, light->linear);
-  uniform_f32(shader.program_id, quadratic_str, light->quadratic);
+texture_handle texture_data_upload(texture_data data, bool free_on_upload) {
+  texture_handle handle = gpu_texture_create(data.description, true, data.image_data);
+  if (free_on_upload) {
+    TRACE("Freed stb_image data");
+    stbi_image_free(data.image_data);
+  }
+  return handle;
 }

@@ -1,11 +1,17 @@
 #include "input.h"
 
+#include <assert.h>
 #include <glfw3.h>
+#include <string.h>
 
 #include "log.h"
 
+static input_state *g_input;  // Use a global to simplify caller code
+
 bool input_system_init(input_state *input, GLFWwindow *window) {
   INFO("Input init");
+  memset(input, 0, sizeof(input_state));
+
   input->window = window;
   // Set everything to false. Could just set memory to zero but where's the fun in that
   for (int i = 0; i < KEYCODE_MAX; i++) {
@@ -14,10 +20,19 @@ bool input_system_init(input_state *input, GLFWwindow *window) {
     input->just_released_keys[i] = false;
   }
 
+  g_input = input;
+
+  assert(input->mouse.x_delta == 0);
+  assert(input->mouse.y_delta == 0);
+
+  INFO("Finish input init");
   return true;
 }
 
+void input_system_shutdown(input_state *input) {}
+
 void input_update(input_state *input) {
+  glfwPollEvents();
   // --- update keyboard input
 
   // if we go from un-pressed -> pressed, set as "just pressed"
@@ -75,3 +90,9 @@ void input_update(input_state *input) {
 
   input->mouse = new_mouse_state;
 }
+
+bool key_is_pressed(keycode key) { return g_input->depressed_keys[key]; }
+
+bool key_just_pressed(keycode key) { return g_input->just_pressed_keys[key]; }
+
+bool key_just_released(keycode key) { return g_input->just_released_keys[key]; }

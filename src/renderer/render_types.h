@@ -1,32 +1,23 @@
 /**
  * @file render_types.h
- * @author Omniscient
- * @brief Type definitions for the majority of data required by the renderer system
- * @date 2024-02-24
+ * @author your name (you@domain.com)
+ * @brief
+ * @version 0.1
+ * @date 2024-04-27
+ *
+ * @copyright Copyright (c) 2024
  *
  */
 #pragma once
 
-#include "darray.h"
-#include "maths_types.h"
-#include "str.h"
+#include "ral.h"
+#include "ral_types.h"
+#if defined(CEL_PLATFORM_WINDOWS)
+// #include "backend_dx11.h"
+#endif
+#include "backend_vulkan.h"
 
 struct GLFWwindow;
-
-#define MAX_MATERIAL_NAME_LEN 256
-#define MAX_TEXTURE_NAME_LEN 256
-
-#ifndef RESOURCE_HANDLE_DEFS
-CORE_DEFINE_HANDLE(model_handle);
-#define ABSENT_MODEL_HANDLE 999999999
-CORE_DEFINE_HANDLE(texture_handle);
-#define RESOURCE_HANDLE_DEFS
-#endif
-
-/* @brief Opaque wrapper around a shader program */
-typedef struct shader {
-  u32 program_id;
-} shader;
 
 /** @brief configuration passed to the renderer at init time */
 typedef struct renderer_config {
@@ -36,27 +27,58 @@ typedef struct renderer_config {
 } renderer_config;
 
 typedef struct renderer {
-  struct GLFWwindow *window; /** Currently all platforms use GLFW*/
-  void *backend_state;       /** Graphics API-specific state */
+  struct GLFWwindow* window;
+  void* backend_context;
   renderer_config config;
-  // shaders
-  shader blinn_phong;
+  gpu_device device;
+  gpu_swapchain swapchain;
+  gpu_renderpass default_renderpass;
+  gpu_pipeline static_opaque_pipeline;
+  bool frame_aborted;
+  struct resource_pools* resource_pools;
 } renderer;
 
-// --- Lighting & Materials
+typedef struct geometry_data {
+  vertex_format format;
+  vertex_darray* vertices;  // TODO: make it not a pointer
+  bool has_indices;
+  u32_darray indices;
+  vec3 colour; /** Optional: set vertex colours */
+} geometry_data;
+
+// 'Upload' a geometry_data (to GPU) -> get back a mesh
+typedef struct mesh {
+  buffer_handle vertex_buffer;
+  buffer_handle index_buffer;
+  u32 index_count;
+  bool has_indices;
+  geometry_data* vertices;  // NULL means it has been freed
+  bool is_uploaded;
+  bool is_latent;
+} mesh;
+
+/* Hot reloading:
+C side - reload_model():
+  - load model from disk using existing loader
+  - remove from transform graph so it isnt tried to be drawn
+*/
+
+typedef struct model {
+  str8 name;
+  mesh* meshes;
+  u32 mesh_count;
+} model;
 
 typedef struct texture {
-  u32 texture_id;
-  char name[MAX_TEXTURE_NAME_LEN];
-  void *image_data;
-  u32 width;
-  u32 height;
-  u8 channel_count;
-  u32 channel_type;
 } texture;
 
+typedef struct texture_data {
+  texture_desc description;
+  void* image_data;
+} texture_data;
+
 typedef struct blinn_phong_material {
-  char name[MAX_MATERIAL_NAME_LEN];
+  char name[256];
   texture diffuse_texture;
   char diffuse_tex_path[256];
   texture specular_texture;
@@ -68,18 +90,49 @@ typedef struct blinn_phong_material {
   bool is_loaded;
   bool is_uploaded;
 } blinn_phong_material;
-typedef blinn_phong_material material;  // when we start using PBR, this will no longer be the case
+typedef blinn_phong_material material;
 
 // the default blinn-phong material. MUST be initialised with the function below
 extern material DEFAULT_MATERIAL;
 void default_material_init();
 
+#ifndef TYPED_MESH_ARRAY
+KITC_DECL_TYPED_ARRAY(mesh)
+#define TYPED_MESH_ARRAY
+#endif
+
+#ifndef TYPED_MODEL_ARRAY
+KITC_DECL_TYPED_ARRAY(model)
+#define TYPED_MODEL_ARRAY
+#endif
+
 #ifndef TYPED_MATERIAL_ARRAY
-KITC_DECL_TYPED_ARRAY(material)  // creates "material_darray"
+KITC_DECL_TYPED_ARRAY(material)
 #define TYPED_MATERIAL_ARRAY
 #endif
 
-// lights
+#ifndef TYPED_ANIMATION_CLIP_ARRAY
+#include "animation.h"
+KITC_DECL_TYPED_ARRAY(animation_clip)
+#define TYPED_ANIMATION_CLIP_ARRAY
+#endif
+
+/** @brief Describes all the data required for the renderer to start executing draws */
+typedef struct render_entity {
+  /* buffer_handle index_buffer; */
+  /* u32 index_count; */
+  /* u32 index_offset; */
+  /* buffer_handle vertex_buffer; */
+  model_handle model;
+  transform tf;
+} render_entity;
+
+#ifndef TYPED_RENDER_ENTITY_ARRAY
+KITC_DECL_TYPED_ARRAY(render_entity)
+#define TYPED_RENDER_ENTITY_ARRAY
+#endif
+
+// --- Lights
 typedef struct point_light {
   vec3 position;
   f32 constant, linear, quadratic;
@@ -94,85 +147,3 @@ typedef struct directional_light {
   vec3 diffuse;
   vec3 specular;
 } directional_light;
-
-void point_light_upload_uniforms(shader shader, point_light *light, char index);
-void dir_light_upload_uniforms(shader shader, directional_light *light);
-
-// --- Models & Meshes
-
-/** @brief Vertex format for a static mesh */
-typedef struct vertex {
-  vec3 position;
-  vec3 normal;
-  vec2 uv;
-} vertex;
-
-#ifndef TYPED_VERTEX_ARRAY
-KITC_DECL_TYPED_ARRAY(vertex)  // creates "vertex_darray"
-#define TYPED_VERTEX_ARRAY
-#endif
-
-typedef struct mesh {
-  vertex_darray *vertices;
-  u32 vertex_size; /** size in bytes of each vertex including necessary padding */
-  bool has_indices;
-  u32 *indices;
-  u32 indices_len;
-  size_t material_index;
-  u32 vbo, vao; /** OpenGL data. TODO: dont leak OpenGL details */
-} mesh;
-
-#ifndef TYPED_MESH_ARRAY
-KITC_DECL_TYPED_ARRAY(mesh)  // creates "mesh_darray"
-#define TYPED_MESH_ARRAY
-#endif
-
-typedef struct model {
-  str8 name;
-  mesh_darray *meshes;
-  aabb_3d bbox;
-  material_darray *materials;
-  bool is_loaded;
-  bool is_uploaded;
-} model;
-
-#ifndef TYPED_MODEL_ARRAY
-KITC_DECL_TYPED_ARRAY(model)  // creates "model_darray"
-#define TYPED_MODEL_ARRAY
-#endif
-
-// --- Scene
-
-// NOTE: This struct won't stay like this for a long time. It's somewhat temporary
-//       in order to get a basic scene working without putting burden on the caller of
-//       draw_model()
-typedef struct scene {
-  directional_light dir_light;
-  point_light point_lights[4];
-  size_t n_point_lights;
-} scene;
-
-// --- Graphics API related
-
-typedef enum cel_primitive_topology {
-  CEL_PRIMITIVE_TOPOLOGY_POINT,
-  CEL_PRIMITIVE_TOPOLOGY_LINE,
-  CEL_PRIMITIVE_TOPOLOGY_LINE_STRIP,
-  CEL_PRIMITIVE_TOPOLOGY_TRIANGLE,
-  CEL_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
-  CEL_PRIMITIVE_TOPOLOGY_COUNT
-} cel_primitive_topology;
-
-typedef enum gpu_texture_type {
-  TEXTURE_TYPE_2D,
-  TEXTURE_TYPE_3D,
-  TEXTURE_TYPE_2D_ARRAY,
-  TEXTURE_TYPE_CUBE_MAP,
-  TEXTURE_TYPE_COUNT
-} gpu_texture_type;
-
-typedef enum gpu_texture_format {
-  TEXTURE_FORMAT_8_8_8_8_RGBA_UNORM,
-  TEXTURE_FORMAT_DEPTH_DEFAULT,
-  TEXTURE_FORMAT_COUNT
-} gpu_texture_format;

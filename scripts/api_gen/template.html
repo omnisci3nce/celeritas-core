@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex p-4 bg-neutral-800 text-neutral-200">
+  <nav class="pr-8">
+    <h3 class="text-sm font-semibold">Modules</h3>
+    <br />
+    <ul class="flex flex-col">
+      <li class="text-neutral-400 text-sm"><span class="pr-1">1.1</span> core lifecycle</li>
+      <li class="text-neutral-400 text-sm"><span class="pr-1">1.2</span> threadpool</li>
+      <h5 class="text-xs text-neutral-300 tracking-wide pt-2">maths</h5>
+      <li class="text-neutral-400 text-sm"><span class="pr-1">1.3</span> vector</li>
+      <li class="text-neutral-400 text-sm"><span class="pr-1">1.4</span> quaternion</li>
+      <li class="text-neutral-400 text-sm"><span class="pr-1">1.5</span> matrix</li>
+      <!-- <li class="text-neutral-400 text-sm"><span class="pr-1">3.0</span> memory</li> -->
+      <h5 class="text-xs text-neutral-300 tracking-wide pt-2">memory</h5>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.6</span> arena</li>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.7</span> pool</li>
+      <!-- <li class="text-neutral-400 text-sm"><span class="pr-1">4.0</span> containers</li> -->
+      <h5 class="text-xs text-neutral-300 tracking-wide pt-2">containers</h5>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.8</span> darray</li>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.9</span> hashtbl</li>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.10</span> ring_queue</li>
+
+      <h5 class="text-xs text-neutral-300 tracking-wide pt-2">std</h5>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.11</span> str8</li>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.12</span> bytebuffer</li>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.13</span> utils</li>
+
+      <h5 class="text-xs text-neutral-300 tracking-wide pt-2">render</h5>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.14</span> ral</li>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.15</span> render</li>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.16</span> immdraw</li>
+
+      <h5 class="text-xs text-neutral-300 tracking-wide pt-2">platform</h5>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.17</span> file</li>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.18</span> path</li>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.19</span> mutex</li>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.20</span> thread</li>
+
+      <h5 class="text-xs text-neutral-300 tracking-wide pt-2"></h5>
+      <li class="text-neutral-400 text-sm "><span class="pr-1">1.21</span> scene</li>
+
+<!-- 
+- core lifecycle
+- memory
+  - arena
+  - pool
+- containers
+  - darray
+  - hashtbl
+  - ring_queue
+- maths
+- physics
+- platform
+  - file
+  - path
+  - mutex
+  - thread
+- threadpool
+ -->
+    </ul>
+  </nav>
+  <main class="px-8">
+    <h2 class="font-semibold text-amber-400">Celeritas Core API</h2>
+
+    <div class="my-8"></div>
+    <div class="bg-neutral-700 px-2 py-1 min-w-[600px]" style="font-family: monospace;">
+      <span class="text-[#ECBE7B]">arena</span>
+      <span class="text-[#80A0C2]">arena_create</span>(<span class="text-[#D2876D]">void*</span> 
+      <span class="text-neutral-300">backing_buffer</span>,
+      <span class="text-[#D2876D]">size_t</span> 
+      <span class="text-neutral-300">capacity</span>);
+    </div>
+    <div class="bg-neutral-700 px-2 py-1 min-w-[600px]" style="font-family: monospace;">
+      <span class="text-[#ECBE7B]">void*</span>
+      <span class="text-[#80A0C2]">arena_alloc</span>(<span class="text-[#D2876D]">arena*</span> 
+      <span class="text-neutral-300">a</span>,
+      <span class="text-[#D2876D]">size_t</span> 
+      <span class="text-neutral-300">size</span>);
+    </div>
+<!-- void* arena_alloc(arena* a, size_t size); -->
+  </main>
+  
+  
+</body>
+</html>

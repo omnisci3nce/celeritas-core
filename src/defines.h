@@ -1,6 +1,6 @@
 /**
  * @file defines.h
- * @brief
+ * @brief Typedefs for common integer/floating point types and very basic macros
  * @date 2024-02-24
  * @copyright Copyright (c) 2024
  */
@@ -65,12 +65,17 @@ Renderer backend defines:
 */
 
 // Platform will inform renderer backend (unless user overrides)
-#if defined(CEL_PLATFORM_LINUX) || defined(CEL_PLATFORM_WINDOWS)
-#define CEL_REND_BACKEND_OPENGL 1
-// #define CEL_REND_BACKEND_VULKAN 1
+#if defined(CEL_PLATFORM_LINUX)
+// #define CEL_REND_BACKEND_OPENGL 1
+#define CEL_REND_BACKEND_VULKAN 1
+#endif
+
+#if defined(CEL_PLATFORM_WINDOWS)
+// #define CEL_REND_BACKEND_DX11 1
+#define CEL_REND_BACKEND_VULKAN 1
 #endif
 
 #if defined(CEL_PLATFORM_MAC)
-#define CEL_REND_BACKEND_METAL 1
-// #define CEL_REND_BACKEND_OPENGL 1
+// #define CEL_REND_BACKEND_METAL 1
+#define CEL_REND_BACKEND_OPENGL 1
 #endif

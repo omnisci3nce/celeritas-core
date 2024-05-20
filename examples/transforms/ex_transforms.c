@@ -5,7 +5,7 @@
 #include "maths_types.h"
 #include "mem.h"
 #include "render.h"
-#include "render_types.h"
+// #include "render_types.h"
 #include "transform_hierarchy.h"
 
 const vec3 pointlight_positions[4] = {

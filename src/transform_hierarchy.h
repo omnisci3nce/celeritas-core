@@ -4,6 +4,7 @@
 #pragma once
 
 #include "maths_types.h"
+#include "ral.h"
 #include "render_types.h"
 
 #define MAX_TF_NODE_CHILDREN \
