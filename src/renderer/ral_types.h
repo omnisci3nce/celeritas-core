@@ -22,6 +22,9 @@ CORE_DEFINE_HANDLE(texture_handle);
 CORE_DEFINE_HANDLE(sampler_handle);
 CORE_DEFINE_HANDLE(shader_handle);
 CORE_DEFINE_HANDLE(model_handle);
+CORE_DEFINE_HANDLE(pipeline_layout_handle);
+CORE_DEFINE_HANDLE(pipeline_handle);
+CORE_DEFINE_HANDLE(renderpass_handle);
 #define ABSENT_MODEL_HANDLE 999999999
 
 /* #define RENDERER_TYPED_HANDLES */

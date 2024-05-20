@@ -40,6 +40,7 @@ typedef struct vulkan_context {
   vulkan_swapchain_support_info swapchain_support;
 
   arena temp_arena;
+  arena pool_arena;
   gpu_device* device;
   gpu_swapchain* swapchain;
   u32 framebuffer_count;
@@ -66,6 +67,7 @@ typedef struct vulkan_context {
   size_t buffer_count;
   VkDescriptorSet_darray* free_set_queue;
   struct resource_pools* resource_pools;
+  gpu_backend_pools gpu_pools;
 
   VkDebugUtilsMessengerEXT vk_debugger;
 } vulkan_context;
@@ -73,6 +75,8 @@ typedef struct vulkan_context {
 static vulkan_context context;
 
 // --- Function forward declarations
+
+void backend_pools_init(arena* a, gpu_backend_pools* backend_pools);
 
 /** @brief Enumerates and selects the most appropriate graphics device */
 bool select_physical_device(gpu_device* out_device);
@@ -114,6 +118,11 @@ bool gpu_backend_init(const char* window_name, GLFWwindow* window) {
   // Create an allocator
   size_t temp_arena_size = 1024 * 1024;
   context.temp_arena = arena_create(malloc(temp_arena_size), temp_arena_size);
+
+  size_t pool_buffer_size = 1024 * 1024;
+  context.pool_arena = arena_create(malloc(pool_buffer_size), pool_buffer_size);
+
+  backend_pools_init(&context.pool_arena, &context.gpu_pools);
 
   // Setup Vulkan instance
   VkApplicationInfo app_info = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
@@ -393,8 +402,9 @@ VkFormat format_from_vertex_attr(vertex_attrib_type attr) {
 
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {
   // Allocate
-  gpu_pipeline_layout* layout = malloc(sizeof(gpu_pipeline_layout));
-  gpu_pipeline* pipeline = malloc(sizeof(gpu_pipeline));
+  gpu_pipeline_layout* layout =
+      pipeline_layout_pool_alloc(&context.gpu_pools.pipeline_layouts, NULL);
+  gpu_pipeline* pipeline = pipeline_pool_alloc(&context.gpu_pools.pipelines, NULL);
 
   // Shaders
   printf("Vertex shader: %s\n", description.vs.filepath.buf);
@@ -725,8 +735,7 @@ gpu_cmd_encoder* gpu_get_default_cmd_encoder() {
 }
 
 gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
-  // TEMP: allocate with malloc. in the future we will have a pool allocator on the context
-  gpu_renderpass* renderpass = malloc(sizeof(gpu_renderpass));
+  gpu_renderpass* renderpass = renderpass_pool_alloc(&context.gpu_pools.renderpasses, NULL);
 
   // attachments
   u32 attachment_desc_count = 2;
@@ -1686,4 +1695,16 @@ void resource_pools_init(arena* a, struct resource_pools* res_pools) {
   res_pools->textures = tex_pool;
 
   context.resource_pools = res_pools;
+}
+
+void backend_pools_init(arena* a, gpu_backend_pools* backend_pools) {
+  pipeline_layout_pool pipeline_layout_pool =
+      pipeline_layout_pool_create(a, MAX_PIPELINES, sizeof(gpu_pipeline_layout));
+  backend_pools->pipeline_layouts = pipeline_layout_pool;
+  pipeline_pool pipeline_pool = pipeline_pool_create(a, MAX_PIPELINES, sizeof(gpu_pipeline));
+  backend_pools->pipelines = pipeline_pool;
+  renderpass_pool rpass_pool = renderpass_pool_create(a, MAX_RENDERPASSES, sizeof(gpu_renderpass));
+  backend_pools->renderpasses = rpass_pool;
+
+  context.gpu_pools;
 }

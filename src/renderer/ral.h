@@ -34,12 +34,21 @@ typedef struct gpu_texture gpu_texture;
 #define MAX_SHADER_DATA_LAYOUTS 5
 #define MAX_BUFFERS 256
 #define MAX_TEXTURES 256
+#define MAX_PIPELINES 128
+#define MAX_RENDERPASSES 128
 
 TYPED_POOL(gpu_buffer, buffer);
 TYPED_POOL(gpu_texture, texture);
 
+TYPED_POOL(gpu_pipeline_layout, pipeline_layout);
+TYPED_POOL(gpu_pipeline, pipeline);
+TYPED_POOL(gpu_renderpass, renderpass);
+
 // --- Pools
-typedef struct gpu_backend_pools { /* TODO: pools for each gpu structure */
+typedef struct gpu_backend_pools {
+  pipeline_pool pipelines;
+  pipeline_layout_pool pipeline_layouts;
+  renderpass_pool renderpasses;
 } gpu_backend_pools;
 
 struct resource_pools {
@@ -47,6 +56,7 @@ struct resource_pools {
   texture_pool textures;
 };
 
+// --- Pipeline description
 typedef enum pipeline_kind {
   PIPELINE_GRAPHICS,
   PIPELINE_COMPUTE,
@@ -111,6 +121,11 @@ void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder);
 void gpu_cmd_encoder_begin_compute();
 gpu_cmd_encoder* gpu_get_default_cmd_encoder();
 
+/** @brief Finish recording and return a command buffer that can be submitted to a queue */
+gpu_cmd_buffer gpu_cmd_encoder_finish(gpu_cmd_encoder* encoder);
+
+void gpu_queue_submit(gpu_cmd_buffer* buffer);
+
 // --- Data copy commands
 /** @brief Copy data from one buffer to another */
 void encode_buffer_copy(gpu_cmd_encoder* encoder, buffer_handle src, u64 src_offset,
@@ -134,11 +149,6 @@ void encode_set_bind_group();  // TODO
 void encode_draw(gpu_cmd_encoder* encoder);
 void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count);
 void encode_clear_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
-
-/** @brief Finish recording and return a command buffer that can be submitted to a queue */
-gpu_cmd_buffer gpu_cmd_encoder_finish(gpu_cmd_encoder* encoder);
-
-void gpu_queue_submit(gpu_cmd_buffer* buffer);
 
 // --- Buffers
 buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_flags flags,

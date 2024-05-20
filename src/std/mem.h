@@ -57,6 +57,7 @@ bool void_pool_is_full(void_pool* pool);
 void* void_pool_get(void_pool* pool, u32 raw_handle);
 void* void_pool_alloc(void_pool* pool, u32* out_raw_handle);
 void void_pool_dealloc(void_pool* pool, u32 raw_handle);
+// TODO: fn to dealloc from the pointer that was handed out
 
 // TODO: macro that lets us specialise
 
