@@ -135,7 +135,6 @@ void encode_draw(gpu_cmd_encoder* encoder);
 void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count);
 void encode_clear_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 
-
 /** @brief Finish recording and return a command buffer that can be submitted to a queue */
 gpu_cmd_buffer gpu_cmd_encoder_finish(gpu_cmd_encoder* encoder);
 
