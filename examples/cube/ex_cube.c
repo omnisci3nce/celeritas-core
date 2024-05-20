@@ -51,12 +51,12 @@ int main() {
   core_bringup();
   arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
 
-  DEBUG("render capacity %d", g_core.default_scene.renderables->capacity);
-
   vec3 camera_pos = vec3(2., 2., 2.);
   vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
   camera cam = camera_create(camera_pos, camera_front, VEC3_Y, deg_to_rad(45.0));
 
+  // This is how to do it manually; run `static_3d_vertex_description()` to get this built-in vertex
+  // format
   vertex_description vertex_input = { .use_full_vertex_size = true };
   vertex_input.debug_label = "Standard Static 3D Vertex Format";
   vertex_desc_add(&vertex_input, "inPosition", ATTR_F32x3);
@@ -102,7 +102,8 @@ int main() {
   // Texture
   texture_data tex_data = texture_data_load("assets/textures/texture.jpg", false);
   texture_handle texture = texture_data_upload(tex_data, true);
-  printf("Texture %d", texture.raw);
+
+  static f32 theta = 0.0;
 
   // Main loop
   while (!should_exit(&g_core)) {
@@ -118,12 +119,11 @@ int main() {
     encode_bind_pipeline(enc, PIPELINE_GRAPHICS, gfx_pipeline);
     encode_set_default_settings(enc);
 
-    static f32 x = 0.0;
-    x += 0.01;
-    quat rotation = quat_from_axis_angle(VEC3_Y, x, true);
-    mat4 translation = mat4_translation(vec3(-0.5, -0.5, -0.5));
-    mat4 model = mat4_rotation(rotation);
-    model = mat4_mult(translation, model);
+    theta += 0.01;
+    transform transform = { .position = vec3(-0.5, -0.5, -0.5),
+                            .rotation = quat_from_axis_angle(VEC3_Y, theta, true),
+                            .scale = 1.0 };
+    mat4 model = transform_to_mat(&transform);
     mat4 view, proj;
     camera_view_projection(&cam, g_core.renderer.swapchain.extent.width,
                            g_core.renderer.swapchain.extent.height, &view, &proj);
@@ -133,12 +133,7 @@ int main() {
     encode_bind_shader_data(enc, 0, &mvp_uniforms_data);
 
     // Record draw calls
-    // -- NEW
     draw_mesh(&cube, &model);
-    // -- OLD
-    /* encode_set_vertex_buffer(enc, triangle_vert_buf); */
-    /* encode_set_index_buffer(enc, triangle_index_buf); */
-    /* gpu_temp_draw(6); */
 
     // End recording
     gpu_cmd_encoder_end_render(enc);
@@ -147,9 +142,6 @@ int main() {
     gpu_queue_submit(&buf);
     // Submit
     gpu_backend_end_frame();
-
-    // render_frame_end(&g_core.renderer);
-    // glfwSwapBuffers(core->renderer.window);
   }
 
   renderer_shutdown(&g_core.renderer);
