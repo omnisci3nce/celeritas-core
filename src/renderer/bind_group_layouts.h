@@ -16,10 +16,10 @@
 
 // 1. Scene / Global
 typedef struct bg_globals {
-  f32 total_time;
-  f32 delta_time;
   mat4 view;
   mat4 projection;
+  f32 total_time;
+  f32 delta_time;
 } bg_globals;
 
 // 2. Material (once per object)

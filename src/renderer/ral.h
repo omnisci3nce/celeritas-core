@@ -166,3 +166,6 @@ void gpu_backend_end_frame();
 void gpu_temp_draw(size_t n_verts);
 
 // TODO: --- Compute
+
+// --- Helpers
+vertex_description static_3d_vertex_description();
