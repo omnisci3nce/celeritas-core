@@ -1,19 +1,22 @@
+#include "colours.h"
 #define CEL_REND_BACKEND_OPENGL
 #if defined(CEL_REND_BACKEND_OPENGL)
 #include <stdlib.h>
 #include "camera.h"
 
+#include "backend_opengl.h"
 #include "defines.h"
 #include "file.h"
 #include "log.h"
 #include "maths_types.h"
 #include "ral.h"
-#include "backend_opengl.h"
 
 #include <glad/glad.h>
 #include <glfw3.h>
 
-typedef struct opengl_context {} opengl_context;
+typedef struct opengl_context {
+  GLFWwindow* window;
+} opengl_context;
 
 static opengl_context context;
 
@@ -21,10 +24,22 @@ struct GLFWwindow;
 
 bool gpu_backend_init(const char* window_name, struct GLFWwindow* window) {
   INFO("loading OpenGL backend");
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+
+  memset(&context, 0, sizeof(opengl_context));
+  context.window = window;
+
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+  // glad: load all OpenGL function pointers
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    ERROR("Failed to initialise GLAD \n");
+    return false;
+  }
+
+  glEnable(GL_DEPTH_TEST);
 
   return true;
 }
@@ -48,10 +63,17 @@ bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {}
 void gpu_swapchain_destroy(gpu_swapchain* swapchain) {}
 
 // --- Command buffer
-gpu_cmd_encoder gpu_cmd_encoder_create();
+gpu_cmd_encoder gpu_cmd_encoder_create() {
+  gpu_cmd_encoder encoder = { 0 };
+  return encoder;
+}
 void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder) {}
 void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) {}
-void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass) {}
+void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass) {
+  rgba clear_colour = STONE_900;
+  glClearColor(clear_colour.r, clear_colour.g, clear_colour.b, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
 void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder) {}
 void gpu_cmd_encoder_begin_compute() {}
 gpu_cmd_encoder* gpu_get_default_cmd_encoder() {}
@@ -104,9 +126,10 @@ bytebuffer vertices_as_bytebuffer(arena* a, vertex_format format, vertex_darray*
 
 // --- TEMP
 bool gpu_backend_begin_frame() { return true; }
-void gpu_backend_end_frame() {}
+void gpu_backend_end_frame() {
+  glfwSwapBuffers(context.window);
+}
 void gpu_temp_draw(size_t n_verts) {}
-
 
 // /** @brief Internal backend state */
 // typedef struct opengl_state {

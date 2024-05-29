@@ -1,4 +1,4 @@
-#if defined (CEL_REND_BACKEND_VULKAN)
+#if defined(CEL_REND_BACKEND_VULKAN)
 
 #include <assert.h>
 #include <glfw3.h>

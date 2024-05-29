@@ -64,10 +64,11 @@ Renderer backend defines:
 #define CEL_REND_BACKEND_METAL 1
 */
 
+// NOTE: The below is now handled in xmake.lua
 // Platform will inform renderer backend (unless user overrides)
 #if defined(CEL_PLATFORM_LINUX)
-// #define CEL_REND_BACKEND_OPENGL 1
-#define CEL_REND_BACKEND_VULKAN 1
+#define CEL_REND_BACKEND_OPENGL 1
+// #define CEL_REND_BACKEND_VULKAN 1
 #endif
 
 #if defined(CEL_PLATFORM_WINDOWS)

@@ -1,8 +1,6 @@
 #pragma once
 
-#define CEL_REND_BACKEND_OPENGL
-
-#if defined(CEL_REND_BACKEND_OPENGL)
+#ifdef CEL_REND_BACKEND_OPENGL
 
 #include "defines.h"
 #include "maths_types.h"

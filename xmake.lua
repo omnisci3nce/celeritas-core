@@ -17,11 +17,10 @@ elseif is_mode("release") then
     add_defines("CRELEASE")
 end
 
-
 -- Platform defines and system packages
 if is_plat("linux") then
     add_defines("CEL_PLATFORM_LINUX")
-    add_syslinks("vulkan", "dl", "X11", "pthread")
+    add_syslinks("dl", "X11", "pthread")
 elseif is_plat("windows") then
     add_defines("CEL_PLATFORM_WINDOWS")
     add_syslinks("user32", "gdi32", "kernel32", "shell32")
@@ -95,12 +94,11 @@ rule("compile_glsl_frag_shaders")
 end)
 -- TODO: Metal shaders compilation
 
---
-
 -- common configuration for both static and shared libraries
 target("core_config")
     set_kind("static") -- kind is required but you can ignore it since it's just for common settings
     add_packages("local_glfw")
+    add_defines("CEL_REND_BACKEND_OPENGL")
     add_includedirs("deps/cgltf", {public = true})
     add_includedirs("deps/glfw-3.3.8/include/GLFW", {public = true})
     add_includedirs("deps/glad/include", {public = true})
@@ -172,6 +170,7 @@ target("tri")
 target("cube")
     set_kind("binary")
     set_group("examples")
+    -- add_defines("CEL_REND_BACKEND_OPENGL")
     add_deps("core_static")
     add_files("examples/cube/ex_cube.c")
     set_rundir("$(projectdir)")

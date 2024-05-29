@@ -21,6 +21,8 @@
 #include "backend_opengl.h"
 #endif
 
+#include "backend_opengl.h"
+
 struct GLFWwindow;
 
 /** @brief configuration passed to the renderer at init time */
