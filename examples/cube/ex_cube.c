@@ -125,8 +125,8 @@ int main() {
                             .scale = 1.0 };
     mat4 model = transform_to_mat(&transform);
     mat4 view, proj;
-    camera_view_projection(&cam, g_core.renderer.swapchain.extent.width,
-                           g_core.renderer.swapchain.extent.height, &view, &proj);
+    camera_view_projection(&cam, g_core.renderer.swapchain.dimensions.x,
+                           g_core.renderer.swapchain.dimensions.y, &view, &proj);
     mvp_uniforms mvp_data = { .model = model, .view = view, .projection = proj };
     my_shader_bind_group shader_bind_data = { .mvp = mvp_data, .tex = texture };
     mvp_uniforms_data.data = &shader_bind_data;

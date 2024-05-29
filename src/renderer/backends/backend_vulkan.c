@@ -1,3 +1,5 @@
+#if defined (CEL_REND_BACKEND_VULKAN)
+
 #include <assert.h>
 #include <glfw3.h>
 #include <stddef.h>
@@ -1708,3 +1710,5 @@ void backend_pools_init(arena* a, gpu_backend_pools* backend_pools) {
 
   context.gpu_pools;
 }
+
+#endif

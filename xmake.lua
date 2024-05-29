@@ -62,6 +62,7 @@ local core_sources = {
     "src/physics/*.c",
     "src/renderer/*.c",
     "src/renderer/backends/*.c",
+    "src/renderer/backends/opengl/*.c",
     "src/resources/*.c",
     "src/std/*.c",
     "src/std/containers/*.c",
@@ -113,17 +114,18 @@ target("core_config")
     add_includedirs("src/physics/", {public = true})
     add_includedirs("src/renderer/", {public = true})
     add_includedirs("src/renderer/backends/", {public = true})
+    add_includedirs("src/renderer/backends/opengl", {public = true})
     add_includedirs("src/resources/", {public = true})
     add_includedirs("src/std/", {public = true})
     add_includedirs("src/std/containers", {public = true})
     add_includedirs("src/systems/", {public = true})
     add_files("src/empty.c") -- for some reason we need this on Mac so it doesnt call 'ar' with no files and error
-    add_rules("compile_glsl_vert_shaders")
-    add_rules("compile_glsl_frag_shaders")
-    add_files("assets/shaders/triangle.vert")
-    add_files("assets/shaders/triangle.frag")
-    add_files("assets/shaders/cube.vert")
-    add_files("assets/shaders/cube.frag")
+    -- add_rules("compile_glsl_vert_shaders")
+    -- add_rules("compile_glsl_frag_shaders")
+    -- add_files("assets/shaders/triangle.vert")
+    -- add_files("assets/shaders/triangle.frag")
+    -- add_files("assets/shaders/cube.vert")
+    -- add_files("assets/shaders/cube.frag")
     -- add_files("assets/shaders/*.frag")
     if is_plat("windows") then
         add_includedirs("$(env VULKAN_SDK)/Include", {public = true})
