@@ -22,7 +22,7 @@ void clear_screen(vec3 colour);
 void texture_data_upload(texture* tex);
 void bind_texture(shader s, texture* tex, u32 slot);
 void bind_mesh_vertex_buffer(void* backend, mesh* mesh);
-void draw_primitives(cel_primitive_topology primitive, u32 start_index, u32 count);
+// void draw_primitives(cel_primitive_topology primitive, u32 start_index, u32 count);
 
 shader shader_create_separate(const char* vert_shader, const char* frag_shader);
 void set_shader(shader s);

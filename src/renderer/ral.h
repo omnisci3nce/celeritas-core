@@ -50,11 +50,13 @@ typedef struct gpu_backend_pools {
   pipeline_layout_pool pipeline_layouts;
   renderpass_pool renderpasses;
 } gpu_backend_pools;
+void backend_pools_init(arena* a, gpu_backend_pools* backend_pools);
 
 struct resource_pools {
   buffer_pool buffers;
   texture_pool textures;
 };
+void resource_pools_init(arena* a, struct resource_pools* res_pools);
 
 // --- Pipeline description
 typedef enum pipeline_kind {

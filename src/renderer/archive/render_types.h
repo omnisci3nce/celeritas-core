@@ -147,10 +147,10 @@ typedef struct mesh {
   u32 vbo, vao; /** OpenGL data. TODO: dont leak OpenGL details */
 } mesh;
 
-// #ifndef TYPED_MESH_ARRAY
-// KITC_DECL_TYPED_ARRAY(mesh)  // creates "mesh_darray"
-// #define TYPED_MESH_ARRAY
-// #endif
+#ifndef TYPED_MESH_ARRAY
+KITC_DECL_TYPED_ARRAY(mesh)  // creates "mesh_darray"
+#define TYPED_MESH_ARRAY
+#endif
 
 typedef struct model {
   str8 name;

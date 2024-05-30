@@ -32,7 +32,7 @@ in VS_OUT {
   vec3 FragPos;
   vec3 Normal;
   vec2 TexCoords;
-  vec4 FragPosLightSpace;
+  // vec4 FragPosLightSpace;
   vec4 Color;
 } fs_in;
 

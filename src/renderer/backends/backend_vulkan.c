@@ -1699,16 +1699,6 @@ void resource_pools_init(arena* a, struct resource_pools* res_pools) {
   context.resource_pools = res_pools;
 }
 
-void backend_pools_init(arena* a, gpu_backend_pools* backend_pools) {
-  pipeline_layout_pool pipeline_layout_pool =
-      pipeline_layout_pool_create(a, MAX_PIPELINES, sizeof(gpu_pipeline_layout));
-  backend_pools->pipeline_layouts = pipeline_layout_pool;
-  pipeline_pool pipeline_pool = pipeline_pool_create(a, MAX_PIPELINES, sizeof(gpu_pipeline));
-  backend_pools->pipelines = pipeline_pool;
-  renderpass_pool rpass_pool = renderpass_pool_create(a, MAX_RENDERPASSES, sizeof(gpu_renderpass));
-  backend_pools->renderpasses = rpass_pool;
 
-  context.gpu_pools;
-}
 
 #endif

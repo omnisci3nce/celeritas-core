@@ -1,4 +1,5 @@
 #include "colours.h"
+#include "ral_types.h"
 #define CEL_REND_BACKEND_OPENGL
 #if defined(CEL_REND_BACKEND_OPENGL)
 #include <stdlib.h>
@@ -16,6 +17,8 @@
 
 typedef struct opengl_context {
   GLFWwindow* window;
+  arena pool_arena;
+  gpu_backend_pools gpu_pools;
 } opengl_context;
 
 static opengl_context context;
@@ -27,6 +30,11 @@ bool gpu_backend_init(const char* window_name, struct GLFWwindow* window) {
 
   memset(&context, 0, sizeof(opengl_context));
   context.window = window;
+
+  size_t pool_buffer_size = 1024 * 1024;
+  context.pool_arena = arena_create(malloc(pool_buffer_size), pool_buffer_size);
+
+  backend_pools_init(&context.pool_arena, &context.gpu_pools);
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
@@ -51,7 +59,25 @@ bool gpu_device_create(gpu_device* out_device) {}
 void gpu_device_destroy() {}
 
 // --- Render Pipeline
-gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {}
+gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {
+  gpu_pipeline* pipeline = pipeline_pool_alloc(&context.gpu_pools.pipelines, NULL);
+
+  // Create shader program
+  u32 shader_id = shader_create_separate(description.vs.filepath.buf, description.fs.filepath.buf);
+  pipeline->shader_id = shader_id;
+
+  // Allocate uniform buffers if needed
+  printf("data layouts %d\n", description.data_layouts_count);
+  for (u32 layout_i = 0; layout_i < description.data_layouts_count; layout_i++) {
+    shader_data_layout sdl = description.data_layouts[layout_i].shader_data_get_layout(NULL);
+    TRACE("Got shader data layout %d's bindings! . found %d", layout_i, sdl.bindings_count);
+
+    for (u32 binding_j = 0; binding_j < sdl.bindings_count; binding_j++) {
+    }
+  }
+
+  return pipeline;
+}
 void gpu_pipeline_destroy(gpu_pipeline* pipeline) {}
 
 // --- Renderpass
@@ -97,8 +123,19 @@ void copy_buffer_to_buffer_oneshot(buffer_handle src, u64 src_offset, buffer_han
 void copy_buffer_to_image_oneshot(buffer_handle src, texture_handle dst) {}
 
 // --- Render commands
-void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipeline* pipeline) {}
-void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* data) {}
+void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipeline* pipeline) {
+  // In OpenGL this is more or less equivalent to just setting the shader
+  glUseProgram(pipeline->shader_id);
+}
+void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* data) {
+  shader_data_layout sdl = data->shader_data_get_layout(data->data);
+  size_t binding_count = sdl.bindings_count;
+
+  for (u32 i = 0; i < sdl.bindings_count; i++) {
+    shader_binding binding = sdl.bindings[i];
+
+  }
+}
 void encode_set_default_settings(gpu_cmd_encoder* encoder) {}
 void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {}
 void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {}
@@ -108,7 +145,28 @@ void encode_clear_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {}
 
 // --- Buffers
 buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_flags flags,
-                                const void* data) {}
+                                const void* data) {
+  GLuint gl_buffer_id;
+  glGenBuffers(1, &gl_buffer_id);
+
+  switch (buf_type) {
+    case CEL_BUFFER_UNIFORM:
+      glBindBuffer(GL_UNIFORM_BUFFER, gl_buffer_id);
+    case CEL_BUFFER_DEFAULT:
+    case CEL_BUFFER_VERTEX:
+    case CEL_BUFFER_INDEX:
+      WARN("Unimplemented gpu_buffer_type!");
+      break;
+    case CEL_BUFFER_COUNT:
+      WARN("Incorrect gpu_buffer_type provided.");
+      break;
+  }
+
+  buffer_handle handle;
+  gpu_buffer* buffer = buffer_pool_alloc(&context.resource_pools, &handle);
+  
+}
+
 void gpu_buffer_destroy(buffer_handle buffer) {}
 void gpu_buffer_upload(const void* data) {}
 
@@ -130,6 +188,58 @@ void gpu_backend_end_frame() {
   glfwSwapBuffers(context.window);
 }
 void gpu_temp_draw(size_t n_verts) {}
+
+u32 shader_create_separate(const char *vert_shader, const char *frag_shader){
+  INFO("Load shaders at %s and %s", vert_shader, frag_shader);
+  int success;
+  char info_log[512];
+
+  u32 vertex = glCreateShader(GL_VERTEX_SHADER);
+  const char *vertex_shader_src = string_from_file(vert_shader);
+  if (vertex_shader_src == NULL) {
+    ERROR("EXIT: couldnt load shader");
+    exit(-1);
+  }
+  glShaderSource(vertex, 1, &vertex_shader_src, NULL);
+  glCompileShader(vertex);
+  glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
+  if (!success) {
+    glGetShaderInfoLog(vertex, 512, NULL, info_log);
+    printf("%s\n", info_log);
+    ERROR("EXIT: vertex shader compilation failed");
+    exit(-1);
+  }
+
+  // fragment shader
+  u32 fragment = glCreateShader(GL_FRAGMENT_SHADER);
+  const char *fragment_shader_src = string_from_file(frag_shader);
+  if (fragment_shader_src == NULL) {
+    ERROR("EXIT: couldnt load shader");
+    exit(-1);
+  }
+  glShaderSource(fragment, 1, &fragment_shader_src, NULL);
+  glCompileShader(fragment);
+  glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
+  if (!success) {
+    glGetShaderInfoLog(fragment, 512, NULL, info_log);
+    printf("%s\n", info_log);
+    ERROR("EXIT: fragment shader compilation failed");
+    exit(-1);
+  }
+
+  u32 shader_prog;
+  shader_prog = glCreateProgram();
+
+  glAttachShader(shader_prog, vertex);
+  glAttachShader(shader_prog, fragment);
+  glLinkProgram(shader_prog);
+  glDeleteShader(vertex);
+  glDeleteShader(fragment);
+  free((char *)vertex_shader_src);
+  free((char *)fragment_shader_src);
+
+  return shader_prog;
+}
 
 // /** @brief Internal backend state */
 // typedef struct opengl_state {
@@ -163,18 +273,18 @@ void gpu_temp_draw(size_t n_verts) {}
 
 // void gfx_backend_shutdown(renderer *ren) {}
 
-// void uniform_vec3f(u32 program_id, const char *uniform_name, vec3 *value) {
-//   glUniform3fv(glGetUniformLocation(program_id, uniform_name), 1, &value->x);
-// }
-// void uniform_f32(u32 program_id, const char *uniform_name, f32 value) {
-//   glUniform1f(glGetUniformLocation(program_id, uniform_name), value);
-// }
-// void uniform_i32(u32 program_id, const char *uniform_name, i32 value) {
-//   glUniform1i(glGetUniformLocation(program_id, uniform_name), value);
-// }
-// void uniform_mat4f(u32 program_id, const char *uniform_name, mat4 *value) {
-//   glUniformMatrix4fv(glGetUniformLocation(program_id, uniform_name), 1, GL_FALSE, value->data);
-// }
+void uniform_vec3f(u32 program_id, const char *uniform_name, vec3 *value) {
+  glUniform3fv(glGetUniformLocation(program_id, uniform_name), 1, &value->x);
+}
+void uniform_f32(u32 program_id, const char *uniform_name, f32 value) {
+  glUniform1f(glGetUniformLocation(program_id, uniform_name), value);
+}
+void uniform_i32(u32 program_id, const char *uniform_name, i32 value) {
+  glUniform1i(glGetUniformLocation(program_id, uniform_name), value);
+}
+void uniform_mat4f(u32 program_id, const char *uniform_name, mat4 *value) {
+  glUniformMatrix4fv(glGetUniformLocation(program_id, uniform_name), 1, GL_FALSE, value->data);
+}
 
 // void clear_screen(vec3 colour) {
 //   glClearColor(colour.x, colour.y, colour.z, 1.0f);
