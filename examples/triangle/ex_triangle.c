@@ -15,7 +15,7 @@
 
 extern core g_core;
 
-const custom_vertex vertices[] = {
+static custom_vertex vertices[] = {
   (custom_vertex){ .pos = vec2(-0.5, -0.5), .color = vec3(1.0, 1.0, 1.0) },
   (custom_vertex){ .pos = vec2(0.5, -0.5), .color = vec3(1.0, 0.0, 0.0) },
   (custom_vertex){ .pos = vec2(-0.5, 0.5), .color = vec3(0.0, 0.0, 1.0) },
