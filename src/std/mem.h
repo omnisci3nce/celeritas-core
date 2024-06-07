@@ -48,9 +48,10 @@ typedef struct void_pool {
   u64 count;
   void* backing_buffer;
   void_pool_header* free_list_head;
+  const char* debug_label;
 } void_pool;
 
-void_pool void_pool_create(arena* a, u64 capacity, u64 entry_size);
+void_pool void_pool_create(arena* a, const char* debug_label, u64 capacity, u64 entry_size);
 void void_pool_free_all(void_pool* pool);
 bool void_pool_is_empty(void_pool* pool);
 bool void_pool_is_full(void_pool* pool);
@@ -68,7 +69,7 @@ void void_pool_dealloc(void_pool* pool, u32 raw_handle);
   } Name##_pool;                                                                     \
                                                                                      \
   static Name##_pool Name##_pool_create(arena* a, u64 cap, u64 entry_size) {         \
-    void_pool p = void_pool_create(a, cap, entry_size);                              \
+    void_pool p = void_pool_create(a, "\""#Name"\"", cap, entry_size);                      \
     return (Name##_pool){ .inner = p };                                              \
   }                                                                                  \
   static inline T* Name##_pool_get(Name##_pool* pool, Name##_handle handle) {        \
