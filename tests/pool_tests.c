@@ -20,7 +20,7 @@ TEST(Pool, SanityCheckTest) { TEST_ASSERT_EQUAL(true, true); }
 
 TEST(Pool, Initialisation) {
   // u32 pool
-  void_pool pool = void_pool_create(&a, 256, sizeof(u32));
+  void_pool pool = void_pool_create(&a, "Test pool", 256, sizeof(u32));
   u32 x_handle;
   u32* x_ptr = (u32*)void_pool_alloc(&pool, &x_handle);
   // store something in it
