@@ -1,4 +1,4 @@
-#version 410 core
+#version 430 core
 out vec4 FragColor;
 
 // A Blinn-Phong material with textures for diffuse and specular
