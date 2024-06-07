@@ -1690,14 +1690,14 @@ void vulkan_transition_image_layout(gpu_texture* texture, VkFormat format, VkIma
 /* TYPED_POOL(gpu_buffer, buffer); */
 /* TYPED_POOL(gpu_texture, texture); */
 
-void resource_pools_init(arena* a, struct resource_pools* res_pools) {
-  buffer_pool buf_pool = buffer_pool_create(a, MAX_BUFFERS, sizeof(gpu_buffer));
-  res_pools->buffers = buf_pool;
-  texture_pool tex_pool = texture_pool_create(a, MAX_TEXTURES, sizeof(gpu_texture));
-  res_pools->textures = tex_pool;
+/* void resource_pools_init(arena* a, struct resource_pools* res_pools) { */
+/*   buffer_pool buf_pool = buffer_pool_create(a, MAX_BUFFERS, sizeof(gpu_buffer)); */
+/*   res_pools->buffers = buf_pool; */
+/*   texture_pool tex_pool = texture_pool_create(a, MAX_TEXTURES, sizeof(gpu_texture)); */
+/*   res_pools->textures = tex_pool; */
 
-  context.resource_pools = res_pools;
-}
+/*   context.resource_pools = res_pools; */
+/* } */
 
 
 

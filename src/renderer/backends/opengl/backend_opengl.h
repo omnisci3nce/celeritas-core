@@ -9,21 +9,23 @@ typedef struct gpu_swapchain {
   u32x2 dimensions;
 } gpu_swapchain;
 typedef struct gpu_device {} gpu_device;
-typedef struct gpu_pipeline_layout {} gpu_pipeline_layout;
+typedef struct gpu_pipeline_layout { void* pad } gpu_pipeline_layout;
 typedef struct gpu_pipeline {
   u32 shader_id;
+  u32 pad;
 } gpu_pipeline;
-typedef struct gpu_renderpass {} gpu_renderpass;
-typedef struct gpu_cmd_encoder {} gpu_cmd_encoder;  // Recording
-typedef struct gpu_cmd_buffer {} gpu_cmd_buffer;    // Ready for submission
+typedef struct gpu_renderpass { void* pad } gpu_renderpass;
+typedef struct gpu_cmd_encoder { void* pad } gpu_cmd_encoder;  // Recording
+typedef struct gpu_cmd_buffer { void* pad } gpu_cmd_buffer;    // Ready for submission
 
 typedef struct gpu_buffer {
   union {
     u32 vbo;
     u32 ibo;
   } id;
+  u32 pad;
 } gpu_buffer;
-typedef struct gpu_texture {} gpu_texture;
+typedef struct gpu_texture { void* pad } gpu_texture;
 
 
 u32 shader_create_separate(const char *vert_shader, const char *frag_shader);

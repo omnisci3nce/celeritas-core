@@ -18,7 +18,9 @@
 typedef struct opengl_context {
   GLFWwindow* window;
   arena pool_arena;
+  gpu_cmd_encoder command_buffer;
   gpu_backend_pools gpu_pools;
+  struct resource_pools* resource_pools;
 } opengl_context;
 
 static opengl_context context;
@@ -35,13 +37,15 @@ bool gpu_backend_init(const char* window_name, struct GLFWwindow* window) {
   context.pool_arena = arena_create(malloc(pool_buffer_size), pool_buffer_size);
 
   backend_pools_init(&context.pool_arena, &context.gpu_pools);
+  context.resource_pools = malloc(sizeof(struct resource_pools));
+  resource_pools_init(&context.pool_arena, context.resource_pools);
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-  // glad: load all OpenGL function pointers
+  // glad: load all opengl function pointers
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     ERROR("Failed to initialise GLAD \n");
     return false;
@@ -53,7 +57,6 @@ bool gpu_backend_init(const char* window_name, struct GLFWwindow* window) {
 }
 
 void gpu_backend_shutdown() {}
-void resource_pools_init(arena* a, struct resource_pools* res_pools) {}
 
 bool gpu_device_create(gpu_device* out_device) {}
 void gpu_device_destroy() {}
@@ -102,7 +105,9 @@ void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* rend
 }
 void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder) {}
 void gpu_cmd_encoder_begin_compute() {}
-gpu_cmd_encoder* gpu_get_default_cmd_encoder() {}
+gpu_cmd_encoder* gpu_get_default_cmd_encoder() {
+  return &context.command_buffer;
+}
 
 /** @brief Finish recording and return a command buffer that can be submitted to a queue */
 gpu_cmd_buffer gpu_cmd_encoder_finish(gpu_cmd_encoder* encoder) {}
@@ -152,19 +157,23 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
   switch (buf_type) {
     case CEL_BUFFER_UNIFORM:
       glBindBuffer(GL_UNIFORM_BUFFER, gl_buffer_id);
+      break;
     case CEL_BUFFER_DEFAULT:
     case CEL_BUFFER_VERTEX:
-    case CEL_BUFFER_INDEX:
-      WARN("Unimplemented gpu_buffer_type!");
+      glBindBuffer(GL_ARRAY_BUFFER, gl_buffer_id);
       break;
-    case CEL_BUFFER_COUNT:
-      WARN("Incorrect gpu_buffer_type provided.");
+    case CEL_BUFFER_INDEX:
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_buffer_id);
+      break;
+    default:
+      WARN("Unimplemented gpu_buffer_type provided %s", buffer_type_names[buf_type]);
       break;
   }
 
   buffer_handle handle;
-  gpu_buffer* buffer = buffer_pool_alloc(&context.resource_pools, &handle);
-  
+  gpu_buffer* buffer = buffer_pool_alloc(&context.resource_pools->buffers, &handle);
+
+  return handle;
 }
 
 void gpu_buffer_destroy(buffer_handle buffer) {}

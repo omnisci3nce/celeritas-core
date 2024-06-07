@@ -77,6 +77,14 @@ typedef enum gpu_buffer_type {
   CEL_BUFFER_COUNT
 } gpu_buffer_type;
 
+static const char* buffer_type_names[] = {
+  "RAL Buffer Default",
+  "RAL Buffer Vertex",
+  "RAL Buffer Index",
+  "RAL Buffer Uniform",
+  "RAL Buffer Count",
+};
+
 typedef enum gpu_buffer_flag {
   CEL_BUFFER_FLAG_CPU = 1 << 0,
   CEL_BUFFER_FLAG_GPU = 1 << 1,
