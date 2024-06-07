@@ -151,24 +151,35 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
   GLuint gl_buffer_id;
   glGenBuffers(1, &gl_buffer_id);
 
+  GLenum gl_buf_type;
+
   switch (buf_type) {
     case CEL_BUFFER_UNIFORM:
-      glBindBuffer(GL_UNIFORM_BUFFER, gl_buffer_id);
+      gl_buf_type = GL_UNIFORM_BUFFER;
       break;
     case CEL_BUFFER_DEFAULT:
     case CEL_BUFFER_VERTEX:
-      glBindBuffer(GL_ARRAY_BUFFER, gl_buffer_id);
+      gl_buf_type = GL_ARRAY_BUFFER;
       break;
     case CEL_BUFFER_INDEX:
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_buffer_id);
+      gl_buf_type = GL_ELEMENT_ARRAY_BUFFER;
       break;
     default:
       WARN("Unimplemented gpu_buffer_type provided %s", buffer_type_names[buf_type]);
       break;
   }
+  // bind buffer
+  glBindBuffer(gl_buf_type, gl_buffer_id);
 
+  // "allocating" the cpu-side buffer struct
   buffer_handle handle;
   gpu_buffer* buffer = buffer_pool_alloc(&context.resource_pools->buffers, &handle);
+  buffer->size = size;
+
+  if (data) {
+    TRACE("Upload data as part of buffer creation");
+    glBufferData(gl_buf_type, buffer->size, data, GL_STATIC_DRAW);
+  }
 
   return handle;
 }
