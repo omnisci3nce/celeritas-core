@@ -1699,6 +1699,4 @@ void vulkan_transition_image_layout(gpu_texture* texture, VkFormat format, VkIma
 /*   context.resource_pools = res_pools; */
 /* } */
 
-
-
 #endif

@@ -15,9 +15,9 @@
 #if defined(CEL_PLATFORM_WINDOWS)
 // #include "backend_dx11.h"
 #endif
-#if defined (CEL_REND_BACKEND_VULKAN)
+#if defined(CEL_REND_BACKEND_VULKAN)
 #include "backend_vulkan.h"
-#elif defined (CEL_REND_BACKEND_OPENGL)
+#elif defined(CEL_REND_BACKEND_OPENGL)
 #include "backend_opengl.h"
 #endif
 

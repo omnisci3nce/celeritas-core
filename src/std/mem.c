@@ -50,7 +50,7 @@ void_pool void_pool_create(arena* a, const char* debug_label, u64 capacity, u64 
   size_t memory_requirements = capacity * entry_size;
   void* backing_buf = arena_alloc(a, memory_requirements);
 
-  assert(entry_size >= sizeof(void_pool_header)); // TODO: create my own assert with error message
+  assert(entry_size >= sizeof(void_pool_header));  // TODO: create my own assert with error message
 
   void_pool pool = { .capacity = capacity,
                      .entry_size = entry_size,

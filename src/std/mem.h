@@ -69,7 +69,7 @@ void void_pool_dealloc(void_pool* pool, u32 raw_handle);
   } Name##_pool;                                                                     \
                                                                                      \
   static Name##_pool Name##_pool_create(arena* a, u64 cap, u64 entry_size) {         \
-    void_pool p = void_pool_create(a, "\""#Name"\"", cap, entry_size);                      \
+    void_pool p = void_pool_create(a, "\"" #Name "\"", cap, entry_size);             \
     return (Name##_pool){ .inner = p };                                              \
   }                                                                                  \
   static inline T* Name##_pool_get(Name##_pool* pool, Name##_handle handle) {        \

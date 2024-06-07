@@ -1,5 +1,5 @@
 #pragma once
-#if defined (CEL_REND_BACKEND_VULKAN)
+#if defined(CEL_REND_BACKEND_VULKAN)
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>

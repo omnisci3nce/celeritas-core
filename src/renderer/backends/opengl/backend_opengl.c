@@ -105,9 +105,7 @@ void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* rend
 }
 void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder) {}
 void gpu_cmd_encoder_begin_compute() {}
-gpu_cmd_encoder* gpu_get_default_cmd_encoder() {
-  return &context.command_buffer;
-}
+gpu_cmd_encoder* gpu_get_default_cmd_encoder() { return &context.command_buffer; }
 
 /** @brief Finish recording and return a command buffer that can be submitted to a queue */
 gpu_cmd_buffer gpu_cmd_encoder_finish(gpu_cmd_encoder* encoder) {}
@@ -138,7 +136,6 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
 
   for (u32 i = 0; i < sdl.bindings_count; i++) {
     shader_binding binding = sdl.bindings[i];
-
   }
 }
 void encode_set_default_settings(gpu_cmd_encoder* encoder) {}
@@ -193,18 +190,16 @@ bytebuffer vertices_as_bytebuffer(arena* a, vertex_format format, vertex_darray*
 
 // --- TEMP
 bool gpu_backend_begin_frame() { return true; }
-void gpu_backend_end_frame() {
-  glfwSwapBuffers(context.window);
-}
+void gpu_backend_end_frame() { glfwSwapBuffers(context.window); }
 void gpu_temp_draw(size_t n_verts) {}
 
-u32 shader_create_separate(const char *vert_shader, const char *frag_shader){
+u32 shader_create_separate(const char* vert_shader, const char* frag_shader) {
   INFO("Load shaders at %s and %s", vert_shader, frag_shader);
   int success;
   char info_log[512];
 
   u32 vertex = glCreateShader(GL_VERTEX_SHADER);
-  const char *vertex_shader_src = string_from_file(vert_shader);
+  const char* vertex_shader_src = string_from_file(vert_shader);
   if (vertex_shader_src == NULL) {
     ERROR("EXIT: couldnt load shader");
     exit(-1);
@@ -221,7 +216,7 @@ u32 shader_create_separate(const char *vert_shader, const char *frag_shader){
 
   // fragment shader
   u32 fragment = glCreateShader(GL_FRAGMENT_SHADER);
-  const char *fragment_shader_src = string_from_file(frag_shader);
+  const char* fragment_shader_src = string_from_file(frag_shader);
   if (fragment_shader_src == NULL) {
     ERROR("EXIT: couldnt load shader");
     exit(-1);
@@ -244,8 +239,8 @@ u32 shader_create_separate(const char *vert_shader, const char *frag_shader){
   glLinkProgram(shader_prog);
   glDeleteShader(vertex);
   glDeleteShader(fragment);
-  free((char *)vertex_shader_src);
-  free((char *)fragment_shader_src);
+  free((char*)vertex_shader_src);
+  free((char*)fragment_shader_src);
 
   return shader_prog;
 }
@@ -282,16 +277,16 @@ u32 shader_create_separate(const char *vert_shader, const char *frag_shader){
 
 // void gfx_backend_shutdown(renderer *ren) {}
 
-void uniform_vec3f(u32 program_id, const char *uniform_name, vec3 *value) {
+void uniform_vec3f(u32 program_id, const char* uniform_name, vec3* value) {
   glUniform3fv(glGetUniformLocation(program_id, uniform_name), 1, &value->x);
 }
-void uniform_f32(u32 program_id, const char *uniform_name, f32 value) {
+void uniform_f32(u32 program_id, const char* uniform_name, f32 value) {
   glUniform1f(glGetUniformLocation(program_id, uniform_name), value);
 }
-void uniform_i32(u32 program_id, const char *uniform_name, i32 value) {
+void uniform_i32(u32 program_id, const char* uniform_name, i32 value) {
   glUniform1i(glGetUniformLocation(program_id, uniform_name), value);
 }
-void uniform_mat4f(u32 program_id, const char *uniform_name, mat4 *value) {
+void uniform_mat4f(u32 program_id, const char* uniform_name, mat4* value) {
   glUniformMatrix4fv(glGetUniformLocation(program_id, uniform_name), 1, GL_FALSE, value->data);
 }
 
