@@ -1,4 +1,6 @@
+#include <stddef.h>
 #include "colours.h"
+#include "opengl_helpers.h"
 #include "ral_types.h"
 #define CEL_REND_BACKEND_OPENGL
 #if defined(CEL_REND_BACKEND_OPENGL)
@@ -26,6 +28,8 @@ typedef struct opengl_context {
 static opengl_context context;
 
 struct GLFWwindow;
+
+size_t vertex_attrib_size(vertex_attrib_type attr);
 
 bool gpu_backend_init(const char* window_name, struct GLFWwindow* window) {
   INFO("loading OpenGL backend");
@@ -68,6 +72,24 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   // Create shader program
   u32 shader_id = shader_create_separate(description.vs.filepath.buf, description.fs.filepath.buf);
   pipeline->shader_id = shader_id;
+
+  // Vertex
+  u32 vao;
+  glGenVertexArrays(1, &vao);
+  pipeline->vao = vao;
+
+  // Attributes
+  u32 attr_count = description.vertex_desc.attributes_count;
+  printf("N attributes %d\n", attr_count);
+  u64 offset = 0;
+  size_t vertex_size = description.vertex_desc.stride;
+  for (u32 i = 0; i < description.vertex_desc.attributes_count; i++) {
+    opengl_vertex_attr format = format_from_vertex_attr(description.vertex_desc.attributes[i]);
+    glVertexAttribPointer(i, format.count, format.data_type, GL_FALSE, vertex_size, (void*)offset);
+    size_t this_offset = format.count * vertex_attrib_size(description.vertex_desc.attributes[i]);
+    printf("offset total %lld this attr %ld\n", offset, this_offset);
+    offset += this_offset;
+  }
 
   // Allocate uniform buffers if needed
   printf("data layouts %d\n", description.data_layouts_count);
@@ -129,6 +151,7 @@ void copy_buffer_to_image_oneshot(buffer_handle src, texture_handle dst) {}
 void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipeline* pipeline) {
   // In OpenGL this is more or less equivalent to just setting the shader
   glUseProgram(pipeline->shader_id);
+  glBindVertexArray(pipeline->vao);
 }
 void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* data) {
   shader_data_layout sdl = data->shader_data_get_layout(data->data);
@@ -177,7 +200,7 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
   buffer->size = size;
 
   if (data) {
-    TRACE("Upload data as part of buffer creation");
+    TRACE("Upload data (%d bytes) as part of buffer creation", size);
     glBufferData(gl_buf_type, buffer->size, data, GL_STATIC_DRAW);
   }
 

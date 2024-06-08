@@ -35,8 +35,14 @@ int main() {
   gpu_renderpass_desc pass_description = {};
   gpu_renderpass* renderpass = gpu_renderpass_create(&pass_description);
 
-  str8 vert_path = str8lit("build/linux/x86_64/debug/triangle.vert.spv");
-  str8 frag_path = str8lit("build/linux/x86_64/debug/triangle.frag.spv");
+  str8 vert_path, frag_path;
+#ifdef CEL_REND_BACKEND_OPENGL
+  vert_path = str8lit("assets/shaders/triangle.vert");
+  frag_path = str8lit("assets/shaders/triangle.frag");
+#else
+  vert_path = str8lit("build/linux/x86_64/debug/triangle.vert.spv");
+  frag_path = str8lit("build/linux/x86_64/debug/triangle.frag.spv");
+#endif
   str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
   str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
   if (!vertex_shader.has_value || !fragment_shader.has_value) {

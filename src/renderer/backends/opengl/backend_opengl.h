@@ -15,7 +15,7 @@ typedef struct gpu_pipeline_layout {
 } gpu_pipeline_layout;
 typedef struct gpu_pipeline {
   u32 shader_id;
-  u32 pad;
+  u32 vao;
 } gpu_pipeline;
 typedef struct gpu_renderpass {
   void *pad
