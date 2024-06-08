@@ -1,6 +1,6 @@
 set_project("celeritas")
 set_version("0.1.0")
-set_config("cc", "gcc")
+set_config("cc", "clang")
 
 add_rules("mode.debug", "mode.release") -- we have two modes: debug & release
 
@@ -30,6 +30,7 @@ elseif is_plat("windows") then
 elseif is_plat("macosx") then
     add_defines("CEL_PLATFORM_MAC")
     add_frameworks("Cocoa", "IOKit", "CoreVideo", "OpenGL")
+    add_frameworks( "Foundation", "Metal", "QuartzCore")
     set_runenv("MTL_DEBUG_LAYER", "1")
     -- add_syslinks("GL")
 end
@@ -62,6 +63,7 @@ local core_sources = {
     "src/renderer/*.c",
     "src/renderer/backends/*.c",
     "src/renderer/backends/opengl/*.c",
+    "src/renderer/backends/metal/*.m",
     "src/resources/*.c",
     "src/std/*.c",
     "src/std/containers/*.c",
@@ -113,6 +115,7 @@ target("core_config")
     add_includedirs("src/renderer/", {public = true})
     add_includedirs("src/renderer/backends/", {public = true})
     add_includedirs("src/renderer/backends/opengl", {public = true})
+    add_includedirs("src/renderer/backends/metal", {public = true})
     add_includedirs("src/resources/", {public = true})
     add_includedirs("src/std/", {public = true})
     add_includedirs("src/std/containers", {public = true})
@@ -166,6 +169,14 @@ target("tri")
     add_deps("core_static")
     add_files("examples/triangle/ex_triangle.c")
     set_rundir("$(projectdir)")
+    if is_plat("macosx") then
+        before_build(function (target)
+            print("build metal shaders lib")
+            os.exec("mkdir -p build/shaders")
+            os.exec("xcrun -sdk macosx metal -c assets/shaders/triangle.metal -o build/shaders/gfx.air")
+            os.exec("xcrun -sdk macosx metallib build/shaders/gfx.air -o build/gfx.metallib")
+        end)
+    end
 
 target("cube")
     set_kind("binary")

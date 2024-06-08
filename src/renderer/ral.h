@@ -66,9 +66,10 @@ typedef enum pipeline_kind {
 
 typedef struct shader_desc {
   const char* debug_name;
-  str8 filepath;  // where it came from
+  str8 filepath;  // Where it came from
   str8 code;      // Either GLSL or SPIRV bytecode
   bool is_spirv;
+  bool is_combined_vert_frag; // Contains both vertex and fragment stages
 } shader_desc;
 
 struct graphics_pipeline_desc {

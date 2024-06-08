@@ -2,7 +2,7 @@
 #include "colours.h"
 #include "opengl_helpers.h"
 #include "ral_types.h"
-#define CEL_REND_BACKEND_OPENGL
+// #define CEL_REND_BACKEND_OPENGL
 #if defined(CEL_REND_BACKEND_OPENGL)
 #include <stdlib.h>
 #include "camera.h"

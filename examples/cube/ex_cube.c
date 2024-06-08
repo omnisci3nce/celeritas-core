@@ -70,8 +70,8 @@ int main() {
 
   str8 vert_path, frag_path;
 #ifdef CEL_REND_BACKEND_OPENGL
-  vert_path = str8lit("assets/shaders/blinn_phong.vert");
-  frag_path = str8lit("assets/shaders/blinn_phong.frag");
+  vert_path = str8lit("assets/shaders/cube.vert");
+  frag_path = str8lit("assets/shaders/cube.frag");
 #else
   vert_path = str8lit("build/linux/x86_64/debug/cube.vert.spv");
   frag_path = str8lit("build/linux/x86_64/debug/cube.frag.spv");

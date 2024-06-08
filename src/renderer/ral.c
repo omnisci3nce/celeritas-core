@@ -1,6 +1,12 @@
 #include "ral.h"
 
+#if defined(CEL_REND_BACKEND_VULKAN)
+#include "backend_vulkan.h"
+#elif defined(CEL_REND_BACKEND_METAL)
+#include "backend_metal.h"
+#elif defined(CEL_REND_BACKEND_OPENGL)
 #include "backend_opengl.h"
+#endif
 
 size_t vertex_attrib_size(vertex_attrib_type attr) {
   switch (attr) {

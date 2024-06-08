@@ -403,6 +403,7 @@ VkFormat format_from_vertex_attr(vertex_attrib_type attr) {
 }
 
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {
+  TRACE("GPU Graphics Pipeline creation");
   // Allocate
   gpu_pipeline_layout* layout =
       pipeline_layout_pool_alloc(&context.gpu_pools.pipeline_layouts, NULL);

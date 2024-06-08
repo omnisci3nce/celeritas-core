@@ -1,4 +1,4 @@
-#version 430 core
+#version 410 core
 
 struct Uniforms {
   mat4 model;
