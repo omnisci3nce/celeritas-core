@@ -54,7 +54,7 @@ static u32 opengl_bindcreate_vao(gpu_buffer* buf, vertex_description desc) {
   u32 attr_count = desc.attributes_count;
   printf("N attributes %d\n", attr_count);
   u64 offset = 0;
-  size_t vertex_size = desc.stride;
+  size_t vertex_size = desc.use_full_vertex_size ? sizeof(vertex) : desc.stride;
   for (u32 i = 0; i < desc.attributes_count; i++) {
     opengl_vertex_attr format = format_from_vertex_attr(desc.attributes[i]);
     glVertexAttribPointer(i, format.count, format.data_type, GL_FALSE, vertex_size, (void*)offset);

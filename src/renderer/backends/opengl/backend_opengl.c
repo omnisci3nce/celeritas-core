@@ -1,12 +1,11 @@
 #include <stddef.h>
+#include <stdio.h>
 #include "colours.h"
 #include "opengl_helpers.h"
 #include "ral_types.h"
-#define CEL_REND_BACKEND_OPENGL 1
 #if defined(CEL_REND_BACKEND_OPENGL)
 #include <assert.h>
 #include <stdlib.h>
-#include "camera.h"
 
 #include "backend_opengl.h"
 #include "defines.h"
@@ -55,6 +54,7 @@ bool gpu_backend_init(const char* window_name, struct GLFWwindow* window) {
   }
 
   glEnable(GL_DEPTH_TEST);
+  // glFrontFace(GL_CW);
 
   return true;
 }
@@ -62,7 +62,7 @@ bool gpu_backend_init(const char* window_name, struct GLFWwindow* window) {
 void gpu_backend_shutdown() {}
 
 bool gpu_device_create(gpu_device* out_device) { /* No-op in OpenGL */ }
-void gpu_device_destroy() {}
+void gpu_device_destroy() { /* No-op in OpenGL */ }
 
 // --- Render Pipeline
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {
@@ -91,8 +91,20 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
                               NULL);  // no data right now
         pipeline->uniform_bindings[binding_id] = ubo_handle;
         gpu_buffer* ubo_buf = BUFFER_GET(ubo_handle);
+
+        u32 blockIndex = glGetUniformBlockIndex(pipeline->shader_id, "Matrices");
+        printf("Block index for Matrices: %d", blockIndex);
+        u32 blocksize;
+        glGetActiveUniformBlockiv(pipeline->shader_id, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE,
+                                  &blocksize);
+        printf("\t with size %d bytes\n", blocksize);
+
         glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
         glBindBufferBase(GL_UNIFORM_BUFFER, binding_j, ubo_buf->id.ubo);
+        if (blockIndex != GL_INVALID_INDEX) {
+          printf("Here\n");
+          glUniformBlockBinding(pipeline->shader_id, blockIndex, 0);
+        }
 
         // Now we want to store a handle associated with the shader for this
       }
@@ -151,7 +163,7 @@ void copy_buffer_to_image_oneshot(buffer_handle src, texture_handle dst) {}
 // --- Render commands
 void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipeline* pipeline) {
   encoder->pipeline = pipeline;
-  // In OpenGL this is more or less equivalent to just setting the shader
+  // In OpenGL binding a pipeline is more or less equivalent to just setting the shader
   glUseProgram(pipeline->shader_id);
 }
 void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* data) {
@@ -159,14 +171,16 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
 
   for (u32 i = 0; i < sdl.bindings_count; i++) {
     shader_binding binding = sdl.bindings[i];
-    print_shader_binding(binding);
+    /* print_shader_binding(binding); */
 
     if (binding.type == SHADER_BINDING_BYTES) {
       buffer_handle b = encoder->pipeline->uniform_bindings[i];
       gpu_buffer* ubo_buf = BUFFER_GET(b);
       glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
       glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, data->data);
-      glBindBuffer(GL_UNIFORM_BUFFER, 0);
+      /* printf("Size %d\n", ubo_buf->size); */
+
+      /* glBindBuffer(GL_UNIFORM_BUFFER, 0); */
     }
   }
 }
@@ -174,6 +188,7 @@ void encode_set_default_settings(gpu_cmd_encoder* encoder) {}
 void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
   gpu_buffer* buffer = BUFFER_GET(buf);
   if (buffer->vao == 0) {  // if no VAO for this vertex buffer, create it
+    INFO("Setting up VAO");
     buffer->vao = opengl_bindcreate_vao(buffer, encoder->pipeline->vertex_desc);
   }
   glBindVertexArray(buffer->vao);
@@ -208,7 +223,7 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
     case CEL_BUFFER_UNIFORM:
       DEBUG("Creating Uniform buffer");
       gl_buf_type = GL_UNIFORM_BUFFER;
-      gl_buf_usage = GL_DYNAMIC_DRAW;
+      /* gl_buf_usage = GL_DYNAMIC_DRAW; */
       buffer->id.ubo = gl_buffer_id;
       break;
     case CEL_BUFFER_DEFAULT:
@@ -254,7 +269,10 @@ bytebuffer vertices_as_bytebuffer(arena* a, vertex_format format, vertex_darray*
 
 // --- TEMP
 bool gpu_backend_begin_frame() { return true; }
-void gpu_backend_end_frame() { glfwSwapBuffers(context.window); }
+void gpu_backend_end_frame() {
+  // TODO: Reset all bindings
+  glfwSwapBuffers(context.window);
+}
 void gpu_temp_draw(size_t n_verts) {}
 
 u32 shader_create_separate(const char* vert_shader, const char* frag_shader) {
@@ -369,10 +387,5 @@ inline void uniform_mat4f(u32 program_id, const char* uniform_name, mat4* value)
 //     case CEL_PRIMITIVE_TOPOLOGY_COUNT:
 //       break;
 //   }
-// }
-
-// void draw_primitives(cel_primitive_topology primitive, u32 start_index, u32 count) {
-//   u32 gl_primitive = to_gl_prim_topology(primitive);
-//   glDrawArrays(gl_primitive, start_index, count);
 // }
 #endif

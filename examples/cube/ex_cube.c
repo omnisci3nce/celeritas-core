@@ -62,6 +62,7 @@ int main() {
   vertex_desc_add(&vertex_input, "inPosition", ATTR_F32x3);
   vertex_desc_add(&vertex_input, "inNormal", ATTR_F32x3);
   vertex_desc_add(&vertex_input, "inTexCoords", ATTR_F32x2);
+  vertex_input.use_full_vertex_size = true;
 
   shader_data mvp_uniforms_data = { .data = NULL, .shader_data_get_layout = &mvp_uniforms_layout };
 
@@ -129,14 +130,23 @@ int main() {
     transform transform = { .position = vec3(-0.5, -0.5, -0.5),
                             .rotation = quat_from_axis_angle(VEC3_Y, theta, true),
                             .scale = 1.0 };
+    /* INFO("Swapchain dimensions x %d y %d", g_core.renderer.swapchain.dimensions.x,
+     * g_core.renderer.swapchain.dimensions.y); */
+
     mat4 model = transform_to_mat(&transform);
     mat4 view, proj;
-    camera_view_projection(&cam, g_core.renderer.swapchain.dimensions.x,
-                           g_core.renderer.swapchain.dimensions.y, &view, &proj);
+    camera_view_projection(&cam, 1000, 1000,
+                           /* g_core.renderer.swapchain.dimensions.x, */
+                           /* g_core.renderer.swapchain.dimensions.y, */
+                           &view, &proj);
     mvp_uniforms mvp_data = { .model = model, .view = view, .projection = proj };
     my_shader_bind_group shader_bind_data = { .mvp = mvp_data, .tex = texture };
     mvp_uniforms_data.data = &shader_bind_data;
-    encode_bind_shader_data(enc, 0, &mvp_uniforms_data);
+    /* encode_bind_shader_data(enc, 0, &mvp_uniforms_data); */
+
+    uniform_mat4f(enc->pipeline->shader_id, "model", &model);
+    uniform_mat4f(enc->pipeline->shader_id, "view", &view);
+    uniform_mat4f(enc->pipeline->shader_id, "projection", &proj);
 
     // Record draw calls
     draw_mesh(&cube, &model);
