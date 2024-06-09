@@ -1,3 +1,4 @@
+#include <Metal/MTLRenderCommandEncoder.h>
 #include <assert.h>
 #define CEL_REND_BACKEND_METAL
 #if defined(CEL_REND_BACKEND_METAL)
@@ -36,6 +37,7 @@ typedef struct metal_context {
   gpu_device* device;
   gpu_swapchain* swapchain;
   id<CAMetalDrawable> surface;
+  id<MTLTexture> depth_buffer;
 
   id<MTLCommandQueue> command_queue;
   gpu_cmd_encoder main_command_buf;
@@ -110,7 +112,7 @@ bool gpu_device_create(gpu_device* out_device) {
   out_device->id = gpu;
   context.device = out_device;
 
-  const id<MTLCommandQueue> queue = [gpu newCommandQueue];
+  id<MTLCommandQueue> queue = [gpu newCommandQueue];
   context.command_queue = queue;
 
   return true;
@@ -130,7 +132,8 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   // Ignore fragment shader data, as vert shader data contains both
   NSError *err = 0x0; // TEMPORARY
   NSString *myNSString = [NSString stringWithUTF8String:(char*)description.vs.filepath.buf];
-  id<MTLLibrary> default_library = [context.device->id newLibraryWithFile:myNSString error:&err];
+  NSURL *baseURL = [NSURL fileURLWithPath:myNSString];
+  id<MTLLibrary> default_library = [context.device->id newLibraryWithURL:baseURL error:&err];
   assert(default_library);
 
   // setup vertex and fragment shaders
@@ -138,6 +141,23 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   assert(ren_vert);
   id<MTLFunction> ren_frag = [default_library newFunctionWithName:@"basic_fragment"];
   assert(ren_frag);
+
+  MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
+
+  // Indicate that each pixel has a blue, green, red, and alpha channel, where each channel is
+  // an 8-bit unsigned normalized value (i.e. 0 maps to 0.0 and 255 maps to 1.0)
+  textureDescriptor.pixelFormat = MTLPixelFormatDepth32Float_Stencil8;
+
+  // Set the pixel dimensions of the texture
+  CGSize window_size = context.metal_window.frame.size;
+  textureDescriptor.height = window_size.height;
+  textureDescriptor.width = window_size.width;
+  textureDescriptor.storageMode = MTLStorageModePrivate;
+  textureDescriptor.usage = MTLTextureUsageRenderTarget;
+
+  // Create the texture from the device by using the descriptor
+  id<MTLTexture> texture = [context.device->id newTextureWithDescriptor:textureDescriptor];
+  context.depth_buffer = texture;
 
   // create pipeline descriptor
   @autoreleasepool {
@@ -155,12 +175,14 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
     depthStencilDescriptor.depthWriteEnabled = YES;
     pld.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float_Stencil8;
 
-    id<MTLDepthStencilState> depth_descriptor = [context.device->id newDepthStencilStateWithDescriptor:depthStencilDescriptor];
-    // FIXME: state->depth_state = depth_descriptor;
+    id<MTLDepthStencilState> depth_stencil_state = [context.device->id newDepthStencilStateWithDescriptor:depthStencilDescriptor];
+    pipeline->depth_stencil_state = depth_stencil_state;
 
     id<MTLRenderPipelineState> pipeline_state = [context.device->id newRenderPipelineStateWithDescriptor:pld error:&err];
-    TRACE("created renderpipelinestate");
+    TRACE("created RenderPipelineState");
     pipeline->pipeline_state = pipeline_state;
+
+    description.renderpass->pipeline = pipeline; // give renderpass a pointer back to us
 
   }
 
@@ -170,6 +192,7 @@ void gpu_pipeline_destroy(gpu_pipeline* pipeline) {}
 
 // --- Renderpass
 gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
+  TRACE("GPU Render Pass create");
   gpu_renderpass* renderpass = renderpass_pool_alloc(&context.gpu_pools.renderpasses, NULL);
 
   // TODO: Configure based on description
@@ -177,6 +200,9 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
   context.surface = [context.swapchain->swapchain nextDrawable];
   MTLRenderPassDescriptor *renderPassDescriptor = [[MTLRenderPassDescriptor alloc] init];
   MTLRenderPassColorAttachmentDescriptor *cd = renderPassDescriptor.colorAttachments[0];
+   renderPassDescriptor.depthAttachment.clearDepth = 1.0;
+    renderPassDescriptor.depthAttachment.texture = context.depth_buffer;
+    renderPassDescriptor.depthAttachment.storeAction = MTLStoreActionDontCare;
   [cd setTexture:context.surface.texture];
   [cd setLoadAction:MTLLoadActionClear];
   MTLClearColor clearColor = MTLClearColorMake(0.1, 0.1, 0.0, 1.0);
@@ -209,19 +235,28 @@ void gpu_swapchain_destroy(gpu_swapchain* swapchain) {}
 
 // --- Command buffer
 gpu_cmd_encoder gpu_cmd_encoder_create() {
-  id <MTLCommandBuffer> cmd_buffer = [context.command_queue commandBuffer];
+  // id <MTLCommandBuffer> cmd_buffer = [context.command_queue commandBuffer];
   
-  return (gpu_cmd_encoder) {
-    .cmd_buffer = cmd_buffer
-  };
+  // return (gpu_cmd_encoder) {
+  //   .cmd_buffer = cmd_buffer
+  // };
 }
 void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder) {}
-void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) { /* no-op */ }
+void gpu_cmd_encoder_begin(gpu_cmd_encoder* encoder) {
+  id <MTLCommandBuffer> cmd_buffer = [context.command_queue commandBuffer];
+  encoder->cmd_buffer = cmd_buffer;
+ }
 void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass) {
   DEBUG("Create Render Command Encoder");
   id<MTLRenderCommandEncoder> render_encoder = [encoder->cmd_buffer renderCommandEncoderWithDescriptor:renderpass->rpass_descriptor];
   encoder->render_encoder = render_encoder;
-  // [encoder setDepthStencilState:state->depth_state];
+
+  [encoder->render_encoder setCullMode:MTLCullModeBack];
+  [encoder->render_encoder setDepthStencilState:renderpass->pipeline->depth_stencil_state];
+
+  // drawing...
+  DEBUG("set RenderPipelineState");
+  [encoder->render_encoder setRenderPipelineState:renderpass->pipeline->pipeline_state];
 }
 void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder) {}
 void gpu_cmd_encoder_begin_compute() {}
@@ -251,10 +286,20 @@ void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
   gpu_buffer* vertex_buf = BUFFER_GET(buf);
   [encoder->render_encoder setVertexBuffer:vertex_buf->id offset:0 atIndex:0];
 }
-void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {}
+void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
+  gpu_buffer* index_buf = BUFFER_GET(buf);
+  encoder->index_buffer = index_buf;
+}
 void encode_set_bind_group() {}
-void encode_draw(gpu_cmd_encoder* encoder) {}
-void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count) {}
+void encode_draw(gpu_cmd_encoder* encoder, u64 count) {}
+void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count) {
+  assert(encoder->index_buffer);
+  [encoder->render_encoder
+      drawIndexedPrimitives:(MTLPrimitiveTypeTriangle)
+      indexCount:(index_count)
+      indexType:(MTLIndexTypeUInt32)
+      indexBuffer:(encoder->index_buffer->id) indexBufferOffset:(0)];
+}
 void encode_clear_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {}
 
 buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_flags flags,
@@ -263,9 +308,12 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
   gpu_buffer* buffer = buffer_pool_alloc(&context.resource_pools->buffers, &handle);
   buffer->size = size;
 
-  id<MTLBuffer> mtl_vert_buf = [context.device->id newBufferWithBytes:data
+  id<MTLBuffer> mtl_buffer_id = [context.device->id newBufferWithBytes:data
       length: size
       options:MTLResourceStorageModeShared];
+  
+  buffer->id = mtl_buffer_id;
+
   return handle;
 }
 void gpu_buffer_destroy(buffer_handle buffer) {}
@@ -279,7 +327,17 @@ bool gpu_backend_begin_frame() {
   context.main_command_buf.cmd_buffer = [context.command_queue commandBuffer];
   return true;
   }
-void gpu_backend_end_frame() {}
+void gpu_backend_end_frame() {
+  gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
+  [enc->render_encoder endEncoding];
+  [enc->cmd_buffer presentDrawable:context.surface];
+  [enc->cmd_buffer commit];
+  [enc->cmd_buffer waitUntilCompleted];
+}
 void gpu_temp_draw(size_t n_verts) {}
+
+/*
+CommandQueue -> MakeCommandBuffer -> MakeRenderCommandEncoder (withDescriptor)
+*/
 
 #endif

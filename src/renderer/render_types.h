@@ -84,6 +84,25 @@ typedef struct texture_data {
   void* image_data;
 } texture_data;
 
+typedef struct pbr_parameters {
+  vec3 albedo;
+  f32 metallic;
+  f32 roughness;
+} pbr_parameters;
+
+typedef struct pbr_material {
+  str8 name;
+  texture_handle albedo;
+  texture_handle normals;
+  texture_handle metallic_roughness;
+  texture_handle ambient_occlusion;
+  str8 albedo_tex_path;
+  str8 normals_tex_path;
+  str8 metallic_roughness_tex_path;
+  str8 ambient_occlusion_path;
+  bool is_uploaded;
+} pbr_material;
+
 typedef struct blinn_phong_material {
   char name[256];
   texture diffuse_texture;
@@ -100,7 +119,7 @@ typedef struct blinn_phong_material {
 typedef blinn_phong_material material;
 
 // the default blinn-phong material. MUST be initialised with the function below
-extern material DEFAULT_MATERIAL;
+extern blinn_phong_material DEFAULT_MATERIAL;
 void default_material_init();
 
 #ifndef TYPED_MESH_ARRAY

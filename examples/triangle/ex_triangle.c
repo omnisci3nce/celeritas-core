@@ -89,7 +89,7 @@ int main() {
     }
     gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
     //   // Begin recording
-    gpu_cmd_encoder_begin(*enc);
+    gpu_cmd_encoder_begin(enc);
     gpu_cmd_encoder_begin_render(enc, renderpass);
     encode_bind_pipeline(enc, PIPELINE_GRAPHICS, gfx_pipeline);
     encode_set_default_settings(enc);

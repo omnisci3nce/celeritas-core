@@ -35,8 +35,10 @@ typedef struct gpu_pipeline_layout {
 typedef struct gpu_pipeline {
 #ifdef __OBJC__
   id<MTLRenderPipelineState> pipeline_state;
+  id<MTLDepthStencilState> depth_stencil_state;
 #else
   void* pipeline_state;
+  void* depth_stencil_state;
 #endif
 } gpu_pipeline;
 typedef struct gpu_renderpass {
@@ -45,6 +47,7 @@ typedef struct gpu_renderpass {
 #else
   void* rpass_descriptor;
 #endif
+  gpu_pipeline* pipeline; // Pipeline this renderpass was created with
 } gpu_renderpass;
 typedef struct gpu_cmd_encoder {
 #ifdef __OBJC__
@@ -54,6 +57,7 @@ typedef struct gpu_cmd_encoder {
   void* cmd_buffer;
   void* render_encoder;
 #endif
+  gpu_buffer* index_buffer;
 } gpu_cmd_encoder;
 typedef struct gpu_cmd_buffer {
   void* pad;

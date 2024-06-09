@@ -122,7 +122,7 @@ void gpu_swapchain_destroy(gpu_swapchain* swapchain);
 // --- Command buffer
 gpu_cmd_encoder gpu_cmd_encoder_create();
 void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder);
-void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder);
+void gpu_cmd_encoder_begin(gpu_cmd_encoder* encoder);
 void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass);
 void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder);
 void gpu_cmd_encoder_begin_compute();

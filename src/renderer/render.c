@@ -135,7 +135,7 @@ void render_frame_begin(renderer* ren) {
   }
   gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
   // begin recording
-  gpu_cmd_encoder_begin(*enc);
+  gpu_cmd_encoder_begin(enc);
   gpu_cmd_encoder_begin_render(enc, &ren->default_renderpass);
   encode_bind_pipeline(enc, PIPELINE_GRAPHICS, &ren->static_opaque_pipeline);
   encode_set_default_settings(enc);
