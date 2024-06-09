@@ -142,11 +142,7 @@ int main() {
     mvp_uniforms mvp_data = { .model = model, .view = view, .projection = proj };
     my_shader_bind_group shader_bind_data = { .mvp = mvp_data, .tex = texture };
     mvp_uniforms_data.data = &shader_bind_data;
-    /* encode_bind_shader_data(enc, 0, &mvp_uniforms_data); */
-
-    uniform_mat4f(enc->pipeline->shader_id, "model", &model);
-    uniform_mat4f(enc->pipeline->shader_id, "view", &view);
-    uniform_mat4f(enc->pipeline->shader_id, "projection", &proj);
+    encode_bind_shader_data(enc, 0, &mvp_uniforms_data);
 
     // Record draw calls
     draw_mesh(&cube, &model);

@@ -3,6 +3,7 @@
 #include "colours.h"
 #include "opengl_helpers.h"
 #include "ral_types.h"
+#define CEL_REND_BACKEND_OPENGL
 #if defined(CEL_REND_BACKEND_OPENGL)
 #include <assert.h>
 #include <stdlib.h>
@@ -178,9 +179,10 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
       gpu_buffer* ubo_buf = BUFFER_GET(b);
       glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
       glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, data->data);
-      /* printf("Size %d\n", ubo_buf->size); */
-
-      /* glBindBuffer(GL_UNIFORM_BUFFER, 0); */
+    } else if (binding.type == SHADER_BINDING_TEXTURE) {
+      gpu_texture* tex = TEXTURE_GET(binding.data.texture.handle);
+      glActiveTexture(GL_TEXTURE0 + i);
+      glBindTexture(GL_TEXTURE_2D, tex->id);
     }
   }
 }
@@ -260,7 +262,40 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
 void gpu_buffer_destroy(buffer_handle buffer) {}
 void gpu_buffer_upload(const void* data) {}
 
-texture_handle gpu_texture_create(texture_desc desc, bool create_view, const void* data) {}
+texture_handle gpu_texture_create(texture_desc desc, bool create_view, const void* data) {
+  // "allocating" the cpu-side struct
+  texture_handle handle;
+  gpu_texture* texture = texture_pool_alloc(&context.resource_pools->textures, &handle);
+  DEBUG("Allocated texture with handle %d", handle.raw);
+
+  GLuint gl_texture_id;
+  glGenTextures(1, &gl_texture_id);
+  texture->id = gl_texture_id;
+
+  glBindTexture(GL_TEXTURE_2D, gl_texture_id);
+
+  // set the texture wrapping parameters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                  GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  // set texture filtering parameters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  if (data) {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, desc.extents.x, desc.extents.y, 0,
+                 GL_RGBA,  // TODO: convert format to GL enum
+                 GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+  } else {
+    WARN("No image data provided");
+  }
+
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  return handle;
+}
+
 void gpu_texture_destroy(texture_handle) {}
 void gpu_texture_upload(texture_handle texture, const void* data) {}
 

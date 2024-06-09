@@ -41,6 +41,7 @@ typedef struct gpu_buffer {
   u64 size;
 } gpu_buffer;
 typedef struct gpu_texture {
+  u32 id;
   void *pad
 } gpu_texture;
 
