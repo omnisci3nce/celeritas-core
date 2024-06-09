@@ -1,6 +1,6 @@
 set_project("celeritas")
 set_version("0.1.0")
-set_config("cc", "gcc")
+set_config("cc", "clang")
 
 add_rules("mode.debug", "mode.release") -- we have two modes: debug & release
 
@@ -17,11 +17,10 @@ elseif is_mode("release") then
     add_defines("CRELEASE")
 end
 
-
 -- Platform defines and system packages
 if is_plat("linux") then
     add_defines("CEL_PLATFORM_LINUX")
-    add_syslinks("vulkan", "dl", "X11", "pthread")
+    add_syslinks("dl", "X11", "pthread", "vulkan")
 elseif is_plat("windows") then
     add_defines("CEL_PLATFORM_WINDOWS")
     add_syslinks("user32", "gdi32", "kernel32", "shell32")
@@ -31,6 +30,7 @@ elseif is_plat("windows") then
 elseif is_plat("macosx") then
     add_defines("CEL_PLATFORM_MAC")
     add_frameworks("Cocoa", "IOKit", "CoreVideo", "OpenGL")
+    add_frameworks( "Foundation", "Metal", "QuartzCore")
     set_runenv("MTL_DEBUG_LAYER", "1")
     -- add_syslinks("GL")
 end
@@ -62,6 +62,7 @@ local core_sources = {
     "src/physics/*.c",
     "src/renderer/*.c",
     "src/renderer/backends/*.c",
+    "src/renderer/backends/opengl/*.c",
     "src/resources/*.c",
     "src/std/*.c",
     "src/std/containers/*.c",
@@ -94,12 +95,11 @@ rule("compile_glsl_frag_shaders")
 end)
 -- TODO: Metal shaders compilation
 
---
-
 -- common configuration for both static and shared libraries
 target("core_config")
     set_kind("static") -- kind is required but you can ignore it since it's just for common settings
     add_packages("local_glfw")
+    add_defines("CEL_REND_BACKEND_OPENGL")
     add_includedirs("deps/cgltf", {public = true})
     add_includedirs("deps/glfw-3.3.8/include/GLFW", {public = true})
     add_includedirs("deps/glad/include", {public = true})
@@ -113,22 +113,27 @@ target("core_config")
     add_includedirs("src/physics/", {public = true})
     add_includedirs("src/renderer/", {public = true})
     add_includedirs("src/renderer/backends/", {public = true})
+    add_includedirs("src/renderer/backends/opengl", {public = true})
+    add_includedirs("src/renderer/backends/metal", {public = true})
     add_includedirs("src/resources/", {public = true})
     add_includedirs("src/std/", {public = true})
     add_includedirs("src/std/containers", {public = true})
     add_includedirs("src/systems/", {public = true})
     add_files("src/empty.c") -- for some reason we need this on Mac so it doesnt call 'ar' with no files and error
-    add_rules("compile_glsl_vert_shaders")
-    add_rules("compile_glsl_frag_shaders")
-    add_files("assets/shaders/triangle.vert")
-    add_files("assets/shaders/triangle.frag")
-    add_files("assets/shaders/cube.vert")
-    add_files("assets/shaders/cube.frag")
+    -- add_rules("compile_glsl_vert_shaders")
+    -- add_rules("compile_glsl_frag_shaders")
+    -- add_files("assets/shaders/triangle.vert")
+    -- add_files("assets/shaders/triangle.frag")
+    -- add_files("assets/shaders/cube.vert")
+    -- add_files("assets/shaders/cube.frag")
     -- add_files("assets/shaders/*.frag")
     if is_plat("windows") then
         add_includedirs("$(env VULKAN_SDK)/Include", {public = true})
         add_linkdirs("$(env VULKAN_SDK)/Lib", {public = true})
         add_links("vulkan-1")
+    end
+    if is_plat("macosx") then 
+        add_files("src/renderer/backends/metal/*.m")
     end
     set_default(false) -- prevents standalone building of this target
 
@@ -166,10 +171,19 @@ target("tri")
     add_deps("core_static")
     add_files("examples/triangle/ex_triangle.c")
     set_rundir("$(projectdir)")
+    if is_plat("macosx") then
+        before_build(function (target)
+            print("build metal shaders lib")
+            os.exec("mkdir -p build/shaders")
+            os.exec("xcrun -sdk macosx metal -c assets/shaders/triangle.metal -o build/shaders/gfx.air")
+            os.exec("xcrun -sdk macosx metallib build/shaders/gfx.air -o build/gfx.metallib")
+        end)
+    end
 
 target("cube")
     set_kind("binary")
     set_group("examples")
+    -- add_defines("CEL_REND_BACKEND_OPENGL")
     add_deps("core_static")
     add_files("examples/cube/ex_cube.c")
     set_rundir("$(projectdir)")

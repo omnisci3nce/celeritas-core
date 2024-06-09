@@ -44,17 +44,23 @@ TYPED_POOL(gpu_pipeline_layout, pipeline_layout);
 TYPED_POOL(gpu_pipeline, pipeline);
 TYPED_POOL(gpu_renderpass, renderpass);
 
+// --- Handy macros
+#define BUFFER_GET(h) (buffer_pool_get(&context.resource_pools->buffers, h))
+#define TEXTURE_GET(h) (texture_pool_get(&context.resource_pools->textures, h))
+
 // --- Pools
 typedef struct gpu_backend_pools {
   pipeline_pool pipelines;
   pipeline_layout_pool pipeline_layouts;
   renderpass_pool renderpasses;
 } gpu_backend_pools;
+void backend_pools_init(arena* a, gpu_backend_pools* backend_pools);
 
 struct resource_pools {
   buffer_pool buffers;
   texture_pool textures;
 };
+void resource_pools_init(arena* a, struct resource_pools* res_pools);
 
 // --- Pipeline description
 typedef enum pipeline_kind {
@@ -64,9 +70,10 @@ typedef enum pipeline_kind {
 
 typedef struct shader_desc {
   const char* debug_name;
-  str8 filepath;  // where it came from
+  str8 filepath;  // Where it came from
   str8 code;      // Either GLSL or SPIRV bytecode
   bool is_spirv;
+  bool is_combined_vert_frag;  // Contains both vertex and fragment stages
 } shader_desc;
 
 struct graphics_pipeline_desc {
@@ -146,7 +153,7 @@ void encode_set_default_settings(gpu_cmd_encoder* encoder);
 void encode_set_vertex_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 void encode_set_bind_group();  // TODO
-void encode_draw(gpu_cmd_encoder* encoder);
+void encode_draw(gpu_cmd_encoder* encoder, u64 count);
 void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count);
 void encode_clear_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 
@@ -179,3 +186,4 @@ void gpu_temp_draw(size_t n_verts);
 
 // --- Helpers
 vertex_description static_3d_vertex_description();
+size_t vertex_attrib_size(vertex_attrib_type attr);

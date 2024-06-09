@@ -47,7 +47,8 @@ model_handle model_load_gltf(struct core *core, const char *path, bool invert_te
 
   model model = { 0 };
   model.name = str8_cstr_view(path);
-  model.meshes = mesh_darray_new(1);
+  // FIXME: Use mesh* malloc'd
+  /* model.meshes = mesh_darray_new(1); */
   // model.materials = material_darray_new(1);
 
   bool success =

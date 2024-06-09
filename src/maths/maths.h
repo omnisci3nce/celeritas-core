@@ -10,6 +10,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include "defines.h"
 #include "maths_types.h"
 
 // --- Helpers

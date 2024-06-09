@@ -1,8 +1,8 @@
+#define CDEBUG
+// #define CEL_REND_BACKEND_VULKAN 1
+#if CEL_REND_BACKEND_VULKAN
 #include "camera.h"
 #include "primitives.h"
-#define CDEBUG
-#define CEL_REND_BACKEND_VULKAN 1
-#if CEL_REND_BACKEND_VULKAN
 // ^ Temporary
 
 #include <assert.h>

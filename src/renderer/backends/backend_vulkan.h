@@ -1,9 +1,10 @@
 #pragma once
+#include "defines.h"
+#if defined(CEL_REND_BACKEND_VULKAN)
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
-#include "defines.h"
 #include "mem.h"
 #include "ral.h"
 #include "ral_types.h"
@@ -35,6 +36,7 @@ typedef struct gpu_swapchain {
   VkSwapchainKHR handle;
   arena swapchain_arena;
   VkExtent2D extent;
+  u32x2 dimensions;
   VkSurfaceFormatKHR image_format;
   VkPresentModeKHR present_mode;
   u32 image_count;
@@ -113,3 +115,4 @@ typedef struct gpu_texture {
   VkSampler sampler;
   char* debug_label;
 } gpu_texture;
+#endif

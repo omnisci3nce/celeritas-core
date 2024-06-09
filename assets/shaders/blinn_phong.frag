@@ -1,4 +1,4 @@
-#version 410 core
+#version 430 core
 out vec4 FragColor;
 
 // A Blinn-Phong material with textures for diffuse and specular
@@ -32,7 +32,7 @@ in VS_OUT {
   vec3 FragPos;
   vec3 Normal;
   vec2 TexCoords;
-  vec4 FragPosLightSpace;
+  // vec4 FragPosLightSpace;
   vec4 Color;
 } fs_in;
 

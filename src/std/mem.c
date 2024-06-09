@@ -46,15 +46,18 @@ void arena_rewind(arena_save savepoint) { savepoint.arena->curr = savepoint.save
 
 // --- Pool
 
-void_pool void_pool_create(arena* a, u64 capacity, u64 entry_size) {
+void_pool void_pool_create(arena* a, const char* debug_label, u64 capacity, u64 entry_size) {
   size_t memory_requirements = capacity * entry_size;
   void* backing_buf = arena_alloc(a, memory_requirements);
+
+  assert(entry_size >= sizeof(void_pool_header));  // TODO: create my own assert with error message
 
   void_pool pool = { .capacity = capacity,
                      .entry_size = entry_size,
                      .count = 0,
                      .backing_buffer = backing_buf,
-                     .free_list_head = NULL };
+                     .free_list_head = NULL,
+                     .debug_label = debug_label };
 
   void_pool_free_all(&pool);
 
@@ -99,7 +102,7 @@ void* void_pool_alloc(void_pool* pool, u32* out_raw_handle) {
   uintptr_t start = (uintptr_t)pool->backing_buffer;
   uintptr_t cur = (uintptr_t)free_node;
   TRACE("%ld %ld ", start, cur);
-  /* assert(cur > start); */
+  assert(cur > start);
   u32 index = (u32)((cur - start) / pool->entry_size);
   printf("Index %d\n", index);
   if (out_raw_handle != NULL) {

@@ -161,6 +161,7 @@ void draw_mesh(mesh* mesh, mat4* model) {  // , mat4* view, mat4* proj) {
   }
   // Assume this has already been done
   /* encode_bind_shader_data(enc, 0, &mvp_uniforms_data); */
+
   encode_draw_indexed(enc, mesh->index_count);
 }
 

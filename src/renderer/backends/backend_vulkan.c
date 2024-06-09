@@ -1,5 +1,10 @@
-#include <assert.h>
+#include "defines.h"
+#if defined(CEL_REND_BACKEND_VULKAN)
+
+#define GLFW_INCLUDE_VULKAN
 #include <glfw3.h>
+
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -17,7 +22,6 @@
 #include "str.h"
 #include "vulkan_helpers.h"
 
-#include "defines.h"
 #include "file.h"
 #include "log.h"
 #include "ral.h"
@@ -401,6 +405,7 @@ VkFormat format_from_vertex_attr(vertex_attrib_type attr) {
 }
 
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {
+  TRACE("GPU Graphics Pipeline creation");
   // Allocate
   gpu_pipeline_layout* layout =
       pipeline_layout_pool_alloc(&context.gpu_pools.pipeline_layouts, NULL);
@@ -1634,7 +1639,7 @@ texture_handle gpu_texture_create(texture_desc desc, bool create_view, const voi
                                  &texture->sampler);
   if (res != VK_SUCCESS) {
     ERROR("Error creating texture sampler for image %s", texture->debug_label);
-    return;
+    exit(1);
   }
 
   return handle;
@@ -1688,23 +1693,13 @@ void vulkan_transition_image_layout(gpu_texture* texture, VkFormat format, VkIma
 /* TYPED_POOL(gpu_buffer, buffer); */
 /* TYPED_POOL(gpu_texture, texture); */
 
-void resource_pools_init(arena* a, struct resource_pools* res_pools) {
-  buffer_pool buf_pool = buffer_pool_create(a, MAX_BUFFERS, sizeof(gpu_buffer));
-  res_pools->buffers = buf_pool;
-  texture_pool tex_pool = texture_pool_create(a, MAX_TEXTURES, sizeof(gpu_texture));
-  res_pools->textures = tex_pool;
+/* void resource_pools_init(arena* a, struct resource_pools* res_pools) { */
+/*   buffer_pool buf_pool = buffer_pool_create(a, MAX_BUFFERS, sizeof(gpu_buffer)); */
+/*   res_pools->buffers = buf_pool; */
+/*   texture_pool tex_pool = texture_pool_create(a, MAX_TEXTURES, sizeof(gpu_texture)); */
+/*   res_pools->textures = tex_pool; */
 
-  context.resource_pools = res_pools;
-}
+/*   context.resource_pools = res_pools; */
+/* } */
 
-void backend_pools_init(arena* a, gpu_backend_pools* backend_pools) {
-  pipeline_layout_pool pipeline_layout_pool =
-      pipeline_layout_pool_create(a, MAX_PIPELINES, sizeof(gpu_pipeline_layout));
-  backend_pools->pipeline_layouts = pipeline_layout_pool;
-  pipeline_pool pipeline_pool = pipeline_pool_create(a, MAX_PIPELINES, sizeof(gpu_pipeline));
-  backend_pools->pipelines = pipeline_pool;
-  renderpass_pool rpass_pool = renderpass_pool_create(a, MAX_RENDERPASSES, sizeof(gpu_renderpass));
-  backend_pools->renderpasses = rpass_pool;
-
-  context.gpu_pools;
-}
+#endif

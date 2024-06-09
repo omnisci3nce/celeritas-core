@@ -15,10 +15,8 @@ struct UNITY_FIXTURE_T UnityFixture;
  * Build with -D UNITY_OUTPUT_CHAR=outputChar and include <stdio.h>
  * int (*outputChar)(int) = putchar; */
 
-void setUp(void) { /*does nothing*/
-}
-void tearDown(void) { /*does nothing*/
-}
+void setUp(void) { /*does nothing*/ }
+void tearDown(void) { /*does nothing*/ }
 
 static void announceTestRun(unsigned int runNumber) {
   UnityPrint("Unity test run ");

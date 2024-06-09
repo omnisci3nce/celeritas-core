@@ -54,7 +54,7 @@ model_handle model_load_obj(core *core, const char *path, bool invert_textures_y
 
   model model = { 0 };
   model.name = str8_cstr_view(path);
-  model.meshes = mesh_darray_new(1);
+  /* model.meshes = mallocmesh_darray_new(1); */
   // model.materials = material_darray_new(1);
 
   bool success = model_load_obj_str(file_string, relative_path.path, &model, invert_textures_y);
@@ -227,6 +227,8 @@ bool model_load_obj_str(const char *file_string, str8 relative_path, model *out_
 
   // // TODO: bounding box calculation for each mesh
   // // TODO: bounding box calculation for model
+
+  // TODO: copy from mesh_darray to malloc'd mesh* array
 
   return true;
 }
