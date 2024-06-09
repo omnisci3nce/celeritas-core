@@ -69,3 +69,8 @@ void resource_pools_init(arena* a, struct resource_pools* res_pools) {
 
   // context.resource_pools = res_pools;
 }
+
+void print_shader_binding(shader_binding b) {
+  printf("Binding name: %s type %s vis %d stores data %d\n", b.label,
+         shader_binding_type_name[b.type], b.vis, b.stores_data);
+}

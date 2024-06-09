@@ -4,6 +4,9 @@
 
 #include "defines.h"
 #include "maths_types.h"
+#include "ral_types.h"
+
+#define MAX_PIPELINE_UNIFORM_BUFFERS 32
 
 typedef struct gpu_swapchain {
   u32x2 dimensions;
@@ -15,13 +18,14 @@ typedef struct gpu_pipeline_layout {
 } gpu_pipeline_layout;
 typedef struct gpu_pipeline {
   u32 shader_id;
-  u32 vao;
+  vertex_description vertex_desc;
+  buffer_handle uniform_bindings[MAX_PIPELINE_UNIFORM_BUFFERS];
 } gpu_pipeline;
 typedef struct gpu_renderpass {
   void *pad
 } gpu_renderpass;
 typedef struct gpu_cmd_encoder {
-  void *pad
+  gpu_pipeline *pipeline;
 } gpu_cmd_encoder;  // Recording
 typedef struct gpu_cmd_buffer {
   void *pad
@@ -31,6 +35,7 @@ typedef struct gpu_buffer {
   union {
     u32 vbo;
     u32 ibo;
+    u32 ubo;
   } id;
   u32 vao;  // Optional
   u64 size;

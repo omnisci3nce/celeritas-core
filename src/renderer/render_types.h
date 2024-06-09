@@ -10,6 +10,7 @@
  */
 #pragma once
 
+#include "defines.h"
 #include "ral.h"
 #include "ral_types.h"
 #if defined(CEL_PLATFORM_WINDOWS)

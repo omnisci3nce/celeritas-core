@@ -20,7 +20,7 @@ end
 -- Platform defines and system packages
 if is_plat("linux") then
     add_defines("CEL_PLATFORM_LINUX")
-    add_syslinks("dl", "X11", "pthread")
+    add_syslinks("dl", "X11", "pthread", "vulkan")
 elseif is_plat("windows") then
     add_defines("CEL_PLATFORM_WINDOWS")
     add_syslinks("user32", "gdi32", "kernel32", "shell32")
@@ -63,7 +63,6 @@ local core_sources = {
     "src/renderer/*.c",
     "src/renderer/backends/*.c",
     "src/renderer/backends/opengl/*.c",
-    "src/renderer/backends/metal/*.m",
     "src/resources/*.c",
     "src/std/*.c",
     "src/std/containers/*.c",
@@ -132,6 +131,9 @@ target("core_config")
         add_includedirs("$(env VULKAN_SDK)/Include", {public = true})
         add_linkdirs("$(env VULKAN_SDK)/Lib", {public = true})
         add_links("vulkan-1")
+    end
+    if is_plat("macosx") then 
+        add_files("src/renderer/backends/metal/*.m")
     end
     set_default(false) -- prevents standalone building of this target
 

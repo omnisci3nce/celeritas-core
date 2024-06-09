@@ -4,6 +4,7 @@
 #include "buf.h"
 #include "camera.h"
 #include "core.h"
+#include "defines.h"
 #include "file.h"
 #include "log.h"
 #include "maths.h"
@@ -73,8 +74,8 @@ int main() {
   gpu_pipeline* gfx_pipeline = gpu_graphics_pipeline_create(pipeline_description);
 
   // Load triangle vertex and index data
-  buffer_handle triangle_vert_buf =
-      gpu_buffer_create(4 * sizeof(vertex), CEL_BUFFER_VERTEX, CEL_BUFFER_FLAG_GPU, vertices);
+  buffer_handle triangle_vert_buf = gpu_buffer_create(4 * sizeof(custom_vertex), CEL_BUFFER_VERTEX,
+                                                      CEL_BUFFER_FLAG_GPU, vertices);
 
   buffer_handle triangle_index_buf =
       gpu_buffer_create(sizeof(indices), CEL_BUFFER_INDEX, CEL_BUFFER_FLAG_GPU, indices);
@@ -87,24 +88,24 @@ int main() {
       continue;
     }
     gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
-  //   // Begin recording
+    //   // Begin recording
     gpu_cmd_encoder_begin(*enc);
     gpu_cmd_encoder_begin_render(enc, renderpass);
-  //   encode_bind_pipeline(enc, PIPELINE_GRAPHICS, gfx_pipeline);
-  //   encode_set_default_settings(enc);
+    encode_bind_pipeline(enc, PIPELINE_GRAPHICS, gfx_pipeline);
+    encode_set_default_settings(enc);
 
-  //   // Record draw calls
-  //   encode_set_vertex_buffer(enc, triangle_vert_buf);
-  //   encode_set_index_buffer(enc, triangle_index_buf);
-  //   encode_draw_indexed(enc, 6);
+    //   // Record draw calls
+    encode_set_vertex_buffer(enc, triangle_vert_buf);
+    encode_set_index_buffer(enc, triangle_index_buf);
+    encode_draw_indexed(enc, 6);
 
-  //   // End recording
-  //   gpu_cmd_encoder_end_render(enc);
+    //   // End recording
+    //   gpu_cmd_encoder_end_render(enc);
 
-  //   gpu_cmd_buffer buf = gpu_cmd_encoder_finish(enc);  // Command buffer is no longer recording
-  //   and is ready to submit
-  //   // Submit
-  //   gpu_queue_submit(&buf);
+    //   gpu_cmd_buffer buf = gpu_cmd_encoder_finish(enc);  // Command buffer is no longer recording
+    //   and is ready to submit
+    //   // Submit
+    //   gpu_queue_submit(&buf);
     gpu_backend_end_frame();
   }
 

@@ -1,7 +1,10 @@
+#include "defines.h"
 #if defined(CEL_REND_BACKEND_VULKAN)
 
-#include <assert.h>
+#define GLFW_INCLUDE_VULKAN
 #include <glfw3.h>
+
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -19,7 +22,6 @@
 #include "str.h"
 #include "vulkan_helpers.h"
 
-#include "defines.h"
 #include "file.h"
 #include "log.h"
 #include "ral.h"
@@ -1637,7 +1639,7 @@ texture_handle gpu_texture_create(texture_desc desc, bool create_view, const voi
                                  &texture->sampler);
   if (res != VK_SUCCESS) {
     ERROR("Error creating texture sampler for image %s", texture->debug_label);
-    return;
+    exit(1);
   }
 
   return handle;

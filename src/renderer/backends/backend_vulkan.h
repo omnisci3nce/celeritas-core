@@ -1,10 +1,10 @@
 #pragma once
+#include "defines.h"
 #if defined(CEL_REND_BACKEND_VULKAN)
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
-#include "defines.h"
 #include "mem.h"
 #include "ral.h"
 #include "ral_types.h"

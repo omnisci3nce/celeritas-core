@@ -201,6 +201,10 @@ typedef enum shader_binding_type {
   SHADER_BINDING_COUNT
 } shader_binding_type;
 
+static const char* shader_binding_type_name[] = { "BUFFER",        "BUFFER ARRAY", "TEXTURE",
+                                                  "TEXTURE ARRAY", "SAMPLER",      "BYTES",
+                                                  "COUNT" };
+
 // pub trait ShaderBindable: Clone + Copy {
 //     fn bind_to(&self, context: &mut PipelineContext, index: u32);
 // }
@@ -227,6 +231,8 @@ typedef struct shader_binding {
 } shader_binding;
 
 #define MAX_LAYOUT_BINDINGS 8
+
+void print_shader_binding(shader_binding b);
 
 /** @brief A list of bindings that describe what data a shader / pipeline expects
     @note This roughly correlates to a descriptor set layout in Vulkan
