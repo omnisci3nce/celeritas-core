@@ -54,15 +54,6 @@ C side - reload_model():
   - remove from transform graph so it isnt tried to be drawn
 */
 
-CORE_DEFINE_HANDLE(model_handle);
-
-typedef struct model {
-  str8 name;
-  mesh_darray* meshes;
-} model;
-
-TYPED_POOL(model, model)
-
 typedef struct texture {
 } texture;
 
@@ -70,6 +61,13 @@ typedef struct texture_data {
   texture_desc description;
   void* image_data;
 } texture_data;
+
+typedef enum material_kind {
+  MAT_BLINN_PHONG,
+  MAT_PBR,
+  MAT_COUNT
+} material_kind;
+static const char* material_kind_names[] = { "Blinn Phong", "PBR", "Count (This should be an error)"};
 
 typedef struct blinn_phong_material {
   char name[256];
@@ -84,28 +82,52 @@ typedef struct blinn_phong_material {
   bool is_loaded;
   bool is_uploaded;
 } blinn_phong_material;
-typedef blinn_phong_material material;
+// typedef blinn_phong_material material;
 
 typedef struct pbr_parameters {
 
 } pbr_parameters;
 
 typedef struct pbr_material {
-
+  texture_handle albedo_map;
+  texture_handle normal_map;
+  bool metal_roughness_combined;
+  texture_handle metallic_map;
+  texture_handle roughness_map;
+  texture_handle ao_map;
 } pbr_material;
 
-// the default blinn-phong material. MUST be initialised with the function below
-extern material DEFAULT_MATERIAL;
+typedef struct material {
+  material_kind kind;
+  union {
+    blinn_phong_material blinn_phong;
+    pbr_material pbr;
+  } mat_data;
+  char* name;
+} material;
+
+#ifndef TYPED_MATERIAL_ARRAY
+KITC_DECL_TYPED_ARRAY(material)
+#define TYPED_MATERIAL_ARRAY
+#endif
+
+CORE_DEFINE_HANDLE(model_handle);
+
+typedef struct model {
+  str8 name;
+  mesh_darray* meshes;
+  material_darray* materials;
+} model;
+
+TYPED_POOL(model, model)
+
+// FIXME: the default blinn-phong material. MUST be initialised with the function below
+// FIXME: extern material DEFAULT_MATERIAL;
 void default_material_init();
 
 #ifndef TYPED_MODEL_ARRAY
 KITC_DECL_TYPED_ARRAY(model)
 #define TYPED_MODEL_ARRAY
-#endif
-
-#ifndef TYPED_MATERIAL_ARRAY
-KITC_DECL_TYPED_ARRAY(material)
-#define TYPED_MATERIAL_ARRAY
 #endif
 
 #ifndef TYPED_ANIMATION_CLIP_ARRAY

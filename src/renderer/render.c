@@ -1,5 +1,6 @@
 #include <glfw3.h>
 #include "maths_types.h"
+#include "render_types.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -259,4 +260,28 @@ texture_handle texture_data_upload(texture_data data, bool free_on_upload) {
     stbi_image_free(data.image_data);
   }
   return handle;
+}
+
+/** @brief load all of the texture for a PBR material and returns an unnamed material */
+material pbr_material_load(char* albedo_path, char* normal_path, bool metal_roughness_combined,
+                           char* metallic_path, char* roughness_map, char* ao_map) {
+  material m = { 0 };
+  m.kind = MAT_PBR;
+
+  // For now we must have the required textures
+  assert(albedo_path);
+  assert(normal_path);
+  assert(metallic_path);
+  assert(metal_roughness_combined);
+
+  m.mat_data.pbr.metal_roughness_combined = metal_roughness_combined;
+  texture_data tex_data;
+  tex_data = texture_data_load(albedo_path, false);
+  m.mat_data.pbr.albedo_map = texture_data_upload(tex_data, true);
+  tex_data = texture_data_load(normal_path, false);
+  m.mat_data.pbr.normal_map = texture_data_upload(tex_data, true);
+  tex_data = texture_data_load(metallic_path, false);
+  m.mat_data.pbr.metallic_map = texture_data_upload(tex_data, true);
+
+  return m;
 }

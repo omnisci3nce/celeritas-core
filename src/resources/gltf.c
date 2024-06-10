@@ -53,6 +53,7 @@ model_handle model_load_gltf(const char *path, bool invert_texture_y) {
   model *model = model_pool_alloc(&g_core.models, &handle);
   model->name = str8_cstr_view(path);
   model->meshes = mesh_darray_new(1);
+  model->materials = material_darray_new(1);
 
   bool success =
       model_load_gltf_str(file_string, path, relative_path.path, model, invert_texture_y);
@@ -158,43 +159,38 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
   //     }
   //   }
 
-  //   // --- Materials
-  //   TRACE("Num materials %d", data->materials_count);
-  //   size_t num_materials = data->materials_count;
-  //   for (size_t m = 0; m < num_materials; m++) {
-  //     cgltf_material gltf_material = data->materials[m];
-  //     material our_material = DEFAULT_MATERIAL;
+  // --- Materials
+  size_t num_materials = data->materials_count;
+  TRACE("Num materials %d", num_materials);
+  for (size_t m = 0; m < num_materials; m++) {
+    cgltf_material gltf_material = data->materials[m];
+    cgltf_pbr_metallic_roughness pbr = gltf_material.pbr_metallic_roughness;
 
-  //     strcpy(our_material.name, gltf_material.name);
+    TRACE("Has PBR metallic roughness ");
+    // we will use base color texture like blinn phong
+    cgltf_texture_view albedo_tex_view = pbr.base_color_texture;  // albedo
+    char albedo_map_path[1024];
+    snprintf(albedo_map_path, sizeof(albedo_map_path), "%s/%s", relative_path.buf,
+             albedo_tex_view.texture->image->uri);
 
-  //     cgltf_pbr_metallic_roughness pbr = gltf_material.pbr_metallic_roughness;
-  //     if (gltf_material.has_pbr_metallic_roughness) {
-  //       // we will use base color texture like blinn phong
-  //       cgltf_texture_view diff_tex_view = pbr.base_color_texture;
+    cgltf_texture_view metal_rough_tex_view = pbr.metallic_roughness_texture;
+    char metal_rough_map_path[1024];
+    snprintf(metal_rough_map_path, sizeof(metal_rough_map_path), "%s/%s", relative_path.buf,
+             metal_rough_tex_view.texture->image->uri);
 
-  //       char diffuse_map_path[1024];
-  //       snprintf(diffuse_map_path, sizeof(diffuse_map_path), "%s/%s", relative_path.buf,
-  //                diff_tex_view.texture->image->uri);
+    cgltf_texture_view normal_tex_view = gltf_material.normal_texture;
+    char normal_map_path[1024];
+    snprintf(normal_map_path, sizeof(normal_map_path), "%s/%s", relative_path.buf,
+             normal_tex_view.texture->image->uri);
 
-  //       strcpy(our_material.diffuse_tex_path, diffuse_map_path);
-  //       texture diffuse_texture = texture_data_load(our_material.diffuse_tex_path, false);
-  //       texture_data_upload(&diffuse_texture);
-  //       our_material.diffuse_texture = diffuse_texture;
+    material our_material =
+        pbr_material_load(albedo_map_path, normal_map_path, true, metal_rough_map_path, NULL, NULL);
 
-  //       cgltf_texture_view specular_tex_view = pbr.metallic_roughness_texture;
+    our_material.name = malloc(strlen(gltf_material.name) + 1);
+    strcpy(our_material.name, gltf_material.name);
 
-  //       char specular_map_path[1024];
-  //       snprintf(specular_map_path, sizeof(specular_map_path), "%s/%s", relative_path.buf,
-  //                specular_tex_view.texture->image->uri);
-
-  //       strcpy(our_material.specular_tex_path, specular_map_path);
-  //       texture specular_texture = texture_data_load(our_material.specular_tex_path, false);
-  //       texture_data_upload(&specular_texture);
-  //       our_material.specular_texture = specular_texture;
-  //     }
-
-  //     // material_darray_push(out_model->materials, our_material);
-  //   }
+    material_darray_push(out_model->materials, our_material);
+  }
 
   // --- Meshes
   size_t num_meshes = data->meshes_count;
@@ -291,6 +287,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     // mesh.vertex_bone_data = vertex_bone_data_darray_new(1);
 
     if (primitive.material != NULL) {
+      ERROR("Primitive Material %s", primitive.material->name);
       // for (int i = 0; i < material_darray_len(out_model->materials); i++) {
       //   printf("%s vs %s \n", primitive.material->name, out_model->materials->data[i].name);
       //   if (strcmp(primitive.material->name, out_model->materials->data[i].name) == 0) {
