@@ -44,7 +44,7 @@ bool gpu_backend_init(const char* window_name, struct GLFWwindow* window) {
   resource_pools_init(&context.pool_arena, context.resource_pools);
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
@@ -132,7 +132,7 @@ gpu_cmd_encoder gpu_cmd_encoder_create() {
 void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder) {}
 void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) {}
 void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass) {
-  rgba clear_colour = STONE_900;
+  rgba clear_colour = STONE_800;
   glClearColor(clear_colour.r, clear_colour.g, clear_colour.b, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -181,7 +181,8 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
       glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, data->data);
     } else if (binding.type == SHADER_BINDING_TEXTURE) {
       gpu_texture* tex = TEXTURE_GET(binding.data.texture.handle);
-      glActiveTexture(GL_TEXTURE0 + i);
+      glActiveTexture(GL_TEXTURE0);
+      // glActiveTexture(GL_TEXTURE0 + i);
       glBindTexture(GL_TEXTURE_2D, tex->id);
     }
   }

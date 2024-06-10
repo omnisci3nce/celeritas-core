@@ -43,6 +43,7 @@ static opengl_vertex_attr format_from_vertex_attr(vertex_attrib_type attr) {
 }
 
 static u32 opengl_bindcreate_vao(gpu_buffer* buf, vertex_description desc) {
+  DEBUG("Vertex format name %s", desc.debug_label);
   // 1. Bind the buffer
   glBindBuffer(GL_ARRAY_BUFFER, buf->id.vbo);
   // 2. Create new VAO

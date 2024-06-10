@@ -18,7 +18,7 @@ Future:
 #include "defines.h"
 #include "maths_types.h"
 #include "mem.h"
-#include "render_types.h"
+#include "render.h"
 #include "str.h"
 
 typedef struct heightmap {

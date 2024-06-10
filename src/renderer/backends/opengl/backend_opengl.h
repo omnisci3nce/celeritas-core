@@ -45,6 +45,10 @@ typedef struct gpu_texture {
   void *pad
 } gpu_texture;
 
+typedef struct opengl_support {
+
+} opengl_support;
+
 u32 shader_create_separate(const char *vert_shader, const char *frag_shader);
 
 void uniform_vec3f(u32 program_id, const char *uniform_name, vec3 *value);

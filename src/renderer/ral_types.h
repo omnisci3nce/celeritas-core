@@ -21,7 +21,6 @@ CORE_DEFINE_HANDLE(buffer_handle);
 CORE_DEFINE_HANDLE(texture_handle);
 CORE_DEFINE_HANDLE(sampler_handle);
 CORE_DEFINE_HANDLE(shader_handle);
-CORE_DEFINE_HANDLE(model_handle);
 CORE_DEFINE_HANDLE(pipeline_layout_handle);
 CORE_DEFINE_HANDLE(pipeline_handle);
 CORE_DEFINE_HANDLE(renderpass_handle);

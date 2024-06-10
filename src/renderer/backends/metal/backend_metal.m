@@ -1,5 +1,5 @@
 #include <assert.h>
-#define CEL_REND_BACKEND_METAL
+// #define CEL_REND_BACKEND_METAL
 #if defined(CEL_REND_BACKEND_METAL)
 #include <stddef.h>
 #include "ral_types.h"

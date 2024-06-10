@@ -111,7 +111,7 @@ geometry_data geo_create_cuboid(f32x3 extents) {
     .format = VERTEX_STATIC_3D,
     .vertices = vertices,
     .has_indices = true,
-    .indices = *indices,  // FIXME: make darray methods that return stack allocated struct
+    .indices = indices,  // FIXME: make darray methods that return stack allocated struct
     .colour = vec3(0, 0, 0),
   };
 

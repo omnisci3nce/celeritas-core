@@ -66,7 +66,7 @@ bool renderer_init(renderer* ren) {
   // default_material_init();
 
   // Create default rendering pipeline
-  /* default_pipelines_init(ren); */
+  default_pipelines_init(ren);
 
   return true;
 }
@@ -86,36 +86,40 @@ void default_pipelines_init(renderer* ren) {
   ren->default_renderpass = *renderpass;
 
   printf("Load shaders\n");
-  str8 vert_path = str8lit("build/linux/x86_64/debug/triangle.vert.spv");
-  str8 frag_path = str8lit("build/linux/x86_64/debug/triangle.frag.spv");
-  /* str8 vert_path =
-   * str8lit("/home/void/code/celeritas-engine/celeritas-core/build/linux/x86_64/debug/triangle.vert.spv");
-   */
-  /* str8 frag_path =
-   * str8lit("/home/void/code/celeritas-engine/celeritas-core/build/linux/x86_64/debug/triangle.frag.spv");
-   */
+  str8 vert_path, frag_path;
+#ifdef CEL_REND_BACKEND_OPENGL
+  vert_path = str8lit("assets/shaders/cube.vert");
+  frag_path = str8lit("assets/shaders/cube.frag");
+#else
+  vert_path = str8lit("build/linux/x86_64/debug/cube.vert.spv");
+  frag_path = str8lit("build/linux/x86_64/debug/cube.frag.spv");
+#endif
   str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
   str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
   if (!vertex_shader.has_value || !fragment_shader.has_value) {
     ERROR_EXIT("Failed to load shaders from disk")
   }
+  if (!vertex_shader.has_value || !fragment_shader.has_value) {
+    ERROR_EXIT("Failed to load shaders from disk")
+  }
 
-  vertex_description vertex_input;
+  vertex_description vertex_input = {0};
   vertex_input.debug_label = "Standard Static 3D Vertex Format";
   vertex_desc_add(&vertex_input, "inPosition", ATTR_F32x3);
   vertex_desc_add(&vertex_input, "inNormal", ATTR_F32x3);
   vertex_desc_add(&vertex_input, "inTexCoords", ATTR_F32x2);
+  vertex_input.use_full_vertex_size = true;
 
   struct graphics_pipeline_desc pipeline_description = {
     .debug_name = "Basic Pipeline",
     .vertex_desc = vertex_input,
     // .data_layouts
     // .data_layouts_count
-    .vs = { .debug_name = "Triangle Vertex Shader",
+    .vs = { .debug_name = "Basic Vertex Shader",
             .filepath = vert_path,
             .code = vertex_shader.contents,
             .is_spirv = true },
-    .fs = { .debug_name = "Triangle Fragment Shader",
+    .fs = { .debug_name = "Basic Fragment Shader",
             .filepath = frag_path,
             .code = fragment_shader.contents,
             .is_spirv = true },
@@ -153,16 +157,20 @@ void render_frame_end(renderer* ren) {
 }
 void render_frame_draw(renderer* ren) {}
 
+bool mesh_has_indices(mesh* m) {
+  return m->geometry->has_indices;
+}
+
 void draw_mesh(mesh* mesh, mat4* model) {  // , mat4* view, mat4* proj) {
   gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
   encode_set_vertex_buffer(enc, mesh->vertex_buffer);
-  if (mesh->has_indices) {
+  if (mesh_has_indices(mesh)) {
     encode_set_index_buffer(enc, mesh->index_buffer);
   }
   // Assume this has already been done
   /* encode_bind_shader_data(enc, 0, &mvp_uniforms_data); */
 
-  encode_draw_indexed(enc, mesh->index_count);
+  encode_draw_indexed(enc, mesh->geometry->indices->len);
 }
 
 void gfx_backend_draw_frame(renderer* ren, camera* camera, mat4 model, texture* tex) {}
@@ -182,15 +190,15 @@ mesh mesh_create(geometry_data* geometry, bool free_on_upload) {
                                       geometry->vertices->data);
 
   // Create and upload index buffer
-  size_t index_bytes = geometry->indices.len * sizeof(u32);
-  INFO("Creating index buffer with size %d (len: %d)", index_bytes, geometry->indices.len);
+  size_t index_bytes = geometry->indices->len * sizeof(u32);
+  INFO("Creating index buffer with size %d (len: %d)", index_bytes, geometry->indices->len);
   m.index_buffer =
-      gpu_buffer_create(index_bytes, CEL_BUFFER_INDEX, CEL_BUFFER_FLAG_GPU, geometry->indices.data);
+      gpu_buffer_create(index_bytes, CEL_BUFFER_INDEX, CEL_BUFFER_FLAG_GPU, geometry->indices->data);
 
   m.is_uploaded = true;
-  m.has_indices = geometry->has_indices;
-  m.index_count = geometry->indices.len;
-  m.vertices = geometry;
+  // m.has_indices = geometry->has_indices;
+  // m.index_count = geometry->indices.len;
+  m.geometry = geometry;
   if (free_on_upload) {
     geo_free_data(geometry);
   }

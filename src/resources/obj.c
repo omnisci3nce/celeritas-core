@@ -64,8 +64,9 @@ model_handle model_load_obj(core *core, const char *path, bool invert_textures_y
     ERROR_EXIT("Load fails are considered crash-worthy right now. This will change later.\n");
   }
 
-  u32 index = model_darray_len(core->models);
-  model_darray_push(core->models, model);
+// FIXME
+  // u32 index = model_darray_len(core->models);
+  // model_darray_push(core->models, model);
 
   arena_free_all(&scratch);
   arena_free_storage(&scratch);

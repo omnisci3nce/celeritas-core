@@ -165,11 +165,12 @@ bool print_node(transform_node* node, void* ctx_data) {
   }
 
   // Grab the model
-  model m = ctx->core->models->data[node->model.raw];
+  // FIXME
+  // model m = ctx->core->models->data[node->model.raw];
   for (int i = 0; i < ctx->indentation_lvl; i++) {
     printf("  ");
   }
-  printf("Node %s\n", m.name.buf);
+  // printf("Node %s\n", m.name.buf);
   ctx->indentation_lvl++;
 
   return true;

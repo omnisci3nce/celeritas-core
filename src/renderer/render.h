@@ -13,6 +13,25 @@
 #include "ral_types.h"
 #include "render_types.h"
 
+/** @brief configuration passed to the renderer at init time */
+typedef struct renderer_config {
+  char window_name[256];
+  u32 scr_width, scr_height;
+  vec3 clear_colour; /** colour that the screen gets cleared to every frame */
+} renderer_config;
+
+typedef struct renderer {
+  struct GLFWwindow* window;
+  void* backend_context;
+  renderer_config config;
+  gpu_device device;
+  gpu_swapchain swapchain;
+  gpu_renderpass default_renderpass;
+  gpu_pipeline static_opaque_pipeline;
+  bool frame_aborted;
+  struct resource_pools* resource_pools;
+} renderer;
+
 bool renderer_init(renderer* ren);
 void renderer_shutdown(renderer* ren);
 

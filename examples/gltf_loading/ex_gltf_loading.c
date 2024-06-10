@@ -10,6 +10,10 @@
 #include "render.h"
 #include "render_types.h"
 
+extern core g_core;
+
+#define MODEL_GET(h) (model_pool_get(&g_core.models, h))
+
 const vec3 pointlight_positions[4] = {
   { 0.7, 0.2, 2.0 },
   { 2.3, -3.3, -4.0 },
@@ -23,12 +27,12 @@ int main() {
   double lastFrame = currentFrame;
   double deltaTime;
 
-  core* core = core_bringup();
+  core_bringup();
 
   model_handle helmet_handle =
-      model_load_gltf(core, "assets/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf", false);
-  model* helmet = &core->models->data[helmet_handle.raw];
-  model_upload_meshes(&core->renderer, helmet);
+      model_load_gltf("assets/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf", false);
+      INFO("GLTF loaded successfully!");
+      model* helmet = MODEL_GET(helmet_handle);
 
   vec3 camera_pos = vec3(5., 0., 0.);
   vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
@@ -51,16 +55,17 @@ int main() {
     point_lights[i].quadratic = 0.032;
   }
 
-  scene our_scene = { .dir_light = dir_light, .n_point_lights = 4 };
-  memcpy(&our_scene.point_lights, &point_lights, sizeof(point_light[4]));
+  // scene our_scene = { .dir_light = dir_light, .n_point_lights = 4 };
+  // memcpy(&our_scene.point_lights, &point_lights, sizeof(point_light[4]));
 
-  while (!should_exit(core)) {
+  while (!should_exit(&g_core)) {
+    input_update(&g_core.input);
+
     currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
-    input_update(&core->input);
 
-    render_frame_begin(&core->renderer);
+    render_frame_begin(&g_core.renderer);
 
     // Draw the model
     static f32 angle = 0.0;
@@ -69,10 +74,13 @@ int main() {
     angle += (rot_speed * deltaTime);
     transform model_tf = transform_create(vec3(0.0, 0.1, -0.1), rot, 1.8);
     mat4 model = transform_to_mat(&model_tf);
-    draw_model(&core->renderer, &cam, helmet, &model, &our_scene);
 
-    render_frame_end(&core->renderer);
+    draw_mesh(&helmet->meshes->data[0], &model);
+
+    render_frame_end(&g_core.renderer);
   }
+
+  renderer_shutdown(&g_core.renderer);
 
   return 0;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "input.h"
+#include "render_types.h"
 #include "scene.h"
 #include "screenspace.h"
 #include "terrain.h"
@@ -19,7 +20,8 @@ typedef struct core {
   screenspace_state screenspace;
   // data storage
   scene default_scene;
-  model_darray* models;
+  model_pool models;
+  // model_darray* models;
 } core;
 
 core* get_global_core();
