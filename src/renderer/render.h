@@ -82,7 +82,7 @@ void shader_hot_reload(const char* filepath);
  */
 mesh mesh_create(geometry_data* geometry, bool free_on_upload);
 
-void draw_mesh(mesh* mesh, mat4* model);  //, mat4* view, mat4* proj); // TODO: material
+void draw_mesh(mesh* mesh, mat4* model, camera* cam);
 
 model_handle model_load(const char* debug_name, const char* filepath);
 

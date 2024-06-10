@@ -103,7 +103,6 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
         glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
         glBindBufferBase(GL_UNIFORM_BUFFER, binding_j, ubo_buf->id.ubo);
         if (blockIndex != GL_INVALID_INDEX) {
-          printf("Here\n");
           glUniformBlockBinding(pipeline->shader_id, blockIndex, 0);
         }
 
@@ -111,6 +110,8 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
       }
     }
   }
+
+  pipeline->wireframe = description.wireframe;
 
   return pipeline;
 }
@@ -164,6 +165,13 @@ void copy_buffer_to_image_oneshot(buffer_handle src, texture_handle dst) {}
 // --- Render commands
 void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipeline* pipeline) {
   encoder->pipeline = pipeline;
+
+  if (pipeline->wireframe) {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  } else {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  }
+
   // In OpenGL binding a pipeline is more or less equivalent to just setting the shader
   glUseProgram(pipeline->shader_id);
 }

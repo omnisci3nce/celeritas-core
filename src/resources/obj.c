@@ -22,6 +22,8 @@
 #include "render_types.h"
 #include "str.h"
 
+extern core g_core;
+
 struct face {
   u32 vertex_indices[3];
   u32 normal_indices[3];
@@ -52,10 +54,10 @@ model_handle model_load_obj(core *core, const char *path, bool invert_textures_y
   }
   const char *file_string = string_from_file(path);
 
-  model model = { 0 };
-  model.name = str8_cstr_view(path);
-  /* model.meshes = mallocmesh_darray_new(1); */
-  // model.materials = material_darray_new(1);
+  model_handle handle;
+  model *model = model_pool_alloc(&g_core.models, &handle);
+  model->name = str8_cstr_view(path);
+  model->meshes = mesh_darray_new(1);
 
   bool success = model_load_obj_str(file_string, relative_path.path, &model, invert_textures_y);
 
@@ -64,13 +66,9 @@ model_handle model_load_obj(core *core, const char *path, bool invert_textures_y
     ERROR_EXIT("Load fails are considered crash-worthy right now. This will change later.\n");
   }
 
-// FIXME
-  // u32 index = model_darray_len(core->models);
-  // model_darray_push(core->models, model);
-
   arena_free_all(&scratch);
   arena_free_storage(&scratch);
-  return (model_handle){ .raw = index };
+  return handle;
 }
 
 bool model_load_obj_str(const char *file_string, str8 relative_path, model *out_model,

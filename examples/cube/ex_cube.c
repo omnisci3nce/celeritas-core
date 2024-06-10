@@ -145,7 +145,7 @@ int main() {
     encode_bind_shader_data(enc, 0, &mvp_uniforms_data);
 
     // Record draw calls
-    draw_mesh(&cube, &model);
+    draw_mesh(&cube, &model, &cam);
 
     // End recording
     gpu_cmd_encoder_end_render(enc);

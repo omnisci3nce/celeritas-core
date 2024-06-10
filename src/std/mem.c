@@ -104,7 +104,7 @@ void* void_pool_alloc(void_pool* pool, u32* out_raw_handle) {
   TRACE("%ld %ld ", start, cur);
   assert(cur > start);
   u32 index = (u32)((cur - start) / pool->entry_size);
-  printf("Index %d\n", index);
+  /* printf("Index %d\n", index); */
   if (out_raw_handle != NULL) {
     *out_raw_handle = index;
   }

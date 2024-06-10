@@ -31,8 +31,8 @@ int main() {
 
   model_handle helmet_handle =
       model_load_gltf("assets/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf", false);
-      INFO("GLTF loaded successfully!");
-      model* helmet = MODEL_GET(helmet_handle);
+  INFO("GLTF loaded successfully!");
+  model* helmet = MODEL_GET(helmet_handle);
 
   vec3 camera_pos = vec3(5., 0., 0.);
   vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
@@ -55,8 +55,11 @@ int main() {
     point_lights[i].quadratic = 0.032;
   }
 
-  // scene our_scene = { .dir_light = dir_light, .n_point_lights = 4 };
-  // memcpy(&our_scene.point_lights, &point_lights, sizeof(point_light[4]));
+  scene our_scene;
+  scene_init(&our_scene);
+  memcpy(&our_scene.point_lights, &point_lights, sizeof(point_light[4]));
+  our_scene.point_lights_count = 4;
+  our_scene.dir_light = dir_light;
 
   while (!should_exit(&g_core)) {
     input_update(&g_core.input);
@@ -68,14 +71,13 @@ int main() {
     render_frame_begin(&g_core.renderer);
 
     // Draw the model
-    static f32 angle = 0.0;
-    static f32 rot_speed = 0.5;
+    static f32 angle = 0.0, rot_speed = 0.5;
     quat rot = quat_from_axis_angle(VEC3_Z, fmod(angle, TAU), true);
     angle += (rot_speed * deltaTime);
     transform model_tf = transform_create(vec3(0.0, 0.1, -0.1), rot, 1.8);
     mat4 model = transform_to_mat(&model_tf);
 
-    draw_mesh(&helmet->meshes->data[0], &model);
+    draw_mesh(&helmet->meshes->data[0], &model, &cam);
 
     render_frame_end(&g_core.renderer);
   }

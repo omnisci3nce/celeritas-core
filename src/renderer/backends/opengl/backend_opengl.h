@@ -20,6 +20,7 @@ typedef struct gpu_pipeline {
   u32 shader_id;
   vertex_description vertex_desc;
   buffer_handle uniform_bindings[MAX_PIPELINE_UNIFORM_BUFFERS];
+  bool wireframe;
 } gpu_pipeline;
 typedef struct gpu_renderpass {
   void *pad

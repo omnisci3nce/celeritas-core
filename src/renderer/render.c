@@ -11,6 +11,10 @@
 #include "ral_types.h"
 #include "render.h"
 
+//---NEW
+#include "static_pipeline.h"
+//---END
+
 /** @brief Creates the pipelines built into Celeritas such as rendering static opaque geometry,
            debug visualisations, immediate mode UI, etc */
 void default_pipelines_init(renderer* ren);
@@ -56,15 +60,6 @@ bool renderer_init(renderer* ren) {
   ren->resource_pools = arena_alloc(&pool_arena, sizeof(struct resource_pools));
   resource_pools_init(&pool_arena, ren->resource_pools);
 
-  // ren->blinn_phong =
-  //     shader_create_separate("assets/shaders/blinn_phong.vert",
-  //     "assets/shaders/blinn_phong.frag");
-
-  // ren->skinned =
-  //     shader_create_separate("assets/shaders/skinned.vert", "assets/shaders/blinn_phong.frag");
-
-  // default_material_init();
-
   // Create default rendering pipeline
   default_pipelines_init(ren);
 
@@ -103,18 +98,22 @@ void default_pipelines_init(renderer* ren) {
     ERROR_EXIT("Failed to load shaders from disk")
   }
 
-  vertex_description vertex_input = {0};
+  // Vertex attributes
+  vertex_description vertex_input = { 0 };
   vertex_input.debug_label = "Standard Static 3D Vertex Format";
   vertex_desc_add(&vertex_input, "inPosition", ATTR_F32x3);
   vertex_desc_add(&vertex_input, "inNormal", ATTR_F32x3);
   vertex_desc_add(&vertex_input, "inTexCoords", ATTR_F32x2);
   vertex_input.use_full_vertex_size = true;
 
+  // Shader data bindings
+  shader_data mvp_uniforms_data = { .data = NULL, .shader_data_get_layout = &mvp_uniforms_layout };
+
   struct graphics_pipeline_desc pipeline_description = {
     .debug_name = "Basic Pipeline",
     .vertex_desc = vertex_input,
-    // .data_layouts
-    // .data_layouts_count
+    .data_layouts = { mvp_uniforms_data },
+    .data_layouts_count = 1,
     .vs = { .debug_name = "Basic Vertex Shader",
             .filepath = vert_path,
             .code = vertex_shader.contents,
@@ -135,6 +134,7 @@ void render_frame_begin(renderer* ren) {
   ren->frame_aborted = false;
   if (!gpu_backend_begin_frame()) {
     ren->frame_aborted = true;
+    WARN("Frame aborted");
     return;
   }
   gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
@@ -148,7 +148,6 @@ void render_frame_end(renderer* ren) {
   if (ren->frame_aborted) {
     return;
   }
-  // gpu_temp_draw(3);
   gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
   gpu_cmd_encoder_end_render(enc);
   gpu_cmd_buffer buf = gpu_cmd_encoder_finish(enc);
@@ -157,18 +156,33 @@ void render_frame_end(renderer* ren) {
 }
 void render_frame_draw(renderer* ren) {}
 
-bool mesh_has_indices(mesh* m) {
-  return m->geometry->has_indices;
-}
+bool mesh_has_indices(mesh* m) { return m->geometry->has_indices; }
 
-void draw_mesh(mesh* mesh, mat4* model) {  // , mat4* view, mat4* proj) {
+/**
+ *
+ * @param Camera used for getting the view projection matric to draw the mesh with.
+ *        If NULL use the last used camera  */
+void draw_mesh(mesh* mesh, mat4* model, camera* cam) {  // , mat4* view, mat4* proj) {
   gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
+
   encode_set_vertex_buffer(enc, mesh->vertex_buffer);
   if (mesh_has_indices(mesh)) {
     encode_set_index_buffer(enc, mesh->index_buffer);
   }
-  // Assume this has already been done
-  /* encode_bind_shader_data(enc, 0, &mvp_uniforms_data); */
+
+  mat4 view, proj;
+  if (cam) {
+    camera_view_projection(cam,  // FIXME: proper swapchain dimensions
+                           1000, 1000, &view, &proj);
+
+  } else {
+    WARN("No camera set");
+  }
+  mvp_uniforms mvp_data = { .model = *model, .view = view, .projection = proj };
+  my_shader_bind_group shader_bind_data = { .mvp = mvp_data };
+  shader_data mvp_uniforms_data = { .data = &shader_bind_data,
+                                    .shader_data_get_layout = &mvp_uniforms_layout };
+  encode_bind_shader_data(enc, 0, &mvp_uniforms_data);
 
   encode_draw_indexed(enc, mesh->geometry->indices->len);
 }
@@ -192,8 +206,8 @@ mesh mesh_create(geometry_data* geometry, bool free_on_upload) {
   // Create and upload index buffer
   size_t index_bytes = geometry->indices->len * sizeof(u32);
   INFO("Creating index buffer with size %d (len: %d)", index_bytes, geometry->indices->len);
-  m.index_buffer =
-      gpu_buffer_create(index_bytes, CEL_BUFFER_INDEX, CEL_BUFFER_FLAG_GPU, geometry->indices->data);
+  m.index_buffer = gpu_buffer_create(index_bytes, CEL_BUFFER_INDEX, CEL_BUFFER_FLAG_GPU,
+                                     geometry->indices->data);
 
   m.is_uploaded = true;
   // m.has_indices = geometry->has_indices;

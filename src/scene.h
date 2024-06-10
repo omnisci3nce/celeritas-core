@@ -26,6 +26,7 @@ typedef struct scene {
   // TODO: tree - transform_hierarchy
 } scene;
 
+
 void scene_init(scene* s);
 void scene_free(scene* s);
 
