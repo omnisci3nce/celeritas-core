@@ -86,6 +86,14 @@ typedef struct blinn_phong_material {
 } blinn_phong_material;
 typedef blinn_phong_material material;
 
+typedef struct pbr_parameters {
+
+} pbr_parameters;
+
+typedef struct pbr_material {
+
+} pbr_material;
+
 // the default blinn-phong material. MUST be initialised with the function below
 extern material DEFAULT_MATERIAL;
 void default_material_init();
