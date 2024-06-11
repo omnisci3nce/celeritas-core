@@ -13,6 +13,7 @@
 #include "defines.h"
 #include "ral.h"
 #include "ral_types.h"
+#include "colours.h"
 #if defined(CEL_PLATFORM_WINDOWS)
 // #include "backend_dx11.h"
 #endif
@@ -31,7 +32,7 @@ typedef struct geometry_data {
   vertex_darray* vertices;  // TODO: make it not a pointer
   bool has_indices;
   u32_darray* indices;
-  vec3 colour; /** Optional: set vertex colours */
+  rgba colour; /** Optional: set vertex colours */
 } geometry_data;
 
 // 'Upload' a geometry_data (to GPU) -> get back a mesh
@@ -65,9 +66,10 @@ typedef struct texture_data {
 typedef enum material_kind {
   MAT_BLINN_PHONG,
   MAT_PBR,
+  MAT_PBR_PARAMS, // uses float values to represent a surface uniformly
   MAT_COUNT
 } material_kind;
-static const char* material_kind_names[] = { "Blinn Phong", "PBR", "Count (This should be an error)"};
+static const char* material_kind_names[] = { "Blinn Phong", "PBR (Textures)", "PBR (Params)", "Count (This should be an error)"};
 
 typedef struct blinn_phong_material {
   char name[256];
@@ -85,7 +87,10 @@ typedef struct blinn_phong_material {
 // typedef blinn_phong_material material;
 
 typedef struct pbr_parameters {
-
+  vec3 albedo;
+  f32 metallic;
+  f32 roughness;
+  f32 ao;
 } pbr_parameters;
 
 typedef struct pbr_material {
@@ -101,6 +106,7 @@ typedef struct material {
   material_kind kind;
   union {
     blinn_phong_material blinn_phong;
+    pbr_parameters pbr_params;
     pbr_material pbr;
   } mat_data;
   char* name;

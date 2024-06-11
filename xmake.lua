@@ -188,6 +188,13 @@ target("cube")
     add_files("examples/cube/ex_cube.c")
     set_rundir("$(projectdir)")
 
+target("primitives")
+    set_kind("binary")
+    set_group("examples")
+    add_deps("core_static")
+    add_files("examples/primitives/ex_primitives.c")
+    set_rundir("$(projectdir)")
+
 -- target("std")
 --     set_kind("binary")
 --     set_group("examples")

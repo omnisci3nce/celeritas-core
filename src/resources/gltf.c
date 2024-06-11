@@ -380,7 +380,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
 
     geometry_data *geometry = malloc(sizeof(geometry_data));
     geometry->format = VERTEX_STATIC_3D;
-    geometry->colour = vec3(1, 1, 1);
+    geometry->colour = (rgba){ 1, 1, 1, 1 };
     geometry->vertices = geo_vertices;
     geometry->indices = geo_indices;
     geometry->has_indices = has_indices;
