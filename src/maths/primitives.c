@@ -1,5 +1,6 @@
 #include "primitives.h"
 #include "colours.h"
+#include "log.h"
 #include "maths.h"
 #include "ral_types.h"
 #include "render_types.h"
@@ -48,6 +49,12 @@ static const vec3 FRONT_TOP_RIGHT = (vec3){ 1, 1, 1 };
     vertex v = { .static_3d = { .position = pos, .normal = norm, .tex_coords = uv } }; \
     vertex_darray_push(arr, v);                                                        \
   }
+
+void push_triangle(u32_darray* arr, u32 i0, u32 i1, u32 i2) {
+  u32_darray_push(arr, i0);
+  u32_darray_push(arr, i1);
+  u32_darray_push(arr, i2);
+}
 
 geometry_data geo_create_cuboid(f32x3 extents) {
   /* static mesh prim_cube_mesh_create() { */
@@ -135,8 +142,8 @@ geometry_data geo_create_cuboid(f32x3 extents) {
 
 vec3 spherical_to_cartesian_coords(f32 rho, f32 theta, f32 phi) {
   f32 x = rho * sin(phi) * cos(theta);
-  f32 y = rho * sin(phi) * sin(theta);
-  f32 z = rho * cos(phi);
+  f32 y = rho * cos(phi);
+  f32 z = rho * sin(phi) * sin(theta);
   return vec3(x, y, z);
 }
 
@@ -151,22 +158,25 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
   // for each vertex we must convert that to a cartesian R3 coordinate
 
   // Top point
-  vertex top = { .static_3d = { .position = vec3(0, 0, radius),
-                                .normal = vec3(0, 0, radius),
+  vertex top = { .static_3d = { .position = vec3(0, radius, 0),
+                                .normal = vec3(0, radius, 0),
                                 .tex_coords = vec2(0, 0) } };
+  vertex_darray_push(vertices, top);
 
   // parallels
   for (u32 i = 0; i < (east_west_lines - 1); i++) {
     // phi should range from 0 to pi
-    f32 phi = PI * ((i + 1) / east_west_lines);
+    f32 phi = PI * (((f32)i + 1) / (f32)east_west_lines);
 
     // meridians
     for (u32 j = 0; j < east_west_lines; j++) {
       // theta should range from 0 to 2PI
-      f32 theta = TAU * (j / north_south_lines);
+      f32 theta = TAU * ((f32)j / (f32)north_south_lines);
       vec3 position = spherical_to_cartesian_coords(radius, theta, phi);
       f32 d = vec3_len(position);
-      assert(d == radius);  // all points on the sphere should be 'radius' away from the origin
+      // print_vec3(position);
+      // printf("Phi %f Theta %f d %d\n", phi, theta, d);
+      // assert(d == radius);  // all points on the sphere should be 'radius' away from the origin
       vertex v = { .static_3d = {
                        .position = position,
                        .normal = position,       // normal vector on sphere is same as position
@@ -177,13 +187,52 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
   }
 
   // Bottom point
-  vertex bot = { .static_3d = { .position = vec3(0, 0, -radius),
-                                .normal = vec3(0, 0, -radius),
+  vertex bot = { .static_3d = { .position = vec3(0, -radius, 0),
+                                .normal = vec3(0, -radius, 0),
                                 .tex_coords = vec2(0, 0) } };
+  vertex_darray_push(vertices, bot);
 
-  // TODO: generate indices for for each flat quad on the UV sphere and triangles
-  //       where they meet the north and south poles
   u32_darray* indices = u32_darray_new(1);
+
+  // top bottom rings
+  for (u32 i = 0; i < north_south_lines; i++) {
+    u32 i1 = i + 1;
+    u32 i2 = (i + 1) % north_south_lines + 1;
+    push_triangle(indices, 0, i1, i2);
+    TRACE("Push triangle (%.2f %.2f %.2f)->(%.2f %.2f %.2f)->(%.2f %.2f %.2f)\n",
+          vertices->data[0].static_3d.position.x, vertices->data[0].static_3d.position.y,
+          vertices->data[0].static_3d.position.z, vertices->data[i1].static_3d.position.x,
+          vertices->data[i1].static_3d.position.y, vertices->data[i1].static_3d.position.z,
+          vertices->data[i2].static_3d.position.x, vertices->data[i2].static_3d.position.y,
+          vertices->data[i2].static_3d.position.z);
+    u32 bot = vertices->len - 1;
+    u32 i3 = i + north_south_lines * (east_west_lines - 2) + 1;
+    u32 i4 = (i + 1) % north_south_lines + north_south_lines * (east_west_lines - 2) + 1;
+    push_triangle(indices, bot, i3, i4);
+  }
+
+  // quads
+  for (u32 i = 0; i < east_west_lines - 2; i++) {
+    u32 ring_start = i * north_south_lines + 1;
+    u32 next_ring_start = (i + 1) * north_south_lines + 1;
+    printf("ring start %d next ring start %d\n", ring_start, next_ring_start);
+    print_vec3(vertices->data[ring_start].static_3d.position);
+    print_vec3(vertices->data[next_ring_start].static_3d.position);
+    for (u32 j = 0; j < north_south_lines; j++) {
+      u32 i0 = ring_start + j;
+      u32 i1 = next_ring_start + j;
+      u32 i2 = ring_start + (j + 1) % north_south_lines;
+      u32 i3 = next_ring_start + (j + 1) % north_south_lines;
+      push_triangle(indices, i0, i1, i2);
+      TRACE("Push triangle (%.2f %.2f %.2f)->(%.2f %.2f %.2f)->(%.2f %.2f %.2f)\n",
+            vertices->data[i0].static_3d.position.x, vertices->data[i0].static_3d.position.y,
+            vertices->data[i0].static_3d.position.z, vertices->data[i1].static_3d.position.x,
+            vertices->data[i1].static_3d.position.y, vertices->data[i1].static_3d.position.z,
+            vertices->data[i2].static_3d.position.x, vertices->data[i2].static_3d.position.y,
+            vertices->data[i2].static_3d.position.z);
+      // push_triangle(indices, i2, i1, i3);
+    }
+  }
 
   geometry_data geo = {
     .format = VERTEX_STATIC_3D,

@@ -20,18 +20,21 @@ int main() {
   core_bringup();
   arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
 
-  vec3 camera_pos = vec3(2., 2., 2.);
+  vec3 camera_pos = vec3(3.0, 2., 6.);
   vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
   camera cam = camera_create(camera_pos, camera_front, VEC3_Y, deg_to_rad(45.0));
 
-  // Geometry
-  // geo_create_cuboid(f32x3(1, 1, 1));
-  geometry_data sphere_data = geo_create_uvsphere(2.0, 8, 8);
+  geometry_data cube_data = geo_create_cuboid(f32x3(1, 1, 1));
+  mesh cube = mesh_create(&cube_data, false);
+
+  geometry_data sphere_data = geo_create_uvsphere(1.0, 8, 8);
   mesh sphere = mesh_create(&sphere_data, false);
 
-  // Texture
-  texture_data tex_data = texture_data_load("assets/textures/texture.jpg", false);
-  texture_handle texture = texture_data_upload(tex_data, true);
+  // FIXME: // Texture
+  // texture_data tex_data = texture_data_load("assets/textures/texture.jpg", false);
+  // texture_handle texture = texture_data_upload(tex_data, true);
+
+  g_core.renderer.static_opaque_pipeline.wireframe = true;
 
   static f32 theta = 0.0;
 
@@ -41,8 +44,15 @@ int main() {
 
     render_frame_begin(&g_core.renderer);
 
-    mat4 model = mat4_ident();
-    draw_mesh(&sphere, &model, &cam);
+    // theta += 0.01;
+    transform transform = { .position = vec3(0.0, 0.0, 0.0),
+                            .rotation = quat_from_axis_angle(VEC3_Y, theta, true),
+                            .scale = 1.0 };
+
+    mat4 sphere_model = transform_to_mat(&transform);
+    mat4 cube_model = mat4_translation(vec3(-2.,0,0));
+    draw_mesh(&cube, &cube_model, &cam);
+    draw_mesh(&sphere, &sphere_model, &cam);
 
     render_frame_end(&g_core.renderer);
   }
