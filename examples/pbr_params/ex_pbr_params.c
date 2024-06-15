@@ -16,21 +16,21 @@
 extern core g_core;
 
 const vec3 pointlight_positions[4] = {
-  { 10.0, 10.0, 10.0 },
-  { -10.0, 10.0, 10.0 },
-  { 10.0, -10.0, 10.0 },
-  { -10.0, -10.0, 10.0 },
+  { 10.0 / 5, 10.0 / 5, 10.0 / 5 },
+  { -10.0 / 5, 10.0 / 5, 10.0 },
+  { 10.0/ 5, -10.0 / 5, 10.0 },
+  { -10.0 / 5, -10.0 / 5, 10.0 },
 };
 pbr_point_light point_lights[4];
 
 // Lets define some constant PBR parameters here to test on one sphere with first
 const rgba ALBEDO = RED_700;
-const f32 metallic = 0.0;
-const f32 roughness = 0.8;
+const f32 metallic = 1.0;
+const f32 roughness = 0.2;
 const f32 ao = 0.2;
 
 const pbr_params_material_uniforms pbr_params = {
-  .albedo = (vec3){ 0.5, 0.5, 0.5 }, .metallic = metallic, .roughness = roughness, .ao = ao
+  .albedo = (vec3){ 1.0, 0.0, 0.0 }, .metallic = metallic, .roughness = roughness, .ao = ao
 };
 
 int main() {
@@ -76,7 +76,7 @@ int main() {
             .code = fragment_shader.contents,
             .is_spirv = false },
     .renderpass = renderpass,
-    .wireframe = true,
+    .wireframe = false,
     .depth_test = false
   };
   gpu_pipeline* pbr_pipeline = gpu_graphics_pipeline_create(pipeline_description);
@@ -110,8 +110,9 @@ int main() {
     pbr_bind_data.material = pbr_params;
     pbr_bind_data.lights =
         (pbr_params_light_uniforms){ .viewPos = cam.position,
-                                     .pointLights = { point_lights[0], point_lights[1],
-                                                      point_lights[2], point_lights[3] } };
+                                     /* .pointLights = { point_lights[0], point_lights[1], */
+                                     /*                  point_lights[2], point_lights[3] } */
+  };
     pbr_uniforms.data = &pbr_bind_data;
     encode_bind_shader_data(enc, 0, &pbr_uniforms);
 

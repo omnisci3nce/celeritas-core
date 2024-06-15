@@ -12,12 +12,6 @@ struct PointLight {
 };
 
 // --- Uniforms
-// Lights data
-#define NUM_POINT_LIGHTS 4
-uniform Scene_Lights {
-    vec3 viewPos;
-    PointLight pointLights[NUM_POINT_LIGHTS];
-} scene;
 // Material properties
 uniform PBR_Params {
   uniform vec3 albedo;
@@ -25,6 +19,12 @@ uniform PBR_Params {
   uniform float roughness;
   uniform float ao;
 } pbr;
+// Lights data
+#define NUM_POINT_LIGHTS 4
+uniform Scene_Lights {
+    vec3 viewPos;
+    // PointLight pointLights[NUM_POINT_LIGHTS];
+} scene;
 
 const float PI = 3.14;
 
@@ -42,39 +42,39 @@ void main() {
   F0      = mix(F0, pbr.albedo, pbr.metallic);
 
   vec3 Lo = vec3(0.0); // denoted L in the radiance equation
-  for (int i = 0; i < 4; i++) {
-    vec3 lightVec = normalize(scene.pointLights[i].position - fragWorldPos);
-    vec3 halfway = normalize(viewDir + lightVec);
-    float distance = length(scene.pointLights[i].position - fragWorldPos);
-    float attenuation = 1.0 / (distance * distance);
-    vec3 radiance = scene.pointLights[i].color * attenuation;
+  // for (int i = 0; i < 4; i++) {
+  //   vec3 lightVec = normalize(scene.pointLights[i].position - fragWorldPos);
+  //   vec3 halfway = normalize(viewDir + lightVec);
+  //   float distance = length(scene.pointLights[i].position - fragWorldPos);
+  //   float attenuation = 1.0 / (distance * distance);
+  //   vec3 radiance = scene.pointLights[i].color * attenuation;
 
-    // cook-torrance brdf
-    float NDF = DistributionGGX(norm, halfway, pbr.roughness);        
-    float G   = GeometrySmith(norm, viewDir, lightVec, pbr.roughness);      
-    vec3 F    = fresnelSchlick(max(dot(halfway, viewDir), 0.0), F0);       
-    
-    vec3 kS = F;
-    vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - pbr.metallic;	  
-    
-    vec3 numerator    = NDF * G * F;
-    float denominator = 4.0 * max(dot(norm, viewDir), 0.0) * max(dot(norm, lightVec), 0.0) + 0.0001;
-    vec3 specular     = numerator / denominator;  
-        
-    // add to outgoing radiance Lo
-    float NdotL = max(dot(norm, lightVec), 0.0);                
-    Lo += (kD * pbr.albedo / PI + specular) * radiance * NdotL; 
-  }
+  //   // cook-torrance brdf
+  //   float NDF = DistributionGGX(norm, halfway, pbr.roughness);
+  //   float G   = GeometrySmith(norm, viewDir, lightVec, pbr.roughness);
+  //   vec3 F    = fresnelSchlick(max(dot(halfway, viewDir), 0.0), F0);
+
+  //   vec3 kS = F;
+  //   vec3 kD = vec3(1.0) - kS;
+  //   kD *= 1.0 - pbr.metallic;
+
+  //   vec3 numerator    = NDF * G * F;
+  //   float denominator = 4.0 * max(dot(norm, viewDir), 0.0) * max(dot(norm, lightVec), 0.0) + 0.0001;
+  //   vec3 specular     = numerator / denominator;
+
+  //   // add to outgoing radiance Lo
+  //   float NdotL = max(dot(norm, lightVec), 0.0);
+  //   Lo += (kD * pbr.albedo / PI + specular) * radiance * NdotL;
+  // }
 
   vec3 ambient = vec3(0.03) * pbr.albedo * pbr.ao;
   vec3 color = ambient + Lo;
 	
-    // color = color / (color + vec3(1.0));
-    // color = pow(color, vec3(1.0/2.2));  
+    color = color / (color + vec3(1.0));
+    color = pow(color, vec3(1.0/2.2));
    
-  // FragColor = vec4(color, 1.0);
-  FragColor = vec4(1.0);
+  FragColor = vec4(scene.viewPos, 1.0);
+  // FragColor = vec4(1.0);
 }
 
 /* The below are from https://learnopengl.com/PBR/Lighting */

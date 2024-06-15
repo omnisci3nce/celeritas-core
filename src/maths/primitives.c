@@ -234,6 +234,11 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
     }
   }
 
+  for (int i = 0; i < vertices->len; i++) {
+
+    print_vec3(vertices->data[i].static_3d.normal);
+  }
+
   geometry_data geo = {
     .format = VERTEX_STATIC_3D,
     .vertices = vertices,

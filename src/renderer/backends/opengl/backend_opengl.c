@@ -1,6 +1,8 @@
 #include <stddef.h>
 #include <stdio.h>
+#include "builtin_materials.h"
 #include "colours.h"
+#include "maths.h"
 #include "opengl_helpers.h"
 #include "ral_types.h"
 #define CEL_REND_BACKEND_OPENGL
@@ -67,6 +69,7 @@ void gpu_device_destroy() { /* No-op in OpenGL */ }
 
 // --- Render Pipeline
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {
+  static u32 ubo_count = 0;
   gpu_pipeline* pipeline = pipeline_pool_alloc(&context.gpu_pools.pipelines, NULL);
 
   // Create shader program
@@ -182,16 +185,25 @@ void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipe
 }
 void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* data) {
   shader_data_layout sdl = data->shader_data_get_layout(data->data);
+  printf("Binding %s shader data\n", sdl.name);
 
   for (u32 i = 0; i < sdl.bindings_count; i++) {
     shader_binding binding = sdl.bindings[i];
-    /* print_shader_binding(binding); */
+    print_shader_binding(binding);
 
     if (binding.type == SHADER_BINDING_BYTES) {
       buffer_handle b = encoder->pipeline->uniform_bindings[i];
       gpu_buffer* ubo_buf = BUFFER_GET(b);
       glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
-      glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, data->data);
+      if (i == 2) {
+        vec3* v = binding.data.bytes.data;
+        print_vec3(*v);
+        (*v).x = 0.0;
+        (*v).y = 0.0;
+        (*v).z = 1.0;
+      }
+
+      glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, binding.data.bytes.data);
     } else if (binding.type == SHADER_BINDING_TEXTURE) {
       gpu_texture* tex = TEXTURE_GET(binding.data.texture.handle);
       glActiveTexture(GL_TEXTURE0);
