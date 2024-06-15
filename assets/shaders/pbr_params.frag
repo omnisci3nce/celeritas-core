@@ -12,15 +12,21 @@ struct PointLight {
 };
 
 // --- Uniforms
-uniform vec3 viewPos;
 // Lights data
 #define NUM_POINT_LIGHTS 4
-uniform PointLight pointLights[NUM_POINT_LIGHTS];
+uniform Scene_Lights {
+    vec3 viewPos;
+    PointLight pointLights[NUM_POINT_LIGHTS];
+} scene;
 // Material properties
-uniform vec3 albedo;
-uniform float metallic;
-uniform float roughness;
-uniform float ao;
+uniform PBR_Params {
+  uniform vec3 albedo;
+  uniform float metallic;
+  uniform float roughness;
+  uniform float ao;
+} pbr;
+
+const float PI = 3.14;
 
 // Forward declarations
 vec3 fresnelSchlick(float cosTheta, vec3 F0);
@@ -30,20 +36,22 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 
 void main() {
   vec3 norm = normalize(Normal);
-  vec3 viewDir = normalize(viewPos - WorldPos);
+  vec3 viewDir = normalize(scene.viewPos - WorldPos);
 
-  vec3 radiance = vec3(0.0); // denoted L in the radiance equation
-  for (int i = 0; i < 4; i++) {
-    vec3 lightVec = normalize(pointLights[i].position - WorldPos);
-    vec3 halfway = normalize(Normal + lightVec);
-    float distance = length(pointLights[i].position - WorldPos);
-    float attenuation = 1.0 / (distance * distance);
-    vec3 radiance = pointLights[i].color * attenuation; 
+  // vec3 radiance = vec3(0.0); // denoted L in the radiance equation
+  // for (int i = 0; i < 4; i++) {
+  //   vec3 lightVec = normalize(pointLights[i].position - WorldPos);
+  //   vec3 halfway = normalize(Normal + lightVec);
+  //   float distance = length(pointLights[i].position - WorldPos);
+  //   float attenuation = 1.0 / (distance * distance);
+  //   vec3 radiance = pointLights[i].color * attenuation;
 
-    vec3 F0 = vec3(0.04); 
-    F0      = mix(F0, albedo, metallic);
-    vec3 F  = fresnelSchlick(max(dot(halfway, lightVec), 0.0), F0);
-  }
+  //   vec3 F0 = vec3(0.04);
+  //   F0      = mix(F0, albedo, metallic);
+  //   vec3 F  = fresnelSchlick(max(dot(halfway, lightVec), 0.0), F0);
+  // }
+
+  FragColor = vec4(1.0);
 }
 
 /* The below are from https://learnopengl.com/PBR/Lighting */

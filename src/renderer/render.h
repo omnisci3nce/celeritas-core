@@ -66,14 +66,8 @@ texture_data texture_data_load(const char* path, bool invert_y);
 texture_handle texture_data_upload(texture_data data, bool free_on_upload);
 
 /** @brief load all of the texture for a PBR material and returns an unnamed material */
-material pbr_material_load(
-  char* albedo_path,
-  char* normal_path,
-  bool metal_roughness_combined,
-  char* metallic_path,
-  char* roughness_map,
-  char* ao_map
-);
+material pbr_material_load(char* albedo_path, char* normal_path, bool metal_roughness_combined,
+                           char* metallic_path, char* roughness_map, char* ao_map);
 
 buffer_handle buffer_create(const char* debug_name, u64 size);
 bool buffer_destroy(buffer_handle buffer);

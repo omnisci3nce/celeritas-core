@@ -10,10 +10,10 @@
  */
 #pragma once
 
+#include "colours.h"
 #include "defines.h"
 #include "ral.h"
 #include "ral_types.h"
-#include "colours.h"
 #if defined(CEL_PLATFORM_WINDOWS)
 // #include "backend_dx11.h"
 #endif
@@ -66,10 +66,11 @@ typedef struct texture_data {
 typedef enum material_kind {
   MAT_BLINN_PHONG,
   MAT_PBR,
-  MAT_PBR_PARAMS, // uses float values to represent a surface uniformly
+  MAT_PBR_PARAMS,  // uses float values to represent a surface uniformly
   MAT_COUNT
 } material_kind;
-static const char* material_kind_names[] = { "Blinn Phong", "PBR (Textures)", "PBR (Params)", "Count (This should be an error)"};
+static const char* material_kind_names[] = { "Blinn Phong", "PBR (Textures)", "PBR (Params)",
+                                             "Count (This should be an error)" };
 
 typedef struct blinn_phong_material {
   char name[256];

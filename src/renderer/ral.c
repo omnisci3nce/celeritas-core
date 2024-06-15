@@ -42,10 +42,11 @@ void vertex_desc_add(vertex_description* builder, const char* name, vertex_attri
 }
 
 vertex_description static_3d_vertex_description() {
-  vertex_description builder = { .debug_label = "vertex" };
-  vertex_desc_add(&builder, "position", ATTR_F32x3);
-  vertex_desc_add(&builder, "normal", ATTR_F32x3);
-  vertex_desc_add(&builder, "texCoords", ATTR_F32x2);
+  vertex_description builder = { .debug_label = "Standard static 3d vertex format" };
+  vertex_desc_add(&builder, "inPosition", ATTR_F32x3);
+  vertex_desc_add(&builder, "inNormal", ATTR_F32x3);
+  vertex_desc_add(&builder, "inTexCoords", ATTR_F32x2);
+  builder.use_full_vertex_size = true;
   return builder;
 }
 

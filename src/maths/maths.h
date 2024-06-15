@@ -314,7 +314,7 @@ static inline mat4 transform_to_mat(transform *tf) {
   mat4 scale = mat4_scale(tf->scale);
   mat4 rotation = mat4_rotation(tf->rotation);
   mat4 translation = mat4_translation(tf->position);
-  return mat4_mult( mat4_mult(scale, rotation), translation);
+  return mat4_mult(mat4_mult(scale, rotation), translation);
 }
 
 // --- Sizing asserts

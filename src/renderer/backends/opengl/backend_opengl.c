@@ -55,7 +55,7 @@ bool gpu_backend_init(const char* window_name, struct GLFWwindow* window) {
   }
 
   glEnable(GL_DEPTH_TEST);
-  // glFrontFace(GL_CW);
+  glEnable(GL_CULL_FACE);
 
   return true;
 }
@@ -93,8 +93,13 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
         pipeline->uniform_bindings[binding_id] = ubo_handle;
         gpu_buffer* ubo_buf = BUFFER_GET(ubo_handle);
 
-        u32 blockIndex = glGetUniformBlockIndex(pipeline->shader_id, "Matrices");
-        printf("Block index for Matrices: %d", blockIndex);
+        i32 blockIndex = glGetUniformBlockIndex(pipeline->shader_id, binding.label);
+        /* printf("Block index for Matrices: %d", blockIndex); */
+        if (blockIndex < 0) {
+          WARN("Couldn't retrieve block index for uniform block '%s'", binding.label);
+        } else {
+          DEBUG("Retrived block index %d for %s", blockIndex, binding.label);
+        }
         u32 blocksize;
         glGetActiveUniformBlockiv(pipeline->shader_id, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE,
                                   &blocksize);
@@ -259,7 +264,7 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
     TRACE("Upload data (%d bytes) as part of buffer creation", size);
     glBufferData(gl_buf_type, buffer->size, data, gl_buf_usage);
   } else {
-    TRACE("Allocating the correct size anyway");
+    TRACE("Allocating but not uploading (%d bytes)", size);
     glBufferData(gl_buf_type, buffer->size, NULL, gl_buf_usage);
   }
 

@@ -47,7 +47,6 @@ typedef struct gpu_texture {
 } gpu_texture;
 
 typedef struct opengl_support {
-
 } opengl_support;
 
 u32 shader_create_separate(const char *vert_shader, const char *frag_shader);

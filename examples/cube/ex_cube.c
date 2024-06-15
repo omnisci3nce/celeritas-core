@@ -16,6 +16,15 @@
 
 extern core g_core;
 
+// Scene / light setup
+const vec3 pointlight_positions[4] = {
+  { -10.0, 10.0, 10.0},
+  { 10.0, 10.0, 10.0},
+  { -10.0, -10.0, 10.0},
+  { 10.0, -10.0, 10.0},
+};
+point_light point_lights[4];
+
 // Define the shader data
 typedef struct mvp_uniforms {
   mat4 model;

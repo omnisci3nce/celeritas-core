@@ -199,38 +199,38 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
     u32 i1 = i + 1;
     u32 i2 = (i + 1) % north_south_lines + 1;
     push_triangle(indices, 0, i1, i2);
-    TRACE("Push triangle (%.2f %.2f %.2f)->(%.2f %.2f %.2f)->(%.2f %.2f %.2f)\n",
-          vertices->data[0].static_3d.position.x, vertices->data[0].static_3d.position.y,
-          vertices->data[0].static_3d.position.z, vertices->data[i1].static_3d.position.x,
-          vertices->data[i1].static_3d.position.y, vertices->data[i1].static_3d.position.z,
-          vertices->data[i2].static_3d.position.x, vertices->data[i2].static_3d.position.y,
-          vertices->data[i2].static_3d.position.z);
+    /* TRACE("Push triangle (%.2f %.2f %.2f)->(%.2f %.2f %.2f)->(%.2f %.2f %.2f)\n", */
+    /*       vertices->data[0].static_3d.position.x, vertices->data[0].static_3d.position.y, */
+    /*       vertices->data[0].static_3d.position.z, vertices->data[i1].static_3d.position.x, */
+    /*       vertices->data[i1].static_3d.position.y, vertices->data[i1].static_3d.position.z, */
+    /*       vertices->data[i2].static_3d.position.x, vertices->data[i2].static_3d.position.y, */
+    /*       vertices->data[i2].static_3d.position.z); */
     u32 bot = vertices->len - 1;
     u32 i3 = i + north_south_lines * (east_west_lines - 2) + 1;
     u32 i4 = (i + 1) % north_south_lines + north_south_lines * (east_west_lines - 2) + 1;
-    push_triangle(indices, bot, i3, i4);
+    push_triangle(indices, i3, bot, i4);
   }
 
   // quads
   for (u32 i = 0; i < east_west_lines - 2; i++) {
     u32 ring_start = i * north_south_lines + 1;
     u32 next_ring_start = (i + 1) * north_south_lines + 1;
-    printf("ring start %d next ring start %d\n", ring_start, next_ring_start);
-    print_vec3(vertices->data[ring_start].static_3d.position);
-    print_vec3(vertices->data[next_ring_start].static_3d.position);
+    /* printf("ring start %d next ring start %d\n", ring_start, next_ring_start); */
+    /* print_vec3(vertices->data[ring_start].static_3d.position); */
+    /* print_vec3(vertices->data[next_ring_start].static_3d.position); */
     for (u32 j = 0; j < north_south_lines; j++) {
       u32 i0 = ring_start + j;
       u32 i1 = next_ring_start + j;
       u32 i2 = ring_start + (j + 1) % north_south_lines;
       u32 i3 = next_ring_start + (j + 1) % north_south_lines;
       push_triangle(indices, i0, i1, i2);
-      TRACE("Push triangle (%.2f %.2f %.2f)->(%.2f %.2f %.2f)->(%.2f %.2f %.2f)\n",
-            vertices->data[i0].static_3d.position.x, vertices->data[i0].static_3d.position.y,
-            vertices->data[i0].static_3d.position.z, vertices->data[i1].static_3d.position.x,
-            vertices->data[i1].static_3d.position.y, vertices->data[i1].static_3d.position.z,
-            vertices->data[i2].static_3d.position.x, vertices->data[i2].static_3d.position.y,
-            vertices->data[i2].static_3d.position.z);
-      // push_triangle(indices, i2, i1, i3);
+      /* TRACE("Push triangle (%.2f %.2f %.2f)->(%.2f %.2f %.2f)->(%.2f %.2f %.2f)\n", */
+      /*       vertices->data[i0].static_3d.position.x, vertices->data[i0].static_3d.position.y, */
+      /*       vertices->data[i0].static_3d.position.z, vertices->data[i1].static_3d.position.x, */
+      /*       vertices->data[i1].static_3d.position.y, vertices->data[i1].static_3d.position.z, */
+      /*       vertices->data[i2].static_3d.position.x, vertices->data[i2].static_3d.position.y, */
+      /*       vertices->data[i2].static_3d.position.z); */
+      push_triangle(indices, i2, i1, i3);
     }
   }
 

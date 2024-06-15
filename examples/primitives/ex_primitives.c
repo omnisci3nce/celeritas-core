@@ -50,7 +50,7 @@ int main() {
                             .scale = 1.0 };
 
     mat4 sphere_model = transform_to_mat(&transform);
-    mat4 cube_model = mat4_translation(vec3(-2.,0,0));
+    mat4 cube_model = mat4_translation(vec3(-2., 0, 0));
     draw_mesh(&cube, &cube_model, &cam);
     draw_mesh(&sphere, &sphere_model, &cam);
 

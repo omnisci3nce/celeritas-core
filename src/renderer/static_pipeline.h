@@ -1,6 +1,6 @@
 #pragma once
-#include "maths_types.h"
 #include "defines.h"
+#include "maths_types.h"
 #include "ral.h"
 #include "ral_types.h"
 #include "render_types.h"
@@ -26,5 +26,5 @@ static shader_data_layout mvp_uniforms_layout(void* data) {
   if (has_data) {
     b1.data.bytes.data = &d->mvp;
   }
-  return (shader_data_layout){ .name = "global_ubo", .bindings = { b1}, .bindings_count = 1 };
+  return (shader_data_layout){ .name = "global_ubo", .bindings = { b1 }, .bindings_count = 1 };
 }
