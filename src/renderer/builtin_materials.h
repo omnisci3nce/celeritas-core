@@ -44,10 +44,14 @@ typedef struct pbr_params_material_uniforms {
   f32 ao;
 } pbr_params_material_uniforms;
 
+typedef struct pbr_point_light {
+  vec3 pos;
+  vec3 color;
+} pbr_point_light;
+
 typedef struct pbr_params_light_uniforms {
   vec3 viewPos;
-  // TODO: PointLights
-
+  pbr_point_light pointLights[4];
 } pbr_params_light_uniforms;
 
 typedef struct pbr_params_bindgroup {

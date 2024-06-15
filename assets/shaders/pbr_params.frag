@@ -1,10 +1,10 @@
-#version 410
+#version 410 core
 
 out vec4 FragColor;
 
-in vec3 WorldPos;
-in vec3 Normal;
-in vec2 TexCoords;
+in vec3 fragWorldPos;
+in vec3 fragNormal;
+in vec2 fragTexCoords;
 
 struct PointLight {
     vec3 position;
@@ -35,22 +35,45 @@ float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 
 void main() {
-  vec3 norm = normalize(Normal);
-  vec3 viewDir = normalize(scene.viewPos - WorldPos);
+  vec3 norm = normalize(fragNormal);
+  vec3 viewDir = normalize(scene.viewPos - fragWorldPos);
 
-  // vec3 radiance = vec3(0.0); // denoted L in the radiance equation
-  // for (int i = 0; i < 4; i++) {
-  //   vec3 lightVec = normalize(pointLights[i].position - WorldPos);
-  //   vec3 halfway = normalize(Normal + lightVec);
-  //   float distance = length(pointLights[i].position - WorldPos);
-  //   float attenuation = 1.0 / (distance * distance);
-  //   vec3 radiance = pointLights[i].color * attenuation;
+  vec3 F0 = vec3(0.04);
+  F0      = mix(F0, pbr.albedo, pbr.metallic);
 
-  //   vec3 F0 = vec3(0.04);
-  //   F0      = mix(F0, albedo, metallic);
-  //   vec3 F  = fresnelSchlick(max(dot(halfway, lightVec), 0.0), F0);
-  // }
+  vec3 Lo = vec3(0.0); // denoted L in the radiance equation
+  for (int i = 0; i < 4; i++) {
+    vec3 lightVec = normalize(scene.pointLights[i].position - fragWorldPos);
+    vec3 halfway = normalize(viewDir + lightVec);
+    float distance = length(scene.pointLights[i].position - fragWorldPos);
+    float attenuation = 1.0 / (distance * distance);
+    vec3 radiance = scene.pointLights[i].color * attenuation;
 
+    // cook-torrance brdf
+    float NDF = DistributionGGX(norm, halfway, pbr.roughness);        
+    float G   = GeometrySmith(norm, viewDir, lightVec, pbr.roughness);      
+    vec3 F    = fresnelSchlick(max(dot(halfway, viewDir), 0.0), F0);       
+    
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - pbr.metallic;	  
+    
+    vec3 numerator    = NDF * G * F;
+    float denominator = 4.0 * max(dot(norm, viewDir), 0.0) * max(dot(norm, lightVec), 0.0) + 0.0001;
+    vec3 specular     = numerator / denominator;  
+        
+    // add to outgoing radiance Lo
+    float NdotL = max(dot(norm, lightVec), 0.0);                
+    Lo += (kD * pbr.albedo / PI + specular) * radiance * NdotL; 
+  }
+
+  vec3 ambient = vec3(0.03) * pbr.albedo * pbr.ao;
+  vec3 color = ambient + Lo;
+	
+    // color = color / (color + vec3(1.0));
+    // color = pow(color, vec3(1.0/2.2));  
+   
+  // FragColor = vec4(color, 1.0);
   FragColor = vec4(1.0);
 }
 
