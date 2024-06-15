@@ -97,11 +97,11 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
         gpu_buffer* ubo_buf = BUFFER_GET(ubo_handle);
 
         i32 blockIndex = glGetUniformBlockIndex(pipeline->shader_id, binding.label);
-        /* printf("Block index for Matrices: %d", blockIndex); */
+         printf("Block index for Matrices: %d", blockIndex); 
         if (blockIndex < 0) {
           WARN("Couldn't retrieve block index for uniform block '%s'", binding.label);
         } else {
-          DEBUG("Retrived block index %d for %s", blockIndex, binding.label);
+          // DEBUG("Retrived block index %d for %s", blockIndex, binding.label);
         }
         u32 blocksize;
         glGetActiveUniformBlockiv(pipeline->shader_id, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE,
@@ -111,7 +111,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
         glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
         glBindBufferBase(GL_UNIFORM_BUFFER, binding_j, ubo_buf->id.ubo);
         if (blockIndex != GL_INVALID_INDEX) {
-          glUniformBlockBinding(pipeline->shader_id, blockIndex, 0);
+          glUniformBlockBinding(pipeline->shader_id, blockIndex, binding_j);
         }
 
         // Now we want to store a handle associated with the shader for this
@@ -185,25 +185,36 @@ void encode_bind_pipeline(gpu_cmd_encoder* encoder, pipeline_kind kind, gpu_pipe
 }
 void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* data) {
   shader_data_layout sdl = data->shader_data_get_layout(data->data);
-  printf("Binding %s shader data\n", sdl.name);
+  // printf("Binding %s shader data\n", sdl.name);
 
   for (u32 i = 0; i < sdl.bindings_count; i++) {
     shader_binding binding = sdl.bindings[i];
-    print_shader_binding(binding);
+    // print_shader_binding(binding);
 
     if (binding.type == SHADER_BINDING_BYTES) {
       buffer_handle b = encoder->pipeline->uniform_bindings[i];
       gpu_buffer* ubo_buf = BUFFER_GET(b);
+
+      i32 blockIndex = glGetUniformBlockIndex(encoder->pipeline->shader_id, binding.label);
+      if (blockIndex < 0) {
+        WARN("Couldn't retrieve block index for uniform block '%s'", binding.label);
+      } else {
+        // DEBUG("Retrived block index %d for %s", blockIndex, binding.label);
+      }
+
       glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
+      glBindBufferBase(GL_UNIFORM_BUFFER, i, ubo_buf->id.ubo);
       if (i == 2) {
-        vec3* v = binding.data.bytes.data;
-        print_vec3(*v);
+        pbr_params_light_uniforms* u = binding.data.bytes.data;
+        vec4* v = &u->viewPos;
         (*v).x = 0.0;
         (*v).y = 0.0;
         (*v).z = 1.0;
+        // print_vec3(*v);
       }
-
+      //  glBindBufferBase(GL_UNIFORM_BUFFER, i, ubo_buf->id.ubo);
       glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, binding.data.bytes.data);
+
     } else if (binding.type == SHADER_BINDING_TEXTURE) {
       gpu_texture* tex = TEXTURE_GET(binding.data.texture.handle);
       glActiveTexture(GL_TEXTURE0);

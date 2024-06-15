@@ -7,8 +7,8 @@ in vec3 fragNormal;
 in vec2 fragTexCoords;
 
 struct PointLight {
-    vec3 position;
-    vec3 color;
+    vec4 position;
+    vec4 color;
 };
 
 // --- Uniforms
@@ -22,8 +22,8 @@ uniform PBR_Params {
 // Lights data
 #define NUM_POINT_LIGHTS 4
 uniform Scene_Lights {
-    vec3 viewPos;
-    // PointLight pointLights[NUM_POINT_LIGHTS];
+    PointLight pointLights[NUM_POINT_LIGHTS];
+    vec4 viewPos;
 } scene;
 
 const float PI = 3.14;
@@ -35,46 +35,51 @@ float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 
 void main() {
-  vec3 norm = normalize(fragNormal);
-  vec3 viewDir = normalize(scene.viewPos - fragWorldPos);
+  vec3 norm = normalize(fragNormal); // N
+  vec3 viewDir = normalize(vec3(scene.viewPos) - fragWorldPos); // V
 
   vec3 F0 = vec3(0.04);
   F0      = mix(F0, pbr.albedo, pbr.metallic);
 
   vec3 Lo = vec3(0.0); // denoted L in the radiance equation
-  // for (int i = 0; i < 4; i++) {
-  //   vec3 lightVec = normalize(scene.pointLights[i].position - fragWorldPos);
-  //   vec3 halfway = normalize(viewDir + lightVec);
-  //   float distance = length(scene.pointLights[i].position - fragWorldPos);
-  //   float attenuation = 1.0 / (distance * distance);
-  //   vec3 radiance = scene.pointLights[i].color * attenuation;
+  for (int i = 0; i < 4; i++) {
+    vec3 lightVec = normalize(vec3(scene.pointLights[i].position) - fragWorldPos); // L
+    vec3 halfway = normalize(viewDir + lightVec); // H
+    float distance = length(vec3(scene.pointLights[i].position) - fragWorldPos);
+    float attenuation = 1.0 / (distance * distance);
+    vec3 radiance = vec3(scene.pointLights[i].color) * attenuation;
 
-  //   // cook-torrance brdf
-  //   float NDF = DistributionGGX(norm, halfway, pbr.roughness);
-  //   float G   = GeometrySmith(norm, viewDir, lightVec, pbr.roughness);
-  //   vec3 F    = fresnelSchlick(max(dot(halfway, viewDir), 0.0), F0);
+    // cook-torrance brdf
+    float NDF = DistributionGGX(norm, halfway, pbr.roughness);
+    float G   = GeometrySmith(norm, viewDir, lightVec, pbr.roughness);
+    vec3 F    = fresnelSchlick(max(dot(halfway, viewDir), 0.0), F0);
 
-  //   vec3 kS = F;
-  //   vec3 kD = vec3(1.0) - kS;
-  //   kD *= 1.0 - pbr.metallic;
+    vec3 numerator    = NDF * G * F;
+    float denominator = 4.0 * max(dot(norm, viewDir), 0.0) * max(dot(norm, lightVec), 0.0) + 0.0001;
+    vec3 specular     = numerator / denominator;
 
-  //   vec3 numerator    = NDF * G * F;
-  //   float denominator = 4.0 * max(dot(norm, viewDir), 0.0) * max(dot(norm, lightVec), 0.0) + 0.0001;
-  //   vec3 specular     = numerator / denominator;
+    vec3 kS = F;
 
-  //   // add to outgoing radiance Lo
-  //   float NdotL = max(dot(norm, lightVec), 0.0);
-  //   Lo += (kD * pbr.albedo / PI + specular) * radiance * NdotL;
-  // }
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - pbr.metallic;
+
+    // add to outgoing radiance Lo
+    float NdotL = max(dot(norm, lightVec), 0.0);
+    Lo += (kD * pbr.albedo / PI + specular) * radiance * NdotL;
+    // Lo += radiance;
+  }
 
   vec3 ambient = vec3(0.03) * pbr.albedo * pbr.ao;
-  vec3 color = ambient + Lo;
+  vec3 color = ambient + Lo; //ambient + Lo;
 	
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
    
-  FragColor = vec4(scene.viewPos, 1.0);
-  // FragColor = vec4(1.0);
+   FragColor = vec4(color, 1.0);
+  // FragColor = vec4(scene.pointLights[0].position);
+  // FragColor = vec4(fragNormal, 1.0);
+  // FragColor = vec4(pbr.metallic, pbr.roughness, pbr.ao, 1.0);
+  // FragColor = scene.viewPos;
 }
 
 /* The below are from https://learnopengl.com/PBR/Lighting */

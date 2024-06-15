@@ -44,16 +44,19 @@ typedef struct pbr_params_material_uniforms {
   f32 metallic;
   f32 roughness;
   f32 ao;
+  f32 pad[2];
 } pbr_params_material_uniforms;
 
 typedef struct pbr_point_light {
   vec3 pos;
+  f32 pad;
   vec3 color;
+  f32 pad2;
 } pbr_point_light;
 
 typedef struct pbr_params_light_uniforms {
-  vec3 viewPos;
-  /* pbr_point_light pointLights[4]; */
+  pbr_point_light pointLights[4];
+  vec4 viewPos;
 } pbr_params_light_uniforms;
 
 typedef struct pbr_params_bindgroup {
@@ -81,13 +84,13 @@ static shader_data_layout pbr_params_shader_layout(void* data) {
                         .stores_data = has_data,
                         .data = { .bytes = { .size = sizeof(pbr_params_light_uniforms) } } };
 
-  printf("Size %d \n", b3.data.bytes.size);
   if (has_data) {
+  // printf("Size %d \n", b3.data.bytes.size);
     b1.data.bytes.data = &d->mvp_matrices;
     b2.data.bytes.data = &d->material;
     /* d->lights.viewPos = vec3(0, 1, 0); */
     b3.data.bytes.data = &d->lights;
-    print_vec3(d->lights.viewPos);
+    // print_vec3(d->lights.viewPos);
   }
 
   return (shader_data_layout){ .name = "pbr_params", .bindings = { b1, b2, b3 }, .bindings_count = 3

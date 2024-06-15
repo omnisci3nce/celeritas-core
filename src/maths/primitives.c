@@ -159,7 +159,7 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
 
   // Top point
   vertex top = { .static_3d = { .position = vec3(0, radius, 0),
-                                .normal = vec3(0, radius, 0),
+                                .normal = vec3_normalise(vec3(0, radius, 0)),
                                 .tex_coords = vec2(0, 0) } };
   vertex_darray_push(vertices, top);
 
@@ -173,13 +173,13 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
       // theta should range from 0 to 2PI
       f32 theta = TAU * ((f32)j / (f32)north_south_lines);
       vec3 position = spherical_to_cartesian_coords(radius, theta, phi);
-      f32 d = vec3_len(position);
+      // f32 d = vec3_len(position);
       // print_vec3(position);
       // printf("Phi %f Theta %f d %d\n", phi, theta, d);
       // assert(d == radius);  // all points on the sphere should be 'radius' away from the origin
       vertex v = { .static_3d = {
                        .position = position,
-                       .normal = position,       // normal vector on sphere is same as position
+                       .normal = vec3_normalise(position),       // normal vector on sphere is same as position
                        .tex_coords = vec2(0, 0)  // TODO
                    } };
       vertex_darray_push(vertices, v);
@@ -188,7 +188,7 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
 
   // Bottom point
   vertex bot = { .static_3d = { .position = vec3(0, -radius, 0),
-                                .normal = vec3(0, -radius, 0),
+                                .normal = vec3_normalise(vec3(0, -radius, 0)),
                                 .tex_coords = vec2(0, 0) } };
   vertex_darray_push(vertices, bot);
 
@@ -235,8 +235,7 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
   }
 
   for (int i = 0; i < vertices->len; i++) {
-
-    print_vec3(vertices->data[i].static_3d.normal);
+    // print_vec3(vertices->data[i].static_3d.normal);
   }
 
   geometry_data geo = {

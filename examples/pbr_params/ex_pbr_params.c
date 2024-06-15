@@ -16,21 +16,21 @@
 extern core g_core;
 
 const vec3 pointlight_positions[4] = {
-  { 10.0 / 5, 10.0 / 5, 10.0 / 5 },
-  { -10.0 / 5, 10.0 / 5, 10.0 },
-  { 10.0/ 5, -10.0 / 5, 10.0 },
-  { -10.0 / 5, -10.0 / 5, 10.0 },
+  { 10.0 / 1., 10.0 / 1., 10.0 / 5 },
+  { -10.0 / 1., 10.0 / 1., 10.0 },
+  { 10.0 / 1., -10.0 / 1., 10.0 },
+  { -10.0 / 1., -10.0 / 1., 10.0 },
 };
 pbr_point_light point_lights[4];
 
 // Lets define some constant PBR parameters here to test on one sphere with first
 const rgba ALBEDO = RED_700;
-const f32 metallic = 1.0;
-const f32 roughness = 0.2;
-const f32 ao = 0.2;
+const f32 metallic = 0.7;
+const f32 roughness = 0.8;
+const f32 ao = 1.0;
 
 const pbr_params_material_uniforms pbr_params = {
-  .albedo = (vec3){ 1.0, 0.0, 0.0 }, .metallic = metallic, .roughness = roughness, .ao = ao
+  .albedo = (vec3){ 0.6, 0.0, 0.0 }, .metallic = metallic, .roughness = roughness, .ao = ao
 };
 
 int main() {
@@ -40,10 +40,11 @@ int main() {
 
   for (int i = 0; i < 4; i++) {
     point_lights[i].pos = pointlight_positions[i];
-    point_lights[i].color = vec3(1, 1, 1);
+    // point_lights[i].color = vec3(0.25 * (i + 1), 0., 0.0);
+    point_lights[i].color = vec3(300.0, 300.0, 300.0);
   }
 
-  vec3 camera_pos = vec3(3.0, 3., 3.);
+  vec3 camera_pos = vec3(1.0, 1., -2.);
   vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
   camera cam = camera_create(camera_pos, camera_front, VEC3_Y, deg_to_rad(45.0));
 
@@ -82,7 +83,7 @@ int main() {
   gpu_pipeline* pbr_pipeline = gpu_graphics_pipeline_create(pipeline_description);
 
   // Geometry
-  geometry_data sphere_data = geo_create_uvsphere(1.0, 12, 12);
+  geometry_data sphere_data = geo_create_uvsphere(1.0, 48, 48);
   mesh sphere = mesh_create(&sphere_data, false);
 
   pbr_params_bindgroup pbr_bind_data;
@@ -108,11 +109,12 @@ int main() {
     pbr_bind_data.mvp_matrices =
         (mvp_matrix_uniforms){ .model = model_affine, .view = view, .projection = proj };
     pbr_bind_data.material = pbr_params;
-    pbr_bind_data.lights =
-        (pbr_params_light_uniforms){ .viewPos = cam.position,
-                                     /* .pointLights = { point_lights[0], point_lights[1], */
-                                     /*                  point_lights[2], point_lights[3] } */
-  };
+    pbr_bind_data.lights = (pbr_params_light_uniforms){
+      .viewPos = vec4(cam.position.x, cam.position.y, cam.position.z, 1.0),
+      // .viewPos = cam.position,
+      .pointLights = { point_lights[0], point_lights[1], 
+                      point_lights[2], point_lights[3] } 
+    };
     pbr_uniforms.data = &pbr_bind_data;
     encode_bind_shader_data(enc, 0, &pbr_uniforms);
 
