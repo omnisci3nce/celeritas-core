@@ -49,7 +49,7 @@ int main() {
     point_lights[i].color = vec3(300.0, 300.0, 300.0);
   }
 
-  vec3 camera_pos = vec3(1.,1., -25.);
+  vec3 camera_pos = vec3(1., 1., -25.);
   vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
   camera cam = camera_create(camera_pos, camera_front, VEC3_Y, deg_to_rad(45.0));
 
@@ -120,45 +120,44 @@ int main() {
     pbr_bind_data.lights = (pbr_params_light_uniforms){
       .viewPos = vec4(cam.position.x, cam.position.y, cam.position.z, 1.0),
       // .viewPos = cam.position,
-      .pointLights = { point_lights[0], point_lights[1], 
-                      point_lights[2], point_lights[3] } 
+      .pointLights = { point_lights[0], point_lights[1], point_lights[2], point_lights[3] }
     };
     pbr_uniforms.data = &pbr_bind_data;
-    // encode_bind_shader_data(enc, 0, &pbr_uniforms);
+// encode_bind_shader_data(enc, 0, &pbr_uniforms);
 
-    // Record draw call
-    /* draw_mesh(&sphere, &model_affine, &cam); */
-    #if 0
+// Record draw call
+/* draw_mesh(&sphere, &model_affine, &cam); */
+#if 0
     encode_set_vertex_buffer(enc, cube.vertex_buffer);
     encode_set_index_buffer(enc, cube.index_buffer);
     encode_draw_indexed(enc, cube.geometry->indices->len);
-    #endif
+#endif
 
     for (u32 row = 0; row < num_rows; row++) {
       f32 metallic = (float)row / (float)num_rows;
       for (u32 col = 0; col < num_cols; col++) {
         f32 roughness = (float)col / (float)num_cols;
-        if (roughness == 0.0) { roughness += 0.05; };
-        if (roughness == 1.0) { roughness -= 0.05; };
+        if (roughness == 0.0) {
+          roughness += 0.05;
+        };
+        if (roughness == 1.0) {
+          roughness -= 0.05;
+        };
 
         pbr_bind_data.material.metallic = metallic;
         pbr_bind_data.material.roughness = roughness;
 
         f32 x = (col - ((f32)num_cols / 2.)) * spacing;
         f32 y = (row - ((f32)num_rows / 2.)) * spacing;
-        mat4 model = mat4_translation(vec3(
-          x, 
-          y,
-          0.0f
-        ));
+        mat4 model = mat4_translation(vec3(x, y, 0.0f));
         pbr_bind_data.mvp_matrices.model = model;
-        encode_bind_shader_data(enc, 0, &pbr_uniforms); 
+        encode_bind_shader_data(enc, 0, &pbr_uniforms);
         encode_set_vertex_buffer(enc, sphere.vertex_buffer);
         encode_set_index_buffer(enc, sphere.index_buffer);
         encode_draw_indexed(enc, sphere.geometry->indices->len);
       }
     }
-    
+
     // End recording
     gpu_cmd_encoder_end_render(enc);
 

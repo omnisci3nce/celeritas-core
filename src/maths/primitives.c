@@ -179,8 +179,9 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
       // assert(d == radius);  // all points on the sphere should be 'radius' away from the origin
       vertex v = { .static_3d = {
                        .position = position,
-                       .normal = vec3_normalise(position),       // normal vector on sphere is same as position
-                       .tex_coords = vec2(0, 0)  // TODO
+                       .normal =
+                           vec3_normalise(position),  // normal vector on sphere is same as position
+                       .tex_coords = vec2(0, 0)       // TODO
                    } };
       vertex_darray_push(vertices, v);
     }

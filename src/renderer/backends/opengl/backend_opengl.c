@@ -90,6 +90,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
       assert(binding_id < MAX_PIPELINE_UNIFORM_BUFFERS);
       shader_binding binding = sdl.bindings[binding_j];
       if (binding.type == SHADER_BINDING_BYTES) {
+        static u32 s_binding_point = 0;
         buffer_handle ubo_handle =
             gpu_buffer_create(binding.data.bytes.size, CEL_BUFFER_UNIFORM, CEL_BUFFER_FLAG_GPU,
                               NULL);  // no data right now
@@ -97,7 +98,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
         gpu_buffer* ubo_buf = BUFFER_GET(ubo_handle);
 
         i32 blockIndex = glGetUniformBlockIndex(pipeline->shader_id, binding.label);
-         printf("Block index for Matrices: %d", blockIndex); 
+        printf("Block index for Matrices: %d", blockIndex);
         if (blockIndex < 0) {
           WARN("Couldn't retrieve block index for uniform block '%s'", binding.label);
         } else {
@@ -109,10 +110,12 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
         printf("\t with size %d bytes\n", blocksize);
 
         glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
-        glBindBufferBase(GL_UNIFORM_BUFFER, binding_j, ubo_buf->id.ubo);
+        glBindBufferBase(GL_UNIFORM_BUFFER, s_binding_point, ubo_buf->id.ubo);
         if (blockIndex != GL_INVALID_INDEX) {
-          glUniformBlockBinding(pipeline->shader_id, blockIndex, binding_j);
+          glUniformBlockBinding(pipeline->shader_id, blockIndex, s_binding_point);
         }
+        ubo_buf->ubo_binding_point = s_binding_point;
+        s_binding_point++;
 
         // Now we want to store a handle associated with the shader for this
       }
@@ -199,11 +202,11 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
       if (blockIndex < 0) {
         WARN("Couldn't retrieve block index for uniform block '%s'", binding.label);
       } else {
-        DEBUG("Retrived block index %d for %s", blockIndex, binding.label);
+        // DEBUG("Retrived block index %d for %s", blockIndex, binding.label);
       }
 
       glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
-      glBindBufferBase(GL_UNIFORM_BUFFER, i, ubo_buf->id.ubo);
+      glBindBufferBase(GL_UNIFORM_BUFFER, ubo_buf->ubo_binding_point, ubo_buf->id.ubo);
       if (i == 2) {
         // pbr_params_light_uniforms* u = binding.data.bytes.data;
         // vec4* v = &u->viewPos;
