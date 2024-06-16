@@ -224,14 +224,14 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
       u32 i1 = next_ring_start + j;
       u32 i2 = ring_start + (j + 1) % north_south_lines;
       u32 i3 = next_ring_start + (j + 1) % north_south_lines;
-      push_triangle(indices, i0, i1, i2);
+      push_triangle(indices, i0, i2, i1);
       /* TRACE("Push triangle (%.2f %.2f %.2f)->(%.2f %.2f %.2f)->(%.2f %.2f %.2f)\n", */
       /*       vertices->data[i0].static_3d.position.x, vertices->data[i0].static_3d.position.y, */
       /*       vertices->data[i0].static_3d.position.z, vertices->data[i1].static_3d.position.x, */
       /*       vertices->data[i1].static_3d.position.y, vertices->data[i1].static_3d.position.z, */
       /*       vertices->data[i2].static_3d.position.x, vertices->data[i2].static_3d.position.y, */
       /*       vertices->data[i2].static_3d.position.z); */
-      push_triangle(indices, i2, i1, i3);
+      push_triangle(indices, i1, i2, i3);
     }
   }
 

@@ -24,19 +24,12 @@ const vec3 pointlight_positions[4] = {
 };
 pbr_point_light point_lights[4];
 
-// Lets define some constant PBR parameters here to test on one sphere with first
-const rgba ALBEDO = RED_700;
-const f32 metallic = 1.0;
-const f32 roughness = 0.3;
-const f32 ao = 1.0;
+void encode_draw_mesh(mesh* m);
 
-const int num_rows = 7;
-const int num_cols = 7;
+const int num_rows = 7, num_cols = 7;
 const float spacing = 2.5;
 
-pbr_params_material_uniforms pbr_params = {
-  .albedo = (vec3){ 0.5, 0.0, 0.0 }, .metallic = metallic, .roughness = roughness, .ao = ao
-};
+pbr_params_material_uniforms pbr_params;
 
 int main() {
   core_bringup();
@@ -45,15 +38,15 @@ int main() {
 
   for (int i = 0; i < 4; i++) {
     point_lights[i].pos = pointlight_positions[i];
-    // point_lights[i].color = vec3(0.25 * (i + 1), 0., 0.0);
     point_lights[i].color = vec3(300.0, 300.0, 300.0);
   }
 
-  vec3 camera_pos = vec3(1., 1., -25.);
-  vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
-  camera cam = camera_create(camera_pos, camera_front, VEC3_Y, deg_to_rad(45.0));
+  vec3 camera_pos = vec3(-1., -1., 26.);
+  camera cam = camera_create(camera_pos, VEC3_NEG_Z, VEC3_Y, deg_to_rad(45.0));
 
   // PBR Material data
+  pbr_params.albedo = (vec3){ 0.5, 0.0, 0.0 };
+  pbr_params.ao = 1.0;
   shader_data pbr_uniforms = { .data = NULL, .shader_data_get_layout = &pbr_params_shader_layout };
 
   // Make the pipeline
@@ -119,20 +112,11 @@ int main() {
     pbr_bind_data.material = pbr_params;
     pbr_bind_data.lights = (pbr_params_light_uniforms){
       .viewPos = vec4(cam.position.x, cam.position.y, cam.position.z, 1.0),
-      // .viewPos = cam.position,
       .pointLights = { point_lights[0], point_lights[1], point_lights[2], point_lights[3] }
     };
     pbr_uniforms.data = &pbr_bind_data;
-// encode_bind_shader_data(enc, 0, &pbr_uniforms);
 
-// Record draw call
-/* draw_mesh(&sphere, &model_affine, &cam); */
-#if 0
-    encode_set_vertex_buffer(enc, cube.vertex_buffer);
-    encode_set_index_buffer(enc, cube.index_buffer);
-    encode_draw_indexed(enc, cube.geometry->indices->len);
-#endif
-
+    // Record draw calls
     for (u32 row = 0; row < num_rows; row++) {
       f32 metallic = (float)row / (float)num_rows;
       for (u32 col = 0; col < num_cols; col++) {
@@ -152,9 +136,8 @@ int main() {
         mat4 model = mat4_translation(vec3(x, y, 0.0f));
         pbr_bind_data.mvp_matrices.model = model;
         encode_bind_shader_data(enc, 0, &pbr_uniforms);
-        encode_set_vertex_buffer(enc, sphere.vertex_buffer);
-        encode_set_index_buffer(enc, sphere.index_buffer);
-        encode_draw_indexed(enc, sphere.geometry->indices->len);
+        mesh object = sphere;
+        encode_draw_mesh(&object);
       }
     }
 
@@ -170,4 +153,11 @@ int main() {
   renderer_shutdown(&g_core.renderer);
 
   return 0;
+}
+
+void encode_draw_mesh(mesh* m) {
+  gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
+  encode_set_vertex_buffer(enc, m->vertex_buffer);
+  encode_set_index_buffer(enc, m->index_buffer);
+  encode_draw_indexed(enc, m->geometry->indices->len);
 }
