@@ -199,20 +199,15 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
       if (blockIndex < 0) {
         WARN("Couldn't retrieve block index for uniform block '%s'", binding.label);
       } else {
-        // DEBUG("Retrived block index %d for %s", blockIndex, binding.label);
+        DEBUG("Retrived block index %d for %s", blockIndex, binding.label);
       }
 
       glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
       glBindBufferBase(GL_UNIFORM_BUFFER, i, ubo_buf->id.ubo);
       if (i == 2) {
-        pbr_params_light_uniforms* u = binding.data.bytes.data;
-        vec4* v = &u->viewPos;
-        (*v).x = 0.0;
-        (*v).y = 0.0;
-        (*v).z = 1.0;
-        // print_vec3(*v);
+        // pbr_params_light_uniforms* u = binding.data.bytes.data;
+        // vec4* v = &u->viewPos;
       }
-      //  glBindBufferBase(GL_UNIFORM_BUFFER, i, ubo_buf->id.ubo);
       glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, binding.data.bytes.data);
 
     } else if (binding.type == SHADER_BINDING_TEXTURE) {

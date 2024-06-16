@@ -36,15 +36,19 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 
 void main() {
   vec3 norm = normalize(fragNormal); // N
+  vec3 N = norm;
   vec3 viewDir = normalize(vec3(scene.viewPos) - fragWorldPos); // V
+  vec3 V = viewDir;
 
   vec3 F0 = vec3(0.04);
   F0      = mix(F0, pbr.albedo, pbr.metallic);
 
-  vec3 Lo = vec3(0.0); // denoted L in the radiance equation
-  for (int i = 0; i < 4; i++) {
+  vec3 Lo = vec3(0.0);
+  for (int i = 0; i < 4; ++i) {
     vec3 lightVec = normalize(vec3(scene.pointLights[i].position) - fragWorldPos); // L
+    vec3 L = lightVec;
     vec3 halfway = normalize(viewDir + lightVec); // H
+    vec3 H = halfway;
     float distance = length(vec3(scene.pointLights[i].position) - fragWorldPos);
     float attenuation = 1.0 / (distance * distance);
     vec3 radiance = vec3(scene.pointLights[i].color) * attenuation;
@@ -52,10 +56,11 @@ void main() {
     // cook-torrance brdf
     float NDF = DistributionGGX(norm, halfway, pbr.roughness);
     float G   = GeometrySmith(norm, viewDir, lightVec, pbr.roughness);
-    vec3 F    = fresnelSchlick(max(dot(halfway, viewDir), 0.0), F0);
+    // vec3 F    = fresnelSchlick(max(dot(halfway, viewDir), 0.0), F0);
+    vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
 
     vec3 numerator    = NDF * G * F;
-    float denominator = 4.0 * max(dot(norm, viewDir), 0.0) * max(dot(norm, lightVec), 0.0) + 0.0001;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
     vec3 specular     = numerator / denominator;
 
     vec3 kS = F;
@@ -64,7 +69,7 @@ void main() {
     kD *= 1.0 - pbr.metallic;
 
     // add to outgoing radiance Lo
-    float NdotL = max(dot(norm, lightVec), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
     Lo += (kD * pbr.albedo / PI + specular) * radiance * NdotL;
     // Lo += radiance;
   }

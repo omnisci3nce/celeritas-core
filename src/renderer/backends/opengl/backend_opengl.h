@@ -38,7 +38,10 @@ typedef struct gpu_buffer {
     u32 ibo;
     u32 ubo;
   } id;
-  u32 vao;  // Optional
+  union {
+    u32 vao;
+    u32 ubo_binding_point
+  }; // Optional
   u64 size;
 } gpu_buffer;
 typedef struct gpu_texture {
