@@ -7,6 +7,14 @@
 
 All third-party dependencies are licensed under their own license.
 
+## "Modules"
+
+| prefix    | module      | Description |
+| --------- | ----------- | ----------- |
+| `gpu`     | RAL         | |
+| `plat`    | Platforn    | |
+| `phys`    | Physics     | |
+
 ## Notes
 
 * Check symbols in an 'archive' (static library)

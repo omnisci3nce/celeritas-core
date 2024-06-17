@@ -102,3 +102,56 @@ static void* shader_layout_get_binding(shader_data_layout* layout, u32 nth_bindi
   assert(nth_binding < layout->bindings_count);
   return &layout->bindings[nth_binding].data;
 }
+
+typedef struct pbr_textures {
+  texture_handle albedo_tex;
+  texture_handle metal_roughness_tex;
+  texture_handle ao_tex;
+  texture_handle normal_tex;
+} pbr_textures;
+
+typedef struct pbr_textured_bindgroup {
+  mvp_matrix_uniforms mvp_matrices;
+  pbr_params_light_uniforms lights;
+  pbr_textures textures;
+} pbr_textured_bindgroup;
+
+static shader_data_layout pbr_textured_shader_layout(void* data) {
+  pbr_textured_bindgroup* d = (pbr_textured_bindgroup*)data;
+  bool has_data = data != NULL;
+
+  shader_binding b1 = { .label = "MVP_Matrices",
+                        .type = SHADER_BINDING_BYTES,
+                        .stores_data = has_data,
+                        .data = { .bytes = { .size = sizeof(mvp_matrix_uniforms) } } };
+
+  shader_binding b2 = { .label = "Scene_Lights",
+                        .type = SHADER_BINDING_BYTES,
+                        .stores_data = has_data,
+                        .data = { .bytes = { .size = sizeof(pbr_params_light_uniforms) } } };
+
+  shader_binding b3 = {.label = "Albedo",
+                        .type = SHADER_BINDING_TEXTURE,
+                        .stores_data = has_data };
+  shader_binding b4 = {.label = "Metallic Roughness",
+                        .type = SHADER_BINDING_TEXTURE,
+                        .stores_data = has_data };
+  shader_binding b5 = {.label = "Ambient Occlusion",
+                        .type = SHADER_BINDING_TEXTURE,
+                        .stores_data = has_data };
+ shader_binding b6 = {.label = "Normal Vectors",
+                        .type = SHADER_BINDING_TEXTURE,
+                        .stores_data = has_data };
+
+  if (has_data) {
+    b1.data.bytes.data = &d->mvp_matrices;
+    b2.data.bytes.data = &d->lights;
+    b3.data.texture.handle = d->textures.albedo_tex;
+    b4.data.texture.handle = d->textures.metal_roughness_tex;
+    b5.data.texture.handle = d->textures.ao_tex;
+    b6.data.texture.handle = d->textures.normal_tex;
+  }
+
+  return (shader_data_layout){ .name = "pbr_params", .bindings = { b1, b2, b3, b4, b5, b6  }, .bindings_count = 6
+  };
+}

@@ -207,16 +207,11 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
 
       glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
       glBindBufferBase(GL_UNIFORM_BUFFER, ubo_buf->ubo_binding_point, ubo_buf->id.ubo);
-      if (i == 2) {
-        // pbr_params_light_uniforms* u = binding.data.bytes.data;
-        // vec4* v = &u->viewPos;
-      }
       glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, binding.data.bytes.data);
 
     } else if (binding.type == SHADER_BINDING_TEXTURE) {
       gpu_texture* tex = TEXTURE_GET(binding.data.texture.handle);
-      glActiveTexture(GL_TEXTURE0);
-      // glActiveTexture(GL_TEXTURE0 + i);
+      glActiveTexture(GL_TEXTURE0 + i);
       glBindTexture(GL_TEXTURE_2D, tex->id);
     }
   }

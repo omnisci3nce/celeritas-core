@@ -192,6 +192,9 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     material_darray_push(out_model->materials, our_material);
   }
 
+  // TEMP
+  u32 mat_idx = 9999;
+
   // --- Meshes
   size_t num_meshes = data->meshes_count;
   TRACE("Num meshes %d", num_meshes);
@@ -288,14 +291,15 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
 
     if (primitive.material != NULL) {
       ERROR("Primitive Material %s", primitive.material->name);
-      // for (int i = 0; i < material_darray_len(out_model->materials); i++) {
-      //   printf("%s vs %s \n", primitive.material->name, out_model->materials->data[i].name);
-      //   if (strcmp(primitive.material->name, out_model->materials->data[i].name) == 0) {
-      //     TRACE("Found material");
-      //     mesh.material_index = i;
-      //     break;
-      //   }
-      // }
+      for (u32 i = 0; i < material_darray_len(out_model->materials); i++) {
+        printf("%s vs %s \n", primitive.material->name, out_model->materials->data[i].name);
+        if (strcmp(primitive.material->name, out_model->materials->data[i].name) == 0) {
+          INFO("Found material");
+          mat_idx = i;
+          // mesh.material_index = i;
+          break;
+        }
+      }
     }
 
     //     // FIXME
@@ -317,17 +321,6 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     //     //   }
     //     // }
 
-    /*
-      typedef struct mesh {
-        buffer_handle vertex_buffer;
-        buffer_handle index_buffer;
-        u32 index_count;
-        bool has_indices;
-        geometry_data* vertices;  // NULL means it has been freed
-        bool is_uploaded;
-        bool is_latent;
-      } mesh;
-      */
     bool has_indices = false;
     vertex_darray *geo_vertices = vertex_darray_new(3);
     u32_darray *geo_indices = u32_darray_new(0);
@@ -384,7 +377,9 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     geometry->vertices = geo_vertices;
     geometry->indices = geo_indices;
     geometry->has_indices = has_indices;
+    
     mesh m = mesh_create(geometry, true);
+    m.material_index = (u32_opt){.has_value = mat_idx == 9999, .value = mat_idx };
 
     mesh_darray_push(out_model->meshes, m);
   }

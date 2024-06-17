@@ -35,11 +35,17 @@ typedef struct geometry_data {
   rgba colour; /** Optional: set vertex colours */
 } geometry_data;
 
+typedef struct u32_opt {
+  u32 value;
+  bool has_value;
+} u32_opt;
+
 // 'Upload' a geometry_data (to GPU) -> get back a mesh
 typedef struct mesh {
   buffer_handle vertex_buffer;
   buffer_handle index_buffer;
   geometry_data* geometry;  // NULL means it has been freed
+  u32_opt material_index;
   bool is_uploaded;
   bool is_latent;
 } mesh;

@@ -230,6 +230,13 @@ target("pbr_params")
     add_files("examples/pbr_params/ex_pbr_params.c")
     set_rundir("$(projectdir)")
 
+target("pbr_textured")
+    set_kind("binary")
+    set_group("examples")
+    add_deps("core_static")
+    add_files("examples/pbr_textured/ex_pbr_textured.c")
+    set_rundir("$(projectdir)")
+
 -- target("transforms")
 --     set_kind("binary")
 --     set_group("examples")
