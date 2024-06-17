@@ -5,6 +5,18 @@
 #include "ral_types.h"
 #include "render_types.h"
 
+#define VERT_3D(arr, pos, norm, uv)                                                    \
+  {                                                                                    \
+    vertex v = { .static_3d = { .position = pos, .normal = norm, .tex_coords = uv } }; \
+    vertex_darray_push(arr, v);                                                        \
+  }
+
+void push_triangle(u32_darray* arr, u32 i0, u32 i1, u32 i2) {
+  u32_darray_push(arr, i0);
+  u32_darray_push(arr, i1);
+  u32_darray_push(arr, i2);
+}
+
 // TODO: move to another file
 void geo_free_data(geometry_data* geo) {
   vertex_darray_free(geo->vertices);
@@ -16,21 +28,40 @@ void geo_free_data(geometry_data* geo) {
 }
 
 // vertices
-f32 plane_vertex_positions[] = {
-  // triangle 1
-  -0.5, 0, -0.5, -0.5, 0, 0.5, 0.5, 0, -0.5,
-  // triangle 2
-  0.5, 0, -0.5, -0.5, 0, 0.5, 0.5, 0, 0.5
+vec3 plane_vertex_positions[] = {
+  (vec3){ -0.5, 0, -0.5},
+  (vec3){ 0.5, 0, -0.5},
+  (vec3){ -0.5, 0, 0.5},
+  (vec3){ 0.5, 0, 0.5},
 };
 
 geometry_data geo_create_plane(f32x2 extents) {
-  f32x2 half_extents = vec2_div(extents, 2.0);
-  vertex_format format = VERTEX_STATIC_3D;
   vertex_darray* vertices = vertex_darray_new(4);
+  u32_darray* indices = u32_darray_new(vertices->len);
 
-  //   vertex_darray_push(vertices, (vertex){ .static_3d = { .position = } });
+  vec3 vert_pos[4];
+  memcpy(&vert_pos, plane_vertex_positions, sizeof(plane_vertex_positions));
+  for (int i = 0; i < 4; i++) {
+    vert_pos[i].x *= extents.x;
+    vert_pos[i].z *= extents.y;
+  }
+  VERT_3D(vertices, vert_pos[0], VEC3_Y, vec2(0, 0));
+  VERT_3D(vertices, vert_pos[1], VEC3_Y, vec2(1, 0));
+  VERT_3D(vertices, vert_pos[2], VEC3_Y, vec2(0, 1));
+  VERT_3D(vertices, vert_pos[3], VEC3_Y, vec2(1, 1));
+   
+  push_triangle(indices, 2,1,0);
+  push_triangle(indices, 1,2,3);
 
-  //   return (geometry_data) { .format = format, .vertices =.has_indices = true, }
+  geometry_data geo = {
+    .format = VERTEX_STATIC_3D,
+    .vertices = vertices,
+    .has_indices = true,
+    .indices = indices,
+    .colour = (rgba){ 0, 0, 0, 1 }
+  };
+
+  return geo;
 }
 
 // OLD
@@ -43,18 +74,6 @@ static const vec3 FRONT_BOT_LEFT = (vec3){ 0, 0, 1 };
 static const vec3 FRONT_BOT_RIGHT = (vec3){ 1, 0, 1 };
 static const vec3 FRONT_TOP_LEFT = (vec3){ 0, 1, 1 };
 static const vec3 FRONT_TOP_RIGHT = (vec3){ 1, 1, 1 };
-
-#define VERT_3D(arr, pos, norm, uv)                                                    \
-  {                                                                                    \
-    vertex v = { .static_3d = { .position = pos, .normal = norm, .tex_coords = uv } }; \
-    vertex_darray_push(arr, v);                                                        \
-  }
-
-void push_triangle(u32_darray* arr, u32 i0, u32 i1, u32 i2) {
-  u32_darray_push(arr, i0);
-  u32_darray_push(arr, i1);
-  u32_darray_push(arr, i2);
-}
 
 geometry_data geo_create_cuboid(f32x3 extents) {
   /* static mesh prim_cube_mesh_create() { */

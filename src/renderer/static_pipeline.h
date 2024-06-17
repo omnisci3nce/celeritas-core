@@ -18,7 +18,7 @@ static shader_data_layout mvp_uniforms_layout(void* data) {
   my_shader_bind_group* d = (my_shader_bind_group*)data;
   bool has_data = data != NULL;
 
-  shader_binding b1 = { .label = "mvp_uniforms",
+  shader_binding b1 = { .label = "Matrices",
                         .type = SHADER_BINDING_BYTES,
                         .stores_data = has_data,
                         .data = { .bytes = { .size = sizeof(mvp_uniforms) } } };

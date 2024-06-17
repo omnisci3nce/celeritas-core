@@ -41,7 +41,7 @@ shader_data_layout mvp_uniforms_layout(void* data) {
   my_shader_bind_group* d = (my_shader_bind_group*)data;
   bool has_data = data != NULL;
 
-  shader_binding b1 = { .label = "mvp_uniforms",
+  shader_binding b1 = { .label = "Matrices",
                         .type = SHADER_BINDING_BYTES,
                         .stores_data = has_data,
                         .data = { .bytes = { .size = sizeof(mvp_uniforms) } } };
@@ -154,7 +154,10 @@ int main() {
     encode_bind_shader_data(enc, 0, &mvp_uniforms_data);
 
     // Record draw calls
-    draw_mesh(&cube, &model, &cam);
+    // draw_mesh(&cube, &model, &cam);
+    encode_set_vertex_buffer(enc, cube.vertex_buffer);
+    encode_set_index_buffer(enc, cube.index_buffer);
+    encode_draw_indexed(enc, cube.geometry->indices->len);
 
     // End recording
     gpu_cmd_encoder_end_render(enc);
