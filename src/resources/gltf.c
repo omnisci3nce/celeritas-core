@@ -377,9 +377,9 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     geometry->vertices = geo_vertices;
     geometry->indices = geo_indices;
     geometry->has_indices = has_indices;
-    
+
     mesh m = mesh_create(geometry, true);
-    m.material_index = (u32_opt){.has_value = mat_idx == 9999, .value = mat_idx };
+    m.material_index = (u32_opt){ .has_value = mat_idx == 9999, .value = mat_idx };
 
     mesh_darray_push(out_model->meshes, m);
   }

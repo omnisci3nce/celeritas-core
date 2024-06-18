@@ -30,7 +30,7 @@ int main() {
   geometry_data sphere_data = geo_create_uvsphere(1.0, 8, 8);
   mesh sphere = mesh_create(&sphere_data, false);
 
-  geometry_data plane_data = geo_create_plane(f32x2(6,4));
+  geometry_data plane_data = geo_create_plane(f32x2(6, 4));
   mesh plane = mesh_create(&plane_data, false);
 
   // FIXME: // Texture
@@ -54,7 +54,7 @@ int main() {
 
     mat4 sphere_model = transform_to_mat(&transform);
     mat4 cube_model = mat4_translation(vec3(-2., 0, 0));
-    mat4 plane_model = mat4_translation(vec3(0,-2,0));
+    mat4 plane_model = mat4_translation(vec3(0, -2, 0));
     draw_mesh(&cube, &cube_model, &cam);
     draw_mesh(&sphere, &sphere_model, &cam);
     draw_mesh(&plane, &plane_model, &cam);

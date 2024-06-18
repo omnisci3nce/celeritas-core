@@ -12,7 +12,7 @@ typedef struct immdraw_system {
   mesh cube;
   mesh sphere;
   // command lists
-  
+
 } immdraw_system;
 
 bool immdraw_system_init(immdraw_system* state) {
@@ -28,13 +28,9 @@ bool immdraw_system_init(immdraw_system* state) {
   return true;
 }
 
-void immdraw_plane(vec3 pos, quat rotation, f32 u_scale, f32 v_scale, vec4 colour) {
+void immdraw_plane(vec3 pos, quat rotation, f32 u_scale, f32 v_scale, vec4 colour) {}
 
-}
-
-void immdraw_system_render(immdraw_system* state) {
-
-}
+void immdraw_system_render(immdraw_system* state) {}
 
 // void imm_draw_sphere(vec3 pos, f32 radius, vec4 colour) {
 //   // Create the vertices

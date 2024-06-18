@@ -41,7 +41,8 @@ int main() {
   vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
   camera cam = camera_create(camera_pos, camera_front, VEC3_NEG_Z, deg_to_rad(45.0));
 
-  shader_data pbr_uniforms = { .data = NULL, .shader_data_get_layout = &pbr_textured_shader_layout };
+  shader_data pbr_uniforms = { .data = NULL,
+                               .shader_data_get_layout = &pbr_textured_shader_layout };
 
   // Make the pipeline
   gpu_renderpass_desc pass_description = {};
@@ -107,9 +108,9 @@ int main() {
     };
     pbr_bind_data.textures = (pbr_textures){
       .albedo_tex = helmet->materials->data[0].mat_data.pbr.albedo_map,
-      .metal_roughness_tex =  helmet->materials->data[0].mat_data.pbr.metallic_map,
-      .ao_tex  = helmet->materials->data[0].mat_data.pbr.ao_map,
-      .normal_tex =   helmet->materials->data[0].mat_data.pbr.normal_map,
+      .metal_roughness_tex = helmet->materials->data[0].mat_data.pbr.metallic_map,
+      .ao_tex = helmet->materials->data[0].mat_data.pbr.ao_map,
+      .normal_tex = helmet->materials->data[0].mat_data.pbr.normal_map,
     };
     pbr_uniforms.data = &pbr_bind_data;
     encode_bind_shader_data(enc, 0, &pbr_uniforms);

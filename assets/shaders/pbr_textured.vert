@@ -19,9 +19,7 @@ layout(location = 2) out vec2 fragTexCoords;
 
 void main() {
   fragWorldPos = vec3(mvp.model * vec4(inPosition, 1.0));
-  fragNormal = mat3(transpose(inverse(mvp.model))) * inNormal;  
-  // fragNormal = inNormal;
-  
+  fragNormal = mat3(transpose(inverse(mvp.model))) * inNormal; // world-space normal
   fragTexCoords = inTexCoords;
 
   gl_Position =  mvp.proj * mvp.view * mvp.model * vec4(inPosition, 1.0);

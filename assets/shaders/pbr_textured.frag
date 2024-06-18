@@ -87,12 +87,12 @@ void main() {
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
    
-   FragColor = vec4(color, 1.0);
+   // FragColor = vec4(color, 1.0);
   //  FragColor = vec4(1.0);
   // FragColor = vec4(scene.pointLights[0].position);
-  FragColor = vec4(albedo, 1.0);
+  // FragColor = vec4(albedo, 1.0);
   // FragColor = vec4(pbr.metallic, pbr.roughness, pbr.ao, 1.0);
-  // FragColor = scene.viewPos;
+  FragColor = vec4(fragTexCoords, 0.0, 1.0);
 }
 
 /* The below are from https://learnopengl.com/PBR/Lighting */

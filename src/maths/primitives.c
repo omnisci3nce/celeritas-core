@@ -29,10 +29,10 @@ void geo_free_data(geometry_data* geo) {
 
 // vertices
 vec3 plane_vertex_positions[] = {
-  (vec3){ -0.5, 0, -0.5},
-  (vec3){ 0.5, 0, -0.5},
-  (vec3){ -0.5, 0, 0.5},
-  (vec3){ 0.5, 0, 0.5},
+  (vec3){ -0.5, 0, -0.5 },
+  (vec3){ 0.5, 0, -0.5 },
+  (vec3){ -0.5, 0, 0.5 },
+  (vec3){ 0.5, 0, 0.5 },
 };
 
 geometry_data geo_create_plane(f32x2 extents) {
@@ -49,17 +49,15 @@ geometry_data geo_create_plane(f32x2 extents) {
   VERT_3D(vertices, vert_pos[1], VEC3_Y, vec2(1, 0));
   VERT_3D(vertices, vert_pos[2], VEC3_Y, vec2(0, 1));
   VERT_3D(vertices, vert_pos[3], VEC3_Y, vec2(1, 1));
-   
-  push_triangle(indices, 2,1,0);
-  push_triangle(indices, 1,2,3);
 
-  geometry_data geo = {
-    .format = VERTEX_STATIC_3D,
-    .vertices = vertices,
-    .has_indices = true,
-    .indices = indices,
-    .colour = (rgba){ 0, 0, 0, 1 }
-  };
+  push_triangle(indices, 2, 1, 0);
+  push_triangle(indices, 1, 2, 3);
+
+  geometry_data geo = { .format = VERTEX_STATIC_3D,
+                        .vertices = vertices,
+                        .has_indices = true,
+                        .indices = indices,
+                        .colour = (rgba){ 0, 0, 0, 1 } };
 
   return geo;
 }

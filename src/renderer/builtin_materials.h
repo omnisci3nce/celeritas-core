@@ -11,10 +11,7 @@
 #pragma once
 
 #include <assert.h>
-#include "colours.h"
 #include "defines.h"
-#include "maths.h"
-#include "ral.h"
 #include "ral_types.h"
 
 // Currently supported materials
