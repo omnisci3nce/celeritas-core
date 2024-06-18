@@ -37,7 +37,7 @@ int main() {
     point_lights[i].color = vec3(300.0, 300.0, 300.0);
   }
 
-  vec3 camera_pos = vec3(5., 0., 0.);
+  vec3 camera_pos = vec3(3., 2., 0.);
   vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
   camera cam = camera_create(camera_pos, camera_front, VEC3_NEG_Z, deg_to_rad(45.0));
 
@@ -82,6 +82,8 @@ int main() {
 
   pbr_textured_bindgroup pbr_bind_data;
 
+  static f32 theta = 0.0;
+
   while (!should_exit()) {
     input_update(&g_core.input);
 
@@ -95,7 +97,11 @@ int main() {
     encode_bind_pipeline(enc, PIPELINE_GRAPHICS, pbr_pipeline);
     encode_set_default_settings(enc);
 
-    mat4 model_affine = mat4_ident();
+    theta += 0.01;
+    transform transform = { .position = vec3(0,0,0),
+                            .rotation = quat_from_axis_angle(VEC3_Z, theta, true),
+                            .scale = 1.0 };
+    mat4 model_affine = transform_to_mat(&transform);
     mat4 view, proj;
     camera_view_projection(&cam, 1000, 1000, &view, &proj);
 

@@ -127,16 +127,16 @@ static shader_data_layout pbr_textured_shader_layout(void* data) {
                         .stores_data = has_data,
                         .data = { .bytes = { .size = sizeof(pbr_params_light_uniforms) } } };
 
-  shader_binding b3 = {.label = "Albedo",
+  shader_binding b3 = {.label = "albedoMap",
                         .type = SHADER_BINDING_TEXTURE,
                         .stores_data = has_data };
-  shader_binding b4 = {.label = "Metallic Roughness",
+  shader_binding b4 = {.label = "metallicRoughnessMap",
                         .type = SHADER_BINDING_TEXTURE,
                         .stores_data = has_data };
-  shader_binding b5 = {.label = "Ambient Occlusion",
+  shader_binding b5 = {.label = "aoMap",
                         .type = SHADER_BINDING_TEXTURE,
                         .stores_data = has_data };
- shader_binding b6 = {.label = "Normal Vectors",
+ shader_binding b6 = {.label = "normalMap",
                         .type = SHADER_BINDING_TEXTURE,
                         .stores_data = has_data };
 

@@ -211,6 +211,8 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
 
     } else if (binding.type == SHADER_BINDING_TEXTURE) {
       gpu_texture* tex = TEXTURE_GET(binding.data.texture.handle);
+      GLuint tex_slot = glGetUniformLocation(encoder->pipeline->shader_id, binding.label);
+      glUniform1i(tex_slot, i);
       glActiveTexture(GL_TEXTURE0 + i);
       glBindTexture(GL_TEXTURE_2D, tex->id);
     }

@@ -35,14 +35,32 @@ float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 
+vec3 getNormalFromMap()
+{
+    vec3 tangentNormal = texture(normalMap, fragTexCoords).xyz * 2.0 - 1.0;
+
+    vec3 Q1  = dFdx(fragWorldPos);
+    vec3 Q2  = dFdy(fragWorldPos);
+    vec2 st1 = dFdx(fragTexCoords);
+    vec2 st2 = dFdy(fragTexCoords);
+
+    vec3 N   = normalize(fragNormal);
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+
+    return normalize(TBN * tangentNormal);
+}
+
 void main() {
-  vec3 albedo     = pow(texture(albedoMap, fragTexCoords).rgb, vec3(2.2));
-  // vec3 normal     = getNormalFromNormalMap();
-  float metallic  = texture(metallicRoughnessMap, fragTexCoords).g;
-  float roughness = texture(metallicRoughnessMap, fragTexCoords).b;
+  // vec3 albedo     = pow(texture(albedoMap, fragTexCoords).rgb, vec3(2.2));
+  vec3 albedo = texture(albedoMap, fragTexCoords).rgb;
+  float metallic  = texture(metallicRoughnessMap, fragTexCoords).b;
+  float roughness = texture(metallicRoughnessMap, fragTexCoords).g;
   float ao        = texture(aoMap, fragTexCoords).r;
 
-  vec3 norm = normalize(fragNormal); // N
+  // vec3 norm = normalize(fragNormal); // N
+  vec3 norm = getNormalFromMap();
   vec3 N = norm;
   vec3 viewDir = normalize(vec3(scene.viewPos) - fragWorldPos); // V
   vec3 V = viewDir;
@@ -87,12 +105,12 @@ void main() {
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
    
-   // FragColor = vec4(color, 1.0);
+   FragColor = vec4(color, 1.0);
   //  FragColor = vec4(1.0);
   // FragColor = vec4(scene.pointLights[0].position);
   // FragColor = vec4(albedo, 1.0);
   // FragColor = vec4(pbr.metallic, pbr.roughness, pbr.ao, 1.0);
-  FragColor = vec4(fragTexCoords, 0.0, 1.0);
+  // FragColor = vec4(fragTexCoords, 0.0, 1.0);
 }
 
 /* The below are from https://learnopengl.com/PBR/Lighting */

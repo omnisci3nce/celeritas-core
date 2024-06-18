@@ -96,7 +96,9 @@ struct graphics_pipeline_desc {
   bool depth_test;
 };
 
-typedef struct gpu_renderpass_desc { /* TODO */
+typedef struct gpu_renderpass_desc {
+ texture_handle  color_target; // for now only support one
+  texture_handle  depth_stencil;
 } gpu_renderpass_desc;
 
 // --- Lifecycle functions
