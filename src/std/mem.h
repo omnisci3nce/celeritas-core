@@ -12,6 +12,14 @@
 #include <stddef.h>
 #include "defines.h"
 
+typedef void* (*alloc_fn)(size_t size);
+typedef void (*free_fn)(void* ptr);
+
+typedef struct allocator_t {
+  alloc_fn alloc;
+  free_fn free;
+} allocator_t;
+
 // --- Arena
 
 // Inspired by https://nullprogram.com/blog/2023/09/27/
