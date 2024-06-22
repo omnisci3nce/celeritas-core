@@ -81,7 +81,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   pipeline->vertex_desc = description.vertex_desc;
 
   // Allocate uniform buffers if needed
-  printf("data layouts %d\n", description.data_layouts_count);
+  // printf("data layouts %d\n", description.data_layouts_count);
   for (u32 layout_i = 0; layout_i < description.data_layouts_count; layout_i++) {
     shader_data_layout sdl = description.data_layouts[layout_i].shader_data_get_layout(NULL);
     TRACE("Got shader data layout %d's bindings! . found %d", layout_i, sdl.bindings_count);
@@ -114,8 +114,8 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
         if (blockIndex != GL_INVALID_INDEX) {
           glUniformBlockBinding(pipeline->shader_id, blockIndex, s_binding_point);
         }
-        ubo_buf->ubo_binding_point = s_binding_point;
-        s_binding_point++;
+        ubo_buf->ubo_binding_point = s_binding_point++;
+        assert(s_binding_point < GL_MAX_UNIFORM_BUFFER_BINDINGS);
       }
     }
   }
@@ -177,7 +177,9 @@ void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* rend
   glClearColor(clear_colour.r, clear_colour.g, clear_colour.b, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
-void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder) {}
+void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder) {
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 void gpu_cmd_encoder_begin_compute() {}
 gpu_cmd_encoder* gpu_get_default_cmd_encoder() { return &context.command_buffer; }
 
