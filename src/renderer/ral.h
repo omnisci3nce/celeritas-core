@@ -97,7 +97,10 @@ struct graphics_pipeline_desc {
 };
 
 typedef struct gpu_renderpass_desc {
- texture_handle  color_target; // for now only support one
+  bool default_framebuffer;
+  bool has_color_target;
+  texture_handle  color_target; // for now only support one
+  bool has_depth_stencil;
   texture_handle  depth_stencil;
 } gpu_renderpass_desc;
 

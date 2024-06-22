@@ -8,6 +8,8 @@
 
 #define MAX_PIPELINE_UNIFORM_BUFFERS 32
 
+#define OPENGL_DEFAULT_FRAMEBUFFER 0
+
 typedef struct gpu_swapchain {
   u32x2 dimensions;
 } gpu_swapchain;
@@ -23,6 +25,8 @@ typedef struct gpu_pipeline {
   bool wireframe;
 } gpu_pipeline;
 typedef struct gpu_renderpass {
+  u32 fbo;
+  gpu_renderpass_desc description;
   void *pad
 } gpu_renderpass;
 typedef struct gpu_cmd_encoder {

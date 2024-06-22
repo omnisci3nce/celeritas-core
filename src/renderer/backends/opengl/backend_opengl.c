@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 #include "builtin_materials.h"
 #include "colours.h"
 #include "maths.h"
@@ -109,15 +110,12 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
                                   &blocksize);
         printf("\t with size %d bytes\n", blocksize);
 
-        glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
         glBindBufferBase(GL_UNIFORM_BUFFER, s_binding_point, ubo_buf->id.ubo);
         if (blockIndex != GL_INVALID_INDEX) {
           glUniformBlockBinding(pipeline->shader_id, blockIndex, s_binding_point);
         }
         ubo_buf->ubo_binding_point = s_binding_point;
         s_binding_point++;
-
-        // Now we want to store a handle associated with the shader for this
       }
     }
   }
@@ -129,8 +127,38 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
 void gpu_pipeline_destroy(gpu_pipeline* pipeline) {}
 
 // --- Renderpass
-gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {}
-void gpu_renderpass_destroy(gpu_renderpass* pass) {}
+gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
+  gpu_renderpass* renderpass = renderpass_pool_alloc(&context.gpu_pools.renderpasses, NULL);
+
+  memcpy(&renderpass->description, description, sizeof(gpu_renderpass_desc));
+
+  if (!description->default_framebuffer) {
+    GLuint gl_fbo_id;
+    glGenFramebuffers(1, &gl_fbo_id);
+    renderpass->fbo = gl_fbo_id;
+  } else {
+    renderpass->fbo = OPENGL_DEFAULT_FRAMEBUFFER;
+    assert(!description->has_color_target);
+    assert(!description->has_depth_stencil);
+  }
+  glBindFramebuffer(GL_FRAMEBUFFER, renderpass->fbo);
+
+  if (description->has_color_target) {
+    gpu_texture* colour_attachment = TEXTURE_GET(description->color_target);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colour_attachment->id, 0); 
+  }
+  if (description->has_depth_stencil) {
+    gpu_texture* depth_attachment = TEXTURE_GET(description->depth_stencil);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depth_attachment->id, 0); 
+  }
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0); // reset to default framebuffer
+
+  return renderpass;
+}
+void gpu_renderpass_destroy(gpu_renderpass* pass) {
+  glDeleteFramebuffers(1, &pass->fbo);
+}
 
 // --- Swapchain
 bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {}
@@ -144,6 +172,7 @@ gpu_cmd_encoder gpu_cmd_encoder_create() {
 void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder) {}
 void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) {}
 void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass) {
+  glBindFramebuffer(GL_FRAMEBUFFER, renderpass->fbo);
   rgba clear_colour = STONE_800;
   glClearColor(clear_colour.r, clear_colour.g, clear_colour.b, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -206,7 +235,6 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
       }
 
       glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
-      glBindBufferBase(GL_UNIFORM_BUFFER, ubo_buf->ubo_binding_point, ubo_buf->id.ubo);
       glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, binding.data.bytes.data);
 
     } else if (binding.type == SHADER_BINDING_TEXTURE) {
