@@ -76,6 +76,8 @@ typedef struct shader_desc {
   bool is_combined_vert_frag;  // Contains both vertex and fragment stages
 } shader_desc;
 
+shader_desc shader_quick_load(const char* filepath);
+
 struct graphics_pipeline_desc {
   const char* debug_name;
   vertex_description vertex_desc;

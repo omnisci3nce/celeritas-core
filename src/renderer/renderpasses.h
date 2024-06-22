@@ -10,6 +10,7 @@
  */
 #pragma once
 #include "ral.h"
+#include "ral_types.h"
 #include "render_types.h"
 
 // Shadowmap pass
@@ -22,12 +23,30 @@ gpu_renderpass* renderpass_blinn_phong_create();
 void renderpass_blinn_phong_execute(gpu_renderpass* pass, render_entity* entities,
                                     size_t entity_count);
 
+
 typedef struct ren_shadowmaps {
   u32 width;
   u32 height;
   gpu_renderpass* rpass;
   gpu_pipeline* static_pipeline;
+  gpu_pipeline* debug_quad;
+  texture_handle depth_tex;
 } ren_shadowmaps;
+
+typedef struct model_uniform {
+  mat4 model;
+} model_uniform;
+typedef struct lightspace_tf_uniform {
+  mat4 lightSpaceMatrix;
+} lightspace_tf_uniform;
+
+typedef struct debug_quad_uniform {
+ texture_handle depthMap;
+} debug_quad_uniform;
+
+shader_data_layout model_uniform_layout(void* data);
+shader_data_layout lightspace_uniform_layout(void* data); 
+shader_data_layout debug_quad_layout(void* data);
 
 void ren_shadowmaps_init(ren_shadowmaps* storage);
 

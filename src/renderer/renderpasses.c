@@ -11,6 +11,7 @@
 
 #include "renderpasses.h"
 #include "file.h"
+#include "log.h"
 #include "maths_types.h"
 #include "ral.h"
 #include "ral_types.h"
@@ -18,9 +19,41 @@
 #define SHADOW_WIDTH 1000
 #define SHADOW_HEIGHT 1000
 
+shader_data_layout debug_quad_layout(void* data) {
+  debug_quad_uniform* d = data;
+  bool has_data = data != NULL;
+
+  shader_binding b1 = { .label = "depthMap",
+                        .type = SHADER_BINDING_TEXTURE,
+                        .stores_data = has_data};
+  if (has_data) {
+    b1.data.texture.handle = d->depthMap;
+  }
+  return (shader_data_layout){ .name = "debug quad uniforms", .bindings = { b1 }, .bindings_count = 1 };
+}
+
+gpu_pipeline* debug_quad_pipeline_create() {
+  gpu_renderpass_desc rpass_desc = {.default_framebuffer = true };
+  gpu_renderpass* rpass = gpu_renderpass_create(&rpass_desc);
+  shader_data shader_layout = {.data = NULL, .shader_data_get_layout = debug_quad_layout};
+  struct graphics_pipeline_desc desc = {
+    .debug_name = "Shadow maps debug quad",
+    .vertex_desc = static_3d_vertex_description(),
+    .data_layouts = { shader_layout },
+    .data_layouts_count = 1,
+    .vs = shader_quick_load("assets/shaders/debug_quad.vert"),
+    .fs = shader_quick_load("assets/shaders/debug_quad.frag"),
+    .renderpass = rpass,
+  };
+
+  return gpu_graphics_pipeline_create(desc);
+}
+
 void ren_shadowmaps_init(ren_shadowmaps* storage) {
   storage->rpass = shadowmaps_renderpass_create();
   storage->static_pipeline = shadowmaps_pipeline_create(storage->rpass);
+  storage->debug_quad = debug_quad_pipeline_create();
+  storage->depth_tex = storage->rpass->description.depth_stencil;
 }
 
 gpu_renderpass* shadowmaps_renderpass_create() {
@@ -39,13 +72,6 @@ gpu_renderpass* shadowmaps_renderpass_create() {
 }
 
 // == shader bindings
-typedef struct model_uniform {
-  mat4 model;
-} model_uniform;
-
-typedef struct lightspace_tf_uniform {
-  mat4 lightSpaceMatrix;
-} lightspace_tf_uniform;
 
 shader_data_layout model_uniform_layout(void* data) {
   bool has_data = data != NULL;
@@ -101,8 +127,8 @@ gpu_pipeline* shadowmaps_pipeline_create(gpu_renderpass* rpass) {
                                                  .code = vertex_shader.contents,
                                                  .is_spirv = true },
                                          .fs = { .debug_name = "Shadows Frag shader",
-                                                 .filepath = vert_path,
-                                                 .code = vertex_shader.contents,
+                                                 .filepath = frag_path,
+                                                 .code = fragment_shader.contents,
                                                  .is_spirv = true },
                                          .renderpass = rpass };
 

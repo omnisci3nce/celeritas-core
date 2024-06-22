@@ -1,4 +1,8 @@
 #include "ral.h"
+#include "file.h"
+#include "log.h"
+#include "str.h"
+#include "mem.h"
 
 #if defined(CEL_REND_BACKEND_VULKAN)
 #include "backend_vulkan.h"
@@ -74,4 +78,20 @@ void resource_pools_init(arena* a, struct resource_pools* res_pools) {
 void print_shader_binding(shader_binding b) {
   printf("Binding name: %s type %s vis %d stores data %d\n", b.label,
          shader_binding_type_name[b.type], b.vis, b.stores_data);
+}
+
+shader_desc shader_quick_load(const char* filepath) {
+  arena a = arena_create(malloc(1024 * 1024), 1024 * 1024);
+  str8 path = str8_cstr_view(filepath);
+  str8_opt shader = str8_from_file(&a, path);
+  if (!shader.has_value) {
+    ERROR_EXIT("Failed to load shaders from disk");
+  }
+
+  return (shader_desc) {
+    .debug_name = filepath,
+    .code = shader.contents,
+    .filepath = path,
+    .is_spirv = true,
+  };
 }

@@ -120,6 +120,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
     }
   }
 
+  pipeline->renderpass = description.renderpass;
   pipeline->wireframe = description.wireframe;
 
   return pipeline;

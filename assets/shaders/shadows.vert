@@ -8,12 +8,12 @@ layout(location = 2) in vec2 inTexCoords;
 // Uniforms
 uniform Model {
   mat4 mat;
-};
+} model;
 
 uniform LightSpace {
   mat4 mat;
-};
+} lightSpace;
 
 void main() {
-  gl_Position = LightSpace.mat * Model.mat * vec4(inPosition, 1.0);
+  gl_Position = lightSpace.mat * model.mat * vec4(inPosition, 1.0);
 }
