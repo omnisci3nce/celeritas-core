@@ -145,11 +145,13 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
 
   if (description->has_color_target) {
     gpu_texture* colour_attachment = TEXTURE_GET(description->color_target);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colour_attachment->id, 0); 
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                           colour_attachment->id, 0);
   }
   if (description->has_depth_stencil) {
     gpu_texture* depth_attachment = TEXTURE_GET(description->depth_stencil);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depth_attachment->id, 0); 
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D,
+                           depth_attachment->id, 0);
   }
 
   if (description->has_depth_stencil && !description->has_color_target) {
@@ -157,13 +159,11 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
     glReadBuffer(GL_NONE);
   }
 
-  glBindFramebuffer(GL_FRAMEBUFFER, 0); // reset to default framebuffer
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);  // reset to default framebuffer
 
   return renderpass;
 }
-void gpu_renderpass_destroy(gpu_renderpass* pass) {
-  glDeleteFramebuffers(1, &pass->fbo);
-}
+void gpu_renderpass_destroy(gpu_renderpass* pass) { glDeleteFramebuffers(1, &pass->fbo); }
 
 // --- Swapchain
 bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {}
@@ -341,7 +341,8 @@ texture_handle gpu_texture_create(texture_desc desc, bool create_view, const voi
 
   glBindTexture(GL_TEXTURE_2D, gl_texture_id);
 
-  GLint internal_format = desc.format == CEL_TEXTURE_FORMAT_DEPTH_DEFAULT ?  GL_DEPTH_COMPONENT : GL_RGB;
+  GLint internal_format =
+      desc.format == CEL_TEXTURE_FORMAT_DEPTH_DEFAULT ? GL_DEPTH_COMPONENT : GL_RGB;
   GLenum format = desc.format == CEL_TEXTURE_FORMAT_DEPTH_DEFAULT ? GL_DEPTH_COMPONENT : GL_RGBA;
   GLenum data_type = desc.format == CEL_TEXTURE_FORMAT_DEPTH_DEFAULT ? GL_FLOAT : GL_UNSIGNED_BYTE;
 
@@ -354,14 +355,12 @@ texture_handle gpu_texture_create(texture_desc desc, bool create_view, const voi
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   if (data) {
-    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, desc.extents.x, desc.extents.y, 0,
-                 format,
+    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, desc.extents.x, desc.extents.y, 0, format,
                  data_type, data);
     glGenerateMipmap(GL_TEXTURE_2D);
   } else {
     WARN("No image data provided");
-    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, desc.extents.x, desc.extents.y, 0,
-                 format,
+    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, desc.extents.x, desc.extents.y, 0, format,
                  data_type, NULL);
   }
 

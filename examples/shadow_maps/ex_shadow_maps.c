@@ -41,7 +41,7 @@ int main() {
 
   mesh scene[5];
   for (int i = 0; i < 4; i++) {
-    geometry_data geo = geo_create_cuboid(f32x3(2,2,2));
+    geometry_data geo = geo_create_cuboid(f32x3(2, 2, 2));
     cubes[i] = mesh_create(&geo, true);
   }
 
@@ -81,7 +81,7 @@ int main() {
 
     end_renderpass()
     */
-    
+
     gpu_backend_end_frame();
   }
 

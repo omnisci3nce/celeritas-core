@@ -1,12 +1,12 @@
 /**
  * @file terrain.c
  * @author your name (you@domain.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-06-22
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 #include "terrain.h"
 #include "ral.h"

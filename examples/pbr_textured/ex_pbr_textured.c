@@ -98,7 +98,7 @@ int main() {
     encode_set_default_settings(enc);
 
     theta += 0.01;
-    transform transform = { .position = vec3(0,0,0),
+    transform transform = { .position = vec3(0, 0, 0),
                             .rotation = quat_from_axis_angle(VEC3_Z, theta, true),
                             .scale = 1.0 };
     mat4 model_affine = transform_to_mat(&transform);
