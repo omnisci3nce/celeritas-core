@@ -152,6 +152,11 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depth_attachment->id, 0); 
   }
 
+  if (description->has_depth_stencil && !description->has_color_target) {
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+  }
+
   glBindFramebuffer(GL_FRAMEBUFFER, 0); // reset to default framebuffer
 
   return renderpass;
@@ -336,6 +341,10 @@ texture_handle gpu_texture_create(texture_desc desc, bool create_view, const voi
 
   glBindTexture(GL_TEXTURE_2D, gl_texture_id);
 
+  GLint internal_format = desc.format == CEL_TEXTURE_FORMAT_DEPTH_DEFAULT ?  GL_DEPTH_COMPONENT : GL_RGB;
+  GLenum format = desc.format == CEL_TEXTURE_FORMAT_DEPTH_DEFAULT ? GL_DEPTH_COMPONENT : GL_RGBA;
+  GLenum data_type = desc.format == CEL_TEXTURE_FORMAT_DEPTH_DEFAULT ? GL_FLOAT : GL_UNSIGNED_BYTE;
+
   // set the texture wrapping parameters
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
                   GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
@@ -345,12 +354,15 @@ texture_handle gpu_texture_create(texture_desc desc, bool create_view, const voi
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   if (data) {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, desc.extents.x, desc.extents.y, 0,
-                 GL_RGBA,  // TODO: convert format to GL enum
-                 GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, desc.extents.x, desc.extents.y, 0,
+                 format,
+                 data_type, data);
     glGenerateMipmap(GL_TEXTURE_2D);
   } else {
     WARN("No image data provided");
+    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, desc.extents.x, desc.extents.y, 0,
+                 format,
+                 data_type, NULL);
   }
 
   glBindTexture(GL_TEXTURE_2D, 0);

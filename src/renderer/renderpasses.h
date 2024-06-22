@@ -32,6 +32,6 @@ typedef struct ren_shadowmaps {
 void ren_shadowmaps_init(ren_shadowmaps* storage);
 
 gpu_renderpass* shadowmaps_renderpass_create();
-gpu_pipeline* shadowmaps_pipeline_create();
+gpu_pipeline* shadowmaps_pipeline_create(gpu_renderpass* rpass);
 
 void renderpass_shadowmap_execute(gpu_renderpass* pass, render_entity* entities, size_t entity_count);

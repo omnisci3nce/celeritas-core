@@ -17,6 +17,11 @@ const vec3 pointlight_positions[4] = {
 };
 point_light point_lights[4];
 
+/*
+  TODO:
+- keyboard button to switch between main camera and light camera
+*/
+
 int main() {
   core_bringup();
   arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
@@ -28,8 +33,13 @@ int main() {
   ren_shadowmaps shadows = { .width = 1000, .height = 1000 };
   // ren_shadowmaps_init(&shadows);
 
-  // Meshes
-  mesh cubes[4];
+  // Set up the scene
+  // We want:
+  // 1. a ground plane
+  // 2. lights
+  // 3. some boxes
+
+  mesh scene[5];
   for (int i = 0; i < 4; i++) {
     geometry_data geo = geo_create_cuboid(f32x3(2,2,2));
     cubes[i] = mesh_create(&geo, true);
