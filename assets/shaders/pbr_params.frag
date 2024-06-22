@@ -2,9 +2,9 @@
 
 out vec4 FragColor;
 
-in vec3 fragWorldPos;
-in vec3 fragNormal;
-in vec2 fragTexCoords;
+layout(location = 0) in vec3 fragWorldPos;
+layout(location = 1) in vec3 fragNormal;
+layout(location = 2) in vec2 fragTexCoords;
 
 struct PointLight {
     vec4 position;
@@ -82,7 +82,7 @@ void main() {
    
    FragColor = vec4(color, 1.0);
   // FragColor = vec4(scene.pointLights[0].position);
-  // FragColor = vec4(fragNormal, 1.0);
+  //FragColor = vec4(fragNormal, 1.0);
   // FragColor = vec4(pbr.metallic, pbr.roughness, pbr.ao, 1.0);
   // FragColor = scene.viewPos;
 }
