@@ -18,6 +18,7 @@ Future:
 #include "defines.h"
 #include "maths_types.h"
 #include "mem.h"
+#include "ral.h"
 #include "render.h"
 #include "str.h"
 
@@ -31,6 +32,8 @@ typedef struct heightmap {
 typedef struct terrain_state {
   arena terrain_allocator;
   heightmap* heightmap;  // NULL = no heightmap
+  gpu_renderpass* hmap_renderpass;
+  gpu_pipeline* hmap_pipeline;
 } terrain_state;
 
 bool terrain_system_init(terrain_state* state);
@@ -52,4 +55,4 @@ geometry_data geo_heightmap(arena* a, heightmap heightmap);
 
 // somewhere there will be an easy way to add a heightmap
 
-// scene_add_heightmap
+// TODO: scene_add_heightmap
