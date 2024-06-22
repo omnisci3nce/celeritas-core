@@ -38,10 +38,10 @@ gpu_renderpass* shadowmaps_renderpass_create() {
 }
 
 gpu_pipeline* shadowmaps_pipeline_create() {
-  struct graphics_pipeline_desc desc = {
-    .
-  };
-  gpu_graphics_pipeline_create(struct graphics_pipeline_desc description)
+  // struct graphics_pipeline_desc desc = {
+  //   .
+  // };
+  // gpu_graphics_pipeline_create(struct graphics_pipeline_desc description)
 }
 
 void renderpass_shadowmap_execute(gpu_renderpass* pass, render_entity* entities, size_t entity_count) {

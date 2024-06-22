@@ -4,6 +4,7 @@
 
 #include "defines.h"
 #include "maths_types.h"
+#include "ral.h"
 #include "ral_types.h"
 
 #define MAX_PIPELINE_UNIFORM_BUFFERS 32
@@ -27,13 +28,13 @@ typedef struct gpu_pipeline {
 typedef struct gpu_renderpass {
   u32 fbo;
   gpu_renderpass_desc description;
-  void *pad
+  void *pad;
 } gpu_renderpass;
 typedef struct gpu_cmd_encoder {
   gpu_pipeline *pipeline;
 } gpu_cmd_encoder;  // Recording
 typedef struct gpu_cmd_buffer {
-  void *pad
+  void *pad;
 } gpu_cmd_buffer;  // Ready for submission
 
 typedef struct gpu_buffer {
@@ -50,7 +51,7 @@ typedef struct gpu_buffer {
 } gpu_buffer;
 typedef struct gpu_texture {
   u32 id;
-  void *pad
+  void* pad;
 } gpu_texture;
 
 typedef struct opengl_support {

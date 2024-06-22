@@ -26,7 +26,7 @@ int main() {
   camera cam = camera_create(camera_pos, camera_front, VEC3_Y, deg_to_rad(45.0));
 
   ren_shadowmaps shadows = { .width = 1000, .height = 1000 };
-  ren_shadowmaps_init(&shadows);
+  // ren_shadowmaps_init(&shadows);
 
   // Meshes
   mesh cubes[4];
@@ -54,7 +54,7 @@ int main() {
 
     gpu_cmd_encoder_end_render(enc);
 
-    gpu_cmd_encoder_begin_render(enc, static_opaque_rpass);
+    // gpu_cmd_encoder_begin_render(enc, static_opaque_rpass);
 
     gpu_cmd_encoder_end_render(enc);
     /*

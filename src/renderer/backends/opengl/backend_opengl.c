@@ -172,13 +172,13 @@ gpu_cmd_encoder gpu_cmd_encoder_create() {
 void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder) {}
 void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) {}
 void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass) {
-  glBindFramebuffer(GL_FRAMEBUFFER, renderpass->fbo);
+  // glBindFramebuffer(GL_FRAMEBUFFER, renderpass->fbo);
   rgba clear_colour = STONE_800;
   glClearColor(clear_colour.r, clear_colour.g, clear_colour.b, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder) {
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  // glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 void gpu_cmd_encoder_begin_compute() {}
 gpu_cmd_encoder* gpu_get_default_cmd_encoder() { return &context.command_buffer; }
