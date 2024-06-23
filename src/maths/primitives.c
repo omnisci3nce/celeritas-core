@@ -46,8 +46,10 @@ geometry_data geo_create_plane(f32x2 extents) {
   VERT_3D(vertices, vert_pos[2], VEC3_Y, vec2(0, 1));
   VERT_3D(vertices, vert_pos[3], VEC3_Y, vec2(1, 1));
 
-  push_triangle(indices, 0, 1, 2);
-  push_triangle(indices, 2, 1, 3);
+  /* push_triangle(indices, 0, 1, 2); */
+  /* push_triangle(indices, 2, 1, 3); */
+  push_triangle(indices, 2, 1, 0);
+  push_triangle(indices, 3, 1, 2);
 
   geometry_data geo = { .format = VERTEX_STATIC_3D,
                         .vertices = vertices,

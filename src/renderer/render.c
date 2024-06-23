@@ -62,7 +62,7 @@ bool renderer_init(renderer* ren) {
   resource_pools_init(&pool_arena, ren->resource_pools);
 
   // Create default rendering pipeline
-  /* default_pipelines_init(ren); */
+  default_pipelines_init(ren);
 
   return true;
 }

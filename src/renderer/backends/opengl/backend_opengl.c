@@ -153,8 +153,8 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
   }
   if (description->has_depth_stencil) {
     gpu_texture* depth_attachment = TEXTURE_GET(description->depth_stencil);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
-                           depth_attachment->id, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_attachment->id,
+                           0);
   }
 
   if (description->has_depth_stencil && !description->has_color_target) {
@@ -192,9 +192,7 @@ void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* rend
     glClear(GL_COLOR_BUFFER_BIT);
   }
 }
-void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder) {
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
+void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder) { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 void gpu_cmd_encoder_begin_compute() {}
 gpu_cmd_encoder* gpu_get_default_cmd_encoder() { return &context.command_buffer; }
 
@@ -238,7 +236,7 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
 
   for (u32 i = 0; i < sdl.bindings_count; i++) {
     shader_binding binding = sdl.bindings[i];
-    print_shader_binding(binding);
+    /* print_shader_binding(binding); */
 
     if (binding.type == SHADER_BINDING_BYTES) {
       buffer_handle b;
@@ -270,8 +268,9 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
     } else if (binding.type == SHADER_BINDING_TEXTURE) {
       gpu_texture* tex = TEXTURE_GET(binding.data.texture.handle);
       GLint tex_slot = glGetUniformLocation(encoder->pipeline->shader_id, binding.label);
+      printf("%d slot \n", tex_slot);
       if (tex_slot == GL_INVALID_VALUE || tex_slot < 0) {
-        WARN("Invalid binding label for texture - couldn't fetch texture slot uniform");
+        WARN("Invalid binding label for texture %s - couldn't fetch texture slot uniform", binding.label);
       }
       glUniform1i(tex_slot, i);
       glActiveTexture(GL_TEXTURE0 + i);
@@ -294,6 +293,7 @@ void encode_set_index_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {
 }
 void encode_draw(gpu_cmd_encoder* encoder, u64 count) { glDrawArrays(GL_TRIANGLES, 0, count); }
 void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count) {
+  /* printf("Draw %ld indices\n", index_count); */
   glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0);
 }
 void encode_clear_buffer(gpu_cmd_encoder* encoder, buffer_handle buf) {}
@@ -408,10 +408,11 @@ void gpu_texture_upload(texture_handle texture, const void* data) {}
 bytebuffer vertices_as_bytebuffer(arena* a, vertex_format format, vertex_darray* vertices) {}
 
 // --- TEMP
-bool gpu_backend_begin_frame() { 
-   glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  return true; }
+bool gpu_backend_begin_frame() {
+  glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  return true;
+}
 void gpu_backend_end_frame() {
   // TODO: Reset all bindings
   glfwSwapBuffers(context.window);
