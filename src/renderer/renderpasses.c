@@ -25,26 +25,26 @@ shader_data_layout debug_quad_layout(void* data) {
 
   shader_binding b1 = { .label = "depthMap",
                         .type = SHADER_BINDING_TEXTURE,
-                        .stores_data = has_data};
+                        .stores_data = has_data };
   if (has_data) {
     b1.data.texture.handle = d->depthMap;
   }
-  return (shader_data_layout){ .name = "debug quad uniforms", .bindings = { b1 }, .bindings_count = 1 };
+  return (
+      shader_data_layout){ .name = "debug quad uniforms", .bindings = { b1 }, .bindings_count = 1 };
 }
 
 gpu_pipeline* debug_quad_pipeline_create() {
-  gpu_renderpass_desc rpass_desc = {.default_framebuffer = true };
+  gpu_renderpass_desc rpass_desc = { .default_framebuffer = true };
   gpu_renderpass* rpass = gpu_renderpass_create(&rpass_desc);
-  shader_data shader_layout = {.data = NULL, .shader_data_get_layout = debug_quad_layout};
-  struct graphics_pipeline_desc desc = {
-    .debug_name = "Shadow maps debug quad",
-    .vertex_desc = static_3d_vertex_description(),
-    .data_layouts = { shader_layout },
-    .data_layouts_count = 1,
-    .vs = shader_quick_load("assets/shaders/debug_quad.vert"),
-    .fs = shader_quick_load("assets/shaders/debug_quad.frag"),
-    .renderpass = rpass,
-  };
+  shader_data shader_layout = { .data = NULL, .shader_data_get_layout = debug_quad_layout };
+  struct graphics_pipeline_desc desc = { .debug_name = "Shadow maps debug quad",
+                                         .vertex_desc = static_3d_vertex_description(),
+                                         .data_layouts = { shader_layout },
+                                         .data_layouts_count = 1,
+                                         .vs = shader_quick_load("assets/shaders/debug_quad.vert"),
+                                         .fs = shader_quick_load("assets/shaders/debug_quad.frag"),
+                                         .renderpass = rpass,
+                                         .wireframe = false };
 
   return gpu_graphics_pipeline_create(desc);
 }

@@ -2,6 +2,7 @@
 #include "maths.h"
 #include "maths_types.h"
 #include "primitives.h"
+#include "log.h"
 #include "ral.h"
 #include "ral_types.h"
 #include "render.h"
@@ -21,14 +22,96 @@ transform s_transforms[5];
 */
 
 void draw_scene();
+void switch_view();
+
+enum active_view {
+  SceneView,
+  LightView,
+  DebugQuad,
+};
+
+// Define the shader data
+typedef struct mvp_uniforms {
+  mat4 model;
+  mat4 view;
+  mat4 projection;
+} mvp_uniforms;
+typedef struct my_shader_bind_group {
+  mvp_uniforms mvp;
+  texture_handle tex;
+} my_shader_bind_group;
+
+// We also must create a function that knows how to return a `shader_data_layout`
+shader_data_layout mvp_uniforms_layout(void* data) {
+  my_shader_bind_group* d = (my_shader_bind_group*)data;
+  bool has_data = data != NULL;
+
+  shader_binding b1 = { .label = "Matrices",
+                        .type = SHADER_BINDING_BYTES,
+                        .stores_data = has_data,
+                        .data = { .bytes = { .size = sizeof(mvp_uniforms) } } };
+
+  shader_binding b2 = { .label = "texSampler",
+                        .type = SHADER_BINDING_TEXTURE,
+                        .stores_data = has_data };
+  if (has_data) {
+    b1.data.bytes.data = &d->mvp;
+    b2.data.texture.handle = d->tex;
+  }
+  return (shader_data_layout){ .name = "global_ubo", .bindings = { b1, b2 }, .bindings_count = 2 };
+}
 
 int main() {
   core_bringup();
   arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
 
-  vec3 camera_pos = vec3(2., 2., 2.);
+  vec3 camera_pos = vec3(5,5,5);
   vec3 camera_front = vec3_normalise(vec3_negate(camera_pos));
   camera cam = camera_create(camera_pos, camera_front, VEC3_Y, deg_to_rad(45.0));
+  // TEMP
+  shader_data mvp_uniforms_data = { .data = NULL, .shader_data_get_layout = &mvp_uniforms_layout };
+
+  gpu_renderpass_desc pass_description = { .default_framebuffer = true };
+  gpu_renderpass* renderpass = gpu_renderpass_create(&pass_description);
+
+  str8 vert_path, frag_path;
+#ifdef CEL_REND_BACKEND_OPENGL
+  vert_path = str8lit("assets/shaders/cube.vert");
+  frag_path = str8lit("assets/shaders/cube.frag");
+#else
+  vert_path = str8lit("build/linux/x86_64/debug/cube.vert.spv");
+  frag_path = str8lit("build/linux/x86_64/debug/cube.frag.spv");
+#endif
+  str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
+  str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
+  if (!vertex_shader.has_value || !fragment_shader.has_value) {
+    ERROR_EXIT("Failed to load shaders from disk")
+  }
+
+  struct graphics_pipeline_desc pipeline_description = {
+    .debug_name = "Basic Pipeline",
+    .vertex_desc = static_3d_vertex_description(),
+    .data_layouts = { mvp_uniforms_data },
+    .data_layouts_count = 1,
+    .vs = { .debug_name = "Cube Vertex Shader",
+            .filepath = vert_path,
+            .code = vertex_shader.contents,
+            .is_spirv = true },
+    .fs = { .debug_name = "Cube Fragment Shader",
+            .filepath = frag_path,
+            .code = fragment_shader.contents,
+            .is_spirv = true },
+    .renderpass = renderpass,
+    .wireframe = false,
+    .depth_test = false
+  };
+  gpu_pipeline* gfx_pipeline = gpu_graphics_pipeline_create(pipeline_description);
+
+  // Texture
+  texture_data tex_data = texture_data_load("assets/textures/texture.jpg", false);
+  texture_handle texture = texture_data_upload(tex_data, true);
+
+  // END TEMP
 
   ren_shadowmaps shadows = { .width = 1000, .height = 1000 };
   ren_shadowmaps_init(&shadows);
@@ -39,14 +122,14 @@ int main() {
   // 2. lights
   // 3. some boxes
   for (int i = 0; i < 4; i++) {
-    geometry_data geo = geo_create_cuboid(f32x3(2, 2, 2));
+    geometry_data geo = geo_create_cuboid(f32x3(1,1,1));
     s_scene[i] = mesh_create(&geo, true);
-    s_transforms[i] = transform_create(vec3(4 * i, 0, 0), quat_ident(), 1.0);
+    s_transforms[i] = transform_create(vec3(-2 + (i * 1.2), 0, 0), quat_ident(), 1.0);
   }
   geometry_data plane = geo_create_plane(f32x2(20, 20));
   s_scene[4] = mesh_create(&plane, true);
 
-  geometry_data quad_geo = geo_create_plane(f32x2(2,2));
+  geometry_data quad_geo = geo_create_plane(f32x2(2, 2));
   mesh quad = mesh_create(&quad_geo, true);
 
   shader_data model_data = { .data = NULL, .shader_data_get_layout = &model_uniform_layout };
@@ -61,7 +144,9 @@ int main() {
       continue;
     }
     gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
+    gpu_cmd_encoder_begin(*enc);
 
+    // Shadow draw
     gpu_cmd_encoder_begin_render(enc, shadows.rpass);
 
     // calculations
@@ -79,22 +164,49 @@ int main() {
     draw_scene();
 
     gpu_cmd_encoder_end_render(enc);
+    // End
 
+    // Debug quad
     gpu_cmd_encoder_begin_render(enc, shadows.debug_quad->renderpass);
+
     encode_bind_pipeline(enc, PIPELINE_GRAPHICS, shadows.debug_quad);
-    debug_quad_uniform dqu = {.depthMap = shadows.depth_tex};
-    shader_data debug_quad_data = { .data = &dqu, .shader_data_get_layout = debug_quad_layout};
+    debug_quad_uniform dqu = { .depthMap = shadows.depth_tex };
+    shader_data debug_quad_data = { .data = &dqu, .shader_data_get_layout = debug_quad_layout };
     encode_bind_shader_data(enc, 0, &debug_quad_data);
     encode_set_vertex_buffer(enc, quad.vertex_buffer);
     encode_set_index_buffer(enc, quad.index_buffer);
     encode_draw_indexed(enc, quad.geometry->indices->len);
 
     gpu_cmd_encoder_end_render(enc);
+    // End
 
     // gpu_cmd_encoder_begin_render(enc, static_opaque_rpass);
 
     // gpu_cmd_encoder_end_render(enc);
 
+
+    /* gpu_cmd_encoder_begin_render(enc, renderpass); */
+    /* encode_bind_pipeline(enc, PIPELINE_GRAPHICS, gfx_pipeline); */
+
+    /* mat4 view, proj; */
+    /* camera_view_projection(&cam, 1000, 1000, */
+    /*                        &view, &proj); */
+    /* for (int i = 0; i < 4; i++) { */
+    /*   mat4 model = transform_to_mat(&s_transforms[i]); */
+    /*   mvp_uniforms mvp_data = { .model = model, .view = view, .projection = proj }; */
+    /*   my_shader_bind_group shader_bind_data = { .mvp = mvp_data, .tex = texture }; */
+    /*   mvp_uniforms_data.data = &shader_bind_data; */
+    /*   encode_bind_shader_data(enc, 0, &mvp_uniforms_data); */
+    /*   encode_set_vertex_buffer(enc, s_scene[i].vertex_buffer); */
+    /*   encode_set_index_buffer(enc, s_scene[i].index_buffer); */
+    /*   encode_draw_indexed(enc, s_scene[i].geometry->indices->len); */
+    /* } */
+
+    /* gpu_cmd_encoder_end_render(enc); */
+
+    // END drawing
+    gpu_cmd_buffer buf = gpu_cmd_encoder_finish(enc);
+    gpu_queue_submit(&buf);
     gpu_backend_end_frame();
   }
 
@@ -105,8 +217,9 @@ int main() {
 
 void draw_scene() {
   gpu_cmd_encoder* enc = gpu_get_default_cmd_encoder();
-  for (int i = 0; i < 5; i++) {
-    model_uniform mu = { .model = transform_to_mat(&s_transforms[i]) };
+  for (int i = 0; i < 4; i++) { //FIXME: draw plane as well
+    mat4 model =  transform_to_mat(&s_transforms[i]) ;
+    model_uniform mu = { .model = model};
     shader_data model_data = { .data = &mu, .shader_data_get_layout = model_uniform_layout };
     encode_bind_shader_data(enc, 0, &model_data);
     encode_set_vertex_buffer(enc, s_scene[i].vertex_buffer);

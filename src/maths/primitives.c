@@ -5,6 +5,7 @@
 #include "ral_types.h"
 #include "render_types.h"
 
+// --- Helpers
 #define VERT_3D(arr, pos, norm, uv)                                                    \
   {                                                                                    \
     vertex v = { .static_3d = { .position = pos, .normal = norm, .tex_coords = uv } }; \
@@ -21,13 +22,8 @@ void push_triangle(u32_darray* arr, u32 i0, u32 i1, u32 i2) {
 void geo_free_data(geometry_data* geo) {
   vertex_darray_free(geo->vertices);
   geo->vertices = NULL;
-  // TODO: do indices as well
-  /* if (geo->has_indices) { */
-  /*   u32_darray_free(&geo->indices); */
-  /* } */
 }
 
-// vertices
 vec3 plane_vertex_positions[] = {
   (vec3){ -0.5, 0, -0.5 },
   (vec3){ 0.5, 0, -0.5 },
@@ -50,8 +46,8 @@ geometry_data geo_create_plane(f32x2 extents) {
   VERT_3D(vertices, vert_pos[2], VEC3_Y, vec2(0, 1));
   VERT_3D(vertices, vert_pos[3], VEC3_Y, vec2(1, 1));
 
-  push_triangle(indices, 2, 1, 0);
-  push_triangle(indices, 1, 2, 3);
+  push_triangle(indices, 0, 1, 2);
+  push_triangle(indices, 2, 1, 3);
 
   geometry_data geo = { .format = VERTEX_STATIC_3D,
                         .vertices = vertices,
@@ -61,8 +57,6 @@ geometry_data geo_create_plane(f32x2 extents) {
 
   return geo;
 }
-
-// OLD
 
 static const vec3 BACK_BOT_LEFT = (vec3){ 0, 0, 0 };
 static const vec3 BACK_BOT_RIGHT = (vec3){ 1, 0, 0 };
@@ -74,7 +68,6 @@ static const vec3 FRONT_TOP_LEFT = (vec3){ 0, 1, 1 };
 static const vec3 FRONT_TOP_RIGHT = (vec3){ 1, 1, 1 };
 
 geometry_data geo_create_cuboid(f32x3 extents) {
-  /* static mesh prim_cube_mesh_create() { */
   vertex_darray* vertices = vertex_darray_new(36);
 
   // back faces
@@ -141,19 +134,6 @@ geometry_data geo_create_cuboid(f32x3 extents) {
 
   return geo;
 }
-
-/* /\** @brief create a new model with the shape of a cube *\/ */
-/* static model_handle prim_cube_new(core* core) { */
-/*   model model = { 0 }; */
-/*   mesh cube = prim_cube_mesh_create(); */
-
-/*   mesh_darray_push(model.meshes, cube); */
-/*   assert(mesh_darray_len(model.meshes) == 1); */
-
-/*   u32 index = (u32)model_darray_len(core->models); */
-/*   model_darray_push_copy(core->models, &model); */
-/*   return (model_handle){ .raw = index }; */
-/* } */
 
 // --- Spheres
 
@@ -250,10 +230,6 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
       /*       vertices->data[i2].static_3d.position.z); */
       push_triangle(indices, i1, i2, i3);
     }
-  }
-
-  for (int i = 0; i < vertices->len; i++) {
-    // print_vec3(vertices->data[i].static_3d.normal);
   }
 
   geometry_data geo = {

@@ -46,7 +46,7 @@ shader_data_layout mvp_uniforms_layout(void* data) {
                         .stores_data = has_data,
                         .data = { .bytes = { .size = sizeof(mvp_uniforms) } } };
 
-  shader_binding b2 = { .label = "texture_sampler",
+  shader_binding b2 = { .label = "texSampler",
                         .type = SHADER_BINDING_TEXTURE,
                         .stores_data = has_data };
   if (has_data) {
@@ -75,7 +75,7 @@ int main() {
 
   shader_data mvp_uniforms_data = { .data = NULL, .shader_data_get_layout = &mvp_uniforms_layout };
 
-  gpu_renderpass_desc pass_description = {};
+  gpu_renderpass_desc pass_description = { .default_framebuffer = true };
   gpu_renderpass* renderpass = gpu_renderpass_create(&pass_description);
 
   str8 vert_path, frag_path;

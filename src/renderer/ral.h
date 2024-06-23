@@ -77,6 +77,8 @@ typedef struct shader_desc {
 } shader_desc;
 
 shader_desc shader_quick_load(const char* filepath);
+/** @brief Hot reloads shaders for the given pipeline. Returns how long it took in milliseconds */
+u64 gpu_pipeline_reload_shaders(gpu_pipeline* pipeline); // TODO
 
 struct graphics_pipeline_desc {
   const char* debug_name;

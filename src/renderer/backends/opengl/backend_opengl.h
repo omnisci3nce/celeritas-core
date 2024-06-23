@@ -24,12 +24,12 @@ typedef struct gpu_pipeline {
   gpu_renderpass* renderpass;
   vertex_description vertex_desc;
   buffer_handle uniform_bindings[MAX_PIPELINE_UNIFORM_BUFFERS];
+  u32 uniform_count;
   bool wireframe;
 } gpu_pipeline;
 typedef struct gpu_renderpass {
   u32 fbo;
   gpu_renderpass_desc description;
-  void *pad;
 } gpu_renderpass;
 typedef struct gpu_cmd_encoder {
   gpu_pipeline *pipeline;
@@ -48,6 +48,7 @@ typedef struct gpu_buffer {
     u32 vao;
     u32 ubo_binding_point
   }; // Optional
+  char* name;
   u64 size;
 } gpu_buffer;
 typedef struct gpu_texture {

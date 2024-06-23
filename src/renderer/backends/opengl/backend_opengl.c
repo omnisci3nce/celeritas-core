@@ -70,7 +70,6 @@ void gpu_device_destroy() { /* No-op in OpenGL */ }
 
 // --- Render Pipeline
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {
-  static u32 ubo_count = 0;
   gpu_pipeline* pipeline = pipeline_pool_alloc(&context.gpu_pools.pipelines, NULL);
 
   // Create shader program
@@ -81,6 +80,7 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
   pipeline->vertex_desc = description.vertex_desc;
 
   // Allocate uniform buffers if needed
+  u32 ubo_count = 0;
   // printf("data layouts %d\n", description.data_layouts_count);
   for (u32 layout_i = 0; layout_i < description.data_layouts_count; layout_i++) {
     shader_data_layout sdl = description.data_layouts[layout_i].shader_data_get_layout(NULL);
@@ -95,11 +95,11 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
         buffer_handle ubo_handle =
             gpu_buffer_create(binding.data.bytes.size, CEL_BUFFER_UNIFORM, CEL_BUFFER_FLAG_GPU,
                               NULL);  // no data right now
-        pipeline->uniform_bindings[binding_id] = ubo_handle;
+        pipeline->uniform_bindings[ubo_count++] = ubo_handle;
         gpu_buffer* ubo_buf = BUFFER_GET(ubo_handle);
 
         i32 blockIndex = glGetUniformBlockIndex(pipeline->shader_id, binding.label);
-        printf("Block index for Matrices: %d", blockIndex);
+        printf("Block index for %s: %d", binding.label, blockIndex);
         if (blockIndex < 0) {
           WARN("Couldn't retrieve block index for uniform block '%s'", binding.label);
         } else {
@@ -115,10 +115,12 @@ gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc descrip
           glUniformBlockBinding(pipeline->shader_id, blockIndex, s_binding_point);
         }
         ubo_buf->ubo_binding_point = s_binding_point++;
+        ubo_buf->name = binding.label;
         assert(s_binding_point < GL_MAX_UNIFORM_BUFFER_BINDINGS);
       }
     }
   }
+  pipeline->uniform_count = ubo_count;
 
   pipeline->renderpass = description.renderpass;
   pipeline->wireframe = description.wireframe;
@@ -151,7 +153,7 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
   }
   if (description->has_depth_stencil) {
     gpu_texture* depth_attachment = TEXTURE_GET(description->depth_stencil);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D,
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
                            depth_attachment->id, 0);
   }
 
@@ -178,13 +180,20 @@ gpu_cmd_encoder gpu_cmd_encoder_create() {
 void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder) {}
 void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) {}
 void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass) {
-  // glBindFramebuffer(GL_FRAMEBUFFER, renderpass->fbo);
+  glViewport(0, 0, 1000, 1000);
+  glBindFramebuffer(GL_FRAMEBUFFER, renderpass->fbo);
   rgba clear_colour = STONE_800;
-  glClearColor(clear_colour.r, clear_colour.g, clear_colour.b, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  /* glClearColor(clear_colour.r, clear_colour.g, clear_colour.b, 1.0f); */
+  /* glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); */
+  // FIXME: account for both
+  if (renderpass->description.has_depth_stencil) {
+    glClear(GL_DEPTH_BUFFER_BIT);
+  } else {
+    glClear(GL_COLOR_BUFFER_BIT);
+  }
 }
 void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder) {
-  // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 void gpu_cmd_encoder_begin_compute() {}
 gpu_cmd_encoder* gpu_get_default_cmd_encoder() { return &context.command_buffer; }
@@ -229,11 +238,24 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
 
   for (u32 i = 0; i < sdl.bindings_count; i++) {
     shader_binding binding = sdl.bindings[i];
-    // print_shader_binding(binding);
+    print_shader_binding(binding);
 
     if (binding.type == SHADER_BINDING_BYTES) {
-      buffer_handle b = encoder->pipeline->uniform_bindings[i];
-      gpu_buffer* ubo_buf = BUFFER_GET(b);
+      buffer_handle b;
+      gpu_buffer* ubo_buf;
+      bool found = false;
+      for (u32 i = 0; i < encoder->pipeline->uniform_count; i++) {
+        b = encoder->pipeline->uniform_bindings[i];
+        ubo_buf = BUFFER_GET(b);
+        assert(ubo_buf->name != NULL);
+        if (strcmp(ubo_buf->name, binding.label) == 0) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        ERROR("Couldnt find uniform buffer object!!");
+      }
 
       i32 blockIndex = glGetUniformBlockIndex(encoder->pipeline->shader_id, binding.label);
       if (blockIndex < 0) {
@@ -247,7 +269,10 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
 
     } else if (binding.type == SHADER_BINDING_TEXTURE) {
       gpu_texture* tex = TEXTURE_GET(binding.data.texture.handle);
-      GLuint tex_slot = glGetUniformLocation(encoder->pipeline->shader_id, binding.label);
+      GLint tex_slot = glGetUniformLocation(encoder->pipeline->shader_id, binding.label);
+      if (tex_slot == GL_INVALID_VALUE || tex_slot < 0) {
+        WARN("Invalid binding label for texture - couldn't fetch texture slot uniform");
+      }
       glUniform1i(tex_slot, i);
       glActiveTexture(GL_TEXTURE0 + i);
       glBindTexture(GL_TEXTURE_2D, tex->id);
@@ -347,13 +372,19 @@ texture_handle gpu_texture_create(texture_desc desc, bool create_view, const voi
   GLenum format = desc.format == CEL_TEXTURE_FORMAT_DEPTH_DEFAULT ? GL_DEPTH_COMPONENT : GL_RGBA;
   GLenum data_type = desc.format == CEL_TEXTURE_FORMAT_DEPTH_DEFAULT ? GL_FLOAT : GL_UNSIGNED_BYTE;
 
-  // set the texture wrapping parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                  GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  // set texture filtering parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  /* // set the texture wrapping parameters */
+  /* glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, */
+  /*                 GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method) */
+  /* glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); */
+  /* // set texture filtering parameters */
+  /* glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); */
+  /* glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); */
+
+  // TEMP
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
   if (data) {
     glTexImage2D(GL_TEXTURE_2D, 0, internal_format, desc.extents.x, desc.extents.y, 0, format,
@@ -377,7 +408,10 @@ void gpu_texture_upload(texture_handle texture, const void* data) {}
 bytebuffer vertices_as_bytebuffer(arena* a, vertex_format format, vertex_darray* vertices) {}
 
 // --- TEMP
-bool gpu_backend_begin_frame() { return true; }
+bool gpu_backend_begin_frame() { 
+   glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  return true; }
 void gpu_backend_end_frame() {
   // TODO: Reset all bindings
   glfwSwapBuffers(context.window);

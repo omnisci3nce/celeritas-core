@@ -1,8 +1,8 @@
 #include "ral.h"
 #include "file.h"
 #include "log.h"
-#include "str.h"
 #include "mem.h"
+#include "str.h"
 
 #if defined(CEL_REND_BACKEND_VULKAN)
 #include "backend_vulkan.h"
@@ -88,7 +88,7 @@ shader_desc shader_quick_load(const char* filepath) {
     ERROR_EXIT("Failed to load shaders from disk");
   }
 
-  return (shader_desc) {
+  return (shader_desc){
     .debug_name = filepath,
     .code = shader.contents,
     .filepath = path,
