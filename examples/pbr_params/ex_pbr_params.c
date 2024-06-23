@@ -50,7 +50,7 @@ int main() {
   shader_data pbr_uniforms = { .data = NULL, .shader_data_get_layout = &pbr_params_shader_layout };
 
   // Make the pipeline
-  gpu_renderpass_desc pass_description = {};
+  gpu_renderpass_desc pass_description = { .default_framebuffer = true, .color_target = true };
   gpu_renderpass* renderpass = gpu_renderpass_create(&pass_description);
   // FIXME: Make this work on other API backends
   str8 vert_path = str8lit("assets/shaders/pbr_params.vert");

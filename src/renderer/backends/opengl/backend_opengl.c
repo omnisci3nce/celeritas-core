@@ -132,10 +132,10 @@ void gpu_pipeline_destroy(gpu_pipeline* pipeline) {}
 // --- Renderpass
 gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
   gpu_renderpass* renderpass = renderpass_pool_alloc(&context.gpu_pools.renderpasses, NULL);
-
   memcpy(&renderpass->description, description, sizeof(gpu_renderpass_desc));
+  bool default_framebuffer = description->default_framebuffer;
 
-  if (!description->default_framebuffer) {
+  if (!default_framebuffer) {
     GLuint gl_fbo_id;
     glGenFramebuffers(1, &gl_fbo_id);
     renderpass->fbo = gl_fbo_id;
@@ -146,12 +146,12 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
   }
   glBindFramebuffer(GL_FRAMEBUFFER, renderpass->fbo);
 
-  if (description->has_color_target) {
+  if (description->has_color_target && !default_framebuffer) {
     gpu_texture* colour_attachment = TEXTURE_GET(description->color_target);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
                            colour_attachment->id, 0);
   }
-  if (description->has_depth_stencil) {
+  if (description->has_depth_stencil && !default_framebuffer) {
     gpu_texture* depth_attachment = TEXTURE_GET(description->depth_stencil);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_attachment->id,
                            0);
@@ -180,16 +180,16 @@ gpu_cmd_encoder gpu_cmd_encoder_create() {
 void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder) {}
 void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) {}
 void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass) {
-  glViewport(0, 0, 1000, 1000);
+  // glViewport(0, 0, 1000, 1000);
   glBindFramebuffer(GL_FRAMEBUFFER, renderpass->fbo);
   rgba clear_colour = STONE_800;
-  /* glClearColor(clear_colour.r, clear_colour.g, clear_colour.b, 1.0f); */
+  glClearColor(clear_colour.r, clear_colour.g, clear_colour.b, 1.0f);
   /* glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); */
   // FIXME: account for both
   if (renderpass->description.has_depth_stencil) {
     glClear(GL_DEPTH_BUFFER_BIT);
   } else {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 }
 void gpu_cmd_encoder_end_render(gpu_cmd_encoder* encoder) { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
@@ -268,9 +268,10 @@ void encode_bind_shader_data(gpu_cmd_encoder* encoder, u32 group, shader_data* d
     } else if (binding.type == SHADER_BINDING_TEXTURE) {
       gpu_texture* tex = TEXTURE_GET(binding.data.texture.handle);
       GLint tex_slot = glGetUniformLocation(encoder->pipeline->shader_id, binding.label);
-      printf("%d slot \n", tex_slot);
+      // printf("%d slot \n", tex_slot);
       if (tex_slot == GL_INVALID_VALUE || tex_slot < 0) {
-        WARN("Invalid binding label for texture %s - couldn't fetch texture slot uniform", binding.label);
+        WARN("Invalid binding label for texture %s - couldn't fetch texture slot uniform",
+             binding.label);
       }
       glUniform1i(tex_slot, i);
       glActiveTexture(GL_TEXTURE0 + i);
@@ -372,19 +373,20 @@ texture_handle gpu_texture_create(texture_desc desc, bool create_view, const voi
   GLenum format = desc.format == CEL_TEXTURE_FORMAT_DEPTH_DEFAULT ? GL_DEPTH_COMPONENT : GL_RGBA;
   GLenum data_type = desc.format == CEL_TEXTURE_FORMAT_DEPTH_DEFAULT ? GL_FLOAT : GL_UNSIGNED_BYTE;
 
-  /* // set the texture wrapping parameters */
-  /* glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, */
-  /*                 GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method) */
-  /* glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); */
-  /* // set texture filtering parameters */
-  /* glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); */
-  /* glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); */
-
-  // TEMP
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  if (desc.format == CEL_TEXTURE_FORMAT_DEPTH_DEFAULT) {
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  } else {
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                    GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  }
 
   if (data) {
     glTexImage2D(GL_TEXTURE_2D, 0, internal_format, desc.extents.x, desc.extents.y, 0, format,

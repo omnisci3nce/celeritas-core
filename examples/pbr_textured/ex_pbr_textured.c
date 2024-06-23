@@ -45,7 +45,7 @@ int main() {
                                .shader_data_get_layout = &pbr_textured_shader_layout };
 
   // Make the pipeline
-  gpu_renderpass_desc pass_description = {};
+  gpu_renderpass_desc pass_description = { .default_framebuffer = true, .color_target = true };
   gpu_renderpass* renderpass = gpu_renderpass_create(&pass_description);
   str8 vert_path = str8lit("assets/shaders/pbr_textured.vert");
   str8 frag_path = str8lit("assets/shaders/pbr_textured.frag");
@@ -56,7 +56,7 @@ int main() {
   }
 
   struct graphics_pipeline_desc pipeline_description = {
-    .debug_name = "Basic Pipeline",
+    .debug_name = "PBR Pipeline",
     .vertex_desc = static_3d_vertex_description(),
     .data_layouts = { pbr_uniforms },
     .data_layouts_count = 1,
