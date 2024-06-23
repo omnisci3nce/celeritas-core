@@ -73,8 +73,6 @@ buffer_handle buffer_create(const char* debug_name, u64 size);
 bool buffer_destroy(buffer_handle buffer);
 sampler_handle sampler_create();
 
-void shader_hot_reload(const char* filepath);
-
 // models and meshes are implemented **in terms of the above**
 
 /**
@@ -86,6 +84,7 @@ void shader_hot_reload(const char* filepath);
  * @return mesh
  */
 mesh mesh_create(geometry_data* geometry, bool free_on_upload);
+void mesh_delete(mesh* mesh); // TODO
 
 void draw_mesh(mesh* mesh, mat4* model, camera* cam);
 
