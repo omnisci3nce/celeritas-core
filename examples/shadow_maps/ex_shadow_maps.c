@@ -110,7 +110,7 @@ int main() {
   texture_data tex_data = texture_data_load("assets/textures/texture.jpg", false);
   texture_handle texture = texture_data_upload(tex_data, true);
   texture_handle white_tex =
-      texture_data_upload(texture_data_load("assets/textures/white1x1.png", false), true);
+      texture_data_upload(texture_data_load("assets/models/obj/cube/container.jpg", false), true);
 
   // END TEMP
 
