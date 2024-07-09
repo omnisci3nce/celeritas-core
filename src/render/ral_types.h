@@ -26,17 +26,6 @@ CORE_DEFINE_HANDLE(pipeline_handle);
 CORE_DEFINE_HANDLE(renderpass_handle);
 #define ABSENT_MODEL_HANDLE 999999999
 
-/* #define RENDERER_TYPED_HANDLES */
-/* #endif */
-
-/* typedef struct gpu_buffer { */
-/* u32 a; */
-/* } gpu_buffer; */
-
-/* #ifndef RAL_TYPED_POOLS */
-/* #define RAL_TYPED_POOLS */
-/* #endif */
-
 // gpu types
 typedef enum gpu_primitive_topology {
   CEL_PRIMITIVE_TOPOLOGY_POINT,
