@@ -38,7 +38,7 @@ _Static_assert(sizeof(i64) == 8, "type i64 should be 8 byte");
 _Static_assert(sizeof(f32) == 4, "type f32 should be 4 bytes");
 _Static_assert(sizeof(f64) == 8, "type f64 should be 8 bytes");
 
-_Static_assert(sizeof(ptrdiff_t) == 8, "");
+_Static_assert(sizeof(ptrdiff_t) == 8, "type ptrdiff_t should be 8 bytes");
 
 #define alignof(x) _Alignof(x)
 
@@ -48,6 +48,10 @@ _Static_assert(sizeof(ptrdiff_t) == 8, "");
   struct name {                  \
     u32 raw;                     \
   }
+
+CORE_DEFINE_HANDLE(Handle); // Untyped handle that can be casted to a strongly typed resource handle
+
+#define PUB // For collecting public APIs to expose in an amalgamation header file
 
 /*
 Possible platform defines:

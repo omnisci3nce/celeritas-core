@@ -4,10 +4,11 @@
 #include "ral_types.h"
 #include "ral_impl.h"
 
-CORE_DEFINE_HANDLE(buffer_handle);
-CORE_DEFINE_HANDLE(texture_handle);
-CORE_DEFINE_HANDLE(sampler_handle);
-CORE_DEFINE_HANDLE(shader_handle);
+CORE_DEFINE_HANDLE(BufferHandle);
+CORE_DEFINE_HANDLE(TextureHandle);
+CORE_DEFINE_HANDLE(SamplerHandle);
+CORE_DEFINE_HANDLE(ShaderHandle);
+
 CORE_DEFINE_HANDLE(pipeline_layout_handle);
 CORE_DEFINE_HANDLE(pipeline_handle);
 CORE_DEFINE_HANDLE(renderpass_handle);
@@ -18,7 +19,7 @@ CORE_DEFINE_HANDLE(renderpass_handle);
 #define MAX_PIPELINES 128
 #define MAX_RENDERPASSES 128
 
-TYPED_POOL(gpu_buffer, buffer);
+TYPED_POOL(GPU_Buffer, Buffer);
 TYPED_POOL(gpu_texture, texture);
 TYPED_POOL(gpu_pipeline_layout, pipeline_layout);
 TYPED_POOL(gpu_pipeline, pipeline);

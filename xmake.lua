@@ -60,6 +60,8 @@ local core_sources = {
     "src/maths/*.c",
     "src/platform/*.c",
     "src/physics/*.c",
+    "src/ral/*.c",
+    "src/ral/backends/opengl/*.c",
     "src/renderer/*.c",
     "src/renderer/backends/*.c",
     "src/renderer/backends/opengl/*.c",
@@ -112,10 +114,11 @@ target("core_config")
     add_includedirs("src/maths/", {public = true})
     add_includedirs("src/platform/", {public = true})
     add_includedirs("src/physics/", {public = true})
-    add_includedirs("src/renderer/", {public = true})
-    add_includedirs("src/renderer/backends/", {public = true})
-    add_includedirs("src/renderer/backends/opengl", {public = true})
-    add_includedirs("src/renderer/backends/metal", {public = true})
+    add_includedirs("src/ral", {public = true})
+    -- add_includedirs("src/renderer/", {public = true})
+    -- add_includedirs("src/renderer/backends/", {public = true})
+    -- add_includedirs("src/renderer/backends/opengl", {public = true})
+    -- add_includedirs("src/renderer/backends/metal", {public = true})
     add_includedirs("src/resources/", {public = true})
     add_includedirs("src/std/", {public = true})
     add_includedirs("src/std/containers", {public = true})

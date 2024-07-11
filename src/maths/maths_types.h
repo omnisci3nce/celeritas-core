@@ -22,54 +22,54 @@
 // --- Types
 
 /** @brief 2D Vector */
-typedef struct vec2 {
+typedef struct Vec2 {
   f32 x, y;
-} vec2;
+} Vec2;
 
 /** @brief 3D Vector */
-typedef struct vec3 {
+typedef struct Vec3 {
   f32 x, y, z;
-} vec3;
+} Vec3;
 
 /** @brief 4D Vector */
-typedef struct vec4 {
+typedef struct Vec4 {
   f32 x, y, z, w;
-} vec4;
+} Vec4;
 
 /** @brief Quaternion */
-typedef vec4 quat;
+typedef Vec4 Quat;
 
 /** @brief 4x4 Matrix */
-typedef struct mat4 {
+typedef union Mat4 {
   // TODO: use this format for more readable code: vec4 x_axis, y_axis, z_axis, w_axis;
   f32 data[16];
-} mat4;
+  Vec4 cols[4];
+} Mat4;
 
 /** @brief Three dimensional bounding box */
-typedef struct bbox_3d {
-  vec3 min;  // minimum point of the box
-  vec3 max;  // maximum point of the box
-} bbox_3d;
+typedef struct Bbox_3D {
+  Vec3 min;  // minimum point of the box
+  Vec3 max;  // maximum point of the box
+} Bbox_3d;
 
 /** @brief 3D Axis-aligned bounding box */
-typedef bbox_3d aabb_3d;
+typedef Bbox_3d Aabb_3D;
 
 /** @brief 3D affine transformation */
-typedef struct transform {
-  vec3 position;
-  quat rotation;
+typedef struct Transform {
+  Vec3 position;
+  Quat rotation;
   f32 scale;
   bool is_dirty;
-} transform;
-typedef transform transform3d;
+} Transform;
 
-typedef struct vec4i {
+typedef struct Vec4i {
   i32 x, y, z, w;
-} vec4i;
+} Vec4i;
 
-typedef struct vec4u {
+typedef struct Vec4u {
   u32 x, y, z, w;
-} vec4u;
+} Vec4u;
 
 // --- Some other types
 typedef struct u32x3 {
@@ -96,8 +96,8 @@ typedef struct u32x2 {
 
 // Type aliass
 
-typedef struct vec2 f32x2;
+typedef struct Vec2 f32x2;
 #define f32x2(x, y) ((f32x2){ x, y })
 
-typedef struct vec3 f32x3;
+typedef struct Vec3 f32x3;
 #define f32x3(x, y, z) ((f32x3){ x, y, z })

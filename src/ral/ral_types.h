@@ -11,6 +11,9 @@ typedef struct gpu_cmd_buffer gpu_cmd_buffer;    // Ready for submission
 typedef struct gpu_buffer gpu_buffer;
 typedef struct gpu_texture gpu_texture;
 
+typedef struct GPU_Renderpass GPU_Renderpass;
+typedef struct GPU_Pipeline GPU_Pipeline;
+
 typedef enum gpu_primitive_topology {
   CEL_PRIMITIVE_TOPOLOGY_POINT,
   CEL_PRIMITIVE_TOPOLOGY_LINE,
