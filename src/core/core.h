@@ -6,23 +6,9 @@
 #include "screenspace.h"
 #include "terrain.h"
 #include "text.h"
-// #include "threadpool.h"
 
-typedef struct core {
-  const char* app_name;
-  // foundations
-  renderer renderer;
-  // threadpool threadpool;
-  // systems
-  input_state input;
-  text_system_state text;
-  terrain_state terrain;
-  screenspace_state screenspace;
-  // data storage
-  scene default_scene;
-  model_pool models;
-  // model_darray* models;
-} core;
+typedef struct Core Core;
+
 
 core* get_global_core();
 

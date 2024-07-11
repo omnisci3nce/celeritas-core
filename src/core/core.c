@@ -10,48 +10,42 @@
 #include "render.h"
 #include "render_types.h"
 #include "scene.h"
-// #include "threadpool.h"
 
 #define SCR_WIDTH 1000
 #define SCR_HEIGHT 1000
 
-core g_core; /** @brief global `core` that other files can use */
+Core g_core; /** @brief global `Core` that other files can use */
 
-inline core* get_global_core() { return &g_core; }
+
+struct Core {
+  const char* app_name;
+  Renderer renderer;
+  input_state input;
+  model_pool models;
+};
+
+/** @brief Gets the global `Core` singleton */
+inline Core* GetCore() { return &g_core; }
 
 void core_bringup() {
   INFO("Initiate Core bringup");
-  renderer_config conf = { .window_name = { "Celeritas Engine Core" },
+  RendererConfig conf = { .window_name = { "Celeritas Engine Core" },
                            .scr_width = SCR_WIDTH,
                            .scr_height = SCR_HEIGHT,
                            .clear_colour = (vec3){ .08, .08, .1 } };
-  g_core.renderer.config = conf;
+
   g_core.renderer.backend_context = NULL;
 
-  // threadpool_create(&c->threadpool, 6, 256);
-  // threadpool_set_ctx(&c->threadpool, c);  // Gives the threadpool access to the core
-
   // initialise all subsystems
-  if (!renderer_init(&g_core.renderer)) {
+  if (!Renderer_Init(conf, &g_core.renderer)) {
     // FATAL("Failed to start renderer");
     ERROR_EXIT("Failed to start renderer\n");
   }
-  if (!input_system_init(&g_core.input, g_core.renderer.window)) {
+  if (!Input_Init(&g_core.input, g_core.renderer.window)) {
     // the input system needs the glfw window which is created by the renderer
     // hence the order here is important
-    FATAL("Failed to start input system");
     ERROR_EXIT("Failed to start input system\n");
   }
-  /*
-  if (!text_system_init(&c->text)) {
-    // FATAL("Failed to start text system");
-    ERROR_EXIT("Failed to start text system\n");
-  }
-  if (!screenspace_2d_init(&c->screenspace)) {
-    // FATAL("Failed to start screenspace 2d plugin");
-    ERROR_EXIT("Failed to start screenspace 2d plugin\n");
-  }
-  */
 
   size_t model_data_max = 1024 * 1024 * 1024;
   arena model_arena = arena_create(malloc(model_data_max), model_data_max);

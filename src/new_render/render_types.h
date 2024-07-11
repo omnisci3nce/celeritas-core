@@ -37,6 +37,10 @@ typedef enum MaterialKind {
 static const char* material_kind_names[] = { "Blinn Phong", "PBR (Textures)", "PBR (Params)",
                                              "Count (This should be an error)" };
 
+typedef struct Material {
+  char name[64];
+} Material;
+
 typedef struct Model {
   // meshes
   // materials

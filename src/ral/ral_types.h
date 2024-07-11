@@ -54,6 +54,9 @@ typedef enum vertex_attrib_type {
   ATTR_I32x4,
 } vertex_attrib_type;
 
+typedef struct vertex_description {} vertex_description;
+typedef struct shader_desc {} shader_desc;
+
 typedef struct graphics_pipeline_desc {
   const char* debug_name;
   vertex_description vertex_desc;

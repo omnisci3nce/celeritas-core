@@ -1,5 +1,4 @@
 /**
- * @file shadows.h
  * @brief Functions for adding shadows to scene rendering.
 */
 
