@@ -80,12 +80,12 @@ void void_pool_dealloc(void_pool* pool, u32 raw_handle);
     void_pool p = void_pool_create(a, "\"" #Name "\"", cap, entry_size);             \
     return (Name##_pool){ .inner = p };                                              \
   }                                                                                  \
-  static inline T* Name##_pool_get(Name##_pool* pool, Name##_handle handle) {        \
+  static inline T* Name##_pool_get(Name##_pool* pool, Name##Handle handle) {        \
     return (T*)void_pool_get(&pool->inner, handle.raw);                              \
   }                                                                                  \
-  static inline T* Name##_pool_alloc(Name##_pool* pool, Name##_handle* out_handle) { \
+  static inline T* Name##_pool_alloc(Name##_pool* pool, Name##Handle* out_handle) { \
     return (T*)void_pool_alloc(&pool->inner, &out_handle->raw);                      \
   }                                                                                  \
-  static inline void Name##_pool_dealloc(Name##_pool* pool, Name##_handle handle) {  \
+  static inline void Name##_pool_dealloc(Name##_pool* pool, Name##Handle handle) {  \
     void_pool_dealloc(&pool->inner, handle.raw);                                     \
   }\

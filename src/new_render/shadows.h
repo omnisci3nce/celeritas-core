@@ -5,11 +5,11 @@
 
 #pragma once
 #include "defines.h"
-#include "ral/ral_types.h"
+#include "ral.h"
+#include "render_types.h"
 
 typedef struct Shadow_Storage Shadow_Storage;
 
-typedef struct RenderEnt RenderEnt;
 typedef struct Camera Camera;
 typedef struct Mat4 Mat4;
 

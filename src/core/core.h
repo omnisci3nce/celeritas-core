@@ -9,18 +9,13 @@
 
 typedef struct Core Core;
 
-
-core* get_global_core();
-
-// --- Lifecycle
+Core* get_global_core();
 
 /** @brief Throws error if the core cannot be instantiated */
-void core_bringup();
-void core_shutdown();
-bool should_exit();
+void Core_Bringup();
+void Core_Shutdown();
+bool ShouldExit();
 
-void frame_begin();
-void frame_draw();
-void frame_end();
-
-void core_input_update();
+void Frame_Begin();
+void Frame_Draw();
+void Frame_End();

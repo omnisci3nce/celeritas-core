@@ -53,21 +53,6 @@ CORE_DEFINE_HANDLE(Handle); // Untyped handle that can be casted to a strongly t
 
 #define PUB // For collecting public APIs to expose in an amalgamation header file
 
-/*
-Possible platform defines:
-#define CEL_PLATFORM_LINUX 1
-#define CEL_PLATFORM_WINDOWS 1
-#define CEL_PLATFORM_MAC 1
-#define CEL_PLATFORM_HEADLESS 1
-*/
-
-/*
-Renderer backend defines:
-#define CEL_REND_BACKEND_OPENGL 1
-#define CEL_REND_BACKEND_VULKAN 1
-#define CEL_REND_BACKEND_METAL 1
-*/
-
 // NOTE: The below is now handled in xmake.lua
 // Platform will inform renderer backend (unless user overrides)
 #if defined(CEL_PLATFORM_LINUX)
@@ -76,8 +61,9 @@ Renderer backend defines:
 #endif
 
 #if defined(CEL_PLATFORM_WINDOWS)
+#define CEL_REND_BACKEND_OPENGL 1
 // #define CEL_REND_BACKEND_DX11 1
-#define CEL_REND_BACKEND_VULKAN 1
+// #define CEL_REND_BACKEND_VULKAN 1
 #endif
 
 #if defined(CEL_PLATFORM_MAC)

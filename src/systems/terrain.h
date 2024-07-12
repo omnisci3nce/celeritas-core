@@ -19,7 +19,7 @@ Future:
 #include "str.h"
 
 typedef struct Heightmap {
-  str8 filepath;
+  Str8 filepath;
   u32x2 size;
   void* image_data;
   bool is_uploaded;
@@ -32,8 +32,12 @@ PUB bool Terrain_Init(Terrain_Storage* storage);
 PUB void Terrain_Shutdown(Terrain_Storage* storage);
 PUB void Terrain_Run(Terrain_Storage* storage); // NOTE: For now it renders directly to main framebuffer
 
-PUB Heightmap Heightmap_FromImage(str8 filepath);
+/** @brief Sets the active heightmap to be rendered and collided against. */
+PUB Heightmap Terrain_LoadHeightmap(Heightmap hmap, bool free_on_upload);
+PUB Heightmap Heightmap_FromImage(Str8 filepath);
 PUB Heightmap Heightmap_FromPerlin(/* TODO: perlin noise generation parameters */);
+
+PUB bool Terrain_IsActive(); // checks whether we have a loaded heightmap and it's being rendered
 
 // --- Internal
 

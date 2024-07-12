@@ -8,7 +8,7 @@
 // --- Helpers
 #define VERT_3D(arr, pos, norm, uv)                                                    \
   {                                                                                    \
-    vertex v = { .static_3d = { .position = pos, .normal = norm, .tex_coords = uv } }; \
+    Vertex v = { .static_3d = { .position = pos, .normal = norm, .tex_coords = uv } }; \
     vertex_darray_push(arr, v);                                                        \
   }
 
@@ -19,23 +19,23 @@ void push_triangle(u32_darray* arr, u32 i0, u32 i1, u32 i2) {
 }
 
 // TODO: move to another file
-void geo_free_data(geometry_data* geo) {
+void geo_free_data(Geometry* geo) {
   vertex_darray_free(geo->vertices);
   geo->vertices = NULL;
 }
 
-vec3 plane_vertex_positions[] = {
-  (vec3){ -0.5, 0, -0.5 },
-  (vec3){ 0.5, 0, -0.5 },
-  (vec3){ -0.5, 0, 0.5 },
-  (vec3){ 0.5, 0, 0.5 },
+Vec3 plane_vertex_positions[] = {
+  (Vec3){ -0.5, 0, -0.5 },
+  (Vec3){ 0.5, 0, -0.5 },
+  (Vec3){ -0.5, 0, 0.5 },
+  (Vec3){ 0.5, 0, 0.5 },
 };
 
-geometry_data geo_create_plane(f32x2 extents) {
-  vertex_darray* vertices = vertex_darray_new(4);
+Geometry geo_create_plane(f32x2 extents) {
+  Vertex_darray* vertices = vertex_darray_new(4);
   u32_darray* indices = u32_darray_new(vertices->len);
 
-  vec3 vert_pos[4];
+  Vec3 vert_pos[4];
   memcpy(&vert_pos, plane_vertex_positions, sizeof(plane_vertex_positions));
   for (int i = 0; i < 4; i++) {
     vert_pos[i].x *= extents.x;
@@ -51,26 +51,25 @@ geometry_data geo_create_plane(f32x2 extents) {
   push_triangle(indices, 2, 1, 0);
   push_triangle(indices, 3, 1, 2);
 
-  geometry_data geo = { .format = VERTEX_STATIC_3D,
-                        .vertices = vertices,
-                        .has_indices = true,
-                        .indices = indices,
-                        .colour = (rgba){ 0, 0, 0, 1 } };
+  Geometry geo = {
+    .format = VERTEX_STATIC_3D, .vertices = vertices, .has_indices = true, .indices = indices
+  };
+  // .colour = (rgba){ 0, 0, 0, 1 } };
 
   return geo;
 }
 
-static const vec3 BACK_BOT_LEFT = (vec3){ 0, 0, 0 };
-static const vec3 BACK_BOT_RIGHT = (vec3){ 1, 0, 0 };
-static const vec3 BACK_TOP_LEFT = (vec3){ 0, 1, 0 };
-static const vec3 BACK_TOP_RIGHT = (vec3){ 1, 1, 0 };
-static const vec3 FRONT_BOT_LEFT = (vec3){ 0, 0, 1 };
-static const vec3 FRONT_BOT_RIGHT = (vec3){ 1, 0, 1 };
-static const vec3 FRONT_TOP_LEFT = (vec3){ 0, 1, 1 };
-static const vec3 FRONT_TOP_RIGHT = (vec3){ 1, 1, 1 };
+static const Vec3 BACK_BOT_LEFT = (Vec3){ 0, 0, 0 };
+static const Vec3 BACK_BOT_RIGHT = (Vec3){ 1, 0, 0 };
+static const Vec3 BACK_TOP_LEFT = (Vec3){ 0, 1, 0 };
+static const Vec3 BACK_TOP_RIGHT = (Vec3){ 1, 1, 0 };
+static const Vec3 FRONT_BOT_LEFT = (Vec3){ 0, 0, 1 };
+static const Vec3 FRONT_BOT_RIGHT = (Vec3){ 1, 0, 1 };
+static const Vec3 FRONT_TOP_LEFT = (Vec3){ 0, 1, 1 };
+static const Vec3 FRONT_TOP_RIGHT = (Vec3){ 1, 1, 1 };
 
-geometry_data geo_create_cuboid(f32x3 extents) {
-  vertex_darray* vertices = vertex_darray_new(36);
+Geometry geo_create_cuboid(f32x3 extents) {
+  Vertex_darray* vertices = vertex_darray_new(36);
 
   // back faces
   VERT_3D(vertices, BACK_TOP_RIGHT, VEC3_NEG_Z, vec2(1, 0));
@@ -126,12 +125,11 @@ geometry_data geo_create_cuboid(f32x3 extents) {
     u32_darray_push(indices, i);
   }
 
-  geometry_data geo = {
+  Geometry geo = {
     .format = VERTEX_STATIC_3D,
     .vertices = vertices,
     .has_indices = true,
     .indices = indices,  // FIXME: make darray methods that return stack allocated struct
-    .colour = (rgba){ 0, 0, 0, 1 }
   };
 
   return geo;
@@ -139,28 +137,28 @@ geometry_data geo_create_cuboid(f32x3 extents) {
 
 // --- Spheres
 
-vec3 spherical_to_cartesian_coords(f32 rho, f32 theta, f32 phi) {
+Vec3 spherical_to_cartesian_coords(f32 rho, f32 theta, f32 phi) {
   f32 x = rho * sin(phi) * cos(theta);
   f32 y = rho * cos(phi);
   f32 z = rho * sin(phi) * sin(theta);
   return vec3(x, y, z);
 }
 
-geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_west_lines) {
+Geometry geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_west_lines) {
   assert(east_west_lines >= 3);  // sphere will be degenerate and look gacked without at least 3
   assert(north_south_lines >= 3);
 
-  vertex_darray* vertices = vertex_darray_new(2 + (east_west_lines - 1) * north_south_lines);
+  Vertex_darray* vertices = vertex_darray_new(2 + (east_west_lines - 1) * north_south_lines);
 
   // Create a UV sphere with spherical coordinates
   // a point P on the unit sphere can be represented P(r, theta, phi)
   // for each vertex we must convert that to a cartesian R3 coordinate
 
   // Top point
-  vertex top = { .static_3d = { .position = vec3(0, radius, 0),
+  Vertex top = { .static_3d = { .position = vec3(0, radius, 0),
                                 .normal = vec3_normalise(vec3(0, radius, 0)),
                                 .tex_coords = vec2(0, 0) } };
-  vertex_darray_push(vertices, top);
+  Vertex_darray_push(vertices, top);
 
   // parallels
   for (u32 i = 0; i < (east_west_lines - 1); i++) {
@@ -171,12 +169,12 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
     for (u32 j = 0; j < east_west_lines; j++) {
       // theta should range from 0 to 2PI
       f32 theta = TAU * ((f32)j / (f32)north_south_lines);
-      vec3 position = spherical_to_cartesian_coords(radius, theta, phi);
+      Vec3 position = spherical_to_cartesian_coords(radius, theta, phi);
       // f32 d = vec3_len(position);
       // print_vec3(position);
       // printf("Phi %f Theta %f d %d\n", phi, theta, d);
       // assert(d == radius);  // all points on the sphere should be 'radius' away from the origin
-      vertex v = { .static_3d = {
+      Vertex v = { .static_3d = {
                        .position = position,
                        .normal =
                            vec3_normalise(position),  // normal vector on sphere is same as position
@@ -187,7 +185,7 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
   }
 
   // Bottom point
-  vertex bot = { .static_3d = { .position = vec3(0, -radius, 0),
+  Vertex bot = { .static_3d = { .position = vec3(0, -radius, 0),
                                 .normal = vec3_normalise(vec3(0, -radius, 0)),
                                 .tex_coords = vec2(0, 0) } };
   vertex_darray_push(vertices, bot);
@@ -234,12 +232,11 @@ geometry_data geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_we
     }
   }
 
-  geometry_data geo = {
+  Geometry geo = {
     .format = VERTEX_STATIC_3D,
     .vertices = vertices,
     .has_indices = true,
     .indices = indices,
-    .colour = RED_800,
   };
   return geo;
 }

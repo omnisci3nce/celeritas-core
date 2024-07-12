@@ -21,24 +21,24 @@
 #define CGLTF_IMPLEMENTATION
 #include <cgltf.h>
 
-extern core g_core;
+extern Core g_core;
 
 struct face {
   cgltf_uint indices[3];
 };
 typedef struct face face;
 
-KITC_DECL_TYPED_ARRAY(vec3)
-KITC_DECL_TYPED_ARRAY(vec2)
-KITC_DECL_TYPED_ARRAY(vec4u)
-KITC_DECL_TYPED_ARRAY(vec4)
+KITC_DECL_TYPED_ARRAY(Vec3)
+KITC_DECL_TYPED_ARRAY(Vec2)
+KITC_DECL_TYPED_ARRAY(Vec4u)
+KITC_DECL_TYPED_ARRAY(Vec4)
 KITC_DECL_TYPED_ARRAY(face)
 // KITC_DECL_TYPED_ARRAY(joint)
 
 bool model_load_gltf_str(const char *file_string, const char *filepath, str8 relative_path,
-                         model *out_model, bool invert_textures_y);
+                         Model *out_model, bool invert_textures_y);
 
-model_handle model_load_gltf(const char *path, bool invert_texture_y) {
+ModelHandle model_load_gltf(const char *path, bool invert_texture_y) {
   size_t arena_size = 1024;
   arena scratch = arena_create(malloc(arena_size), arena_size);
 
@@ -49,22 +49,22 @@ model_handle model_load_gltf(const char *path, bool invert_texture_y) {
   }
   const char *file_string = string_from_file(path);
 
-  model_handle handle;
-  model *model = model_pool_alloc(&g_core.models, &handle);
-  model->name = str8_cstr_view(path);
-  model->meshes = mesh_darray_new(1);
-  model->materials = material_darray_new(1);
+  ModelHandle handle;
+  // modfl *model = model_pool_alloc(&g_core.models, &handle);
+  // model->name = str8_cstr_view(path);
+  // model->meshes = mesh_darray_new(1);
+  // model->materials = material_darray_new(1);
 
-  bool success =
-      model_load_gltf_str(file_string, path, relative_path.path, model, invert_texture_y);
+  // bool success =
+  //     model_load_gltf_str(file_string, path, relative_path.path, model, invert_texture_y);
 
-  if (!success) {
-    FATAL("Couldnt load GLTF file at path %s", path);
-    ERROR_EXIT("Load fails are considered crash-worthy right now. This will change later.\n");
-  }
+  // if (!success) {
+  //   FATAL("Couldnt load GLTF file at path %s", path);
+  //   ERROR_EXIT("Load fails are considered crash-worthy right now. This will change later.\n");
+  // }
 
-  arena_free_all(&scratch);
-  arena_free_storage(&scratch);
+  // arena_free_all(&scratch);
+  // arena_free_storage(&scratch);
   return handle;
 }
 
@@ -86,30 +86,30 @@ typedef struct model {
 } model;
 */
 bool model_load_gltf_str(const char *file_string, const char *filepath, str8 relative_path,
-                         model *out_model, bool invert_textures_y) {
-  TRACE("Load GLTF from string");
+                         Model *out_model, bool invert_textures_y) {
+  // TRACE("Load GLTF from string");
 
-  // Setup temps
-  vec3_darray *tmp_positions = vec3_darray_new(1000);
-  vec3_darray *tmp_normals = vec3_darray_new(1000);
-  vec2_darray *tmp_uvs = vec2_darray_new(1000);
-  vec4u_darray *tmp_joint_indices = vec4u_darray_new(1000);
-  vec4_darray *tmp_weights = vec4_darray_new(1000);
-  // FIXME
-  // joint_darray *tmp_joints = joint_darray_new(256);
-  // vertex_bone_data_darray *tmp_vertex_bone_data = vertex_bone_data_darray_new(1000);
+  // // Setup temps
+  // vec3_darray *tmp_positions = vec3_darray_new(1000);
+  // vec3_darray *tmp_normals = vec3_darray_new(1000);
+  // vec2_darray *tmp_uvs = vec2_darray_new(1000);
+  // vec4u_darray *tmp_joint_indices = vec4u_darray_new(1000);
+  // vec4_darray *tmp_weights = vec4_darray_new(1000);
+  // // FIXME
+  // // joint_darray *tmp_joints = joint_darray_new(256);
+  // // vertex_bone_data_darray *tmp_vertex_bone_data = vertex_bone_data_darray_new(1000);
 
-  cgltf_options options = { 0 };
-  cgltf_data *data = NULL;
-  cgltf_result result = cgltf_parse_file(&options, filepath, &data);
-  if (result != cgltf_result_success) {
-    WARN("gltf load failed");
-    // TODO: cleanup arrays(allocate all from arena ?)
-    return false;
-  }
+  // cgltf_options options = { 0 };
+  // cgltf_data *data = NULL;
+  // cgltf_result result = cgltf_parse_file(&options, filepath, &data);
+  // if (result != cgltf_result_success) {
+  //   WARN("gltf load failed");
+  //   // TODO: cleanup arrays(allocate all from arena ?)
+  //   return false;
+  // }
 
-  cgltf_load_buffers(&options, data, filepath);
-  DEBUG("loaded buffers");
+  // cgltf_load_buffers(&options, data, filepath);
+  // DEBUG("loaded buffers");
 
   //   // --- Skin
   //   size_t num_skins = data->skins_count;
@@ -204,7 +204,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     // DEBUG("Number of this primitive %d", primitive.)
 
     for (cgltf_size a = 0; a < data->meshes[m].primitives[0].attributes_count; a++) {
-      cgltf_attribute attribute = data->meshes[m].primitives[0].attributes[a];
+      // cgltf_attribute attribute = data->meshes[m].primitives[0].attributes[a];
       if (attribute.type == cgltf_attribute_type_position) {
         TRACE("Load positions from accessor");
 
@@ -214,11 +214,11 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
 
         TRACE("Loading %d vec3 components", accessor->count);
 
-        for (cgltf_size v = 0; v < accessor->count; ++v) {
-          vec3 pos;
-          cgltf_accessor_read_float(accessor, v, &pos.x, 3);
-          vec3_darray_push(tmp_positions, pos);
-        }
+        // for (cgltf_size v = 0; v < accessor->count; ++v) {
+        //   vec3 pos;
+        //   cgltf_accessor_read_float(accessor, v, &pos.x, 3);
+        //   vec3_darray_push(tmp_positions, pos);
+        // }
 
       } else if (attribute.type == cgltf_attribute_type_normal) {
         TRACE("Load normals from accessor");
@@ -227,11 +227,11 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
         assert(accessor->component_type == cgltf_component_type_r_32f);
         // CASSERT_MSG(accessor->type == cgltf_type_vec3, "Normal vectors should be a vec3");
 
-        for (cgltf_size v = 0; v < accessor->count; ++v) {
-          vec3 pos;
-          cgltf_accessor_read_float(accessor, v, &pos.x, 3);
-          vec3_darray_push(tmp_normals, pos);
-        }
+        // for (cgltf_size v = 0; v < accessor->count; ++v) {
+        //   vec3 pos;
+        //   cgltf_accessor_read_float(accessor, v, &pos.x, 3);
+        //   vec3_darray_push(tmp_normals, pos);
+        // }
 
       } else if (attribute.type == cgltf_attribute_type_texcoord) {
         TRACE("Load texture coordinates from accessor");
@@ -241,12 +241,12 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
         // vec2");
 
         for (cgltf_size v = 0; v < accessor->count; ++v) {
-          vec2 tex;
-          bool success = cgltf_accessor_read_float(accessor, v, &tex.x, 2);
-          if (!success) {
-            ERROR("Error loading tex coord");
-          }
-          vec2_darray_push(tmp_uvs, tex);
+          // vec2 tex;
+          // bool success = cgltf_accessor_read_float(accessor, v, &tex.x, 2);
+          // if (!success) {
+          //   ERROR("Error loading tex coord");
+          // }
+          // vec2_darray_push(tmp_uvs, tex);
         }
       } else if (attribute.type == cgltf_attribute_type_joints) {
         // FIXME: joints
@@ -289,18 +289,18 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     }
     // mesh.vertex_bone_data = vertex_bone_data_darray_new(1);
 
-    if (primitive.material != NULL) {
-      ERROR("Primitive Material %s", primitive.material->name);
-      for (u32 i = 0; i < material_darray_len(out_model->materials); i++) {
-        printf("%s vs %s \n", primitive.material->name, out_model->materials->data[i].name);
-        if (strcmp(primitive.material->name, out_model->materials->data[i].name) == 0) {
-          INFO("Found material");
-          mat_idx = i;
-          // mesh.material_index = i;
-          break;
-        }
-      }
-    }
+    // if (primitive.material != NULL) {
+    //   ERROR("Primitive Material %s", primitive.material->name);
+    //   for (u32 i = 0; i < material_darray_len(out_model->materials); i++) {
+    //     printf("%s vs %s \n", primitive.material->name, out_model->materials->data[i].name);
+    //     if (strcmp(primitive.material->name, out_model->materials->data[i].name) == 0) {
+    //       INFO("Found material");
+    //       mat_idx = i;
+    //       // mesh.material_index = i;
+    //       break;
+    //     }
+    //   }
+    // }
 
     //     // FIXME
     //     // if (is_skinned) {

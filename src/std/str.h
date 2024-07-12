@@ -23,30 +23,30 @@
 typedef struct {
   u8* buf;
   size_t len;
-} str8;
+} Str8;
 
 // --- Constructors
 
 /** @brief Take a string literal and turn it into a `str8` */
-#define str8lit(s) \
-  (str8) { (u8*)s, ((sizeof(s) / sizeof(*(s)) - 1)) }
+#define str8(s) \
+  (Str8) { (u8*)s, ((sizeof(s) / sizeof(*(s)) - 1)) }
 
-str8 str8_create(u8* buf, size_t len);
+Str8 str8_create(u8* buf, size_t len);
 
 /** @brief Return a null-terminated C string cloned onto an arena */
-char* str8_to_cstr(arena* a, str8 s);
+char* Str8_to_cstr(arena* a, Str8 s);
 
-#define cstr(a, s) (str8_to_cstr(a, s))  // Shorthand
+#define cstr(a, s) (Str8_to_cstr(a, s))  // Shorthand
 
-/** @brief Return a str8 that references a statically allocated string.
+/** @brief Return a Str8 that references a statically allocated string.
            `string` therefore must already be null-terminated.
     @note  The backing `string` cannot be modified. */
-str8 str8_cstr_view(char* string);
+Str8 Str8_cstr_view(char* string);
 
 // --- Comparisons
 
 /** @brief Compare two strings for exact equality */
-bool str8_equals(str8 a, str8 b);
+bool Str8_equals(Str8 a, Str8 b);
 
 /**
  * @brief Compare the first `first_nchars` of each string for equality
@@ -55,27 +55,27 @@ bool str8_equals(str8 a, str8 b);
  * @returns 0 if they are fully equal up until `first_nchars`, i.e they never differed, else it
             returns the index at which the first string differed from the second string.
 */
-size_t str8_nequals(str8 a, str8 b, size_t first_nchars);
+size_t Str8_nequals(Str8 a, Str8 b, size_t first_nchars);
 
-bool str8_ends_with(str8 input_str, str8 suffix);
+bool Str8_ends_with(Str8 input_str, Str8 suffix);
 
 /// --- Subviews
 
-str8 str8_substr(str8 s, u64 min, u64 max);
+Str8 Str8_substr(Str8 s, u64 min, u64 max);
 /** @brief Keeps only the `first_n` chars of `s` */
-str8 str8_take(str8 s, u64 first_n);
+Str8 Str8_take(Str8 s, u64 first_n);
 /** @brief Keeps only the `last_n` chars of `s` */
-str8 str8_drop(str8 s, u64 last_n);
+Str8 Str8_drop(Str8 s, u64 last_n);
 /** @brief Keeps everything after the first `n` chars of `s` */
-str8 str8_skip(str8 s, u64 n);
+Str8 Str8_skip(Str8 s, u64 n);
 /** @brief Keeps everything before the last `n` chars of `s` */
-str8 str8_chop(str8 s, u64 n);
+Str8 Str8_chop(Str8 s, u64 n);
 
-str8 str8_concat(arena* a, str8 left, str8 right);
+Str8 Str8_concat(arena* a, Str8 left, Str8 right);
 
 /// --- Misc
 
-static inline bool str8_is_null_term(str8 a) {
+static inline bool Str8_is_null_term(Str8 a) {
   return a.buf[a.len] == 0;  // This doesn't seem safe. YOLO
 }
 

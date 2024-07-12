@@ -22,7 +22,7 @@
 #include "render_types.h"
 #include "str.h"
 
-extern core g_core;
+extern Core g_core;
 
 struct face {
   u32 vertex_indices[3];
@@ -31,19 +31,19 @@ struct face {
 };
 typedef struct face face;
 
-KITC_DECL_TYPED_ARRAY(vec3)
-KITC_DECL_TYPED_ARRAY(vec2)
+KITC_DECL_TYPED_ARRAY(Vec3)
+KITC_DECL_TYPED_ARRAY(Vec2)
 KITC_DECL_TYPED_ARRAY(face)
 
 // Forward declarations
-void create_submesh(mesh_darray *meshes, vec3_darray *tmp_positions, vec3_darray *tmp_normals,
-                    vec2_darray *tmp_uvs, face_darray *tmp_faces, material_darray *materials,
+void create_submesh(mesh_darray *meshes, Vec3_darray *tmp_positions, Vec3_darray *tmp_normals,
+                    Vec2_darray *tmp_uvs, face_darray *tmp_faces, material_darray *materials,
                     bool material_loaded, char current_material_name[256]);
 bool load_material_lib(const char *path, str8 relative_path, material_darray *materials);
-bool model_load_obj_str(const char *file_string, str8 relative_path, model *out_model,
+bool model_load_obj_str(const char *file_string, str8 relative_path, Model *out_model,
                         bool invert_textures_y);
 
-model_handle model_load_obj(core *core, const char *path, bool invert_textures_y) {
+model_handle model_load_obj(Core *core, const char *path, bool invert_textures_y) {
   size_t arena_size = 1024;
   arena scratch = arena_create(malloc(arena_size), arena_size);
 

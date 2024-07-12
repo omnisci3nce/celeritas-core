@@ -21,65 +21,65 @@
 // --- Vector Implementations
 
 // Dimension 3
-static inline vec3 vec3_create(f32 x, f32 y, f32 z) { return (vec3){ x, y, z }; }
-#define vec3(x, y, z) ((vec3){ x, y, z })
-static inline vec3 vec3_add(vec3 a, vec3 b) { return (vec3){ a.x + b.x, a.y + b.y, a.z + b.z }; }
-static inline vec3 vec3_sub(vec3 a, vec3 b) { return (vec3){ a.x - b.x, a.y - b.y, a.z - b.z }; }
-static inline vec3 vec3_mult(vec3 a, f32 s) { return (vec3){ a.x * s, a.y * s, a.z * s }; }
-static inline vec3 vec3_div(vec3 a, f32 s) { return (vec3){ a.x / s, a.y / s, a.z / s }; }
+static inline Vec3 vec3_create(f32 x, f32 y, f32 z) { return (Vec3){ x, y, z }; }
+#define vec3(x, y, z) ((Vec3){ x, y, z })
+static inline Vec3 vec3_add(Vec3 a, Vec3 b) { return (Vec3){ a.x + b.x, a.y + b.y, a.z + b.z }; }
+static inline Vec3 vec3_sub(Vec3 a, Vec3 b) { return (Vec3){ a.x - b.x, a.y - b.y, a.z - b.z }; }
+static inline Vec3 vec3_mult(Vec3 a, f32 s) { return (Vec3){ a.x * s, a.y * s, a.z * s }; }
+static inline Vec3 vec3_div(Vec3 a, f32 s) { return (Vec3){ a.x / s, a.y / s, a.z / s }; }
 
-static inline f32 vec3_len_squared(vec3 a) { return (a.x * a.x) + (a.y * a.y) + (a.z * a.z); }
-static inline f32 vec3_len(vec3 a) { return sqrtf(vec3_len_squared(a)); }
-static inline vec3 vec3_negate(vec3 a) { return (vec3){ -a.x, -a.y, -a.z }; }
-static inline vec3 vec3_normalise(vec3 a) {
+static inline f32 vec3_len_squared(Vec3 a) { return (a.x * a.x) + (a.y * a.y) + (a.z * a.z); }
+static inline f32 vec3_len(Vec3 a) { return sqrtf(vec3_len_squared(a)); }
+static inline Vec3 vec3_negate(Vec3 a) { return (Vec3){ -a.x, -a.y, -a.z }; }
+static inline Vec3 vec3_normalise(Vec3 a) {
   f32 length = vec3_len(a);
   return vec3_div(a, length);
 }
 
-static inline f32 vec3_dot(vec3 a, vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
-static inline vec3 vec3_cross(vec3 a, vec3 b) {
+static inline f32 vec3_dot(Vec3 a, Vec3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+static inline Vec3 vec3_cross(Vec3 a, Vec3 b) {
   return (
-      vec3){ .x = a.y * b.z - a.z * b.y, .y = a.z * b.x - a.x * b.z, .z = a.x * b.y - a.y * b.x };
+      Vec3){ .x = a.y * b.z - a.z * b.y, .y = a.z * b.x - a.x * b.z, .z = a.x * b.y - a.y * b.x };
 }
 
-#define VEC3_ZERO ((vec3){ .x = 0.0, .y = 0.0, .z = 0.0 })
-#define VEC3_X ((vec3){ .x = 1.0, .y = 0.0, .z = 0.0 })
-#define VEC3_NEG_X ((vec3){ .x = -1.0, .y = 0.0, .z = 0.0 })
-#define VEC3_Y ((vec3){ .x = 0.0, .y = 1.0, .z = 0.0 })
-#define VEC3_NEG_Y ((vec3){ .x = 0.0, .y = -1.0, .z = 0.0 })
-#define VEC3_Z ((vec3){ .x = 0.0, .y = 0.0, .z = 1.0 })
-#define VEC3_NEG_Z ((vec3){ .x = 0.0, .y = 0.0, .z = -1.0 })
+#define VEC3_ZERO ((Vec3){ .x = 0.0, .y = 0.0, .z = 0.0 })
+#define VEC3_X ((Vec3){ .x = 1.0, .y = 0.0, .z = 0.0 })
+#define VEC3_NEG_X ((Vec3){ .x = -1.0, .y = 0.0, .z = 0.0 })
+#define VEC3_Y ((Vec3){ .x = 0.0, .y = 1.0, .z = 0.0 })
+#define VEC3_NEG_Y ((Vec3){ .x = 0.0, .y = -1.0, .z = 0.0 })
+#define VEC3_Z ((Vec3){ .x = 0.0, .y = 0.0, .z = 1.0 })
+#define VEC3_NEG_Z ((Vec3){ .x = 0.0, .y = 0.0, .z = -1.0 })
 
-static inline void print_vec3(vec3 v) { printf("{ x: %f, y: %f, z: %f )\n", v.x, v.y, v.z); }
+static inline void print_vec3(Vec3 v) { printf("{ x: %f, y: %f, z: %f )\n", (f64)v.x, (f64)v.y, (f64)v.z); }
 
 // TODO: Dimension 2
-static inline vec2 vec2_create(f32 x, f32 y) { return (vec2){ x, y }; }
-#define vec2(x, y) ((vec2){ x, y })
-static inline vec2 vec2_div(vec2 a, f32 s) { return (vec2){ a.x / s, a.y / s }; }
+static inline Vec2 vec2_create(f32 x, f32 y) { return (Vec2){ x, y }; }
+#define vec2(x, y) ((Vec2){ x, y })
+static inline Vec2 vec2_div(Vec2 a, f32 s) { return (Vec2){ a.x / s, a.y / s }; }
 
 // TODO: Dimension 4
-static inline vec4 vec4_create(f32 x, f32 y, f32 z, f32 w) { return (vec4){ x, y, z, w }; }
+static inline Vec4 vec4_create(f32 x, f32 y, f32 z, f32 w) { return (Vec4){ x, y, z, w }; }
 #define vec4(x, y, z, w) (vec4_create(x, y, z, w))
-#define VEC4_ZERO ((vec4){ .x = 0.0, .y = 0.0, .z = 0.0, .w = 0.0 })
+#define VEC4_ZERO ((Vec4){ .x = 0.0, .y = 0.0, .z = 0.0, .w = 0.0 })
 
 // --- Quaternion Implementations
 
-static inline f32 quat_dot(quat a, quat b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
+static inline f32 quat_dot(Quat a, Quat b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
 
-static inline quat quat_normalise(quat a) {
+static inline Quat quat_normalise(Quat a) {
   f32 length = sqrtf(quat_dot(a, a));  // same as len squared
 
-  return (quat){ a.x / length, a.y / length, a.z / length, a.w / length };
+  return (Quat){ a.x / length, a.y / length, a.z / length, a.w / length };
 }
 
-static inline quat quat_ident() { return (quat){ .x = 0.0, .y = 0.0, .z = 0.0, .w = 1.0 }; }
+static inline Quat quat_ident() { return (Quat){ .x = 0.0, .y = 0.0, .z = 0.0, .w = 1.0 }; }
 
-static quat quat_from_axis_angle(vec3 axis, f32 angle, bool normalize) {
+static Quat quat_from_axis_angle(Vec3 axis, f32 angle, bool normalize) {
   const f32 half_angle = 0.5f * angle;
   f32 s = sinf(half_angle);
   f32 c = cosf(half_angle);
 
-  quat q = (quat){ s * axis.x, s * axis.y, s * axis.z, c };
+  Quat q = (Quat){ s * axis.x, s * axis.y, s * axis.z, c };
   if (normalize) {
     return quat_normalise(q);
   }
@@ -87,11 +87,11 @@ static quat quat_from_axis_angle(vec3 axis, f32 angle, bool normalize) {
 }
 
 // TODO: grok this.
-static inline quat quat_slerp(quat a, quat b, f32 percentage) {
-  quat out_quaternion;
+static inline Quat quat_slerp(Quat a, Quat b, f32 percentage) {
+  Quat out_quaternion;
 
-  quat q0 = quat_normalise(a);
-  quat q1 = quat_normalise(b);
+  Quat q0 = quat_normalise(a);
+  Quat q1 = quat_normalise(b);
 
   // Compute the cosine of the angle between the two vectors.
   f32 dot = quat_dot(q0, q1);
@@ -113,41 +113,43 @@ static inline quat quat_slerp(quat a, quat b, f32 percentage) {
     // If the inputs are too close for comfort, linearly interpolate
     // and normalize the result.
     out_quaternion =
-        (quat){ q0.x + ((q1.x - q0.x) * percentage), q0.y + ((q1.y - q0.y) * percentage),
+        (Quat){ q0.x + ((q1.x - q0.x) * percentage), q0.y + ((q1.y - q0.y) * percentage),
                 q0.z + ((q1.z - q0.z) * percentage), q0.w + ((q1.w - q0.w) * percentage) };
 
     return quat_normalise(out_quaternion);
   }
 
-  // Since dot is in range [0, DOT_THRESHOLD], acos is safe
-  f32 theta_0 = cos(dot);            // theta_0 = angle between input vectors
-  f32 theta = theta_0 * percentage;  // theta = angle between v0 and result
-  f32 sin_theta = sin(theta);        // compute this value only once
-  f32 sin_theta_0 = sin(theta_0);    // compute this value only once
+  // TODO: Are there math functions that take floats instead of doubles?
 
-  f32 s0 = cos(theta) - dot * sin_theta / sin_theta_0;  // == sin(theta_0 - theta) / sin(theta_0)
+  // Since dot is in range [0, DOT_THRESHOLD], acos is safe
+  f64 theta_0 = cos((f64)dot);            // theta_0 = angle between input vectors
+  f64 theta = theta_0 * (f64)percentage;  // theta = angle between v0 and result
+  f64 sin_theta = sin((f64)theta);        // compute this value only once
+  f64 sin_theta_0 = sin((f64)theta_0);    // compute this value only once
+
+  f32 s0 = cos(theta) - (f64)dot * sin_theta / sin_theta_0;  // == sin(theta_0 - theta) / sin(theta_0)
   f32 s1 = sin_theta / sin_theta_0;
 
-  return (quat){ (q0.x * s0) + (q1.x * s1), (q0.y * s0) + (q1.y * s1), (q0.z * s0) + (q1.z * s1),
+  return (Quat){ (q0.x * s0) + (q1.x * s1), (q0.y * s0) + (q1.y * s1), (q0.z * s0) + (q1.z * s1),
                  (q0.w * s0) + (q1.w * s1) };
 }
 
 // --- Matrix Implementations
 
-static inline mat4 mat4_ident() {
-  return (mat4){ .data = { 1.0, 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.0 } };
+static inline Mat4 mat4_ident() {
+  return (Mat4){ .data = { 1.0, 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.0 } };
 }
 
-static inline mat4 mat4_translation(vec3 position) {
-  mat4 out_matrix = mat4_ident();
+static inline Mat4 mat4_translation(Vec3 position) {
+  Mat4 out_matrix = mat4_ident();
   out_matrix.data[12] = position.x;
   out_matrix.data[13] = position.y;
   out_matrix.data[14] = position.z;
   return out_matrix;
 }
 
-static inline mat4 mat4_scale(f32 scale) {
-  mat4 out_matrix = mat4_ident();
+static inline Mat4 mat4_scale(f32 scale) {
+  Mat4 out_matrix = mat4_ident();
   out_matrix.data[0] = scale;
   out_matrix.data[5] = scale;
   out_matrix.data[10] = scale;
@@ -155,9 +157,9 @@ static inline mat4 mat4_scale(f32 scale) {
 }
 
 // TODO: double check this
-static inline mat4 mat4_rotation(quat rotation) {
-  mat4 out_matrix = mat4_ident();
-  quat n = quat_normalise(rotation);
+static inline Mat4 mat4_rotation(Quat rotation) {
+  Mat4 out_matrix = mat4_ident();
+  Quat n = quat_normalise(rotation);
 
   out_matrix.data[0] = 1.0f - 2.0f * n.y * n.y - 2.0f * n.z * n.z;
   out_matrix.data[1] = 2.0f * n.x * n.y - 2.0f * n.z * n.w;
@@ -174,8 +176,8 @@ static inline mat4 mat4_rotation(quat rotation) {
   return out_matrix;
 }
 
-static inline mat4 mat4_mult(mat4 lhs, mat4 rhs) {
-  mat4 out_matrix = mat4_ident();
+static inline Mat4 mat4_mult(Mat4 lhs, Mat4 rhs) {
+  Mat4 out_matrix = mat4_ident();
 
   const f32 *m1_ptr = lhs.data;
   const f32 *m2_ptr = rhs.data;
@@ -193,8 +195,8 @@ static inline mat4 mat4_mult(mat4 lhs, mat4 rhs) {
   return out_matrix;
 }
 
-static mat4 mat4_transposed(mat4 matrix) {
-  mat4 out_matrix = mat4_ident();
+static Mat4 mat4_transposed(Mat4 matrix) {
+  Mat4 out_matrix = mat4_ident();
   out_matrix.data[0] = matrix.data[0];
   out_matrix.data[1] = matrix.data[4];
   out_matrix.data[2] = matrix.data[8];
@@ -216,10 +218,10 @@ static mat4 mat4_transposed(mat4 matrix) {
 
 #if defined(CEL_REND_BACKEND_VULKAN)
 /** @brief Creates a perspective projection matrix compatible with Vulkan */
-static inline mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_clip,
+static inline Mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_clip,
                                     f32 far_clip) {
   f32 half_tan_fov = tanf(fov_radians * 0.5f);
-  mat4 out_matrix = { .data = { 0 } };
+  Mat4 out_matrix = { .data = { 0 } };
 
   out_matrix.data[0] = 1.0f / (aspect_ratio * half_tan_fov);
   out_matrix.data[5] = -1.0f / half_tan_fov;  // Flip Y-axis for Vulkan
@@ -231,10 +233,10 @@ static inline mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_
 }
 #else
 /** @brief Creates a perspective projection matrix */
-static inline mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_clip,
+static inline Mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_clip,
                                     f32 far_clip) {
   f32 half_tan_fov = tanf(fov_radians * 0.5f);
-  mat4 out_matrix = { .data = { 0 } };
+  Mat4 out_matrix = { .data = { 0 } };
   out_matrix.data[0] = 1.0f / (aspect_ratio * half_tan_fov);
   out_matrix.data[5] = 1.0f / half_tan_fov;
   out_matrix.data[10] = -((far_clip + near_clip) / (far_clip - near_clip));
@@ -245,10 +247,10 @@ static inline mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_
 #endif
 
 /** @brief Creates an orthographic projection matrix */
-static inline mat4 mat4_orthographic(f32 left, f32 right, f32 bottom, f32 top, f32 near_clip,
+static inline Mat4 mat4_orthographic(f32 left, f32 right, f32 bottom, f32 top, f32 near_clip,
                                      f32 far_clip) {
   // source: kohi game engine.
-  mat4 out_matrix = mat4_ident();
+  Mat4 out_matrix = mat4_ident();
 
   f32 lr = 1.0f / (left - right);
   f32 bt = 1.0f / (bottom - top);
@@ -265,16 +267,16 @@ static inline mat4 mat4_orthographic(f32 left, f32 right, f32 bottom, f32 top, f
   return out_matrix;
 }
 
-static inline mat4 mat4_look_at(vec3 position, vec3 target, vec3 up) {
-  mat4 out_matrix;
-  vec3 z_axis;
+static inline Mat4 mat4_look_at(Vec3 position, Vec3 target, Vec3 up) {
+  Mat4 out_matrix;
+  Vec3 z_axis;
   z_axis.x = target.x - position.x;
   z_axis.y = target.y - position.y;
   z_axis.z = target.z - position.z;
 
   z_axis = vec3_normalise(z_axis);
-  vec3 x_axis = vec3_normalise(vec3_cross(z_axis, up));
-  vec3 y_axis = vec3_cross(x_axis, z_axis);
+  Vec3 x_axis = vec3_normalise(vec3_cross(z_axis, up));
+  Vec3 y_axis = vec3_cross(x_axis, z_axis);
 
   out_matrix.data[0] = x_axis.x;
   out_matrix.data[1] = y_axis.x;
@@ -301,26 +303,26 @@ static inline mat4 mat4_look_at(vec3 position, vec3 target, vec3 up) {
 // --- Transform Implementations
 
 #define TRANSFORM_DEFAULT                                                 \
-  ((transform){ .position = VEC3_ZERO,                                    \
-                .rotation = (quat){ .x = 0., .y = 0., .z = 0., .w = 1. }, \
+  ((Transform){ .position = VEC3_ZERO,                                    \
+                .rotation = (Quat){ .x = 0., .y = 0., .z = 0., .w = 1. }, \
                 .scale = 1.0,                                             \
                 .is_dirty = false })
 
-static transform transform_create(vec3 pos, quat rot, f32 scale) {
-  return (transform){ .position = pos, .rotation = rot, .scale = scale, .is_dirty = true };
+static Transform transform_create(Vec3 pos, Quat rot, f32 scale) {
+  return (Transform){ .position = pos, .rotation = rot, .scale = scale, .is_dirty = true };
 }
 
-static inline mat4 transform_to_mat(transform *tf) {
-  mat4 scale = mat4_scale(tf->scale);
-  mat4 rotation = mat4_rotation(tf->rotation);
-  mat4 translation = mat4_translation(tf->position);
+static inline Mat4 transform_to_mat(Transform *tf) {
+  Mat4 scale = mat4_scale(tf->scale);
+  Mat4 rotation = mat4_rotation(tf->rotation);
+  Mat4 translation = mat4_translation(tf->position);
   return mat4_mult(translation, mat4_mult(rotation, scale));
   // return mat4_mult(mat4_mult(scale, rotation), translation);
 }
 
 // --- Sizing asserts
 
-_Static_assert(alignof(vec3) == 4, "vec3 is 4 byte aligned");
-_Static_assert(sizeof(vec3) == 12, "vec3 is 12 bytes so has no padding");
+_Static_assert(alignof(Vec3) == 4, "Vec3 is 4 byte aligned");
+_Static_assert(sizeof(Vec3) == 12, "Vec3 is 12 bytes so has no padding");
 
-_Static_assert(alignof(vec4) == 4, "vec4 is 4 byte aligned");
+_Static_assert(alignof(Vec4) == 4, "Vec4 is 4 byte aligned");

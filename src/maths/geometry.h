@@ -11,31 +11,31 @@
 
 #include "maths.h"
 
-typedef struct line_3d {
-  vec3 start, end;
-} line_3d;
+// typedef struct line_3d {
+//   vec3 start, end;
+// } line_3d;
 
-typedef struct plane {
-  vec3 normal;
-} plane;
+// typedef struct plane {
+//   vec3 normal;
+// } plane;
 
-typedef struct cuboid {
-  vec3 half_extents;
-} cuboid;
+// typedef struct cuboid {
+//   vec3 half_extents;
+// } cuboid;
 
-typedef struct sphere {
-  f32 radius;
-} sphere;
+// typedef struct sphere {
+//   f32 radius;
+// } sphere;
 
-typedef struct cylinder {
-  f32 radius;
-  f32 half_height;
-} cylinder;
+// typedef struct cylinder {
+//   f32 radius;
+//   f32 half_height;
+// } cylinder;
 
-typedef struct cone {
-  f32 radius;
-  f32 half_height;
-} cone;
+// typedef struct cone {
+//   f32 radius;
+//   f32 half_height;
+// } cone;
 
 // TODO:
 // capsule

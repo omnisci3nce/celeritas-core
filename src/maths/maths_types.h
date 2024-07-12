@@ -40,10 +40,9 @@ typedef struct Vec4 {
 typedef Vec4 Quat;
 
 /** @brief 4x4 Matrix */
-typedef union Mat4 {
+typedef struct Mat4 {
   // TODO: use this format for more readable code: vec4 x_axis, y_axis, z_axis, w_axis;
   f32 data[16];
-  Vec4 cols[4];
 } Mat4;
 
 /** @brief Three dimensional bounding box */

@@ -11,6 +11,7 @@
 #include "log.h"
 #include "maths.h"
 #include "maths_types.h"
+#include "render_types.h"
 
 struct transform_hierarchy {
   transform_node root;
@@ -49,8 +50,8 @@ void transform_hierarchy_free(transform_hierarchy* tfh) {
 
 transform_node* transform_hierarchy_root_node(transform_hierarchy* tfh) { return &tfh->root; }
 
-transform_node* transform_hierarchy_add_node(transform_node* parent, model_handle model,
-                                             transform tf) {
+transform_node* transform_hierarchy_add_node(transform_node* parent, ModelHandle model,
+                                             Transform tf) {
   if (!parent) {
     WARN("You tried to add a node to a bad parent (NULL?)");
     return NULL;
@@ -131,10 +132,10 @@ bool update_matrix(transform_node* node, void* _ctx_data) {
 
   if (node->tf.is_dirty) {
     // invalidates children
-    mat4 updated_local_transform = transform_to_mat(&node->tf);
+    Mat4 updated_local_transform = transform_to_mat(&node->tf);
     node->local_matrix_tf = updated_local_transform;
     if (node->parent) {
-      mat4 updated_world_transform =
+      Mat4 updated_world_transform =
           mat4_mult(node->parent->world_matrix_tf, updated_local_transform);
       node->world_matrix_tf = updated_world_transform;
     }
@@ -149,7 +150,7 @@ void transform_hierarchy_propagate_transforms(transform_hierarchy* tfh) {
 }
 
 struct print_ctx {
-  core* core;
+  Core* core;
   u32 indentation_lvl;
 };
 
@@ -175,7 +176,7 @@ bool print_node(transform_node* node, void* ctx_data) {
   return true;
 }
 
-void transform_hierarchy_debug_print(transform_node* start_node, core* core) {
+void transform_hierarchy_debug_print(transform_node* start_node, Core* core) {
   struct print_ctx* ctx = malloc(sizeof(struct print_ctx));
   ctx->core = core;
   ctx->indentation_lvl = 0;

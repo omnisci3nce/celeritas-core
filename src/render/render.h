@@ -69,11 +69,6 @@ texture_handle texture_data_upload(texture_data data, bool free_on_upload);
 material pbr_material_load(char* albedo_path, char* normal_path, bool metal_roughness_combined,
                            char* metallic_path, char* roughness_map, char* ao_map);
 
-buffer_handle buffer_create(const char* debug_name, u64 size);
-bool buffer_destroy(buffer_handle buffer);
-sampler_handle sampler_create();
-
-// models and meshes are implemented **in terms of the above**
 
 /**
  * @brief Creates buffers and returns a struct that holds handles to our resources
@@ -89,8 +84,3 @@ void mesh_delete(mesh* mesh); // TODO
 void draw_mesh(mesh* mesh, mat4* model, camera* cam);
 
 model_handle model_load(const char* debug_name, const char* filepath);
-
-void geo_free_data(geometry_data* geo);
-void geo_set_vertex_colours(geometry_data* geo, vec4 colour);
-
-vertex_description static_3d_vertex_description();

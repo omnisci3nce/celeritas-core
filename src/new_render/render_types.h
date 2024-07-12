@@ -7,6 +7,11 @@
 #include "defines.h"
 #include "ral.h"
 #include "maths.h"
+#include "ral_types.h"
+
+// --- Handles
+CORE_DEFINE_HANDLE(ModelHandle);
+#define ABSENT_MODEL_HANDLE 999999999
 
 typedef struct Geometry {
   VertexFormat format;
@@ -27,6 +32,11 @@ typedef struct Mesh {
   bool is_uploaded; // has the data been uploaded to the GPU
 } Mesh;
 
+typedef struct TextureData {
+    TextureDesc description;
+    void* image_data;
+} TextureData;
+
 // --- Supported materials
 typedef enum MaterialKind {
   MAT_BLINN_PHONG,
@@ -46,6 +56,8 @@ typedef struct Model {
   // materials
 } Model;
 
+// TODO: function to create a model from a single mesh (like when using primitives)
+
 // --- Lights
 typedef struct PointLight {
   Vec3 position;
@@ -61,3 +73,12 @@ typedef struct DirectionalLight {
   Vec3 diffuse;
   Vec3 specular;
 } DirectionalLight;
+
+// ---
+
+// A renderable 'thing'
+typedef struct RenderEnt {
+    ModelHandle model;
+    Mat4 affine;
+    bool casts_shadows;
+} RenderEnt;

@@ -44,6 +44,8 @@ typedef struct PBR_Textures {
 
 // --- Internal
 
+typedef struct MaterialMap MaterialMap;
+typedef struct RenderEnt RenderEnt;
 
 GPU_Renderpass* PBR_RPassCreate();
 GPU_Pipeline* PBR_PipelineCreate(GPU_Renderpass* rpass);

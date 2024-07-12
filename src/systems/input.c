@@ -6,11 +6,11 @@
 
 #include "log.h"
 
-static input_state *g_input;  // Use a global to simplify caller code
+static Input_State *g_input;  // Use a global to simplify caller code
 
-bool input_system_init(input_state *input, GLFWwindow *window) {
+bool Input_Init(Input_State *input, GLFWwindow *window) {
   INFO("Input init");
-  memset(input, 0, sizeof(input_state));
+  memset(input, 0, sizeof(Input_State));
 
   input->window = window;
   // Set everything to false. Could just set memory to zero but where's the fun in that
@@ -29,9 +29,9 @@ bool input_system_init(input_state *input, GLFWwindow *window) {
   return true;
 }
 
-void input_system_shutdown(input_state *input) {}
+void Input_Shutdown(Input_State *input) {}
 
-void input_update(input_state *input) {
+void Input_Update(Input_State *input) {
   glfwPollEvents();
   // --- update keyboard input
 

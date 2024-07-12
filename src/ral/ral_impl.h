@@ -1,22 +1,38 @@
+/**
+ * @brief
+*/
 #pragma once
 #include "defines.h"
 #include "ral_types.h"
 
 struct GLFWwindow;
 
-bool gpu_backend_init(const char* window_name, struct GLFWwindow* window);
-void gpu_backend_shutdown();
+// Forward declare structs - these must be defined in the backend implementation
+typedef struct GPU_Swapchain GPU_Swapchain;
+typedef struct GPU_Device GPU_Device;
+typedef struct GPU_PipelineLayout GPU_PipelineLayout;
+typedef struct GPU_Pipeline GPU_Pipeline;
+typedef struct GPU_Renderpass GPU_Renderpass;
+typedef struct GPU_CmdEncoder GPU_CmdEncoder;  // Recording
+typedef struct GPU_CmdBuffer GPU_CmdBuffer;    // Ready for submission
+typedef struct GPU_Buffer GPU_Buffer;
+typedef struct GPU_Texture GPU_Texture;
 
-bool gpu_device_create(gpu_device* out_device);
-void gpu_device_destroy(gpu_device* device);
+bool GPU_Backend_Init(const char* window_name, struct GLFWwindow* window);
+void GPU_Backend_Shutdown();
 
-gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description);
-void gpu_pipeline_destroy(gpu_pipeline* pipeline);
+bool GPU_Device_Create(GPU_Device* out_device);
+void GPU_Device_Destroy(GPU_Device* device);
 
-// --- Renderpass
-gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description);
-void gpu_renderpass_destroy(gpu_renderpass* pass);
+bool GPU_Swapchain_Create(GPU_Swapchain* out_swapchain);
+void GPU_Swapchain_Destroy(GPU_Swapchain* swapchain);
 
-// --- Swapchain
-bool gpu_swapchain_create(gpu_swapchain* out_swapchain);
-void gpu_swapchain_destroy(gpu_swapchain* swapchain);
+GPU_Renderpass* GPU_Renderpass_Create(GPU_RenderpassDesc description);
+void GPU_Renderpass_Destroy(GPU_Renderpass* pass);
+
+GPU_Pipeline* GPU_GraphicsPipeline_Create(GraphicsPipelineDesc description, GPU_Renderpass* renderpass);
+void GraphicsPipeline_Destroy(GPU_Pipeline* pipeline);
+
+#if defined(CEL_REND_BACKEND_OPENGL)
+#include "backend_opengl.h"
+#endif

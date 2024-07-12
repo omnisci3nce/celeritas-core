@@ -36,7 +36,7 @@ bool key_just_released(keycode key);
 
 // --- Lifecycle
 
-bool Input_Init(Input_state *input, struct GLFWwindow *window);
-void Input_Shutdown(Input_state *input);
+bool Input_Init(Input_State *input, struct GLFWwindow *window);
+void Input_Shutdown(Input_State *input);
 
-void Input_Update(Input_state *state); // must be run once per main loop
+void Input_Update(Input_State *state); // must be run once per main loop

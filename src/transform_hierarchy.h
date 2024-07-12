@@ -10,25 +10,26 @@
 #define MAX_TF_NODE_CHILDREN \
   32 /** TEMP: Make it simpler to manage children in `transform_node`s　*/
 
-typedef struct transform_hierarchy transform_hierarchy;
+typedef struct TransformHierarchy TransformHierarchy;
 
-struct transform_node {
-  model_handle model; /** A handle back to what model this node represents */
-  transform tf;
-  mat4 local_matrix_tf; /** cached local affine transform */
-  mat4 world_matrix_tf; /** cached world-space affine transform */
+struct Transform_Node {
+  ModelHandle model; /** A handle back to what model this node represents */
+  Transform tf;
+  Mat4 local_matrix_tf; /** cached local affine transform */
+  Mat4 world_matrix_tf; /** cached world-space affine transform */
 
   struct transform_node* parent;
   struct transform_node* children[MAX_TF_NODE_CHILDREN];
   u32 n_children;
   struct transform_hierarchy* tfh;
 };
-typedef struct transform_node transform_node;
+typedef struct Transform_Node Transform_Node;
+typedef struct Transform_Node TF_Node;
 
 // --- Lifecycle
 
 /** @brief Allocates and returns an empty transform hierarchy with a root node */
-transform_hierarchy* transform_hierarchy_create();
+TransformHierarchy* TransformHierarchy_Create();
 
 /**
  * @brief recursively frees all the children and then finally itself
@@ -45,11 +46,11 @@ void transform_hierarchy_propagate_transforms(transform_hierarchy* tfh);
 // --- Queries
 
 /** @brief Get a pointer to the root node */
-transform_node* transform_hierarchy_root_node(transform_hierarchy* tfh);
+Transform_Node* TransformHierarchy_RootNode(TransformHierarchy* tfh);
 
 // --- Mutations
-transform_node* transform_hierarchy_add_node(transform_node* parent, model_handle model,
-                                             transform tf);
+Transform_Node* TransformHierarchy_AddNode(transform_node* parent, ModelHandle model,
+                                             Transform tf);
 void transform_hierarchy_delete_node(transform_node* node);
 
 // --- Traversal
@@ -73,5 +74,5 @@ void transform_hierarchy_dfs(transform_node* start_node,
                              bool (*visit_node)(transform_node* node, void* ctx_data),
                              bool is_pre_order, void* ctx_data);
 
-struct core;
-void transform_hierarchy_debug_print(transform_node* start_node, struct core* core);
+struct Core;
+void transform_hierarchy_debug_print(transform_node* start_node, struct Core* core);

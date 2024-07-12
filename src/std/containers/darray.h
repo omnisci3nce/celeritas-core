@@ -86,6 +86,7 @@
       size_t new_capacity =                                                               \
           d->capacity > 0 ? d->capacity * DARRAY_RESIZE_FACTOR : DARRAY_DEFAULT_CAPACITY; \
       T *resized = Type##_darray_resize(d, new_capacity);                                 \
+      (void)resized; \
     }                                                                                     \
                                                                                           \
     d->data[d->len] = value;                                                              \
@@ -97,6 +98,7 @@
       size_t new_capacity =                                                               \
           d->capacity > 0 ? d->capacity * DARRAY_RESIZE_FACTOR : DARRAY_DEFAULT_CAPACITY; \
       T *resized = Type##_darray_resize(d, new_capacity);                                 \
+      (void)resized; \
     }                                                                                     \
                                                                                           \
     T *place = d->data + d->len;                                                          \
@@ -116,6 +118,7 @@
       size_t new_capacity =                                                               \
           d->capacity > 0 ? d->capacity * DARRAY_RESIZE_FACTOR : DARRAY_DEFAULT_CAPACITY; \
       T *resized = Type##_darray_resize(d, new_capacity);                                 \
+      (void)resized; \
     }                                                                                     \
                                                                                           \
     /* shift existing data after index */                                                 \
@@ -135,14 +138,6 @@
   }                                                                                       \
                                                                                           \
   PREFIX size_t Type##_darray_len(Type##_darray *d) { return d->len; }                    \
-                                                                                          \
-  PREFIX void Type##_darray_print(Type##_darray *d) {                                     \
-    printf("len: %zu ", d->len);                                                          \
-    printf("capacity: %zu\n", d->capacity);                                               \
-    for (int i = 0; i < d->len; i++) {                                                    \
-      printf("Index %d holds value %d\n", i, d->data[i]);                                 \
-    }                                                                                     \
-  }                                                                                       \
                                                                                           \
   PREFIX Type##_darray_iter Type##_darray_iter_new(Type##_darray *d) {                    \
     Type##_darray_iter iterator;                                                          \
