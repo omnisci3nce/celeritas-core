@@ -5,6 +5,7 @@
 
 #pragma once
 #include "defines.h"
+#include "maths_types.h"
 #include "ral.h"
 #include "maths.h"
 #include "ral_types.h"
@@ -79,6 +80,7 @@ typedef struct DirectionalLight {
 // A renderable 'thing'
 typedef struct RenderEnt {
     ModelHandle model;
-    Mat4 affine;
+    Mat4 affine; // In the future this should be updated by the transform graph
+    // Bbox_3D bounding_box;
     bool casts_shadows;
 } RenderEnt;

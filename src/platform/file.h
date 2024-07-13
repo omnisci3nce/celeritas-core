@@ -10,13 +10,13 @@
 #include "str.h"
 
 typedef struct str8_opt {
-  str8 contents;
+  Str8 contents;
   bool has_value;
 } str8_opt;
 
 const char* string_from_file(const char* path);
 
-str8_opt str8_from_file(arena* a, str8 path);
+str8_opt str8_from_file(arena* a, Str8 path);
 
 typedef struct {
   char* data;

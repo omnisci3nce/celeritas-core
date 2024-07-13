@@ -50,13 +50,16 @@ int main() {
   // TODO: query joints of the gltf to get the hand bone to parent a sword to
 
   RenderEnt player_r = { .model = player_model, .affine = mat4_ident(), .casts_shadows = true };
+
+  RenderEnt entities[] = { player_r };
+
   while (!ShouldExit()) {
     Frame_Begin();
 
     // BEGIN Draw calls
 
     // draw the player model with shadows
-
+    Render_RenderEntities(entities, 1);
     Render_DrawTerrain();
     Skybox_Draw(&skybox);
 

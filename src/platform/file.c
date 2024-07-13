@@ -33,7 +33,7 @@ const char *string_from_file(const char *path) {
   return string;
 }
 
-str8_opt str8_from_file(arena *a, str8 path) {
+str8_opt str8_from_file(arena *a, Str8 path) {
   char *p = cstr(a, path);
   str8_opt result = { .has_value = false };
 
@@ -51,7 +51,7 @@ str8_opt str8_from_file(arena *a, str8 path) {
   rewind(f);
 
   u8 *raw = arena_alloc(a, fsize + 1);
-  str8 contents = str8_create(raw, fsize);
+  Str8 contents = str8_create(raw, fsize);
   contents.buf[contents.len] = '\0';
 
   fread(raw, fsize, 1, f);

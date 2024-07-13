@@ -28,7 +28,11 @@ PUB void Renderer_Shutdown(Renderer* renderer);
 // NOTE: All of these functions grab the Renderer instance off the global Core
 PUB void Render_FrameBegin(Renderer* renderer);
 PUB void Render_FrameEnd(Renderer* renderer);
-PUB void Render_FrameDraw(Renderer* renderer);
+
+/** @brief  */
+PUB void Render_RenderEntities(RenderEnt* entities, size_t entity_count);
+
+// TODO: Render_FrameDraw(); - this will
 
 // --- Resources
 

@@ -9,7 +9,7 @@
 #include "str.h"
 
 typedef struct path_opt {
-  str8 path;
+  Str8 path;
   bool has_value;
 } path_opt;
 

@@ -35,7 +35,7 @@ KITC_DECL_TYPED_ARRAY(Vec4)
 KITC_DECL_TYPED_ARRAY(face)
 // KITC_DECL_TYPED_ARRAY(joint)
 
-bool model_load_gltf_str(const char *file_string, const char *filepath, str8 relative_path,
+bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 relative_path,
                          Model *out_model, bool invert_textures_y);
 
 ModelHandle model_load_gltf(const char *path, bool invert_texture_y) {
@@ -85,7 +85,7 @@ typedef struct model {
   u32 mesh_count;
 } model;
 */
-bool model_load_gltf_str(const char *file_string, const char *filepath, str8 relative_path,
+bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 relative_path,
                          Model *out_model, bool invert_textures_y) {
   // TRACE("Load GLTF from string");
 
@@ -100,7 +100,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
   // // vertex_bone_data_darray *tmp_vertex_bone_data = vertex_bone_data_darray_new(1000);
 
   // cgltf_options options = { 0 };
-  // cgltf_data *data = NULL;
+  cgltf_data *data = NULL;
   // cgltf_result result = cgltf_parse_file(&options, filepath, &data);
   // if (result != cgltf_result_success) {
   //   WARN("gltf load failed");
@@ -183,13 +183,13 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     snprintf(normal_map_path, sizeof(normal_map_path), "%s/%s", relative_path.buf,
              normal_tex_view.texture->image->uri);
 
-    material our_material =
-        pbr_material_load(albedo_map_path, normal_map_path, true, metal_rough_map_path, NULL, NULL);
+    // material our_material =
+    //     pbr_material_load(albedo_map_path, normal_map_path, true, metal_rough_map_path, NULL, NULL);
 
-    our_material.name = malloc(strlen(gltf_material.name) + 1);
-    strcpy(our_material.name, gltf_material.name);
+    // our_material.name = malloc(strlen(gltf_material.name) + 1);
+    // strcpy(our_material.name, gltf_material.name);
 
-    material_darray_push(out_model->materials, our_material);
+    // material_darray_push(out_model->materials, our_material);
   }
 
   // TEMP
@@ -204,7 +204,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     // DEBUG("Number of this primitive %d", primitive.)
 
     for (cgltf_size a = 0; a < data->meshes[m].primitives[0].attributes_count; a++) {
-      // cgltf_attribute attribute = data->meshes[m].primitives[0].attributes[a];
+      cgltf_attribute attribute = data->meshes[m].primitives[0].attributes[a];
       if (attribute.type == cgltf_attribute_type_position) {
         TRACE("Load positions from accessor");
 
@@ -322,34 +322,34 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
     //     // }
 
     bool has_indices = false;
-    vertex_darray *geo_vertices = vertex_darray_new(3);
+    Vertex_darray *geo_vertices = Vertex_darray_new(3);
     u32_darray *geo_indices = u32_darray_new(0);
 
     // Store vertices
-    printf("Positions %d Normals %d UVs %d\n", tmp_positions->len, tmp_normals->len, tmp_uvs->len);
-    assert(tmp_positions->len == tmp_normals->len);
-    assert(tmp_normals->len == tmp_uvs->len);
-    for (u32 v_i = 0; v_i < tmp_positions->len; v_i++) {
-      vertex v = { .static_3d = {
-                       .position = tmp_positions->data[v_i],
-                       .normal = tmp_normals->data[v_i],
-                       .tex_coords = tmp_uvs->data[v_i],
-                   } };
-      vertex_darray_push(geo_vertices, v);
+    // printf("Positions %d Normals %d UVs %d\n", tmp_positions->len, tmp_normals->len, tmp_uvs->len);
+    // assert(tmp_positions->len == tmp_normals->len);
+    // assert(tmp_normals->len == tmp_uvs->len);
+    // for (u32 v_i = 0; v_i < tmp_positions->len; v_i++) {
+    //   vertex v = { .static_3d = {
+    //                    .position = tmp_positions->data[v_i],
+    //                    .normal = tmp_normals->data[v_i],
+    //                    .tex_coords = tmp_uvs->data[v_i],
+    //                } };
+    //   vertex_darray_push(geo_vertices, v);
     }
 
     // Store indices
-    cgltf_accessor *indices = primitive.indices;
-    if (primitive.indices > 0) {
-      WARN("indices! %d", indices->count);
-      has_indices = true;
+    // cgltf_accessor *indices = primitive.indices;
+    // if (primitive.indices > 0) {
+      // WARN("indices! %d", indices->count);
+      // has_indices = true;
 
-      // store indices
-      for (cgltf_size i = 0; i < indices->count; ++i) {
-        cgltf_uint ei;
-        cgltf_accessor_read_uint(indices, i, &ei, 1);
-        u32_darray_push(geo_indices, ei);
-      }
+      // // store indices
+      // for (cgltf_size i = 0; i < indices->count; ++i) {
+      //   cgltf_uint ei;
+      //   cgltf_accessor_read_uint(indices, i, &ei, 1);
+      //   u32_darray_push(geo_indices, ei);
+      // }
 
       // fetch and store vertices for each index
       // for (cgltf_size i = 0; i < indices->count; ++i) {
@@ -366,23 +366,23 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, str8 rel
       //   }
       //   // for each vertex do the bone data
       // }
-    } else {
-      has_indices = false;
-      return false;  // TODO: handle this
-    }
+    // } else {
+      // has_indices = false;
+      // return false;  // TODO: handle this
+    // }
 
-    geometry_data *geometry = malloc(sizeof(geometry_data));
-    geometry->format = VERTEX_STATIC_3D;
-    geometry->colour = (rgba){ 1, 1, 1, 1 };
-    geometry->vertices = geo_vertices;
-    geometry->indices = geo_indices;
-    geometry->has_indices = has_indices;
+    // geometry_data *geometry = malloc(sizeof(geometry_data));
+    // geometry->format = VERTEX_STATIC_3D;
+    // geometry->colour = (rgba){ 1, 1, 1, 1 };
+    // geometry->vertices = geo_vertices;
+    // geometry->indices = geo_indices;
+    // geometry->has_indices = has_indices;
 
-    mesh m = mesh_create(geometry, true);
-    m.material_index = (u32_opt){ .has_value = mat_idx == 9999, .value = mat_idx };
+    // mesh m = mesh_create(geometry, true);
+    // m.material_index = (u32_opt){ .has_value = mat_idx == 9999, .value = mat_idx };
 
-    mesh_darray_push(out_model->meshes, m);
-  }
+    // mesh_darray_push(out_model->meshes, m);
+  //    }
 
   //     // clear data for each mesh
   //     vec3_darray_clear(tmp_positions);
