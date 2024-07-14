@@ -8,6 +8,7 @@
 #include "ral_types.h"
 
 struct GLFWwindow;
+struct ResourcePools;
 
 // Forward declare structs - these must be defined in the backend implementation
 typedef struct GPU_Swapchain GPU_Swapchain;
@@ -19,8 +20,6 @@ typedef struct GPU_CmdEncoder GPU_CmdEncoder;  // Recording
 typedef struct GPU_CmdBuffer GPU_CmdBuffer;    // Ready for submission
 typedef struct GPU_Buffer GPU_Buffer;
 typedef struct GPU_Texture GPU_Texture;
-
-struct ResourcePools;
 
 bool GPU_Backend_Init(const char* window_name, struct GLFWwindow* window, struct ResourcePools* res_pools);
 void GPU_Backend_Shutdown();
@@ -40,6 +39,8 @@ PUB void GraphicsPipeline_Destroy(GPU_Pipeline* pipeline);
 // --- Command buffer
 PUB GPU_CmdEncoder GPU_CmdEncoder_Create();
 PUB void GPU_CmdEncoder_Destroy(GPU_CmdEncoder* encoder);
+PUB void GPU_CmdEncoder_Begin(GPU_CmdEncoder* encoder);
+PUB void GPU_CmdEncoder_Finish(GPU_CmdEncoder* encoder);
 PUB void GPU_CmdEncoder_BeginRender(GPU_CmdEncoder* encoder, GPU_Renderpass* renderpass);
 PUB void GPU_CmdEncoder_EndRender(GPU_CmdEncoder* encoder);
 PUB GPU_CmdEncoder* GPU_GetDefaultEncoder();
@@ -67,7 +68,7 @@ void copy_buffer_to_image_oneshot(BufferHandle src, TextureHandle dst);
 
 // --- Render commands
 PUB void GPU_EncodeBindPipeline(GPU_CmdEncoder* encoder, GPU_Pipeline* pipeline);
-PUB void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData* data);
+PUB void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData data);
 void GPU_EncodeSetDefaults(GPU_CmdEncoder* encoder);
 PUB void GPU_EncodeSetVertexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf);
 PUB void GPU_EncodeSetIndexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf);

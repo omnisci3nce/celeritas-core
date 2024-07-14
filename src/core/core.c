@@ -17,13 +17,6 @@
 
 Core g_core; /** @brief global `Core` that other files can use */
 
-struct Core {
-  const char* app_name;
-  GLFWwindow* window;
-  Renderer* renderer;
-  Input_State input;
-};
-
 /** @brief Gets the global `Core` singleton */
 inline Core* GetCore() { return &g_core; }
 

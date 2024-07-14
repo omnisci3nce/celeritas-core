@@ -19,23 +19,23 @@ void ResourcePools_Init(arena* a, struct ResourcePools* res_pools) {
 }
 
 VertexDescription static_3d_vertex_description() {
-    VertexDescription builder = { .debug_label = "Standard static 3d vertex format" };
-    VertexDesc_AddAttr(&builder, "inPosition", ATTR_F32x3);
-    VertexDesc_AddAttr(&builder, "inNormal", ATTR_F32x3);
-    VertexDesc_AddAttr(&builder, "inTexCoords", ATTR_F32x2);
-    builder.use_full_vertex_size = true;
-    return builder;
+  VertexDescription builder = { .debug_label = "Standard static 3d vertex format" };
+  VertexDesc_AddAttr(&builder, "inPosition", ATTR_F32x3);
+  VertexDesc_AddAttr(&builder, "inNormal", ATTR_F32x3);
+  VertexDesc_AddAttr(&builder, "inTexCoords", ATTR_F32x2);
+  builder.use_full_vertex_size = true;
+  return builder;
 }
 
 void VertexDesc_AddAttr(VertexDescription* builder, const char* name, VertexAttribType type) {
-    u32 i = builder->attributes_count;
+  u32 i = builder->attributes_count;
 
-    size_t size = VertexAttribSize(type);
-    builder->attributes[i] = type;
-    builder->stride += size;
-    builder->attr_names[i] = name;
+  size_t size = VertexAttribSize(type);
+  builder->attributes[i] = type;
+  builder->stride += size;
+  builder->attr_names[i] = name;
 
-    builder->attributes_count++;
+  builder->attributes_count++;
 }
 
 size_t VertexAttribSize(VertexAttribType attr) {

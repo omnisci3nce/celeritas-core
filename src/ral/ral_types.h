@@ -152,6 +152,7 @@ typedef enum ShaderVisibility {
 typedef struct ShaderDesc {} ShaderDesc;
 
 typedef enum ShaderBindingKind {
+    BINDING_BYTES,
     BINDING_BUFFER,
     BINDING_BUFFER_ARRAY,
     BINDING_TEXTURE,
@@ -165,14 +166,14 @@ typedef struct ShaderBinding {
     ShaderBindingKind kind;
     ShaderVisibility vis;
     union {
-        struct { u32 size; } bytes;
+        struct { u32 size; void* data; } bytes;
         struct { BufferHandle handle; } buffer;
         struct { TextureHandle handle; } texture;
     } data;
 } ShaderBinding;
 
 typedef struct ShaderDataLayout {
-    ShaderBinding* bindings;
+    ShaderBinding bindings[MAX_SHADER_BINDINGS];
     size_t binding_count;
 } ShaderDataLayout;
 

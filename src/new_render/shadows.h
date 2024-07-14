@@ -6,9 +6,17 @@
 #pragma once
 #include "defines.h"
 #include "ral.h"
+#include "ral_impl.h"
+#include "ral_types.h"
 #include "render_types.h"
 
-typedef struct Shadow_Storage Shadow_Storage;
+typedef struct Shadow_Storage {
+    GPU_Renderpass* shadowmap_pass;
+    GPU_Pipeline* pipeline;
+    bool debug_quad_enabled;
+    TextureHandle depth_texture;
+    // TODO: Some statistics tracking
+} Shadow_Storage;
 
 typedef struct Camera Camera;
 typedef struct Mat4 Mat4;
@@ -26,4 +34,5 @@ PUB Handle Shadow_GetShadowMapTexture(Shadow_Storage* storage);
 // --- Internal
 GPU_Renderpass* Shadow_RPassCreate(); // Creates the render pass
 GPU_Pipeline*   Shadow_PipelineCreate(GPU_Renderpass* rpass); // Creates the pipeline
-void Shadow_ShadowmapExecute(Shadow_Storage* storage, Mat4 light_space_transform, RenderEnt* entites, size_t entity_count);
+void Shadow_ShadowmapExecute(Shadow_Storage* storage, Mat4 light_space_transform, RenderEnt* entities, size_t entity_count);
+void Shadow_RenderDebugQuad();

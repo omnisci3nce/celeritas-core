@@ -32,6 +32,10 @@ typedef struct Mesh {
   Geometry* geometry; // NULL means it has been freed CPU-side
   bool is_uploaded; // has the data been uploaded to the GPU
 } Mesh;
+#ifndef TYPED_MESH_ARRAY
+KITC_DECL_TYPED_ARRAY(Mesh)
+#define TYPED_MESH_ARRAY
+#endif
 
 typedef struct TextureData {
     TextureDesc description;
@@ -54,6 +58,7 @@ typedef struct Material {
 
 typedef struct Model {
   // meshes
+  Mesh_darray* meshes;
   // materials
 } Model;
 

@@ -11,7 +11,7 @@
  *         Whenever you call draw functions you can think of this as an implicit parameter. */
 typedef struct RenderScene {
     Camera camera;
-    PointLight light;
+    DirectionalLight sun;
 } RenderScene;
 
 // --- Public APIs

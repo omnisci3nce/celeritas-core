@@ -6,14 +6,14 @@
 
 KITC_DECL_TYPED_ARRAY(f32)
 
-// typedef enum interpolation { INTERPOLATION_LINEAR, INTERPOLATION_COUNT } interpolation;
+typedef enum Interpolation { INTERPOLATION_LINEAR, INTERPOLATION_COUNT } Interpolation;
 
-// typedef enum keyframe_kind {
-//   KEYFRAME_ROTATION,
-//   KEYFRAME_TRANSLATION,
-//   KEYFRAME_SCALE,
-//   KEYFRAME_WEIGHTS,
-// } keyframe_kind;
+typedef enum KeyframeKind {
+  KEYFRAME_ROTATION,
+  KEYFRAME_TRANSLATION,
+  KEYFRAME_SCALE,
+  KEYFRAME_WEIGHTS,
+} KeyframeKind;
 
 // typedef union keyframe {
 //   quat rotation;
