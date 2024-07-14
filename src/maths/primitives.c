@@ -9,19 +9,13 @@
 #define VERT_3D(arr, pos, norm, uv)                                                    \
   {                                                                                    \
     Vertex v = { .static_3d = { .position = pos, .normal = norm, .tex_coords = uv } }; \
-    vertex_darray_push(arr, v);                                                        \
+    Vertex_darray_push(arr, v);                                                        \
   }
 
 void push_triangle(u32_darray* arr, u32 i0, u32 i1, u32 i2) {
   u32_darray_push(arr, i0);
   u32_darray_push(arr, i1);
   u32_darray_push(arr, i2);
-}
-
-// TODO: move to another file
-void geo_free_data(Geometry* geo) {
-  vertex_darray_free(geo->vertices);
-  geo->vertices = NULL;
 }
 
 Vec3 plane_vertex_positions[] = {
@@ -32,7 +26,7 @@ Vec3 plane_vertex_positions[] = {
 };
 
 Geometry geo_create_plane(f32x2 extents) {
-  Vertex_darray* vertices = vertex_darray_new(4);
+  Vertex_darray* vertices = Vertex_darray_new(4);
   u32_darray* indices = u32_darray_new(vertices->len);
 
   Vec3 vert_pos[4];
@@ -69,7 +63,7 @@ static const Vec3 FRONT_TOP_LEFT = (Vec3){ 0, 1, 1 };
 static const Vec3 FRONT_TOP_RIGHT = (Vec3){ 1, 1, 1 };
 
 Geometry geo_create_cuboid(f32x3 extents) {
-  Vertex_darray* vertices = vertex_darray_new(36);
+  Vertex_darray* vertices = Vertex_darray_new(36);
 
   // back faces
   VERT_3D(vertices, BACK_TOP_RIGHT, VEC3_NEG_Z, vec2(1, 0));
@@ -148,7 +142,7 @@ Geometry geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_west_li
   assert(east_west_lines >= 3);  // sphere will be degenerate and look gacked without at least 3
   assert(north_south_lines >= 3);
 
-  Vertex_darray* vertices = vertex_darray_new(2 + (east_west_lines - 1) * north_south_lines);
+  Vertex_darray* vertices = Vertex_darray_new(2 + (east_west_lines - 1) * north_south_lines);
 
   // Create a UV sphere with spherical coordinates
   // a point P on the unit sphere can be represented P(r, theta, phi)
@@ -180,7 +174,7 @@ Geometry geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_west_li
                            vec3_normalise(position),  // normal vector on sphere is same as position
                        .tex_coords = vec2(0, 0)       // TODO
                    } };
-      vertex_darray_push(vertices, v);
+      Vertex_darray_push(vertices, v);
     }
   }
 
@@ -188,7 +182,7 @@ Geometry geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_west_li
   Vertex bot = { .static_3d = { .position = vec3(0, -radius, 0),
                                 .normal = vec3_normalise(vec3(0, -radius, 0)),
                                 .tex_coords = vec2(0, 0) } };
-  vertex_darray_push(vertices, bot);
+  Vertex_darray_push(vertices, bot);
 
   u32_darray* indices = u32_darray_new(1);
 

@@ -50,7 +50,7 @@ ModelHandle model_load_gltf(const char *path, bool invert_texture_y) {
   const char *file_string = string_from_file(path);
 
   ModelHandle handle;
-  // modfl *model = model_pool_alloc(&g_core.models, &handle);
+  // Model *model = model_pool_alloc(&g_core.models, &handle);
   // model->name = str8_cstr_view(path);
   // model->meshes = mesh_darray_new(1);
   // model->materials = material_darray_new(1);
@@ -184,7 +184,8 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 rel
              normal_tex_view.texture->image->uri);
 
     // material our_material =
-    //     pbr_material_load(albedo_map_path, normal_map_path, true, metal_rough_map_path, NULL, NULL);
+    //     pbr_material_load(albedo_map_path, normal_map_path, true, metal_rough_map_path, NULL,
+    //     NULL);
 
     // our_material.name = malloc(strlen(gltf_material.name) + 1);
     // strcpy(our_material.name, gltf_material.name);
@@ -326,62 +327,61 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 rel
     u32_darray *geo_indices = u32_darray_new(0);
 
     // Store vertices
-    // printf("Positions %d Normals %d UVs %d\n", tmp_positions->len, tmp_normals->len, tmp_uvs->len);
-    // assert(tmp_positions->len == tmp_normals->len);
-    // assert(tmp_normals->len == tmp_uvs->len);
-    // for (u32 v_i = 0; v_i < tmp_positions->len; v_i++) {
+    // printf("Positions %d Normals %d UVs %d\n", tmp_positions->len, tmp_normals->len,
+    // tmp_uvs->len); assert(tmp_positions->len == tmp_normals->len); assert(tmp_normals->len ==
+    // tmp_uvs->len); for (u32 v_i = 0; v_i < tmp_positions->len; v_i++) {
     //   vertex v = { .static_3d = {
     //                    .position = tmp_positions->data[v_i],
     //                    .normal = tmp_normals->data[v_i],
     //                    .tex_coords = tmp_uvs->data[v_i],
     //                } };
     //   vertex_darray_push(geo_vertices, v);
-    }
+  }
 
-    // Store indices
-    // cgltf_accessor *indices = primitive.indices;
-    // if (primitive.indices > 0) {
-      // WARN("indices! %d", indices->count);
-      // has_indices = true;
+  // Store indices
+  // cgltf_accessor *indices = primitive.indices;
+  // if (primitive.indices > 0) {
+  // WARN("indices! %d", indices->count);
+  // has_indices = true;
 
-      // // store indices
-      // for (cgltf_size i = 0; i < indices->count; ++i) {
-      //   cgltf_uint ei;
-      //   cgltf_accessor_read_uint(indices, i, &ei, 1);
-      //   u32_darray_push(geo_indices, ei);
-      // }
+  // // store indices
+  // for (cgltf_size i = 0; i < indices->count; ++i) {
+  //   cgltf_uint ei;
+  //   cgltf_accessor_read_uint(indices, i, &ei, 1);
+  //   u32_darray_push(geo_indices, ei);
+  // }
 
-      // fetch and store vertices for each index
-      // for (cgltf_size i = 0; i < indices->count; ++i) {
-      //   vertex vert;
-      //   cgltf_uint index = mesh.indices[i];
-      //   vert.position = tmp_positions->data[index];
-      //   vert.normal = tmp_normals->data[index];
-      //   vert.uv = tmp_uvs->data[index];
-      //   vertex_darray_push(mesh.vertices, vert);
+  // fetch and store vertices for each index
+  // for (cgltf_size i = 0; i < indices->count; ++i) {
+  //   vertex vert;
+  //   cgltf_uint index = mesh.indices[i];
+  //   vert.position = tmp_positions->data[index];
+  //   vert.normal = tmp_normals->data[index];
+  //   vert.uv = tmp_uvs->data[index];
+  //   vertex_darray_push(mesh.vertices, vert);
 
-      //   if (is_skinned) {
-      //     vertex_bone_data vbd = tmp_vertex_bone_data->data[index];  // create a copy
-      //     vertex_bone_data_darray_push(mesh.vertex_bone_data, vbd);
-      //   }
-      //   // for each vertex do the bone data
-      // }
-    // } else {
-      // has_indices = false;
-      // return false;  // TODO: handle this
-    // }
+  //   if (is_skinned) {
+  //     vertex_bone_data vbd = tmp_vertex_bone_data->data[index];  // create a copy
+  //     vertex_bone_data_darray_push(mesh.vertex_bone_data, vbd);
+  //   }
+  //   // for each vertex do the bone data
+  // }
+  // } else {
+  // has_indices = false;
+  // return false;  // TODO: handle this
+  // }
 
-    // geometry_data *geometry = malloc(sizeof(geometry_data));
-    // geometry->format = VERTEX_STATIC_3D;
-    // geometry->colour = (rgba){ 1, 1, 1, 1 };
-    // geometry->vertices = geo_vertices;
-    // geometry->indices = geo_indices;
-    // geometry->has_indices = has_indices;
+  // geometry_data *geometry = malloc(sizeof(geometry_data));
+  // geometry->format = VERTEX_STATIC_3D;
+  // geometry->colour = (rgba){ 1, 1, 1, 1 };
+  // geometry->vertices = geo_vertices;
+  // geometry->indices = geo_indices;
+  // geometry->has_indices = has_indices;
 
-    // mesh m = mesh_create(geometry, true);
-    // m.material_index = (u32_opt){ .has_value = mat_idx == 9999, .value = mat_idx };
+  // mesh m = mesh_create(geometry, true);
+  // m.material_index = (u32_opt){ .has_value = mat_idx == 9999, .value = mat_idx };
 
-    // mesh_darray_push(out_model->meshes, m);
+  // mesh_darray_push(out_model->meshes, m);
   //    }
 
   //     // clear data for each mesh

@@ -39,11 +39,11 @@ typedef struct GPU_Renderpass {
 
 typedef struct GPU_CmdEncoder {
   GPU_Pipeline *pipeline;
-} GPU_CmdEncoder;  // Recording
+} GPU_CmdEncoder; // Recording
 
-typedef struct gpu_cmd_buffer {
+typedef struct GPU_CmdBuffer {
   void *pad;
-} gpu_cmd_buffer;  // Ready for submission
+} GPU_CmdBuffer;  // Ready for submission
 
 typedef struct GPU_Buffer {
   union {

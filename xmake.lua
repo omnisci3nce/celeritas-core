@@ -159,12 +159,12 @@ end
 
 target("core_shared")
 set_kind("shared")
-add_deps("core_config")     -- inherit common configurations
+add_deps("core_config") -- inherit common configurations
 add_files(core_sources)
 -- Link against dynamic CRT
 if is_plat("windows") then
-    add_links("msvcrt", "legacy_stdio_definitions")      -- for release builds
-    add_links("msvcrtd", "legacy_stdio_definitions")     -- for debug builds
+    add_links("msvcrt", "legacy_stdio_definitions")  -- for release builds
+    add_links("msvcrtd", "legacy_stdio_definitions") -- for debug builds
 end
 
 -- target("main_loop")

@@ -109,24 +109,24 @@ typedef struct gpu_renderpass_desc {
 } gpu_renderpass_desc;
 
 // --- Lifecycle functions
-bool gpu_backend_init(const char* window_name, struct GLFWwindow* window);
-void gpu_backend_shutdown();
+// bool gpu_backend_init(const char* window_name, struct GLFWwindow* window);
+// void gpu_backend_shutdown();
 void resource_pools_init(arena* a, struct resource_pools* res_pools);
 
-bool gpu_device_create(gpu_device* out_device);
-void gpu_device_destroy();
+// bool gpu_device_create(gpu_device* out_device);
+// void gpu_device_destroy();
 
-// --- Render Pipeline
-gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description);
-void gpu_pipeline_destroy(gpu_pipeline* pipeline);
+// // --- Render Pipeline
+// gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description);
+// void gpu_pipeline_destroy(gpu_pipeline* pipeline);
 
-// --- Renderpass
-gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description);
-void gpu_renderpass_destroy(gpu_renderpass* pass);
+// // --- Renderpass
+// gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description);
+// void gpu_renderpass_destroy(gpu_renderpass* pass);
 
-// --- Swapchain
-bool gpu_swapchain_create(gpu_swapchain* out_swapchain);
-void gpu_swapchain_destroy(gpu_swapchain* swapchain);
+// // --- Swapchain
+// bool gpu_swapchain_create(gpu_swapchain* out_swapchain);
+// void gpu_swapchain_destroy(gpu_swapchain* swapchain);
 
 // --- Command buffer
 gpu_cmd_encoder gpu_cmd_encoder_create();
@@ -167,20 +167,6 @@ void encode_draw_indexed(gpu_cmd_encoder* encoder, u64 index_count);
 void encode_clear_buffer(gpu_cmd_encoder* encoder, buffer_handle buf);
 
 // --- Buffers
-buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_flags flags,
-                                const void* data);
-void gpu_buffer_destroy(buffer_handle buffer);
-void gpu_buffer_upload(const void* data);
-
-// Textures
-/** @brief Create a new GPU texture resource.
- *  @param create_view creates a texture view (with same dimensions) at the same time
- *  @param data if not NULL then the data stored at the pointer will be uploaded to the GPU texture
- *  @note automatically creates a sampler for you */
-texture_handle gpu_texture_create(texture_desc desc, bool create_view, const void* data);
-void gpu_texture_destroy(texture_handle);
-void gpu_texture_upload(texture_handle texture, const void* data);
-
 // --- Vertex formats
 bytebuffer vertices_as_bytebuffer(arena* a, vertex_format format, vertex_darray* vertices);
 

@@ -260,7 +260,8 @@ bool model_load_obj_str(const char *file_string, Str8 relative_path, Model *out_
 //   // }
 
 //   // DEBUG("Loaded submesh\n  vertices: %zu\n  uvs: %zu\n  normals: %zu\n  faces: %zu",
-//   //       vec3_darray_len(tmp_positions), vec2_darray_len(tmp_uvs), vec3_darray_len(tmp_normals),
+//   //       vec3_darray_len(tmp_positions), vec2_darray_len(tmp_uvs),
+//   vec3_darray_len(tmp_normals),
 //   //       face_darray_len(tmp_faces));
 
 //   // // Clear current object faces
@@ -339,7 +340,8 @@ bool model_load_obj_str(const char *file_string, Str8 relative_path, Model *out_
 //   //            &current_material.ambient_colour.y, &current_material.ambient_colour.z);
 //   //   } else if (strcmp(line_header, "Kd") == 0) {
 //   //     // diffuse
-//   //     sscanf(pch + offset, "%f %f %f", &current_material.diffuse.x, &current_material.diffuse.y,
+//   //     sscanf(pch + offset, "%f %f %f", &current_material.diffuse.x,
+//   &current_material.diffuse.y,
 //   //            &current_material.diffuse.z);
 //   //   } else if (strcmp(line_header, "Ks") == 0) {
 //   //     // specular

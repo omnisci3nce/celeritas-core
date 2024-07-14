@@ -1,7 +1,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
-#include "builtin_materials.h"
 #include "colours.h"
 #include "maths.h"
 #include "opengl_helpers.h"
@@ -62,11 +61,6 @@ bool gpu_backend_init(const char* window_name, struct GLFWwindow* window) {
 
   return true;
 }
-
-void gpu_backend_shutdown() {}
-
-bool gpu_device_create(gpu_device* out_device) { /* No-op in OpenGL */ }
-void gpu_device_destroy() { /* No-op in OpenGL */ }
 
 // --- Render Pipeline
 gpu_pipeline* gpu_graphics_pipeline_create(struct graphics_pipeline_desc description) {
@@ -168,10 +162,6 @@ gpu_renderpass* gpu_renderpass_create(const gpu_renderpass_desc* description) {
 }
 void gpu_renderpass_destroy(gpu_renderpass* pass) { glDeleteFramebuffers(1, &pass->fbo); }
 
-// --- Swapchain
-bool gpu_swapchain_create(gpu_swapchain* out_swapchain) {}
-void gpu_swapchain_destroy(gpu_swapchain* swapchain) {}
-
 // --- Command buffer
 gpu_cmd_encoder gpu_cmd_encoder_create() {
   gpu_cmd_encoder encoder = { 0 };
@@ -180,12 +170,9 @@ gpu_cmd_encoder gpu_cmd_encoder_create() {
 void gpu_cmd_encoder_destroy(gpu_cmd_encoder* encoder) {}
 void gpu_cmd_encoder_begin(gpu_cmd_encoder encoder) {}
 void gpu_cmd_encoder_begin_render(gpu_cmd_encoder* encoder, gpu_renderpass* renderpass) {
-  // glViewport(0, 0, 1000, 1000);
   glBindFramebuffer(GL_FRAMEBUFFER, renderpass->fbo);
   rgba clear_colour = STONE_800;
   glClearColor(clear_colour.r, clear_colour.g, clear_colour.b, 1.0f);
-  /* glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); */
-  // FIXME: account for both
   if (renderpass->description.has_depth_stencil) {
     glClear(GL_DEPTH_BUFFER_BIT);
   } else {
@@ -352,9 +339,6 @@ buffer_handle gpu_buffer_create(u64 size, gpu_buffer_type buf_type, gpu_buffer_f
 
   return handle;
 }
-
-void gpu_buffer_destroy(buffer_handle buffer) {}
-void gpu_buffer_upload(const void* data) {}
 
 texture_handle gpu_texture_create(texture_desc desc, bool create_view, const void* data) {
   // "allocating" the cpu-side struct

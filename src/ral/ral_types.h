@@ -176,7 +176,7 @@ typedef struct ShaderDataLayout {
     size_t binding_count;
 } ShaderDataLayout;
 
-typedef ShaderDataLayout (*FN_GetBindingLayout)(void);
+typedef ShaderDataLayout (*FN_GetBindingLayout)(void* data);
 
 typedef struct ShaderData {
     FN_GetBindingLayout get_layout;
@@ -197,7 +197,6 @@ typedef enum PrimitiveTopology {
 typedef enum CullMode { CULL_BACK_FACE, CULL_FRONT_FACE, CULL_COUNT } CullMode;
 
 typedef struct GraphicsPipelineDesc {
-    // GPU_Renderpass* renderpass -> takes a renderpass in the create function
   const char* debug_name;
   VertexDescription vertex_desc;
   ShaderDesc vs; /** @brief Vertex shader stage */
@@ -205,7 +204,7 @@ typedef struct GraphicsPipelineDesc {
 
   // Roughly equivalent to a descriptor set layout each. each layout can have multiple bindings
   // examples:
-  // - uniform buffer reprensenting view projection matrix
+  // - uniform buffer representing view projection matrix
   // - texture for shadow map
   ShaderData data_layouts[MAX_SHADER_DATA_LAYOUTS];
   u32 data_layouts_count;

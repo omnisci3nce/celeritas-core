@@ -24,6 +24,10 @@ typedef struct RenderCtx {
 
 PUB bool Renderer_Init(RendererConfig config, Renderer* renderer);
 PUB void Renderer_Shutdown(Renderer* renderer);
+PUB size_t Renderer_GetMemReqs();
+
+// internal init functions
+void DefaultPipelinesInit(Renderer* renderer);
 
 // NOTE: All of these functions grab the Renderer instance off the global Core
 PUB void Render_FrameBegin(Renderer* renderer);
@@ -37,12 +41,13 @@ PUB void Render_RenderEntities(RenderEnt* entities, size_t entity_count);
 // --- Resources
 
 PUB TextureHandle TextureUpload();
-PUB ModelHandle ModelLoad(const char* name, const char* filepath);
+PUB ModelHandle ModelLoad(const char* debug_name, const char* filepath);
 
 // --- Rendering Data
 
 PUB Mesh Mesh_Create(Geometry* geometry, bool free_on_upload);
 PUB void Mesh_Delete(Mesh* mesh);
+void Geometry_Destroy(Geometry* geometry);
 
 // --- Drawing
 

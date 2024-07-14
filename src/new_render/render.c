@@ -2,12 +2,22 @@
  * @brief
  */
 
+#include <glfw3.h>
 #include "render.h"
+#include "core.h"
+#include "camera.h"
+#include "colours.h"
+#include "log.h"
+#include "maths.h"
 #include "maths_types.h"
 #include "pbr.h"
 #include "ral_common.h"
+#include "ral_impl.h"
 #include "render_scene.h"
+#include "render_types.h"
 #include "shadows.h"
+
+extern Core g_core;
 
 struct Renderer {
   struct GLFWwindow* window;
@@ -21,14 +31,105 @@ struct Renderer {
   Shadow_Storage* shadows;
   // Terrain_Storage terrain;
   // Text_Storage text;
-  struct ResourcePools* resource_pools;
+  ResourcePools* resource_pools;
 };
 
-bool Renderer_Init(RendererConfig config, Renderer* renderer) {
+bool Renderer_Init(RendererConfig config, Renderer* ren) {
+    INFO("Renderer init");
+
+    // init resource pools
+    DEBUG("Initialise GPU resource pools");
+    arena pool_arena = arena_create(malloc(1024 * 1024), 1024 * 1024);
+    ren->resource_pools = arena_alloc(&pool_arena, sizeof(struct ResourcePools));
+    ResourcePools_Init(&pool_arena, ren->resource_pools);
+
+  // GLFW window creation
+
+  // NOTE: all platforms use GLFW at the moment but thats subject to change
+  glfwInit();
+
+  #if defined(CEL_REND_BACKEND_OPENGL)
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  #elif defined(CEL_REND_BACKEND_VULKAN)
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+  #endif
+
+  GLFWwindow* window = glfwCreateWindow(config.scr_width, config.scr_height,
+                                        config.window_name, NULL, NULL);
+  if (window == NULL) {
+    ERROR("Failed to create GLFW window\n");
+    glfwTerminate();
+    return false;
+  }
+  ren->window = window;
+
+  glfwMakeContextCurrent(ren->window);
+
   // set the RAL backend up
+  if (!GPU_Backend_Init(config.window_name, window, ren->resource_pools)) {
+    return false;
+  }
+
+  GPU_Device_Create(&ren->device);
+  GPU_Swapchain_Create(&ren->swapchain);
+
+
+  // set up default scene
+  Camera default_cam =
+      Camera_Create(vec3(0.0, 2.0, 4.0), vec3_normalise(vec3(0.0, -2.0, -4.0)), VEC3_Y, 45.0);
+  SetCamera(default_cam);
+  PointLight default_light = { /* TODO */ };
+  SetPointLight(default_light);
 
   // create our renderpasses
-  Shadow_Init(renderer->shadows);
+  Shadow_Init(ren->shadows);
 
   return true;
+}
+
+void Renderer_Shutdown(Renderer* renderer) { }
+size_t Renderer_GetMemReqs() { return sizeof(Renderer); }
+
+void Render_FrameBegin(Renderer *renderer) {
+    renderer->frame_aborted = false;
+    if (GPU_Backend)
+
+}
+void Render_FrameEnd(Renderer* renderer) {
+
+}
+void Render_RenderEntities(RenderEnt* entities, size_t entity_count) {
+    Renderer* ren = Core_GetRenderer(&g_core);
+
+    GPU_CmdEncoder* enc = GPU_GetDefaultEncoder();
+    // bind shadow
+    GPU_EncodeBindPipeline(enc, ren->shadows)
+
+}
+
+Mesh Mesh_Create(Geometry* geometry, bool free_on_upload) {
+    Mesh m = { 0 };
+
+    // Create and upload vertex buffer
+    size_t vert_bytes = geometry->vertices->len * sizeof(Vertex);
+    INFO("Creating vertex buffer with size %d (%d x %d)", vert_bytes, geometry->vertices->len,
+         sizeof(Vertex));
+    m.vertex_buffer = GPU_BufferCreate(vert_bytes, BUFFER_VERTEX, BUFFER_FLAG_GPU,
+                                        geometry->vertices->data);
+
+    // Create and upload index buffer
+    size_t index_bytes = geometry->indices->len * sizeof(u32);
+    INFO("Creating index buffer with size %d (len: %d)", index_bytes, geometry->indices->len);
+    m.index_buffer = GPU_BufferCreate(index_bytes, BUFFER_INDEX, BUFFER_FLAG_GPU,
+                                       geometry->indices->data);
+
+    m.is_uploaded = true;
+    m.geometry = geometry;
+    if (free_on_upload) {
+      Geometry_Destroy(geometry);
+    }
+    return m;
 }

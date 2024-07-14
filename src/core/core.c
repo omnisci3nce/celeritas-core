@@ -34,6 +34,7 @@ void Core_Bringup() {
                           .scr_height = SCR_HEIGHT,
                           .clear_colour = (Vec3){ .08, .08, .1 } };
 
+  g_core.renderer = malloc(Renderer_GetMemReqs());
   // initialise all subsystems
   if (!Renderer_Init(conf, g_core.renderer)) {
     // FATAL("Failed to start renderer");
@@ -61,6 +62,7 @@ void Core_Bringup() {
 void Core_Shutdown() {
   Input_Shutdown(&g_core.input);
   Renderer_Shutdown(g_core.renderer);
+  free(g_core.renderer);
 }
 
 bool ShouldExit() {

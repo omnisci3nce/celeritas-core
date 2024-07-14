@@ -1,0 +1,236 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <link rel="stylesheet" href="doc_styles.css">
+    <!-- <link rel="stylesheet" href="prism.css"> -->
+    <!-- <script src="prism.js"></script> -->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- and it's easy to individually load additional languages -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+    <script>hljs.highlightAll();</script>
+
+    <title>Celeritas core API</title>
+</head>
+<body>
+<main>
+
+<header>
+    <h1>CELERITAS CORE</h1>
+</header>
+<h3>RAL</h3><ul class="category-list">
+    <li class="signature">
+    <pre><code class="language-c">void GPU_Renderpass_Destroy(GPU_Renderpass* pass)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GraphicsPipeline_Destroy(GPU_Pipeline* pipeline)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">GPU_CmdEncoder GPU_CmdEncoder_Create()</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_CmdEncoder_Destroy(GPU_CmdEncoder* encoder)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_CmdEncoder_BeginRender(GPU_CmdEncoder* encoder, GPU_Renderpass* renderpass)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_CmdEncoder_EndRender(GPU_CmdEncoder* encoder)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_QueueSubmit(GPU_CmdBuffer* cmd_buffer)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">BufferHandle GPU_BufferCreate(u64 size, GPU_BufferType buf_type, GPU_BufferFlags flags, const void* data)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_BufferDestroy(BufferHandle handle)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_BufferUpload(BufferHandle buffer, size_t n_bytes, const void* data)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">TextureHandle GPU_TextureCreate(TextureDesc desc, bool create_view, const void* data)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_TextureDestroy(TextureHandle handle)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_TextureUpload(TextureHandle handle, size_t n_bytes, const void* data)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_EncodeBindPipeline(GPU_CmdEncoder* encoder, GPU_Pipeline* pipeline)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData* data)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_EncodeSetVertexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_EncodeSetIndexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_EncodeDraw(GPU_CmdEncoder* encoder, u64 count)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, u64 index_count)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">bool GPU_Backend_BeginFrame()</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_Backend_EndFrame()</code></pre>
+    </li>
+    </ul><h3>Render</h3><ul class="category-list">
+    <li class="signature">
+    <pre><code class="language-c">void EncodeDrawModel(Handle model, Mat4 transform)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void EncodeDrawMesh(Mesh* mesh, Material* material, Mat4 affine)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Immdraw_Init(Immdraw_Storage* storage)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Immdraw_Shutdown(Immdraw_Storage* storage)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Immdraw_Plane(Transform tf, Vec4 colour, bool wireframe)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Immdraw_Cuboid(Transform tf, Vec4 colour, bool wireframe)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Immdraw_Sphere(Transform tf, f32 size, Vec4 colour, bool wireframe)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Immdraw_TransformGizmo(Transform tf, f32 size)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void PBR_Init(PBR_Storage* storage)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">bool Renderer_Init(RendererConfig config, Renderer* renderer)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Renderer_Shutdown(Renderer* renderer)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">size_t Renderer_GetMemReqs()</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Render_FrameBegin(Renderer* renderer)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Render_FrameEnd(Renderer* renderer)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Render_RenderEntities(RenderEnt* entities, size_t entity_count)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">TextureHandle TextureUpload()</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">ModelHandle ModelLoad(const char* debug_name, const char* filepath)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Mesh Mesh_Create(Geometry* geometry, bool free_on_upload)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Mesh_Delete(Mesh* mesh)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void DrawMesh(Mesh* mesh, Material* material, Mat4 model)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Render_DrawTerrain()</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void SetCamera(Camera camera)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void SetPointLight(PointLight light)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Shadow_Init(Shadow_Storage* storage)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Shadow_Run(Shadow_Storage* storage, RenderEnt* entities, size_t entity_count)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Handle Shadow_GetShadowMapTexture(Shadow_Storage* storage)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void CubeMapData_Load(const char** face_paths, int n)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void CubeMapData_Free(CubeMapData* cubemap)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">TextureHandle CubeMapData_Upload(CubeMapData* cubemap)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Skybox Skybox_Create(const char** face_paths, int n)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Skybox_Draw(Skybox* skybox)</code></pre>
+    </li>
+    </ul>
+</main>
+</body>
+</html>

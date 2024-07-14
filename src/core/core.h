@@ -9,12 +9,16 @@
 
 typedef struct Core Core;
 
+struct Renderer;
+
 Core* get_global_core();
 
 /** @brief Throws error if the core cannot be instantiated */
 void Core_Bringup();
 void Core_Shutdown();
 bool ShouldExit();
+
+struct Renderer* Core_GetRenderer(Core* core);
 
 void Frame_Begin();
 void Frame_Draw();

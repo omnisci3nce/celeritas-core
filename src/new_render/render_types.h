@@ -27,7 +27,7 @@ typedef struct u32_opt {
 } u32_opt;
 
 typedef struct Mesh {
-  BufferHandle vextex_buffer;
+  BufferHandle vertex_buffer;
   BufferHandle index_buffer;
   Geometry* geometry; // NULL means it has been freed CPU-side
   bool is_uploaded; // has the data been uploaded to the GPU
