@@ -6,7 +6,10 @@
 #include <assert.h>
 #include "camera.h"
 #include "core.h"
+#include "loaders.h"
 #include "maths.h"
+#include "primitives.h"
+#include "ral_types.h"
 #include "render.h"
 #include "render_scene.h"
 #include "render_types.h"
@@ -15,9 +18,9 @@
 #include "terrain.h"
 #include "transform_hierarchy.h"
 
-static const char* faces[6] = { "assets/demo/skybox/left.jpg",  "assets/demo/skybox/right.jpg",
-                                "assets/demo/skybox/front.jpg", "assets/demo/skybox/back.jpg",
-                                "assets/demo/skybox/top.jpg",   "assets/demo/skybox/bottom.jpg" };
+static const char* faces[6] = { "assets/demo/skybox/right.jpg", "assets/demo/skybox/left.jpg",
+                                "assets/demo/skybox/top.jpg",   "assets/demo/skybox/bottom.jpg",
+                                "assets/demo/skybox/back.jpg",  "assets/demo/skybox/front.jpg" };
 
 int main() {
   Core_Bringup();
@@ -44,11 +47,34 @@ int main() {
   // assert(Terrain_IsActive());
 
   // --- Skybox
-  // Skybox skybox = Skybox_Create(faces, 6);
+  Skybox skybox = Skybox_Create(faces, 6);
 
   // --- Models
-  // ModelHandle player_model = ModelLoad("Player Model", "assets/demo/player.gltf");
+  // ModelHandle player_model = ModelLoad_gltf("Player Model", "assets/demo/player.gltf");
   // ModelHandle sword_model = ModelLoad("Sword Model", "assets/demo/sword.gltf");
+  // create a wooden crate
+  Geometry cube_geo = Geo_CreateCuboid(f32x3(2.0, 2.0, 2.0));
+  Mesh crate_mesh = Mesh_Create(&cube_geo, false);  // dont free as we may use later
+  TextureHandle albedo_map = TextureLoadFromFile("assets/demo/crate/Wood_Crate_001_basecolor.jpg");
+  TextureHandle roughness_map =
+      TextureLoadFromFile("assets/demo/crate/Wood_Crate_001_roughness.jpg");
+  TextureHandle normal_map = TextureLoadFromFile("assets/demo/crate/Wood_Crate_001_normal.jpg");
+  TextureHandle ao_map =
+      TextureLoadFromFile("assets/demo/crate/Wood_Crate_001_ambientOcclusion.jpg");
+  Material crate_mat = { .name = "Wood_Crate",
+                         .kind = MAT_PBR,
+                         .metal_roughness_combined = true,
+                         .pbr_albedo_map = albedo_map,
+                         .pbr_metallic_map = roughness_map,
+                         .pbr_normal_map = normal_map,
+                         .pbr_ao_map = ao_map };
+
+  RenderEnt crate_renderable = {
+    .mesh = &crate_mesh, .material = &crate_mat, .affine = mat4_ident(), .casts_shadows = true
+  };
+
+  RenderEnt entities[] = { crate_renderable };
+  size_t entity_count = 1;
 
   // --- Transforms
   // TransformHierarchy* scene_tree =  TransformHierarchy_Create();
@@ -65,7 +91,7 @@ int main() {
     // BEGIN Draw calls
 
     // draw the player model with shadows
-    // Render_RenderEntities(entities, 1);
+    Render_RenderEntities(entities, entity_count);
     // Render_DrawTerrain();
     // Skybox_Draw(&skybox);
 

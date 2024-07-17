@@ -55,6 +55,7 @@ typedef enum GPU_TextureType {
 
 typedef enum GPU_TextureFormat {
   TEXTURE_FORMAT_8_8_8_8_RGBA_UNORM,
+  TEXTURE_FORMAT_8_8_8_RGB_UNORM,
   TEXTURE_FORMAT_DEPTH_DEFAULT,
   TEXTURE_FORMAT_COUNT
 } GPU_TextureFormat;
@@ -144,6 +145,11 @@ typedef struct VertexDescription {
 } VertexDescription;
 
 // --- Shaders
+typedef enum PipelineKind {
+  PIPELINE_GRAPHICS,
+  PIPELINE_COMPUTE,
+} PipelineKind;
+
 typedef enum ShaderVisibility {
     VISIBILITY_VERTEX = 1 << 0,
     VISIBILITY_FRAGMENT = 1 << 1,
@@ -164,7 +170,7 @@ typedef enum ShaderBindingKind {
     BINDING_BUFFER_ARRAY,
     BINDING_TEXTURE,
     BINDING_TEXTURE_ARRAY,
-    // TODO: sampler
+    BINDING_SAMPLER,
     BINDING_COUNT
 } ShaderBindingKind;
 

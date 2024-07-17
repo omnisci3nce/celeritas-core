@@ -174,7 +174,7 @@ BufferHandle GPU_BufferCreate(u64 size, GPU_BufferType buf_type, GPU_BufferFlags
                               const void* data) {
   // "allocating" the cpu-side buffer struct
   BufferHandle handle;
-  GPU_Buffer* buffer = Buffer_pool_alloc(&context.resource_pools, &handle);
+  GPU_Buffer* buffer = Buffer_pool_alloc(&context.resource_pools->buffers, &handle);
   buffer->size = size;
   buffer->vao = 0;
 
@@ -267,6 +267,22 @@ TextureHandle GPU_TextureCreate(TextureDesc desc, bool create_view, const void* 
   glBindTexture(GL_TEXTURE_2D, 0);
 
   return handle;
+}
+
+GPU_Texture* GPU_TextureAlloc(TextureHandle* out_handle) {
+  TextureHandle handle;
+  GPU_Texture* texture = Texture_pool_alloc(&context.resource_pools->textures, &handle);
+  DEBUG("Allocated texture with handle %d", handle.raw);
+
+  GLuint gl_texture_id;
+  glGenTextures(1, &gl_texture_id);
+  texture->id = gl_texture_id;
+
+  if (out_handle != NULL) {
+    *out_handle = handle;
+  }
+
+  return texture;
 }
 
 void GPU_TextureDestroy(TextureHandle handle) { glDeleteTextures(1, &handle.raw); }

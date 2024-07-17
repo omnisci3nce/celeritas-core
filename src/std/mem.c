@@ -93,7 +93,7 @@ void* void_pool_alloc(void_pool* pool, u32* out_raw_handle) {
     return NULL;
   }
   if (pool->free_list_head == NULL) {
-    ERROR("Pool is full (head = null)");
+    ERROR("%s Pool is full (head = null)", pool->debug_label);
     return NULL;
   }
   void_pool_header* free_node = pool->free_list_head;

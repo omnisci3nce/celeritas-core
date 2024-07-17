@@ -50,10 +50,10 @@ ModelHandle model_load_gltf(const char *path, bool invert_texture_y) {
   const char *file_string = string_from_file(path);
 
   ModelHandle handle;
-  // Model *model = model_pool_alloc(&g_core.models, &handle);
-  // model->name = str8_cstr_view(path);
-  // model->meshes = mesh_darray_new(1);
-  // model->materials = material_darray_new(1);
+  Model *model = Model_pool_alloc(&g_core.models, &handle);
+  model->name = Str8_cstr_view(path);
+  model->meshes = Mesh_darray_new(1);
+  model->materials = Material_darray_new(1);
 
   // bool success =
   //     model_load_gltf_str(file_string, path, relative_path.path, model, invert_texture_y);

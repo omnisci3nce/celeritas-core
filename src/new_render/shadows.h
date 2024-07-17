@@ -5,7 +5,6 @@
 
 #pragma once
 #include "defines.h"
-#include "ral.h"
 #include "ral_impl.h"
 #include "ral_types.h"
 #include "render_types.h"
@@ -17,6 +16,11 @@ typedef struct Shadow_Storage {
     TextureHandle depth_texture;
     // TODO: Some statistics tracking
 } Shadow_Storage;
+
+typedef struct ShadowUniforms {
+  Mat4 light_space;
+  Mat4 model;
+} ShadowUniforms;
 
 typedef struct Camera Camera;
 typedef struct Mat4 Mat4;

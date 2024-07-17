@@ -18,6 +18,9 @@
 #include "render_types.h"
 #include "shadows.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 extern Core g_core;
 
 struct Renderer {
@@ -91,6 +94,9 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
   ren->shadows = malloc(sizeof(Shadow_Storage));
   Shadow_Init(ren->shadows, u32x2(512, 512));
 
+  ren->pbr = malloc(sizeof(PBR_Storage));
+  PBR_Init(ren->pbr);
+
   return true;
 }
 
@@ -118,13 +124,50 @@ void Render_RenderEntities(RenderEnt* entities, size_t entity_count) {
   Renderer* ren = get_renderer();
   RenderScene scene = ren->scene;
 
-  // -- Shadows
-  f32 near_plane = 1.0, far_plane = 10.0;
-  Mat4 light_projection = mat4_orthographic(-10.0, 10.0, -10.0, 10.0, near_plane, far_plane);
-  Vec3 pos = vec3_negate(scene.sun.direction);
-  Mat4 light_view = mat4_look_at(pos, VEC3_ZERO, VEC3_Y);
-  Mat4 light_space_matrix = mat4_mult(light_view, light_projection);
-  Shadow_ShadowmapExecute(ren->shadows, light_space_matrix, entities, entity_count);
+  // TOOD: -- Shadows
+  // f32 near_plane = 1.0, far_plane = 10.0;
+  // Mat4 light_projection = mat4_orthographic(-10.0, 10.0, -10.0, 10.0, near_plane, far_plane);
+  // Vec3 pos = vec3_negate(scene.sun.direction);
+  // Mat4 light_view = mat4_look_at(pos, VEC3_ZERO, VEC3_Y);
+  // Mat4 light_space_matrix = mat4_mult(light_view, light_projection);
+  // Shadow_ShadowmapExecute(ren->shadows, light_space_matrix, entities, entity_count);
+}
+
+TextureData TextureDataLoad(const char* path, bool invert_y) {
+  TRACE("Load texture %s", path);
+
+  // load the file data
+  int width, height, num_channels;
+  stbi_set_flip_vertically_on_load(invert_y);
+
+#pragma GCC diagnostic ignored "-Wpointer-sign"
+  char* data = stbi_load(path, &width, &height, &num_channels, STBI_rgb_alpha);
+  if (data) {
+    DEBUG("loaded texture: %s", path);
+  } else {
+    WARN("failed to load texture");
+  }
+
+  unsigned int channel_type;
+  GPU_TextureFormat format;
+  if (num_channels == 4) {
+    channel_type = GL_RGBA;
+    format = TEXTURE_FORMAT_8_8_8_8_RGBA_UNORM;
+  } else {
+    channel_type = GL_RGB;
+    format = TEXTURE_FORMAT_8_8_8_RGB_UNORM;
+  }
+  TextureDesc desc = { .extents = { width, height },
+                       .format = format,
+                       .tex_type = TEXTURE_TYPE_2D };
+
+  return (TextureData){ .description = desc, .image_data = data };
+}
+
+TextureHandle TextureLoadFromFile(const char* path) {
+  TextureData tex_data = TextureDataLoad(path, false);
+  TextureHandle h = GPU_TextureCreate(tex_data.description, true, tex_data.image_data);
+  return h;
 }
 
 Mesh Mesh_Create(Geometry* geometry, bool free_on_upload) {

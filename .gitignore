@@ -8,3 +8,6 @@ _temp
 .DS_Store
 compile_commands.json
 node_modules/
+
+# in case we accidentally use something not licensed properly, we will keep demo game assets ignored.
+assets/demo/

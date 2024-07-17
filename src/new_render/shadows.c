@@ -11,11 +11,6 @@
 #include "render_scene.h"
 #include "render_types.h"
 
-typedef struct ShadowUniforms {
-  Mat4 light_space;
-  Mat4 model;
-} ShadowUniforms;
-
 ShaderDataLayout ShadowUniforms_GetLayout(void* data) {
   ShadowUniforms* d = (ShadowUniforms*)data;
   bool has_data = data != NULL;
@@ -102,19 +97,15 @@ void Shadow_ShadowmapExecute(Shadow_Storage* storage, Mat4 light_space_transform
   for (size_t ent_i = 0; ent_i < entity_count; ent_i++) {
     RenderEnt renderable = entities[ent_i];
     if (renderable.casts_shadows) {
-      Model* model = MODEL_GET(renderable.model);
+      // Model* model = MODEL_GET(renderable.model);
 
       uniforms.model = renderable.affine;  // update the model transform
 
-      size_t num_meshes = Mesh_darray_len(model->meshes);
-      for (u32 mesh_i = 0; mesh_i < num_meshes; mesh_i++) {
-        Mesh mesh = model->meshes->data[mesh_i];
-
-        GPU_EncodeBindShaderData(&shadow_encoder, 0, shader_data);
-        GPU_EncodeSetVertexBuffer(&shadow_encoder, mesh.vertex_buffer);
-        GPU_EncodeSetIndexBuffer(&shadow_encoder, mesh.index_buffer);
-        GPU_EncodeDrawIndexed(&shadow_encoder, mesh.geometry->indices->len);
-      }
+      Mesh* mesh = renderable.mesh;
+      GPU_EncodeBindShaderData(&shadow_encoder, 0, shader_data);
+      GPU_EncodeSetVertexBuffer(&shadow_encoder, mesh->vertex_buffer);
+      GPU_EncodeSetIndexBuffer(&shadow_encoder, mesh->index_buffer);
+      GPU_EncodeDrawIndexed(&shadow_encoder, mesh->geometry->indices->len);
     }
   }
 

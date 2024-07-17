@@ -62,7 +62,7 @@ static const Vec3 FRONT_BOT_RIGHT = (Vec3){ 1, 0, 1 };
 static const Vec3 FRONT_TOP_LEFT = (Vec3){ 0, 1, 1 };
 static const Vec3 FRONT_TOP_RIGHT = (Vec3){ 1, 1, 1 };
 
-Geometry geo_create_cuboid(f32x3 extents) {
+Geometry Geo_CreateCuboid(f32x3 extents) {
   Vertex_darray* vertices = Vertex_darray_new(36);
 
   // back faces

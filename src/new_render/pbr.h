@@ -4,16 +4,23 @@
  */
 
 #pragma once
+#include "backend_opengl.h"
 #include "defines.h"
 #include "camera.h"
 #include "maths_types.h"
-#include "ral/ral.h"
-#include "ral/ral_common.h"
-
-// PBR;
+#include "ral_types.h"
+#include "render_types.h"
 
 // --- Public API
-typedef struct PBR_Storage PBR_Storage; // Stores all necessary data and handles
+typedef struct PBR_Storage {
+    GPU_Renderpass* pbr_pass;
+    GPU_Pipeline* pbr_pipeline;
+
+} PBR_Storage; // Stores all necessary data and handles
+
+typedef struct PBRMaterialUniforms {
+  Material mat;
+} PBRMaterialUniforms;
 
 PUB void PBR_Init(PBR_Storage* storage);
 
@@ -45,7 +52,6 @@ typedef struct PBR_Textures {
 // --- Internal
 
 typedef struct MaterialMap MaterialMap;
-typedef struct RenderEnt RenderEnt;
 
 GPU_Renderpass* PBR_RPassCreate();
 GPU_Pipeline* PBR_PipelineCreate(GPU_Renderpass* rpass);
@@ -59,4 +65,4 @@ void PBR_Execute(
 
 );
 
-// Internally this will need to update material parameters
+ShaderDataLayout PBRMaterial_GetLayout(void* data);

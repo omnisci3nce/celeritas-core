@@ -52,6 +52,7 @@ PUB void GPU_BufferUpload(BufferHandle buffer, size_t n_bytes, const void* data)
 
 // --- Textures
 PUB TextureHandle GPU_TextureCreate(TextureDesc desc, bool create_view, const void* data);
+PUB GPU_Texture* GPU_TextureAlloc(TextureHandle* out_handle);
 PUB void GPU_TextureDestroy(TextureHandle handle);
 PUB void GPU_TextureUpload(TextureHandle handle, size_t n_bytes, const void* data);
 

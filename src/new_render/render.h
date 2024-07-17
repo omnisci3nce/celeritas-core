@@ -41,7 +41,9 @@ PUB void Render_RenderEntities(RenderEnt* entities, size_t entity_count);
 
 // --- Resources
 
-PUB TextureHandle TextureUpload();
+PUB TextureData TextureDataLoad(const char* path, bool invert_y);
+PUB void TextureUpload(TextureHandle handle, size_t n_bytes, const void* data);
+PUB TextureHandle TextureLoadFromFile(const char* path);
 PUB ModelHandle ModelLoad(const char* debug_name, const char* filepath);
 
 // --- Rendering Data

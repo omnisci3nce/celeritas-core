@@ -44,7 +44,7 @@ void Core_Bringup() {
   size_t model_data_max = 1024 * 1024 * 1024;
   arena model_arena = arena_create(malloc(model_data_max), model_data_max);
 
-  // model_pool model_pool = model_pool_create(&model_arena, 256, sizeof(model));
+  Model_pool model_pool = Model_pool_create(&model_arena, 256, sizeof(Model));
   // g_core.models = model_pool;
   // INFO("Created model pool allocator");
 
