@@ -35,7 +35,9 @@ struct Renderer {
   ResourcePools* resource_pools;
 };
 
-bool Renderer_Init(RendererConfig config, Renderer* ren) {
+Renderer* get_renderer() { return g_core.renderer; }
+
+bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window) {
   INFO("Renderer init");
 
   // init resource pools
@@ -66,6 +68,7 @@ bool Renderer_Init(RendererConfig config, Renderer* ren) {
     return false;
   }
   ren->window = window;
+  *out_window = window;
 
   glfwMakeContextCurrent(ren->window);
 
@@ -81,16 +84,17 @@ bool Renderer_Init(RendererConfig config, Renderer* ren) {
   Camera default_cam =
       Camera_Create(vec3(0.0, 2.0, 4.0), vec3_normalise(vec3(0.0, -2.0, -4.0)), VEC3_Y, 45.0);
   SetCamera(default_cam);
-  PointLight default_light = { /* TODO */ };
-  SetPointLight(default_light);
+  DirectionalLight default_light = { /* TODO */ };
+  SetMainLight(default_light);
 
   // create our renderpasses
-  Shadow_Init(ren->shadows);
+  ren->shadows = malloc(sizeof(Shadow_Storage));
+  Shadow_Init(ren->shadows, u32x2(512, 512));
 
   return true;
 }
 
-void Renderer_Shutdown(Renderer* ren) {}
+void Renderer_Shutdown(Renderer* ren) { free(ren->shadows); }
 size_t Renderer_GetMemReqs() { return sizeof(Renderer); }
 
 void Render_FrameBegin(Renderer* ren) {
@@ -107,9 +111,11 @@ void Render_FrameEnd(Renderer* ren) {
   }
 
   GPU_CmdEncoder* enc = GPU_GetDefaultEncoder();
+
+  GPU_Backend_EndFrame();
 }
 void Render_RenderEntities(RenderEnt* entities, size_t entity_count) {
-  Renderer* ren = Core_GetRenderer(&g_core);
+  Renderer* ren = get_renderer();
   RenderScene scene = ren->scene;
 
   // -- Shadows
@@ -144,3 +150,15 @@ Mesh Mesh_Create(Geometry* geometry, bool free_on_upload) {
   }
   return m;
 }
+
+void Geometry_Destroy(Geometry* geometry) {
+  if (geometry->indices) {
+    u32_darray_free(geometry->indices);
+  }
+  if (geometry->vertices) {
+    Vertex_darray_free(geometry->vertices);
+  }
+}
+
+void SetCamera(Camera camera) { g_core.renderer->scene.camera = camera; }
+void SetMainLight(DirectionalLight light) { g_core.renderer->scene.sun = light; }

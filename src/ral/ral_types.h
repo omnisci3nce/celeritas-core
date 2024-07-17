@@ -2,6 +2,7 @@
 #include "defines.h"
 #include "darray.h"
 #include "maths_types.h"
+#include "str.h"
 
 // --- Max size constants
 #define MAX_SHADER_DATA_LAYOUTS 8
@@ -149,7 +150,13 @@ typedef enum ShaderVisibility {
     VISIBILITY_COMPUTE = 1 << 2,
 } ShaderVisibility ;
 
-typedef struct ShaderDesc {} ShaderDesc;
+typedef struct ShaderDesc {
+  const char* debug_name;
+  Str8 filepath;  // Where it came from
+  Str8 code;      // Either GLSL or SPIRV bytecode
+  bool is_spirv;
+  bool is_combined_vert_frag;  // Contains both vertex and fragment stages
+} ShaderDesc;
 
 typedef enum ShaderBindingKind {
     BINDING_BYTES,

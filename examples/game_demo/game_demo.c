@@ -22,36 +22,42 @@ static const char* faces[6] = { "assets/demo/skybox/left.jpg",  "assets/demo/sky
 int main() {
   Core_Bringup();
 
-  Vec3 camera_pos = vec3(0.0, 4.0, 8.0);
-  Camera cam = Camera_Create(camera_pos, vec3_negate(camera_pos), VEC3_Y, 45.0);
-  SetCamera(cam);  // update the camera in RenderScene
-
   // TODO: Load humanoid model + weapon
   // TODO: Animate it with WASD keys
   // TODO: Skybox
   // TODO: Add a ground terrain
   // TODO: Move camera with model
 
+  // --- Render Scene
+  Vec3 camera_pos = vec3(0.0, 4.0, 8.0);
+  Camera cam = Camera_Create(camera_pos, vec3_negate(camera_pos), VEC3_Y, 45.0);
+  SetCamera(cam);  // update the camera in RenderScene
+
+  DirectionalLight sun = {
+    .ambient = vec3(1.0, 1.0, 1.0),
+  };
+  SetMainLight(sun);
+
   // --- Terrain
-  Heightmap terrain = Heightmap_FromImage(str8("assets/demo/heightmap.png"));
-  Terrain_LoadHeightmap(terrain, true);
-  assert(Terrain_IsActive());
+  // Heightmap terrain = Heightmap_FromImage(str8("assets/demo/heightmap.png"));
+  // Terrain_LoadHeightmap(terrain, true);
+  // assert(Terrain_IsActive());
 
   // --- Skybox
-  Skybox skybox = Skybox_Create(faces, 6);
+  // Skybox skybox = Skybox_Create(faces, 6);
 
   // --- Models
-  ModelHandle player_model = ModelLoad("Player Model", "assets/demo/player.gltf");
-  ModelHandle sword_model = ModelLoad("Sword Model", "assets/demo/sword.gltf");
+  // ModelHandle player_model = ModelLoad("Player Model", "assets/demo/player.gltf");
+  // ModelHandle sword_model = ModelLoad("Sword Model", "assets/demo/sword.gltf");
 
   // --- Transforms
   // TransformHierarchy* scene_tree =  TransformHierarchy_Create();
   // TODO: parent camera to model - to start with I can just manually update it every frame
   // TODO: query joints of the gltf to get the hand bone to parent a sword to
 
-  RenderEnt player_r = { .model = player_model, .affine = mat4_ident(), .casts_shadows = true };
+  // RenderEnt player_r = { .model = player_model, .affine = mat4_ident(), .casts_shadows = true };
 
-  RenderEnt entities[] = { player_r };
+  // RenderEnt entities[] = { player_r };
 
   while (!ShouldExit()) {
     Frame_Begin();
@@ -59,9 +65,9 @@ int main() {
     // BEGIN Draw calls
 
     // draw the player model with shadows
-    Render_RenderEntities(entities, 1);
-    Render_DrawTerrain();
-    Skybox_Draw(&skybox);
+    // Render_RenderEntities(entities, 1);
+    // Render_DrawTerrain();
+    // Skybox_Draw(&skybox);
 
     // END Draw calls
     Frame_Draw();

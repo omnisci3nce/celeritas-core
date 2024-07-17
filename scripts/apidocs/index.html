@@ -20,7 +20,7 @@
 <main>
 
 <header>
-    <h1>CELERITAS CORE</h1>
+    <h1>CELERITAS CORE DOCS</h1>
 </header>
 <h3>RAL</h3><ul class="category-list">
     <li class="signature">
@@ -37,6 +37,14 @@
     
     <li class="signature">
     <pre><code class="language-c">void GPU_CmdEncoder_Destroy(GPU_CmdEncoder* encoder)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_CmdEncoder_Begin(GPU_CmdEncoder* encoder)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void GPU_CmdEncoder_Finish(GPU_CmdEncoder* encoder)</code></pre>
     </li>
     
     <li class="signature">
@@ -80,7 +88,7 @@
     </li>
     
     <li class="signature">
-    <pre><code class="language-c">void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData* data)</code></pre>
+    <pre><code class="language-c">void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData data)</code></pre>
     </li>
     
     <li class="signature">
@@ -200,7 +208,7 @@
     </li>
     
     <li class="signature">
-    <pre><code class="language-c">void Shadow_Init(Shadow_Storage* storage)</code></pre>
+    <pre><code class="language-c">void Shadow_Init(Shadow_Storage* storage, u32x2 shadowmap_extents)</code></pre>
     </li>
     
     <li class="signature">
@@ -229,6 +237,10 @@
     
     <li class="signature">
     <pre><code class="language-c">void Skybox_Draw(Skybox* skybox)</code></pre>
+    </li>
+    </ul><h3>Maths</h3><ul class="category-list">
+    <li class="signature">
+    <pre><code class="language-c">static inline Vec3 vec3_create(f32 x, f32 y, f32 z)</code></pre>
     </li>
     </ul>
 </main>

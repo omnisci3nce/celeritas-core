@@ -17,4 +17,4 @@ typedef struct RenderScene {
 // --- Public APIs
 
 PUB void SetCamera(Camera camera);
-PUB void SetPointLight(PointLight light);
+PUB void SetMainLight(DirectionalLight light);

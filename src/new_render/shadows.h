@@ -22,7 +22,7 @@ typedef struct Camera Camera;
 typedef struct Mat4 Mat4;
 
 // --- Public API
-PUB void Shadow_Init(Shadow_Storage* storage);
+PUB void Shadow_Init(Shadow_Storage* storage, u32x2 shadowmap_extents);
 
 /** @brief Run shadow map generation for given entities, and store in a texture.
  *  @note Uses active directional light for now */

@@ -1,6 +1,7 @@
-#include <string.h>
 #include "shadows.h"
+#include <string.h>
 #include "core.h"
+#include "file.h"
 #include "log.h"
 #include "maths.h"
 #include "ral_common.h"
@@ -28,7 +29,7 @@ ShaderDataLayout ShadowUniforms_GetLayout(void* data) {
   };
 
   if (has_data) {
-      b1.data.bytes.data = data;
+    b1.data.bytes.data = data;
   }
 
   return (ShaderDataLayout){ .binding_count = 1, .bindings = { b1 } };

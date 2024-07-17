@@ -21,7 +21,7 @@
 // --- Vector Implementations
 
 // Dimension 3
-static inline Vec3 vec3_create(f32 x, f32 y, f32 z) { return (Vec3){ x, y, z }; }
+PUB static inline Vec3 vec3_create(f32 x, f32 y, f32 z) { return (Vec3){ x, y, z }; }
 #define vec3(x, y, z) ((Vec3){ x, y, z })
 static inline Vec3 vec3_add(Vec3 a, Vec3 b) { return (Vec3){ a.x + b.x, a.y + b.y, a.z + b.z }; }
 static inline Vec3 vec3_sub(Vec3 a, Vec3 b) { return (Vec3){ a.x - b.x, a.y - b.y, a.z - b.z }; }

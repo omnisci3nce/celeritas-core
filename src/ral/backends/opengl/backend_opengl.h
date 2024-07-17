@@ -1,11 +1,10 @@
 #pragma once
-
-#include "ral_impl.h"
-#ifdef CEL_REND_BACKEND_OPENGL
-
 #include "defines.h"
+
+#if defined(CEL_REND_BACKEND_OPENGL)
+
 #include "maths_types.h"
-#include "ral.h"
+#include "ral_impl.h"
 #include "ral_types.h"
 
 #define MAX_PIPELINE_UNIFORM_BUFFERS 32

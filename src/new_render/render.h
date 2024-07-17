@@ -9,6 +9,7 @@
 #include "render_types.h"
 
 typedef struct Renderer Renderer;
+typedef struct GLFWwindow GLFWwindow;
 typedef struct RendererConfig {
     char window_name[256];
     u32 scr_width, scr_height;
@@ -22,7 +23,7 @@ typedef struct RenderCtx {
 
 // --- Lifecycle
 
-PUB bool Renderer_Init(RendererConfig config, Renderer* renderer);
+PUB bool Renderer_Init(RendererConfig config, Renderer* renderer, GLFWwindow** out_window);
 PUB void Renderer_Shutdown(Renderer* renderer);
 PUB size_t Renderer_GetMemReqs();
 

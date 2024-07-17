@@ -6,7 +6,13 @@
 #include "buf.h"
 #include "mem.h"
 #include "ral_types.h"
-#include "ral_impl.h"
+// #include "ral_impl.h"
+
+// Concrete implementation
+#if defined(CEL_REND_BACKEND_OPENGL)
+#include "backend_opengl.h"
+#endif
+
 
 TYPED_POOL(GPU_Buffer, Buffer);
 TYPED_POOL(GPU_Texture, Texture);
@@ -15,8 +21,8 @@ TYPED_POOL(GPU_Pipeline, Pipeline);
 TYPED_POOL(GPU_Renderpass, Renderpass);
 
 // --- Handy macros
-#define BUFFER_GET(h) (buffer_pool_get(&context.resource_pools->buffers, h))
-#define TEXTURE_GET(h) (texture_pool_get(&context.resource_pools->textures, h))
+#define BUFFER_GET(h) (Buffer_pool_get(&context.resource_pools->buffers, h))
+#define TEXTURE_GET(h) (Texture_pool_get(&context.resource_pools->textures, h))
 
 // --- Pools
 typedef struct GPU_BackendPools {

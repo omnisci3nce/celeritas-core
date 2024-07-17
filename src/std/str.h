@@ -31,7 +31,7 @@ typedef struct {
 #define str8(s) \
   (Str8) { (u8*)s, ((sizeof(s) / sizeof(*(s)) - 1)) }
 
-Str8 str8_create(u8* buf, size_t len);
+Str8 Str8_create(u8* buf, size_t len);
 
 /** @brief Return a null-terminated C string cloned onto an arena */
 char* Str8_to_cstr(arena* a, Str8 s);

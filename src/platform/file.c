@@ -51,7 +51,7 @@ str8_opt str8_from_file(arena *a, Str8 path) {
   rewind(f);
 
   u8 *raw = arena_alloc(a, fsize + 1);
-  Str8 contents = str8_create(raw, fsize);
+  Str8 contents = Str8_create(raw, fsize);
   contents.buf[contents.len] = '\0';
 
   fread(raw, fsize, 1, f);

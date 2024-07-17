@@ -1,4 +1,9 @@
 # Generates a static webpage for the public C-API of `celeritas-core`
+#
+# TODO:
+#   - remove prefixes like 'static' and 'inline'
+#   - parse docstrings from source
+
 import re
 import os
 from pathlib import Path
@@ -52,7 +57,8 @@ def emit_function_sig(signature: str) -> str:
 
 categories = {
     "RAL": "src/ral",
-    "Render": "src/new_render"
+    "Render": "src/new_render",
+    "Maths": "src/maths"
 }
 
 def find_pub_functions_in_folder(folder_path):

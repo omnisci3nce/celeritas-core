@@ -22,6 +22,8 @@ inline Core* GetCore() { return &g_core; }
 
 void Core_Bringup() {
   INFO("Initiate Core bringup");
+  memset(&g_core, 0, sizeof(Core));
+
   RendererConfig conf = { .window_name = { "Celeritas Engine Core" },
                           .scr_width = SCR_WIDTH,
                           .scr_height = SCR_HEIGHT,
@@ -29,7 +31,7 @@ void Core_Bringup() {
 
   g_core.renderer = malloc(Renderer_GetMemReqs());
   // initialise all subsystems
-  if (!Renderer_Init(conf, g_core.renderer)) {
+  if (!Renderer_Init(conf, g_core.renderer, &g_core.window)) {
     // FATAL("Failed to start renderer");
     ERROR_EXIT("Failed to start renderer\n");
   }
@@ -50,8 +52,6 @@ void Core_Bringup() {
   // scene_init(&g_core.default_scene);
 }
 
-#include <glfw3.h>
-
 void Core_Shutdown() {
   Input_Shutdown(&g_core.input);
   Renderer_Shutdown(g_core.renderer);
@@ -63,7 +63,7 @@ bool ShouldExit() {
 }
 
 void Frame_Begin() {
-  glfwPollEvents();
+  Input_Update(&g_core.input);
   Render_FrameBegin(g_core.renderer);
 }
 void Frame_Draw() {}
