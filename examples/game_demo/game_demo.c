@@ -6,7 +6,6 @@
 #include <assert.h>
 #include "camera.h"
 #include "core.h"
-#include "loaders.h"
 #include "maths.h"
 #include "primitives.h"
 #include "ral_types.h"
@@ -15,8 +14,6 @@
 #include "render_types.h"
 #include "skybox.h"
 #include "str.h"
-#include "terrain.h"
-#include "transform_hierarchy.h"
 
 static const char* faces[6] = { "assets/demo/skybox/right.jpg", "assets/demo/skybox/left.jpg",
                                 "assets/demo/skybox/top.jpg",   "assets/demo/skybox/bottom.jpg",
@@ -70,7 +67,7 @@ int main() {
                          .pbr_ao_map = ao_map };
 
   RenderEnt crate_renderable = {
-    .mesh = &crate_mesh, .material = &crate_mat, .affine = mat4_ident(), .casts_shadows = true
+    .mesh = &crate_mesh, .material = &crate_mat, .affine = mat4_scale(3.0), .casts_shadows = true
   };
 
   RenderEnt entities[] = { crate_renderable };

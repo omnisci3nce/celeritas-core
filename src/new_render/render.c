@@ -131,6 +131,7 @@ void Render_RenderEntities(RenderEnt* entities, size_t entity_count) {
   // Mat4 light_view = mat4_look_at(pos, VEC3_ZERO, VEC3_Y);
   // Mat4 light_space_matrix = mat4_mult(light_view, light_projection);
   // Shadow_ShadowmapExecute(ren->shadows, light_space_matrix, entities, entity_count);
+  PBR_Execute(ren->pbr, scene.camera, INVALID_TEX_HANDLE, entities, entity_count);
 }
 
 TextureData TextureDataLoad(const char* path, bool invert_y) {

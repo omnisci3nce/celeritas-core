@@ -126,7 +126,7 @@ GPU_Pipeline* GPU_GraphicsPipeline_Create(GraphicsPipelineDesc description,
       assert(binding_id < MAX_PIPELINE_UNIFORM_BUFFERS);
       ShaderBinding binding = sdl.bindings[binding_j];
       // Do I want Buffer vs Bytes?
-      if (binding.kind == BINDING_BUFFER) {
+      if (binding.kind == BINDING_BYTES) {
         static u32 s_binding_point = 0;
         BufferHandle ubo_handle = GPU_BufferCreate(binding.data.bytes.size, BUFFER_UNIFORM,
                                                    BUFFER_FLAG_GPU, NULL);  // no data right now
@@ -317,7 +317,7 @@ PUB void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData
         }
       }
       if (!found) {
-        ERROR("Couldnt find uniform buffer object!!");
+        ERROR("Couldnt find uniform buffer object for %s!!", binding.label);
       }
 
       i32 blockIndex = glGetUniformBlockIndex(encoder->pipeline->shader_id, binding.label);

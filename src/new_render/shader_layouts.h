@@ -6,6 +6,7 @@
 typedef struct Binding_Camera {
   Mat4 view;
   Mat4 projection;
+  Vec4 viewPos;
 } Binding_Camera;
 
 typedef struct Binding_Model {
@@ -24,10 +25,9 @@ typedef struct pbr_point_light {
   f32 pad2;
 } pbr_point_light;
 
-typedef struct Binding_PointLights {
+typedef struct Binding_Lights {
   pbr_point_light pointLights[4];
-  Vec4 viewPos;
-} Binding_PointLights;
+} Binding_Lights;
 
 static ShaderDataLayout Binding_Camera_GetLayout(void* data) {
   Binding_Camera* d = data;
@@ -35,7 +35,8 @@ static ShaderDataLayout Binding_Camera_GetLayout(void* data) {
 
   ShaderBinding b1 = {
     .label = "Camera",
-    .kind = BINDING_BYTES
+    .kind = BINDING_BYTES,
+    .data.bytes = { .size = sizeof(Binding_Camera) }
   };
   if (has_data) {
     b1.data.bytes.data = d;
@@ -49,7 +50,25 @@ static ShaderDataLayout Binding_Model_GetLayout(void* data) {
 
   ShaderBinding b1 = {
     .label = "Model",
-    .kind = BINDING_BYTES
+    .kind = BINDING_BYTES,
+    .vis = VISIBILITY_VERTEX,
+    .data.bytes = { .size = sizeof(Binding_Model) }
+  };
+  if (has_data) {
+    b1.data.bytes.data = d;
+  }
+  return (ShaderDataLayout) {.bindings = {b1 }, .binding_count = 1};
+}
+
+static ShaderDataLayout Binding_Lights_GetLayout(void* data) {
+Binding_Lights* d = data;
+  bool has_data = data != NULL;
+
+  ShaderBinding b1 = {
+    .label = "Lights",
+    .kind = BINDING_BYTES,
+    .vis = VISIBILITY_FRAGMENT,
+    .data.bytes = { .size = sizeof(Binding_Lights) }
   };
   if (has_data) {
     b1.data.bytes.data = d;

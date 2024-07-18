@@ -1,9 +1,14 @@
 #include "pbr.h"
+#include "camera.h"
+#include "core.h"
 #include "file.h"
 #include "log.h"
+#include "maths.h"
 #include "ral_common.h"
 #include "ral_impl.h"
 #include "ral_types.h"
+#include "render_scene.h"
+#include "render_types.h"
 #include "shader_layouts.h"
 
 void PBR_Init(PBR_Storage* storage) {
@@ -31,12 +36,13 @@ GPU_Pipeline* PBR_PipelineCreate(GPU_Renderpass* rpass) {
   ShaderData camera_data = { .get_layout = &Binding_Camera_GetLayout };
   ShaderData model_data = { .get_layout = &Binding_Model_GetLayout };
   ShaderData material_data = { .get_layout = &PBRMaterial_GetLayout };
+  ShaderData lights_data = { .get_layout = &Binding_Lights_GetLayout };
 
   GraphicsPipelineDesc desc = {
     .debug_name = "PBR Pipeline",
     .vertex_desc = static_3d_vertex_description(),
-    .data_layouts = {camera_data,model_data,material_data},
-    .data_layouts_count = 3,
+    .data_layouts = {camera_data,model_data,material_data, lights_data },
+    .data_layouts_count = 4,
     .vs = { .debug_name = "PBR (textured) Vertex Shader",
             .filepath = vert_path,
             .code = vertex_shader.contents },
@@ -48,6 +54,68 @@ GPU_Pipeline* PBR_PipelineCreate(GPU_Renderpass* rpass) {
     .wireframe = false,
   };
   return GPU_GraphicsPipeline_Create(desc, rpass);
+}
+
+void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_tex,
+                 RenderEnt* entities, size_t entity_count) {
+  // 1. set up our pipeline
+
+  // 2. upload constant data (camera, lights)
+
+  // 3. draw each entity
+  //  - upload material data
+  //  - upload model transform
+  //  - emit draw call
+
+  GPU_CmdEncoder* enc = GPU_GetDefaultEncoder();
+  GPU_CmdEncoder_BeginRender(enc, storage->pbr_pass);
+  GPU_EncodeBindPipeline(enc, storage->pbr_pipeline);
+
+  // Feed shader data
+  Mat4 view, proj;
+  Camera_ViewProj(&camera, 1000, 1000, &view, &proj);
+  Binding_Camera camera_data = { .view = view,
+                                 .projection = proj,
+                                 .viewPos = vec4(camera.position.x, camera.position.y,
+                                                 camera.position.z, 1.0) };
+  GPU_EncodeBindShaderData(
+      enc, 0, (ShaderData){ .data = &camera_data, .get_layout = &Binding_Camera_GetLayout });
+
+  Vec3 light_color = vec3(300.0, 300.0, 300.0);
+  Binding_Lights
+      lights_data = { .pointLights = {
+                          // FIXME: fill out soem default lights to use
+                          (pbr_point_light){ .pos = vec3(10, 10, 10), .color = light_color },
+                          (pbr_point_light){ .pos = vec3(-10, 10, 10), .color = light_color },
+                          (pbr_point_light){ .pos = vec3(10, -10, 10), .color = light_color },
+                          (pbr_point_light){ .pos = vec3(-10, -10, 10), .color = light_color },
+                      } };
+  GPU_EncodeBindShaderData(
+      enc, 3, (ShaderData){ .data = &lights_data, .get_layout = &Binding_Lights_GetLayout });
+
+  // TODO: Add shadowmap texture to uniforms
+
+  for (size_t ent_i = 0; ent_i < entity_count; ent_i++) {
+    RenderEnt renderable = entities[ent_i];
+
+    // upload material data
+    PBRMaterialUniforms material_data = { .mat = *renderable.material };
+    GPU_EncodeBindShaderData(
+        enc, 2, (ShaderData){ .data = &material_data, .get_layout = PBRMaterial_GetLayout });
+
+    // upload model transform
+    Binding_Model model_data = { .model = renderable.affine };
+    GPU_EncodeBindShaderData(
+        enc, 1, (ShaderData){ .data = &model_data, .get_layout = &Binding_Model_GetLayout });
+
+    // set buffers
+    GPU_EncodeSetVertexBuffer(enc, renderable.mesh->vertex_buffer);
+    GPU_EncodeSetIndexBuffer(enc, renderable.mesh->index_buffer);
+    // draw
+    GPU_EncodeDrawIndexed(enc, renderable.mesh->geometry->indices->len);
+  }
+
+  GPU_CmdEncoder_EndRender(enc);
 }
 
 ShaderDataLayout PBRMaterial_GetLayout(void* data) {

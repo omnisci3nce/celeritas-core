@@ -6,6 +6,8 @@ in vec3 fragWorldPos;
 in vec3 fragNormal;
 in vec2 fragTexCoords;
 
+in vec4 viewPos;
+
 struct PointLight {
     vec4 position;
     vec4 color;
@@ -15,10 +17,10 @@ struct PointLight {
 
 // Lights data
 #define NUM_POINT_LIGHTS 4
-uniform Scene_Lights {
+uniform Lights {
     PointLight pointLights[NUM_POINT_LIGHTS];
-    vec4 viewPos;
 } scene;
+
 
 // Material Textures
 uniform sampler2D albedoMap;
@@ -62,7 +64,7 @@ void main() {
   // vec3 norm = normalize(fragNormal); // N
   vec3 norm = getNormalFromMap();
   vec3 N = norm;
-  vec3 viewDir = normalize(vec3(scene.viewPos) - fragWorldPos); // V
+  vec3 viewDir = normalize(vec3(viewPos) - fragWorldPos); // V
   vec3 V = viewDir;
 
   vec3 F0 = vec3(0.04);

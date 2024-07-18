@@ -54,15 +54,15 @@ typedef struct PBR_Textures {
 typedef struct MaterialMap MaterialMap;
 
 GPU_Renderpass* PBR_RPassCreate();
+
 GPU_Pipeline* PBR_PipelineCreate(GPU_Renderpass* rpass);
+
 void PBR_Execute(
     PBR_Storage* storage,
     Camera camera,
     TextureHandle shadowmap_tex,
-    MaterialMap* materials, // map of String -> Material
     RenderEnt* entities,
     size_t entity_count
-
 );
 
 ShaderDataLayout PBRMaterial_GetLayout(void* data);
