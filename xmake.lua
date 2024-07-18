@@ -32,6 +32,7 @@ elseif is_plat("macosx") then
     add_frameworks("Cocoa", "IOKit", "CoreVideo", "OpenGL")
     add_frameworks("Foundation", "Metal", "QuartzCore")
     set_runenv("MTL_DEBUG_LAYER", "1")
+    add_requires("vulkansdk", { system = true })
     -- add_syslinks("GL")
 end
 
@@ -123,6 +124,7 @@ add_includedirs("src/new_render", { public = true })
 -- add_includedirs("src/renderer/backends/", {public = true})
 -- add_includedirs("src/renderer/backends/opengl", {public = true})
 -- add_includedirs("src/renderer/backends/metal", {public = true})
+add_includedirs("src/ral/backends/vulkan", {public = true})
 add_includedirs("src/resources/", { public = true })
 add_includedirs("src/std/", { public = true })
 add_includedirs("src/std/containers", { public = true })
@@ -141,7 +143,8 @@ if is_plat("windows") then
     add_links("vulkan-1")
 end
 if is_plat("macosx") then
-    add_files("src/renderer/backends/metal/*.m")
+    -- add_files("src/renderer/backends/metal/*.m")
+    add_files("src/ral/backends/vulkan/*.c")
 end
 set_default(false) -- prevents standalone building of this target
 

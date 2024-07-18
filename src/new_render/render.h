@@ -16,6 +16,10 @@ typedef struct RendererConfig {
     Vec3 clear_colour;
 } RendererConfig;
 
+typedef struct RenderFlags {
+    bool wireframe;
+} RenderFlags;
+
 typedef struct RenderCtx {
     Mat4 view;
     Mat4 projection;

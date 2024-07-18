@@ -78,3 +78,10 @@ PUB void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, u64 index_count);
 // --- Frame cycle
 PUB bool GPU_Backend_BeginFrame();
 PUB void GPU_Backend_EndFrame();
+
+// Concrete implementation
+#if defined(CEL_REND_BACKEND_OPENGL)
+#include "backend_opengl.h"
+#elif defined(CEL_REND_BACKEND_VULKAN)
+#include "backend_vulkan.h"
+#endif

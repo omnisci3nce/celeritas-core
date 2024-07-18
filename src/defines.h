@@ -68,5 +68,6 @@ CORE_DEFINE_HANDLE(Handle); // Untyped handle that can be casted to a strongly t
 
 #if defined(CEL_PLATFORM_MAC)
 // #define CEL_REND_BACKEND_METAL 1
-#define CEL_REND_BACKEND_OPENGL 1
+// #define CEL_REND_BACKEND_OPENGL 1
+#define CEL_REND_BACKEND_VULKAN 1
 #endif
