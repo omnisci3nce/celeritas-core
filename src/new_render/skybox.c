@@ -61,7 +61,7 @@ Skybox Skybox_Create(const char** face_paths, int n) {
   // VertexDesc_AddAttr(&pos_only, "inPos", ATTR_F32x3);
   // pos_only.use_full_vertex_size = true;
 
-  ShaderData camera_data = { .data = NULL, .get_layout = &Binding_Camera_GetLayout};
+  ShaderData camera_data = { .data = NULL, .get_layout = &Binding_Camera_GetLayout };
   ShaderData shader_data = { .data = NULL, .get_layout = &Skybox_GetLayout };
 
   GraphicsPipelineDesc pipeline_desc = {
@@ -69,16 +69,12 @@ Skybox Skybox_Create(const char** face_paths, int n) {
     .vertex_desc = static_3d_vertex_description(),
     .data_layouts = { camera_data, shader_data },
     .data_layouts_count = 2,
-    .vs = {
-      .debug_name = "Skybox Vertex Shader",
-      .filepath = vert_path,
-      .code = vertex_shader.contents
-    },
-    .fs = {
-      .debug_name = "Skybox Fragment Shader",
-      .filepath = frag_path,
-      .code = fragment_shader.contents
-    },
+    .vs = { .debug_name = "Skybox Vertex Shader",
+            .filepath = vert_path,
+            .code = vertex_shader.contents },
+    .fs = { .debug_name = "Skybox Fragment Shader",
+            .filepath = frag_path,
+            .code = fragment_shader.contents },
     .wireframe = false,
     .depth_test = true,
   };
@@ -116,8 +112,7 @@ void Skybox_Draw(Skybox* skybox, Camera camera) {
   GPU_EncodeBindShaderData(
       enc, 0, (ShaderData){ .data = &camera_data, .get_layout = &Binding_Camera_GetLayout });
 
-
-  SkyboxUniforms uniforms = {  .cubemap = skybox->texture };
+  SkyboxUniforms uniforms = { .cubemap = skybox->texture };
   ShaderData skybox_data = { .data = &uniforms, .get_layout = &Skybox_GetLayout };
   GPU_EncodeBindShaderData(enc, 0, skybox_data);
 
