@@ -49,7 +49,8 @@ int main() {
   // --- Models
   // ModelHandle player_model = ModelLoad_gltf("Player Model", "assets/demo/player.gltf");
   // ModelHandle sword_model = ModelLoad("Sword Model", "assets/demo/sword.gltf");
-  // create a wooden crate
+
+  // create a wooden crate - loads mesh and material directly rather than via loading a model from a gltf file
   Geometry cube_geo = Geo_CreateCuboid(f32x3(2.0, 2.0, 2.0));
   Mesh crate_mesh = Mesh_Create(&cube_geo, false);  // dont free as we may use later
   TextureHandle albedo_map = TextureLoadFromFile("assets/demo/crate/Wood_Crate_001_basecolor.jpg");
