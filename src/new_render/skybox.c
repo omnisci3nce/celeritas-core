@@ -3,12 +3,14 @@
 #include "file.h"
 #include "glad/glad.h"
 #include "log.h"
+#include "maths.h"
 #include "primitives.h"
 #include "ral_common.h"
 #include "ral_impl.h"
 #include "ral_types.h"
 #include "render.h"
 #include "render_types.h"
+#include "shader_layouts.h"
 
 Skybox Skybox_Create(const char** face_paths, int n) {
   INFO("Creating a skybox");
@@ -16,7 +18,7 @@ Skybox Skybox_Create(const char** face_paths, int n) {
 
   // -- cube verts
   Geometry geom = Geo_CreateCuboid(f32x3(1.0, 1.0, 1.0));
-  Mesh cube = Mesh_Create(&geom, true);
+  Mesh cube = Mesh_Create(&geom, false);
 
   // -- cubemap texture
   TextureHandle handle;
@@ -40,11 +42,6 @@ Skybox Skybox_Create(const char** face_paths, int n) {
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
   // shader pipeline
-
-  
-
-  ShaderData shader_data = { .data = NULL, .get_layout = &Skybox_GetLayout };
-
   GPU_RenderpassDesc rpass_desc = {
     .default_framebuffer = true,
   };
@@ -53,22 +50,25 @@ Skybox Skybox_Create(const char** face_paths, int n) {
   arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
 
   Str8 vert_path = str8("assets/shaders/skybox.vert");
-  Str8 frag_path = str8("assets/shaders/pbr_textured.frag");
+  Str8 frag_path = str8("assets/shaders/skybox.frag");
   str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
   str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
   if (!vertex_shader.has_value || !fragment_shader.has_value) {
     ERROR_EXIT("Failed to load shaders from disk")
   }
 
-  VertexDescription pos_only = { .debug_label = "Position only verts" };
-  VertexDesc_AddAttr(&pos_only, "inPos", ATTR_F32x3);
-  pos_only.use_full_vertex_size = true;
+  // VertexDescription pos_only = { .debug_label = "Position only verts" };
+  // VertexDesc_AddAttr(&pos_only, "inPos", ATTR_F32x3);
+  // pos_only.use_full_vertex_size = true;
+
+  ShaderData camera_data = { .data = NULL, .get_layout = &Binding_Camera_GetLayout};
+  ShaderData shader_data = { .data = NULL, .get_layout = &Skybox_GetLayout };
 
   GraphicsPipelineDesc pipeline_desc = {
     .debug_name = "Skybox pipeline",
-    .vertex_desc = pos_only,
-    .data_layouts = { shader_data },
-    .data_layouts_count = 1,
+    .vertex_desc = static_3d_vertex_description(),
+    .data_layouts = { camera_data, shader_data },
+    .data_layouts_count = 2,
     .vs = {
       .debug_name = "Skybox Vertex Shader",
       .filepath = vert_path,
@@ -95,12 +95,37 @@ void Skybox_Draw(Skybox* skybox, Camera camera) {
   GPU_EncodeSetDefaults(enc);
 
   // Shader data
-  SkyboxUniforms uniforms = { .in_position = camera.position, .cubemap = skybox->texture };
-  ShaderData skybox_data = { .data = &uniforms, .get_layout = Skybox_GetLayout };
+
+  Mat4 view, proj;
+  Camera_ViewProj(&camera, 1000, 1000, &view, &proj);
+  Mat4 new = mat4_ident();
+  new.data[0] = view.data[0];
+  new.data[1] = view.data[1];
+  new.data[2] = view.data[2];
+  new.data[4] = view.data[4];
+  new.data[5] = view.data[5];
+  new.data[6] = view.data[6];
+  new.data[8] = view.data[8];
+  new.data[9] = view.data[9];
+  new.data[10] = view.data[10];
+
+  Binding_Camera camera_data = { .view = new,
+                                 .projection = proj,
+                                 .viewPos = vec4(camera.position.x, camera.position.y,
+                                                 camera.position.z, 1.0) };
+  GPU_EncodeBindShaderData(
+      enc, 0, (ShaderData){ .data = &camera_data, .get_layout = &Binding_Camera_GetLayout });
+
+
+  SkyboxUniforms uniforms = {  .cubemap = skybox->texture };
+  ShaderData skybox_data = { .data = &uniforms, .get_layout = &Skybox_GetLayout };
+  GPU_EncodeBindShaderData(enc, 0, skybox_data);
 
   GPU_EncodeSetVertexBuffer(enc, skybox->cube.vertex_buffer);
-  GPU_EncodeSetVertexBuffer(enc, skybox->cube.index_buffer);
-  GPU_EncodeDrawIndexed(enc, skybox->cube.geometry->indices->len);
+  GPU_EncodeSetIndexBuffer(enc, skybox->cube.index_buffer);
+  glDepthFunc(GL_LEQUAL);
+  GPU_EncodeDrawIndexed(enc, skybox->cube.geometry.indices->len);
+  glDepthFunc(GL_LESS);
 
   GPU_CmdEncoder_EndRender(enc);
 }

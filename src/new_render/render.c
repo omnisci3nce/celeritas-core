@@ -188,7 +188,7 @@ Mesh Mesh_Create(Geometry* geometry, bool free_on_upload) {
       GPU_BufferCreate(index_bytes, BUFFER_INDEX, BUFFER_FLAG_GPU, geometry->indices->data);
 
   m.is_uploaded = true;
-  m.geometry = geometry;
+  m.geometry = *geometry; // clone geometry data and store on Mesh struct
   if (free_on_upload) {
     Geometry_Destroy(geometry);
   }

@@ -37,3 +37,22 @@ All third-party dependencies are licensed under their own license.
         * `docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material`
     * Build docs static site
         * `docker run --rm -it -v ${PWD}:/docs squidfunk/mkdocs-material build`
+
+## TODO
+
+### Core
+
+#### Memory
+- [x] Pool allocator (typed)
+- [ ] SoA hot/cold pool allocator (pool for all entities of same type, split into two structs in SoA so we can have hot ,(`VkHandle`and cold `size`, `format` data separated))
+
+#### Scene
+- [ ] Transform hierarchy / Scene tree
+  - [ ] transform propagation
+
+### Renderer
+
+- [ ] PBR
+  - [x] Basic implementation using learnopengl
+  - [ ] Implementation using filament as a reference for first in class PBR
+  - [ ] Handle metallic / roughness being in different channels, combined, or absent

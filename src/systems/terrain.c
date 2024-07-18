@@ -11,8 +11,11 @@ struct Terrain_Storage {
   GPU_Pipeline* hmap_pipeline;
 };
 
-PUB bool Terrain_Init(Terrain_Storage* storage) { return true; }
-PUB void Terrain_Shutdown(Terrain_Storage* storage);
+bool Terrain_Init(Terrain_Storage* storage) {
+    return true;
+}
+
+void Terrain_Shutdown(Terrain_Storage* storage);
 
 /* bool terrain_system_init(terrain_state* state) { */
 /*   gpu_renderpass_desc rpass_desc = { */

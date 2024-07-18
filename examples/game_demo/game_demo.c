@@ -90,9 +90,9 @@ int main() {
     // BEGIN Draw calls
 
     // draw the player model with shadows
-    Render_RenderEntities(entities, entity_count);
+    // Render_RenderEntities(entities, entity_count);
     // Render_DrawTerrain();
-    // Skybox_Draw(&skybox);
+    Skybox_Draw(&skybox, cam);
 
     // END Draw calls
     Frame_Draw();

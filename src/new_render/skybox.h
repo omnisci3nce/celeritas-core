@@ -19,7 +19,6 @@ PUB Skybox Skybox_Create(const char** face_paths, int n); // should always pass 
 PUB void Skybox_Draw(Skybox* skybox, Camera camera);
 
 typedef struct SkyboxUniforms {
-    Vec3 in_position;
     TextureHandle cubemap;
 } SkyboxUniforms;
 
@@ -28,24 +27,16 @@ static ShaderDataLayout Skybox_GetLayout(void* data) {
     bool has_data = data != NULL;
 
     ShaderBinding b1 = {
-        .label = "In",
-        .vis = VISIBILITY_VERTEX,
-        .kind = BINDING_BYTES,
-        .data = {.bytes = {.size = sizeof(Vec3)}}
-    };
-
-    ShaderBinding b2 = {
         .label = "cubemap",
         .vis = VISIBILITY_FRAGMENT,
-        .kind = BINDING_SAMPLER,
+        .kind = BINDING_TEXTURE,
     };
 
     if (has_data) {
-        b1.data.bytes.data = &d->in_position;
-        b2.data.texture.handle = d->cubemap;
+        b1.data.texture.handle = d->cubemap;
     }
     return (ShaderDataLayout) {
-        .bindings = { b1, b2},
-        .binding_count = 2
+        .bindings = { b1},
+        .binding_count = 1
     };
 }

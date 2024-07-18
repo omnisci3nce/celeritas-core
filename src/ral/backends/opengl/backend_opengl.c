@@ -340,7 +340,7 @@ PUB void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData
       }
       glUniform1i(tex_slot, i);
       glActiveTexture(GL_TEXTURE0 + i);
-      glBindTexture(GL_TEXTURE_2D, tex->id);
+      glBindTexture(GL_TEXTURE_CUBE_MAP, tex->id);
     }
   }
 }

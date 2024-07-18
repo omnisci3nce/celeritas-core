@@ -30,10 +30,10 @@ typedef struct Terrain_Storage Terrain_Storage;
 // --- Public API
 PUB bool Terrain_Init(Terrain_Storage* storage);
 PUB void Terrain_Shutdown(Terrain_Storage* storage);
-PUB void Terrain_Run(Terrain_Storage* storage); // NOTE: For now it renders directly to main framebuffer
+PUB void Terrain_Draw(Terrain_Storage* storage); // NOTE: For now it renders directly to main framebuffer
 
 /** @brief Sets the active heightmap to be rendered and collided against. */
-PUB Heightmap Terrain_LoadHeightmap(Heightmap hmap, bool free_on_upload);
+PUB void Terrain_LoadHeightmap(Heightmap hmap, bool free_on_upload);
 PUB Heightmap Heightmap_FromImage(Str8 filepath);
 PUB Heightmap Heightmap_FromPerlin(/* TODO: perlin noise generation parameters */);
 

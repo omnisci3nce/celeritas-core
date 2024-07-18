@@ -111,7 +111,7 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
     GPU_EncodeSetVertexBuffer(enc, renderable.mesh->vertex_buffer);
     GPU_EncodeSetIndexBuffer(enc, renderable.mesh->index_buffer);
     // draw
-    GPU_EncodeDrawIndexed(enc, renderable.mesh->geometry->indices->len);
+    GPU_EncodeDrawIndexed(enc, renderable.mesh->geometry.indices->len);
   }
 
   GPU_CmdEncoder_EndRender(enc);
