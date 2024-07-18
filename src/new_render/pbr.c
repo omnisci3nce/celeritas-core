@@ -59,11 +59,9 @@ GPU_Pipeline* PBR_PipelineCreate(GPU_Renderpass* rpass) {
 void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_tex,
                  RenderEnt* entities, size_t entity_count) {
   // 1. set up our pipeline
-
   // 2. upload constant data (camera, lights)
-
   // 3. draw each entity
-  //  - upload material data
+  //  - upload material data -> in the future we will sort & batch by material
   //  - upload model transform
   //  - emit draw call
 
@@ -84,7 +82,8 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
   Vec3 light_color = vec3(300.0, 300.0, 300.0);
   Binding_Lights
       lights_data = { .pointLights = {
-                          // FIXME: fill out soem default lights to use
+                          // FIXME: add lights to our RenderScene structure. for now these are
+                          // hardcoded
                           (pbr_point_light){ .pos = vec3(10, 10, 10), .color = light_color },
                           (pbr_point_light){ .pos = vec3(-10, 10, 10), .color = light_color },
                           (pbr_point_light){ .pos = vec3(10, -10, 10), .color = light_color },

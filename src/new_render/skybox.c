@@ -1,6 +1,9 @@
 #include "skybox.h"
 #include <assert.h>
+#include "file.h"
 #include "glad/glad.h"
+#include "log.h"
+#include "primitives.h"
 #include "ral_common.h"
 #include "ral_impl.h"
 #include "ral_types.h"
@@ -8,7 +11,12 @@
 #include "render_types.h"
 
 Skybox Skybox_Create(const char** face_paths, int n) {
+  INFO("Creating a skybox");
   assert(n == 6);  // ! we're only supporting a full cubemap for now
+
+  // -- cube verts
+  Geometry geom = Geo_CreateCuboid(f32x3(1.0, 1.0, 1.0));
+  Mesh cube = Mesh_Create(&geom, true);
 
   // -- cubemap texture
   TextureHandle handle;
@@ -33,11 +41,28 @@ Skybox Skybox_Create(const char** face_paths, int n) {
 
   // shader pipeline
 
+  
+
+  ShaderData shader_data = { .data = NULL, .get_layout = &Skybox_GetLayout };
+
+  GPU_RenderpassDesc rpass_desc = {
+    .default_framebuffer = true,
+  };
+  GPU_Renderpass* pass = GPU_Renderpass_Create(rpass_desc);
+
+  arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
+
+  Str8 vert_path = str8("assets/shaders/skybox.vert");
+  Str8 frag_path = str8("assets/shaders/pbr_textured.frag");
+  str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
+  str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
+  if (!vertex_shader.has_value || !fragment_shader.has_value) {
+    ERROR_EXIT("Failed to load shaders from disk")
+  }
+
   VertexDescription pos_only = { .debug_label = "Position only verts" };
   VertexDesc_AddAttr(&pos_only, "inPos", ATTR_F32x3);
   pos_only.use_full_vertex_size = true;
-
-  ShaderData shader_data = { .data = NULL, .get_layout = &Skybox_GetLayout };
 
   GraphicsPipelineDesc pipeline_desc = {
     .debug_name = "Skybox pipeline",
@@ -45,17 +70,37 @@ Skybox Skybox_Create(const char** face_paths, int n) {
     .data_layouts = { shader_data },
     .data_layouts_count = 1,
     .vs = {
-
+      .debug_name = "Skybox Vertex Shader",
+      .filepath = vert_path,
+      .code = vertex_shader.contents
     },
     .fs = {
-
+      .debug_name = "Skybox Fragment Shader",
+      .filepath = frag_path,
+      .code = fragment_shader.contents
     },
     .wireframe = false,
     .depth_test = true,
   };
 
-  return (Skybox){
-    .texture = handle,
+  GPU_Pipeline* pipeline = GPU_GraphicsPipeline_Create(pipeline_desc, pass);
 
-  };
+  return (Skybox){ .cube = cube, .texture = handle, .pipeline = pipeline };
+}
+
+void Skybox_Draw(Skybox* skybox, Camera camera) {
+  GPU_CmdEncoder* enc = GPU_GetDefaultEncoder();
+  GPU_CmdEncoder_BeginRender(enc, skybox->pipeline->renderpass);
+  GPU_EncodeBindPipeline(enc, skybox->pipeline);
+  GPU_EncodeSetDefaults(enc);
+
+  // Shader data
+  SkyboxUniforms uniforms = { .in_position = camera.position, .cubemap = skybox->texture };
+  ShaderData skybox_data = { .data = &uniforms, .get_layout = Skybox_GetLayout };
+
+  GPU_EncodeSetVertexBuffer(enc, skybox->cube.vertex_buffer);
+  GPU_EncodeSetVertexBuffer(enc, skybox->cube.index_buffer);
+  GPU_EncodeDrawIndexed(enc, skybox->cube.geometry->indices->len);
+
+  GPU_CmdEncoder_EndRender(enc);
 }

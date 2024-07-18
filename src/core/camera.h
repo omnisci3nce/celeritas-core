@@ -29,7 +29,7 @@ PUB Mat4 Camera_ViewProj(Camera* c, f32 lens_height, f32 lens_width, Mat4* out_v
 PUB Mat4 Camera_View2D(Camera* c); // TODO: 2D cameras
 
 
-// TODO: Basic reusable camera controls
+// TODO: (HIGH) Basic reusable camera controls
 /*
 Right click + move = pan
 Left click = orbit camera

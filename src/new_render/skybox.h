@@ -3,22 +3,23 @@
  */
 
 #pragma once
-#include "backend_opengl.h"
+#include "camera.h"
 #include "defines.h"
 #include "ral_types.h"
+#include "render_types.h"
 
 typedef struct Skybox {
-    BufferHandle vertex_buffer;
+    Mesh cube;
     TextureHandle texture;
     GPU_Pipeline* pipeline; // "shader"
 } Skybox;
 
 PUB Skybox Skybox_Create(const char** face_paths, int n); // should always pass n = 6 for now
 
-PUB void Skybox_Draw(Skybox* skybox);
+PUB void Skybox_Draw(Skybox* skybox, Camera camera);
 
 typedef struct SkyboxUniforms {
-    Vec3 in_pos;
+    Vec3 in_position;
     TextureHandle cubemap;
 } SkyboxUniforms;
 
@@ -40,7 +41,7 @@ static ShaderDataLayout Skybox_GetLayout(void* data) {
     };
 
     if (has_data) {
-        b1.data.bytes.data = &d->in_pos;
+        b1.data.bytes.data = &d->in_position;
         b2.data.texture.handle = d->cubemap;
     }
     return (ShaderDataLayout) {
