@@ -39,6 +39,8 @@ struct ResourcePools {
 typedef struct ResourcePools ResourcePools;
 void ResourcePools_Init(arena* a, struct ResourcePools* res_pools);
 
+PUB GPU_Renderpass* GPU_GetDefaultRenderpass(); // returns a renderpass that draws directly to default framebuffer with default depth
+
 // --- Vertex formats
 VertexDescription static_3d_vertex_description();
 

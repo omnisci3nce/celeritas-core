@@ -14,5 +14,6 @@ out vec3 TexCoords;
 
 void main() {
     TexCoords = inPosition;
-    gl_Position = cam.proj * cam.view * vec4(inPosition, 1.0);
+    vec4 pos = cam.proj * cam.view * vec4(inPosition, 1.0);
+    gl_Position = pos.xyww;
 }

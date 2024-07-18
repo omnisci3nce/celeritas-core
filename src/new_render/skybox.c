@@ -12,12 +12,42 @@
 #include "render_types.h"
 #include "shader_layouts.h"
 
+float skyboxVertices[] = {
+  // positions
+  -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
+  1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f,
+
+  -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f,
+  -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,
+
+  1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,
+  1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f,
+
+  -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,  1.0f,
+  1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,
+
+  -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,
+  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f,
+
+  -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f,
+  1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f
+};
+
 Skybox Skybox_Create(const char** face_paths, int n) {
   INFO("Creating a skybox");
   assert(n == 6);  // ! we're only supporting a full cubemap for now
 
   // -- cube verts
-  Geometry geom = Geo_CreateCuboid(f32x3(1.0, 1.0, 1.0));
+  Geometry geom = { .format = VERTEX_POS_ONLY,  // doesnt matter
+                    .has_indices = false,
+                    .indices = NULL,
+                    .vertices = Vertex_darray_new(36) };
+  for (u32 i = 0; i < (36 * 3); i += 3) {
+    Vertex_darray_push(
+        geom.vertices,
+        (Vertex){ .pos_only = { .position = vec3(skyboxVertices[i], skyboxVertices[i + 1],
+                                                 skyboxVertices[i + 2]) } });
+  }
   Mesh cube = Mesh_Create(&geom, false);
 
   // -- cubemap texture
@@ -64,10 +94,14 @@ Skybox Skybox_Create(const char** face_paths, int n) {
   ShaderData camera_data = { .data = NULL, .get_layout = &Binding_Camera_GetLayout };
   ShaderData shader_data = { .data = NULL, .get_layout = &Skybox_GetLayout };
 
+  VertexDescription builder = { .debug_label = "pos only" };
+  VertexDesc_AddAttr(&builder, "inPosition", ATTR_F32x3);
+  builder.use_full_vertex_size = true;
+
   GraphicsPipelineDesc pipeline_desc = {
     .debug_name = "Skybox pipeline",
-    .vertex_desc = static_3d_vertex_description(),
-    .data_layouts = { camera_data, shader_data },
+    .vertex_desc = builder,
+    .data_layouts = { shader_data, camera_data },
     .data_layouts_count = 2,
     .vs = { .debug_name = "Skybox Vertex Shader",
             .filepath = vert_path,
@@ -75,7 +109,7 @@ Skybox Skybox_Create(const char** face_paths, int n) {
     .fs = { .debug_name = "Skybox Fragment Shader",
             .filepath = frag_path,
             .code = fragment_shader.contents },
-    .wireframe = false,
+    .wireframe = true,
     .depth_test = true,
   };
 
@@ -86,6 +120,7 @@ Skybox Skybox_Create(const char** face_paths, int n) {
 
 void Skybox_Draw(Skybox* skybox, Camera camera) {
   GPU_CmdEncoder* enc = GPU_GetDefaultEncoder();
+  glDepthFunc(GL_LEQUAL);
   GPU_CmdEncoder_BeginRender(enc, skybox->pipeline->renderpass);
   GPU_EncodeBindPipeline(enc, skybox->pipeline);
   GPU_EncodeSetDefaults(enc);
@@ -118,9 +153,9 @@ void Skybox_Draw(Skybox* skybox, Camera camera) {
 
   GPU_EncodeSetVertexBuffer(enc, skybox->cube.vertex_buffer);
   GPU_EncodeSetIndexBuffer(enc, skybox->cube.index_buffer);
-  glDepthFunc(GL_LEQUAL);
-  GPU_EncodeDrawIndexed(enc, skybox->cube.geometry.indices->len);
-  glDepthFunc(GL_LESS);
+
+  GPU_EncodeDraw(enc, 36);
 
   GPU_CmdEncoder_EndRender(enc);
+  glDepthFunc(GL_LESS);
 }

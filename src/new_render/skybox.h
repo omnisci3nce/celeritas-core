@@ -27,7 +27,7 @@ static ShaderDataLayout Skybox_GetLayout(void* data) {
     bool has_data = data != NULL;
 
     ShaderBinding b1 = {
-        .label = "cubemap",
+        .label = "cubeMap",
         .vis = VISIBILITY_FRAGMENT,
         .kind = BINDING_TEXTURE,
     };

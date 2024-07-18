@@ -117,6 +117,9 @@ Geometry Geo_CreateCuboid(f32x3 extents) {
 
   for (u32 i = 0; i < vertices->len; i++) {
     u32_darray_push(indices, i);
+    vertices->data[i].static_3d.position =
+        vec3_sub(vertices->data[i].static_3d.position,
+                 vec3(0.5, 0.5, 0.5));  // make center of the cube is the origin of mesh space
   }
 
   Geometry geo = {

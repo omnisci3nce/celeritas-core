@@ -24,13 +24,13 @@ int main() {
 
   // TODO: Load humanoid model + weapon
   // TODO: Animate it with WASD keys
-  // TODO: Skybox
+  // TODO: Skybox (ALMOST)
   // TODO: Add a ground terrain
   // TODO: Move camera with model
 
   // --- Render Scene
-  Vec3 camera_pos = vec3(0.0, 4.0, 8.0);
-  Camera cam = Camera_Create(camera_pos, vec3_negate(camera_pos), VEC3_Y, 45.0);
+  Vec3 camera_pos = vec3(0.0, 4.0, -8.0);
+  Camera cam = Camera_Create(camera_pos, vec3_normalise(vec3_negate(camera_pos)), VEC3_Y, 45.0);
   SetCamera(cam);  // update the camera in RenderScene
 
   DirectionalLight sun = {
@@ -90,7 +90,7 @@ int main() {
     // BEGIN Draw calls
 
     // draw the player model with shadows
-    // Render_RenderEntities(entities, entity_count);
+    Render_RenderEntities(entities, entity_count);
     // Render_DrawTerrain();
     Skybox_Draw(&skybox, cam);
 

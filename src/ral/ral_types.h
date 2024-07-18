@@ -76,6 +76,7 @@ typedef enum VertexFormat {
   VERTEX_SKINNED,
   VERTEX_COLOURED_STATIC_3D,
   VERTEX_RAW_POS_COLOUR,
+  VERTEX_POS_ONLY,
   VERTEX_COUNT
 } VertexFormat;
 
@@ -112,6 +113,10 @@ typedef union Vertex {
     Vec2 position;
     Vec3 colour;
   } raw_pos_colour;
+
+  struct {
+    Vec3 position;
+  } pos_only;
 } Vertex;
 
 #ifndef TYPED_VERTEX_ARRAY

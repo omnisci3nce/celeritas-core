@@ -142,7 +142,7 @@ TextureData TextureDataLoad(const char* path, bool invert_y) {
   stbi_set_flip_vertically_on_load(invert_y);
 
 #pragma GCC diagnostic ignored "-Wpointer-sign"
-  char* data = stbi_load(path, &width, &height, &num_channels, STBI_rgb_alpha);
+  char* data = stbi_load(path, &width, &height, &num_channels, STBI_rgb);
   if (data) {
     DEBUG("loaded texture: %s", path);
   } else {
@@ -182,10 +182,12 @@ Mesh Mesh_Create(Geometry* geometry, bool free_on_upload) {
       GPU_BufferCreate(vert_bytes, BUFFER_VERTEX, BUFFER_FLAG_GPU, geometry->vertices->data);
 
   // Create and upload index buffer
-  size_t index_bytes = geometry->indices->len * sizeof(u32);
-  INFO("Creating index buffer with size %d (len: %d)", index_bytes, geometry->indices->len);
-  m.index_buffer =
-      GPU_BufferCreate(index_bytes, BUFFER_INDEX, BUFFER_FLAG_GPU, geometry->indices->data);
+  if (geometry->has_indices) {
+    size_t index_bytes = geometry->indices->len * sizeof(u32);
+    INFO("Creating index buffer with size %d (len: %d)", index_bytes, geometry->indices->len);
+    m.index_buffer =
+        GPU_BufferCreate(index_bytes, BUFFER_INDEX, BUFFER_FLAG_GPU, geometry->indices->data);
+  }
 
   m.is_uploaded = true;
   m.geometry = *geometry;  // clone geometry data and store on Mesh struct
