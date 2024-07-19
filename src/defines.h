@@ -53,8 +53,9 @@ CORE_DEFINE_HANDLE(Handle); // Untyped handle that can be casted to a strongly t
 
 #define PUB // For collecting public APIs to expose in an amalgamation header file
 
-#define MB(x) ((size_t) x * 1000 * 1000)
 #define KB(x) ((size_t) x * 1000)
+#define MB(x) ((size_t) x * 1000 * 1000)
+#define GB(x) ((size_t) x * 1000 * 1000 * 1000)
 
 // NOTE: The below is now handled in xmake.lua
 // Platform will inform renderer backend (unless user overrides)

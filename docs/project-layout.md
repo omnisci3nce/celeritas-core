@@ -3,8 +3,10 @@ title: Project Structure
 ---
 
 ```
-deps/ - third-party dependencies
-docs/ - these docs you're reading now that get built with mkdocs
+assets/   - shaders and bundled assets for examples (must be licensed open)
+bindgen/  - bindings generation
+deps/     - third-party dependencies
+docs/     - these docs you're reading now that get built with mkdocs
 src/
     core/     - core game engine facilities
     logos/    -

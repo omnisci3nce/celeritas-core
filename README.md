@@ -40,18 +40,26 @@ All third-party dependencies are licensed under their own license.
 
 ## TODO
 
-### Core
+#### Engine
+- [ ] Shader hot-reloading
+- [ ] Cross-platform threadpool
+- Strings
+  - [x] custom fat pointer string type
+- [ ] Transform gizmo
 
 #### Memory
+- [x] Arena allocator
+  - [x] malloc backed
+  - [ ] overcommit address-space backed (`VirtualAlloc` & `mmap`)
 - [x] Pool allocator (typed)
 - [ ] SoA hot/cold pool allocator (pool for all entities of same type, split into two structs in SoA so we can have hot ,(`VkHandle`and cold `size`, `format` data separated))
 
 #### Scene
 - [ ] Transform hierarchy / Scene tree
   - [ ] Transform propagation
+- [ ] Asset streaming
 
 ### Renderer
-
 - [ ] PBR
   - [x] Basic implementation using learnopengl
   - [ ] Implementation using filament as a reference for first in class PBR
@@ -60,9 +68,23 @@ All third-party dependencies are licensed under their own license.
   - [x] Shadowmaps
   - [ ] PCF
   - [ ] Cascading shadowmaps (CSM)
+  - [ ] Point light shadows
 - [ ] Cel shading
 - [ ] Terrain
+  - [ ] Heightmaps
+- [ ] Water
+  -  [] water plane
 - [ ] Animation
   - [x] Joint and keyframe loading
   - [ ] Handle multiple animations in one GLTF
   - [ ] Animation Blending
+- [ ] Global illumination (future)
+
+### RAL
+- [x] Buffer/texture creation
+
+### Logistics
+
+- [ ] Replace screenshot with one using PBR + skybox + shadows
+- [ ] Update website
+- [ ] Check licenses of assets currently in `assets` folder
