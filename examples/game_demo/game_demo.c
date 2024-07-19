@@ -86,6 +86,8 @@ int main() {
 
   while (!ShouldExit()) {
     Frame_Begin();
+    Camera_Update(&cam);
+    SetCamera(cam);
 
     // BEGIN Draw calls
 

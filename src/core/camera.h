@@ -29,6 +29,10 @@ PUB Mat4 Camera_ViewProj(Camera* c, f32 lens_height, f32 lens_width, Mat4* out_v
 /** @brief Get 2D camera transform matrix */
 PUB Mat4 Camera_View2D(Camera* c);  // TODO: 2D cameras
 
+struct Input_State;
+
+void Camera_Update(Camera* camera);
+
 // TODO: (HIGH) Basic reusable camera controls
 /*
 Right click + move = pan

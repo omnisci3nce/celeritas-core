@@ -41,7 +41,7 @@ All third-party dependencies are licensed under their own license.
 ## TODO
 
 #### Engine
-= [ ] Embedded assets - shaders, textures, et al (probably will use C23's `#embed`?)
+- [ ] Embedded assets - shaders, textures, et al (probably will use C23's `#embed`?)
 - [ ] Shader hot-reloading
 - [ ] Cross-platform threadpool
 - Strings
@@ -71,11 +71,12 @@ All third-party dependencies are licensed under their own license.
   - [ ] PCF
   - [ ] Cascading shadowmaps (CSM)
   - [ ] Point light shadows
+- [ ] Resizing viewport
 - [ ] Cel shading
 - [ ] Terrain
   - [ ] Heightmaps
 - [ ] Water
-  -  [] water plane
+  - [ ] water plane
 - [ ] Animation
   - [x] Joint and keyframe loading
   - [ ] Handle multiple animations in one GLTF

@@ -96,3 +96,9 @@ bool key_is_pressed(keycode key) { return g_input->depressed_keys[key]; }
 bool key_just_pressed(keycode key) { return g_input->just_pressed_keys[key]; }
 
 bool key_just_released(keycode key) { return g_input->just_released_keys[key]; }
+
+bool MouseBtn_Held() {
+  return g_input->mouse.prev_left_btn_pressed && g_input->mouse.left_btn_pressed;
+}
+
+mouse_state Input_GetMouseState() { return g_input->mouse; }

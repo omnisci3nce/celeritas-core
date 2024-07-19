@@ -34,9 +34,14 @@ bool key_just_pressed(keycode key);
 /** @brief `key` was just released */
 bool key_just_released(keycode key);
 
+// TODO: right btn as well
+bool MouseBtn_Held();
+
 // --- Lifecycle
 
 bool Input_Init(Input_State *input, struct GLFWwindow *window);
 void Input_Shutdown(Input_State *input);
 
 void Input_Update(Input_State *state);  // must be run once per main loop
+
+PUB mouse_state Input_GetMouseState();
