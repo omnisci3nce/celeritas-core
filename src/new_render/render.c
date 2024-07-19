@@ -156,12 +156,14 @@ TextureData TextureDataLoad(const char* path, bool invert_y) {
   stbi_set_flip_vertically_on_load(invert_y);
 
 #pragma GCC diagnostic ignored "-Wpointer-sign"
-  char* data = stbi_load(path, &width, &height, &num_channels, STBI_rgb);
+  char* data = stbi_load(path, &width, &height, &num_channels, 0);
   if (data) {
     DEBUG("loaded texture: %s", path);
   } else {
     WARN("failed to load texture");
   }
+
+  // printf("width: %d height: %d num channels: %d\n", width, height, num_channels);
 
   unsigned int channel_type;
   GPU_TextureFormat format;

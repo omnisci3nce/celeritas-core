@@ -233,10 +233,23 @@ TextureHandle GPU_TextureCreate(TextureDesc desc, bool create_view, const void* 
   glGenTextures(1, &gl_texture_id);
   texture->id = gl_texture_id;
 
-  glBindTexture(GL_TEXTURE_2D, gl_texture_id);
+  GLenum gl_tex_type = opengl_tex_type(desc.tex_type);
+  texture->type = desc.tex_type;
+  printf("Creating texture of type %s\n", texture_type_names[desc.tex_type]);
+  glBindTexture(gl_tex_type, gl_texture_id);
 
-  GLint internal_format = desc.format == TEXTURE_FORMAT_DEPTH_DEFAULT ? GL_DEPTH_COMPONENT : GL_RGB;
-  GLenum format = desc.format == TEXTURE_FORMAT_DEPTH_DEFAULT ? GL_DEPTH_COMPONENT : GL_RGBA;
+  GLint internal_format;
+  if (desc.format == TEXTURE_FORMAT_DEPTH_DEFAULT) {
+    internal_format = GL_DEPTH_COMPONENT;
+  } else if (desc.format == TEXTURE_FORMAT_8_8_8_8_RGBA_UNORM) {
+    internal_format = GL_RGBA;
+  } else {
+    internal_format = GL_RGB;
+  }
+
+  GLint format = internal_format;
+  // FIXME: GLint format = desc.format == TEXTURE_FORMAT_DEPTH_DEFAULT ? GL_DEPTH_COMPONENT :
+  // GL_RGBA;
   GLenum data_type = desc.format == TEXTURE_FORMAT_DEPTH_DEFAULT ? GL_FLOAT : GL_UNSIGNED_BYTE;
 
   if (desc.format == TEXTURE_FORMAT_DEPTH_DEFAULT) {
@@ -257,7 +270,9 @@ TextureHandle GPU_TextureCreate(TextureDesc desc, bool create_view, const void* 
   if (data) {
     glTexImage2D(GL_TEXTURE_2D, 0, internal_format, desc.extents.x, desc.extents.y, 0, format,
                  data_type, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    if (desc.tex_type == TEXTURE_TYPE_2D) {
+      glGenerateMipmap(GL_TEXTURE_2D);
+    }
   } else {
     WARN("No image data provided");
     glTexImage2D(GL_TEXTURE_2D, 0, internal_format, desc.extents.x, desc.extents.y, 0, format,
@@ -340,7 +355,8 @@ PUB void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData
       }
       glUniform1i(tex_slot, i);
       glActiveTexture(GL_TEXTURE0 + i);
-      glBindTexture(GL_TEXTURE_CUBE_MAP, tex->id);
+      GLenum gl_tex_type = opengl_tex_type(tex->type);
+      glBindTexture(gl_tex_type, tex->id);
     }
   }
 }

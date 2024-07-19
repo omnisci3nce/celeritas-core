@@ -127,4 +127,15 @@ static u32 shader_create_separate(const char* vert_shader, const char* frag_shad
   return shader_prog;
 }
 
+static GLenum opengl_tex_type(GPU_TextureType tex_type) {
+  switch (tex_type) {
+    case TEXTURE_TYPE_2D:
+      return GL_TEXTURE_2D;
+    case TEXTURE_TYPE_CUBE_MAP:
+      return GL_TEXTURE_CUBE_MAP;
+    default:
+      return GL_TEXTURE_2D;
+  }
+}
+
 #endif

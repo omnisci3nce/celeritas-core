@@ -14,11 +14,6 @@
 #define HALF_PI 1.57079632679489661923
 #define TAU (2.0 * PI)
 
-// --- Helpers
-#define deg_to_rad(x) (x * 3.14 / 180.0)
-#define min(a, b) (a < b ? a : b)
-#define max(a, b) (a > b ? a : b)
-
 // --- Types
 
 /** @brief 2D Vector */

@@ -60,7 +60,7 @@ typedef struct GPU_Buffer {
 
 typedef struct GPU_Texture {
   u32 id;
-  void *pad;
+  GPU_TextureType type;
 } GPU_Texture;
 
 typedef struct opengl_support {

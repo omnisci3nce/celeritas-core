@@ -37,6 +37,8 @@ KITC_DECL_TYPED_ARRAY(Joint);
 #define TYPED_JOINT_ARRAY
 #endif
 
+typedef u32 JointIdx;
+
 typedef struct Armature {
   char* label;
   Joint_darray* joints;
