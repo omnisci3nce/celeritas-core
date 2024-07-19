@@ -138,7 +138,7 @@ void Render_RenderEntities(RenderEnt* entities, size_t entity_count) {
   Renderer* ren = get_renderer();
   RenderScene scene = ren->scene;
 
-  // TOOD: -- Shadows
+  // TODO: -- Shadows
   // f32 near_plane = 1.0, far_plane = 10.0;
   // Mat4 light_projection = mat4_orthographic(-10.0, 10.0, -10.0, 10.0, near_plane, far_plane);
   // Vec3 pos = vec3_negate(scene.sun.direction);

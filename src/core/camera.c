@@ -1,5 +1,7 @@
 #include "camera.h"
 
+#include "input.h"
+#include "keys.h"
 #include "maths.h"
 
 Camera Camera_Create(Vec3 pos, Vec3 front, Vec3 up, f32 fov) {
@@ -18,4 +20,60 @@ Mat4 Camera_ViewProj(Camera *c, f32 lens_height, f32 lens_width, Mat4 *out_view,
     *out_proj = proj;
   }
   return mat4_mult(view, proj);
+}
+
+void Camera_Update(Camera *camera) {
+  static f32 yaw = 0.0;
+  static f32 pitch = 0.0;
+
+  // Keyboard
+  f32 speed = 0.25;
+  Vec3 horizontal = vec3_cross(camera->front, camera->up);
+  if (key_is_pressed(KEYCODE_A) || key_is_pressed(KEYCODE_KEY_LEFT)) {
+    Vec3 displacement = vec3_mult(horizontal, -speed);
+    camera->position = vec3_add(camera->position, displacement);
+  }
+  if (key_is_pressed(KEYCODE_D) || key_is_pressed(KEYCODE_KEY_RIGHT)) {
+    Vec3 displacement = vec3_mult(horizontal, speed);
+    camera->position = vec3_add(camera->position, displacement);
+  }
+  if (key_is_pressed(KEYCODE_W) || key_is_pressed(KEYCODE_KEY_UP)) {
+    Vec3 displacement = vec3_mult(camera->front, speed);
+    camera->position = vec3_add(camera->position, displacement);
+  }
+  if (key_is_pressed(KEYCODE_S) || key_is_pressed(KEYCODE_KEY_DOWN)) {
+    Vec3 displacement = vec3_mult(camera->front, -speed);
+    camera->position = vec3_add(camera->position, displacement);
+  }
+
+  // Mouse
+  if (MouseBtn_Held()) {
+    mouse_state mouse = Input_GetMouseState();
+    // printf("Delta x: %d Delta y %d\n",mouse.x_delta, mouse.y_delta );
+
+    f32 x_offset = mouse.x_delta;
+    f32 y_offset = -mouse.y_delta;
+
+    f32 sensitivity = 0.7f;  // change this value to your liking
+    x_offset *= sensitivity;
+    y_offset *= sensitivity;
+
+    yaw += x_offset;
+    pitch += y_offset;
+
+    // make sure that when pitch is out of bounds, screen doesn't get flipped
+    if (pitch > 89.0f) pitch = 89.0f;
+    if (pitch < -89.0f) pitch = -89.0f;
+
+    Vec3 front;
+    front.x = cos(deg_to_rad(yaw) * cos(deg_to_rad(pitch)));
+    front.y = sin(deg_to_rad(pitch));
+    front.z = sin(deg_to_rad(yaw)) * cos(deg_to_rad(pitch));
+    front = vec3_normalise(front);
+    camera->front.x = front.x;
+    camera->front.y = front.y;
+    camera->front.z = front.z;
+  }
+
+  // TODO: Right mouse => pan in screen space
 }
