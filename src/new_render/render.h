@@ -64,3 +64,6 @@ PUB void DrawMesh(Mesh* mesh, Material* material, Mat4 model);
 /** @brief the renderer does some internal bookkeeping for terrain so we use the terrain
            stored on the Renderer rather than accept it as a parameter */
 PUB void Render_DrawTerrain();
+
+// --- Getters (not in love with this but I'm finding keeping Renderer internals private to be okay)
+arena* GetRenderFrameArena(Renderer* r);

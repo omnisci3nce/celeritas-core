@@ -66,7 +66,7 @@ typedef struct GPU_Texture {
 typedef struct opengl_support {
 } opengl_support;
 
-u32 shader_create_separate(const char *vert_shader, const char *frag_shader);
+// u32 shader_create_separate(const char *vert_shader, const char *frag_shader);
 
 void uniform_vec3f(u32 program_id, const char *uniform_name, Vec3 *value);
 void uniform_f32(u32 program_id, const char *uniform_name, f32 value);

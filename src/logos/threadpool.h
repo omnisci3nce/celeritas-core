@@ -92,3 +92,5 @@ bool threadpool_add_task(threadpool *pool, tpool_task_start do_task,
                          u32 result_data_size);
 
 void threadpool_process_results(threadpool *pool, int num_to_process);
+
+u32 Tpool_GetNumWorkers(); // how many threads are we using

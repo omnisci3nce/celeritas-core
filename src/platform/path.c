@@ -12,7 +12,7 @@ path_opt path_parent(arena* a, const char* path) {
   char* path_copy = arena_alloc(a, strlen(path) + 1);
   strcpy(path_copy, path);
   char* path_dirname = dirname(path_copy);
-  return (path_opt){ .path = str8_cstr_view(path_dirname), .has_value = true };
+  return (path_opt){ .path = Str8_cstr_view(path_dirname), .has_value = true };
 }
 #endif
 #ifdef CEL_PLATFORM_WINDOWS

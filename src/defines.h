@@ -53,6 +53,9 @@ CORE_DEFINE_HANDLE(Handle); // Untyped handle that can be casted to a strongly t
 
 #define PUB // For collecting public APIs to expose in an amalgamation header file
 
+#define MB(x) ((size_t) x * 1000 * 1000)
+#define KB(x) ((size_t) x * 1000)
+
 // NOTE: The below is now handled in xmake.lua
 // Platform will inform renderer backend (unless user overrides)
 #if defined(CEL_PLATFORM_LINUX)
@@ -68,6 +71,6 @@ CORE_DEFINE_HANDLE(Handle); // Untyped handle that can be casted to a strongly t
 
 #if defined(CEL_PLATFORM_MAC)
 // #define CEL_REND_BACKEND_METAL 1
-// #define CEL_REND_BACKEND_OPENGL 1
-#define CEL_REND_BACKEND_VULKAN 1
+#define CEL_REND_BACKEND_OPENGL 1
+// #define CEL_REND_BACKEND_VULKAN 1
 #endif

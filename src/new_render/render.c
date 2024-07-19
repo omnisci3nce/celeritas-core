@@ -10,6 +10,7 @@
 #include "log.h"
 #include "maths.h"
 #include "maths_types.h"
+#include "mem.h"
 #include "pbr.h"
 #include "ral_common.h"
 #include "ral_impl.h"
@@ -20,6 +21,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+
+#define FRAME_ARENA_SIZE MB(1)
 
 extern Core g_core;
 
@@ -36,12 +39,15 @@ struct Renderer {
   // Terrain_Storage terrain;
   // Text_Storage text;
   ResourcePools* resource_pools;
+  arena frame_arena;
 };
 
 Renderer* get_renderer() { return g_core.renderer; }
 
 bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window) {
   INFO("Renderer init");
+
+  ren->frame_arena = arena_create(malloc(FRAME_ARENA_SIZE), FRAME_ARENA_SIZE);
 
   // init resource pools
   DEBUG("Initialise GPU resource pools");
@@ -100,10 +106,18 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
   return true;
 }
 
-void Renderer_Shutdown(Renderer* ren) { free(ren->shadows); }
+void Renderer_Shutdown(Renderer* ren) {
+  free(ren->shadows);
+  DEBUG("Freed Shadows storage");
+  free(ren->pbr);
+  DEBUG("Freed PBR storage");
+  arena_free_storage(&ren->frame_arena);
+  DEBUG("Freed frame allocator buffer");
+}
 size_t Renderer_GetMemReqs() { return sizeof(Renderer); }
 
 void Render_FrameBegin(Renderer* ren) {
+  arena_free_all(&ren->frame_arena);
   ren->frame_aborted = false;
   if (!GPU_Backend_BeginFrame()) {
     ren->frame_aborted = true;
@@ -208,3 +222,7 @@ void Geometry_Destroy(Geometry* geometry) {
 
 void SetCamera(Camera camera) { g_core.renderer->scene.camera = camera; }
 void SetMainLight(DirectionalLight light) { g_core.renderer->scene.sun = light; }
+
+arena* GetRenderFrameArena(Renderer* r) {
+  return &r->frame_arena;
+}

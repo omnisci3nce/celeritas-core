@@ -48,7 +48,7 @@ All third-party dependencies are licensed under their own license.
 
 #### Scene
 - [ ] Transform hierarchy / Scene tree
-  - [ ] transform propagation
+  - [ ] Transform propagation
 
 ### Renderer
 
@@ -56,3 +56,13 @@ All third-party dependencies are licensed under their own license.
   - [x] Basic implementation using learnopengl
   - [ ] Implementation using filament as a reference for first in class PBR
   - [ ] Handle metallic / roughness being in different channels, combined, or absent
+- [ ] Shadows
+  - [x] Shadowmaps
+  - [ ] PCF
+  - [ ] Cascading shadowmaps (CSM)
+- [ ] Cel shading
+- [ ] Terrain
+- [ ] Animation
+  - [x] Joint and keyframe loading
+  - [ ] Handle multiple animations in one GLTF
+  - [ ] Animation Blending

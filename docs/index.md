@@ -30,9 +30,7 @@ Celeritas is the original Latin word for celerity that the English is derived fr
 
 **Roadmap going forwards**
 
-* Collision detection
-* Terrain rendering
-* GPU-driven rendering
+[See here (README)](https://github.com/omnisci3nce/celeritas-core/blob/winter-cleaning/README.md#todo)
 
 ## Getting started
 
