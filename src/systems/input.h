@@ -8,13 +8,19 @@
 
 struct GLFWWindow;
 
+typedef enum MouseBtn {
+  MOUSEBTN_LEFT = 0,
+  MOUSEBTN_RIGHT = 1,
+  MOUSEBTN_MIDDLE = 2,
+} MouseBtn;
+
 typedef struct mouse_state {
   i32 x;
   i32 y;
   i32 x_delta;
   i32 y_delta;
-  bool prev_left_btn_pressed;
-  bool left_btn_pressed;
+  bool prev_pressed_states[3];
+  bool cur_pressed_states[3];
 } mouse_state;
 
 typedef struct Input_State {
@@ -35,7 +41,7 @@ bool key_just_pressed(keycode key);
 bool key_just_released(keycode key);
 
 // TODO: right btn as well
-bool MouseBtn_Held();
+bool MouseBtn_Held(MouseBtn btn);
 
 // --- Lifecycle
 

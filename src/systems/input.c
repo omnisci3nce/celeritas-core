@@ -75,14 +75,13 @@ void Input_Update(Input_State *input) {
 
   // buttons
   int left_state = glfwGetMouseButton(input->window, GLFW_MOUSE_BUTTON_LEFT);
-  // int right_state = glfwGetMouseButton(input->window, GLFW_MOUSE_BUTTON_RIGHT);
+  int right_state = glfwGetMouseButton(input->window, GLFW_MOUSE_BUTTON_RIGHT);
 
-  new_mouse_state.prev_left_btn_pressed = input->mouse.left_btn_pressed;
-  if (left_state == GLFW_PRESS) {
-    new_mouse_state.left_btn_pressed = true;
-  } else {
-    new_mouse_state.left_btn_pressed = false;
+  for (int i = 0; i < 3; i++) {
+    new_mouse_state.prev_pressed_states[i] = input->mouse.cur_pressed_states[i];
   }
+  new_mouse_state.cur_pressed_states[MOUSEBTN_LEFT] = left_state == GLFW_PRESS;
+  new_mouse_state.cur_pressed_states[MOUSEBTN_RIGHT] = right_state == GLFW_PRESS;
 
   // this was dumb! need to also check button state changes lol
   // if (new_mouse_state.x != input->mouse.x || new_mouse_state.y != input->mouse.y)
@@ -97,8 +96,9 @@ bool key_just_pressed(keycode key) { return g_input->just_pressed_keys[key]; }
 
 bool key_just_released(keycode key) { return g_input->just_released_keys[key]; }
 
-bool MouseBtn_Held() {
-  return g_input->mouse.prev_left_btn_pressed && g_input->mouse.left_btn_pressed;
+bool MouseBtn_Held(MouseBtn btn) {
+  assert(btn < 3);
+  return g_input->mouse.prev_pressed_states[btn] && g_input->mouse.cur_pressed_states[btn];
 }
 
 mouse_state Input_GetMouseState() { return g_input->mouse; }

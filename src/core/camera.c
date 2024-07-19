@@ -47,7 +47,7 @@ void Camera_Update(Camera *camera) {
   }
 
   // Mouse
-  if (MouseBtn_Held()) {
+  if (MouseBtn_Held(MOUSEBTN_LEFT)) {
     mouse_state mouse = Input_GetMouseState();
     // printf("Delta x: %d Delta y %d\n",mouse.x_delta, mouse.y_delta );
 
