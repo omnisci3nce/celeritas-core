@@ -5,18 +5,18 @@
 
 #pragma once
 #include "backend_opengl.h"
-#include "defines.h"
 #include "camera.h"
+#include "defines.h"
 #include "maths_types.h"
 #include "ral_types.h"
 #include "render_types.h"
 
 // --- Public API
 typedef struct PBR_Storage {
-    GPU_Renderpass* pbr_pass;
-    GPU_Pipeline* pbr_pipeline;
+  GPU_Renderpass* pbr_pass;
+  GPU_Pipeline* pbr_pipeline;
 
-} PBR_Storage; // Stores all necessary data and handles
+} PBR_Storage;  // Stores all necessary data and handles
 
 typedef struct PBRMaterialUniforms {
   Material mat;
@@ -25,12 +25,11 @@ typedef struct PBRMaterialUniforms {
 PUB void PBR_Init(PBR_Storage* storage);
 
 // NOTE: For simplicity's sake we will render this pass directly to the default framebuffer
-PUB void PBR_Run(
-    PBR_Storage* storage
-    // light data
-    // camera
-    // geometry
-    // materials
+PUB void PBR_Run(PBR_Storage* storage
+                 // light data
+                 // camera
+                 // geometry
+                 // materials
 );
 
 typedef struct PBR_Params {
@@ -57,12 +56,7 @@ GPU_Renderpass* PBR_RPassCreate();
 
 GPU_Pipeline* PBR_PipelineCreate(GPU_Renderpass* rpass);
 
-void PBR_Execute(
-    PBR_Storage* storage,
-    Camera camera,
-    TextureHandle shadowmap_tex,
-    RenderEnt* entities,
-    size_t entity_count
-);
+void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_tex,
+                 RenderEnt* entities, size_t entity_count);
 
 ShaderDataLayout PBRMaterial_GetLayout(void* data);

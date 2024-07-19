@@ -82,7 +82,7 @@ static shader_data_layout pbr_params_shader_layout(void* data) {
                         .data = { .bytes = { .size = sizeof(pbr_params_light_uniforms) } } };
 
   if (has_data) {
-  // printf("Size %d \n", b3.data.bytes.size);
+    // printf("Size %d \n", b3.data.bytes.size);
     b1.data.bytes.data = &d->mvp_matrices;
     b2.data.bytes.data = &d->material;
     /* d->lights.viewPos = vec3(0, 1, 0); */
@@ -127,16 +127,14 @@ static shader_data_layout pbr_textured_shader_layout(void* data) {
                         .stores_data = has_data,
                         .data = { .bytes = { .size = sizeof(pbr_params_light_uniforms) } } };
 
-  shader_binding b3 = {.label = "albedoMap",
+  shader_binding b3 = { .label = "albedoMap",
                         .type = SHADER_BINDING_TEXTURE,
                         .stores_data = has_data };
-  shader_binding b4 = {.label = "metallicRoughnessMap",
+  shader_binding b4 = { .label = "metallicRoughnessMap",
                         .type = SHADER_BINDING_TEXTURE,
                         .stores_data = has_data };
-  shader_binding b5 = {.label = "aoMap",
-                        .type = SHADER_BINDING_TEXTURE,
-                        .stores_data = has_data };
- shader_binding b6 = {.label = "normalMap",
+  shader_binding b5 = { .label = "aoMap", .type = SHADER_BINDING_TEXTURE, .stores_data = has_data };
+  shader_binding b6 = { .label = "normalMap",
                         .type = SHADER_BINDING_TEXTURE,
                         .stores_data = has_data };
 
@@ -149,6 +147,7 @@ static shader_data_layout pbr_textured_shader_layout(void* data) {
     b6.data.texture.handle = d->textures.normal_tex;
   }
 
-  return (shader_data_layout){ .name = "pbr_params", .bindings = { b1, b2, b3, b4, b5, b6  }, .bindings_count = 6
-  };
+  return (shader_data_layout){ .name = "pbr_params",
+                               .bindings = { b1, b2, b3, b4, b5, b6 },
+                               .bindings_count = 6 };
 }

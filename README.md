@@ -41,6 +41,7 @@ All third-party dependencies are licensed under their own license.
 ## TODO
 
 #### Engine
+= [ ] Embedded assets - shaders, textures, et al (probably will use C23's `#embed`?)
 - [ ] Shader hot-reloading
 - [ ] Cross-platform threadpool
 - Strings
@@ -52,6 +53,7 @@ All third-party dependencies are licensed under their own license.
   - [x] malloc backed
   - [ ] overcommit address-space backed (`VirtualAlloc` & `mmap`)
 - [x] Pool allocator (typed)
+  - [ ] Generational handles
 - [ ] SoA hot/cold pool allocator (pool for all entities of same type, split into two structs in SoA so we can have hot ,(`VkHandle`and cold `size`, `format` data separated))
 
 #### Scene

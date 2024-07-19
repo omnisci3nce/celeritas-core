@@ -7,7 +7,6 @@
 #include "maths_types.h"
 
 typedef struct Immdraw_Storage {
-
 } Immdraw_Storage;
 
 // --- Public API

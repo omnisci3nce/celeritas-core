@@ -1,6 +1,6 @@
 #pragma once
-#include "defines.h"
 #include "darray.h"
+#include "defines.h"
 #include "maths_types.h"
 #include "str.h"
 
@@ -21,10 +21,10 @@ CORE_DEFINE_HANDLE(ShaderHandle);
 CORE_DEFINE_HANDLE(PipelineLayoutHandle);
 CORE_DEFINE_HANDLE(PipelineHandle);
 CORE_DEFINE_HANDLE(RenderpassHandle);
-#define INVALID_TEX_HANDLE ((TextureHandle){.raw = 9999999 })
+#define INVALID_TEX_HANDLE ((TextureHandle){ .raw = 9999999 })
 
 // --- Buffers
-typedef enum GPU_BufferType{
+typedef enum GPU_BufferType {
   BUFFER_DEFAULT,  // on Vulkan this would be a storage buffer?
   BUFFER_VERTEX,
   BUFFER_INDEX,
@@ -142,12 +142,12 @@ typedef enum VertexAttribType {
 } VertexAttribType;
 
 typedef struct VertexDescription {
-    char* debug_label;
-    const char* attr_names[MAX_VERTEX_ATTRIBUTES];
-    VertexAttribType attributes[MAX_VERTEX_ATTRIBUTES];
-    u32 attributes_count;
-    size_t stride;
-    bool use_full_vertex_size;
+  char* debug_label;
+  const char* attr_names[MAX_VERTEX_ATTRIBUTES];
+  VertexAttribType attributes[MAX_VERTEX_ATTRIBUTES];
+  u32 attributes_count;
+  size_t stride;
+  bool use_full_vertex_size;
 } VertexDescription;
 
 // --- Shaders
@@ -157,10 +157,10 @@ typedef enum PipelineKind {
 } PipelineKind;
 
 typedef enum ShaderVisibility {
-    VISIBILITY_VERTEX = 1 << 0,
-    VISIBILITY_FRAGMENT = 1 << 1,
-    VISIBILITY_COMPUTE = 1 << 2,
-} ShaderVisibility ;
+  VISIBILITY_VERTEX = 1 << 0,
+  VISIBILITY_FRAGMENT = 1 << 1,
+  VISIBILITY_COMPUTE = 1 << 2,
+} ShaderVisibility;
 
 typedef struct ShaderDesc {
   const char* debug_name;
@@ -171,36 +171,43 @@ typedef struct ShaderDesc {
 } ShaderDesc;
 
 typedef enum ShaderBindingKind {
-    BINDING_BYTES,
-    BINDING_BUFFER,
-    BINDING_BUFFER_ARRAY,
-    BINDING_TEXTURE,
-    BINDING_TEXTURE_ARRAY,
-    BINDING_SAMPLER,
-    BINDING_COUNT
+  BINDING_BYTES,
+  BINDING_BUFFER,
+  BINDING_BUFFER_ARRAY,
+  BINDING_TEXTURE,
+  BINDING_TEXTURE_ARRAY,
+  BINDING_SAMPLER,
+  BINDING_COUNT
 } ShaderBindingKind;
 
 typedef struct ShaderBinding {
-    const char* label;
-    ShaderBindingKind kind;
-    ShaderVisibility vis;
-    union {
-        struct { u32 size; void* data; } bytes;
-        struct { BufferHandle handle; } buffer;
-        struct { TextureHandle handle; } texture;
-    } data;
+  const char* label;
+  ShaderBindingKind kind;
+  ShaderVisibility vis;
+  union {
+    struct {
+      u32 size;
+      void* data;
+    } bytes;
+    struct {
+      BufferHandle handle;
+    } buffer;
+    struct {
+      TextureHandle handle;
+    } texture;
+  } data;
 } ShaderBinding;
 
 typedef struct ShaderDataLayout {
-    ShaderBinding bindings[MAX_SHADER_BINDINGS];
-    size_t binding_count;
+  ShaderBinding bindings[MAX_SHADER_BINDINGS];
+  size_t binding_count;
 } ShaderDataLayout;
 
 typedef ShaderDataLayout (*FN_GetBindingLayout)(void* data);
 
 typedef struct ShaderData {
-    FN_GetBindingLayout get_layout;
-    void* data;
+  FN_GetBindingLayout get_layout;
+  void* data;
 } ShaderData;
 
 // --- Miscellaneous
@@ -236,7 +243,7 @@ typedef struct GraphicsPipelineDesc {
 typedef struct GPU_RenderpassDesc {
   bool default_framebuffer;
   bool has_color_target;
-  TextureHandle  color_target; // for now only support one
+  TextureHandle color_target;  // for now only support one
   bool has_depth_stencil;
-  TextureHandle  depth_stencil;
+  TextureHandle depth_stencil;
 } GPU_RenderpassDesc;

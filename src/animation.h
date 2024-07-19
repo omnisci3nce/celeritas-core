@@ -4,8 +4,6 @@
 #include "defines.h"
 #include "maths_types.h"
 
-KITC_DECL_TYPED_ARRAY(f32)
-
 typedef enum Interpolation { INTERPOLATION_LINEAR, INTERPOLATION_COUNT } Interpolation;
 
 typedef enum KeyframeKind {
@@ -15,58 +13,69 @@ typedef enum KeyframeKind {
   KEYFRAME_WEIGHTS,
 } KeyframeKind;
 
-// typedef union keyframe {
-//   quat rotation;
-//   vec3 translation;
-//   vec3 scale;
-//   float* weights;
-// } keyframe;
+typedef union Keyframe {
+  Quat rotation;
+  Vec3 translation;
+  Vec3 scale;
+  f32 weights[4];
+} Keyframe;
 
-// typedef struct keyframes {
-//   keyframe_kind kind;
-//   keyframe* values;
-//   size_t count;
-// } keyframes;
+typedef struct Keyframes {
+  KeyframeKind kind;
+  Keyframe* values;
+  size_t count;
+} Keyframes;
 
-// typedef struct joint {
-//   char* name;  // optional
-//   transform transform_components;
-//   mat4 inverse_bind_matrix;
-//   mat4 local_transform;
-// } joint;
+typedef struct Joint {
+  char* debug_label;  // optional
+  Mat4 inverse_bind_matrix;
+  Mat4 local_transform;
+  Transform transform_components;
+} Joint;
+#ifndef TYPED_JOINT_ARRAY
+KITC_DECL_TYPED_ARRAY(Joint);
+#define TYPED_JOINT_ARRAY
+#endif
 
-// typedef struct animation_spline {
-//   f32* timestamps;
-//   size_t n_timestamps;
-//   keyframes values;
-//   interpolation interpolation;
-// } animation_spline;
+typedef struct Armature {
+  char* label;
+  Joint_darray* joints;
+} Armature;
 
-// typedef struct animation_sampler {
-//   int current_index;
-//   f32 min;
-//   f32 max;
-//   animation_spline animation;
-// } animation_sampler;
+// NOTE: I think we will need to topologically sort the joints to store them in array if we want to
+// do linear array traversal
+//       when calculating transforms.
 
-// /** @brief Sample an animation at a given time `t` */
-// keyframe animation_sample(animation_sampler* sampler, f32 t);
+typedef struct AnimationSpline {
+  f32* timestamps;
+  size_t n_timestamps;
+  Keyframes values;
+  Interpolation interpolation;
+} AnimationSpline;
 
-// typedef struct animation_clip {
-//   // A clip contains one or more animation curves
-//   // for now I think we can just enumerate all of the properties (assuming *only* one per type is in
-//   // a clip) NULL = this property is not animated in this clip
-//   animation_sampler* rotation;
-//   animation_sampler* translation;
-//   animation_sampler* scale;
-//   animation_sampler* weights;
-// } animation_clip;
+typedef struct AnimationSampler {
+  int current_index;
+  f32 min;
+  f32 max;
+  AnimationSpline animation;
+} AnimationSampler;
 
-// typedef struct skinned_animation {
-//   mat4* joint_matrices;
-//   size_t n_joints;
-// } skinned_animation;
+/** @brief Sample an animation at a given time `t` returning an interpolated keyframe */
+Keyframe Animation_Sample(AnimationSampler* sampler, f32 t);
 
-// // void animation_update_joint_matrices(animation_clip* )
+typedef struct AnimationClip {
+  // A clip contains one or more animation curves
+  // for now I think we can just enumerate all of the properties (assuming *only* one per type is in
+  // a clip) NULL = this property is not animated in this clip
+  AnimationSampler* rotation;
+  AnimationSampler* translation;
+  AnimationSampler* scale;
+  AnimationSampler* weights;
+} AnimationClip;
 
-// void animation_play(animation_clip* clip);
+typedef struct SkinnedAnimation {
+  Mat4* joint_matrices;
+  size_t n_joints;
+} SkinnedAnimation;
+
+void animation_play(AnimationClip* clip);

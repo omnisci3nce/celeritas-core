@@ -223,6 +223,4 @@ void Geometry_Destroy(Geometry* geometry) {
 void SetCamera(Camera camera) { g_core.renderer->scene.camera = camera; }
 void SetMainLight(DirectionalLight light) { g_core.renderer->scene.sun = light; }
 
-arena* GetRenderFrameArena(Renderer* r) {
-  return &r->frame_arena;
-}
+arena* GetRenderFrameArena(Renderer* r) { return &r->frame_arena; }

@@ -26,7 +26,6 @@ CORE_DEFINE_HANDLE(pipeline_handle);
 CORE_DEFINE_HANDLE(renderpass_handle);
 #define ABSENT_MODEL_HANDLE 999999999
 
-
 // --- Shaders & Bindings
 
 typedef enum shader_visibility {
@@ -84,7 +83,6 @@ typedef struct shader_binding {
     } texture;
   } data; /** @brief can store any kind of data that we can bind to a shader / descriptor set */
 } shader_binding;
-
 
 void print_shader_binding(shader_binding b);
 

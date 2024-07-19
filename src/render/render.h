@@ -69,7 +69,6 @@ texture_handle texture_data_upload(texture_data data, bool free_on_upload);
 material pbr_material_load(char* albedo_path, char* normal_path, bool metal_roughness_combined,
                            char* metallic_path, char* roughness_map, char* ao_map);
 
-
 /**
  * @brief Creates buffers and returns a struct that holds handles to our resources
  *
@@ -79,7 +78,7 @@ material pbr_material_load(char* albedo_path, char* normal_path, bool metal_roug
  * @return mesh
  */
 mesh mesh_create(geometry_data* geometry, bool free_on_upload);
-void mesh_delete(mesh* mesh); // TODO
+void mesh_delete(mesh* mesh);  // TODO
 
 void draw_mesh(mesh* mesh, mat4* model, camera* cam);
 

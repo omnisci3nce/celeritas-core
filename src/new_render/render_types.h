@@ -1,13 +1,13 @@
 /**
  * @file render_types.h
  * @brief
-*/
+ */
 
 #pragma once
 #include "defines.h"
+#include "maths.h"
 #include "maths_types.h"
 #include "ral.h"
-#include "maths.h"
 #include "ral_types.h"
 
 // --- Handles
@@ -29,9 +29,9 @@ typedef struct u32_opt {
 typedef struct Mesh {
   BufferHandle vertex_buffer;
   BufferHandle index_buffer;
-  Geometry geometry; // NULL means it has been freed CPU-side
-  i32 material_index; // -1 => no material
-  bool is_uploaded; // has the data been uploaded to the GPU
+  Geometry geometry;   // NULL means it has been freed CPU-side
+  i32 material_index;  // -1 => no material
+  bool is_uploaded;    // has the data been uploaded to the GPU
 } Mesh;
 #ifndef TYPED_MESH_ARRAY
 KITC_DECL_TYPED_ARRAY(Mesh)
@@ -39,15 +39,15 @@ KITC_DECL_TYPED_ARRAY(Mesh)
 #endif
 
 typedef struct TextureData {
-    TextureDesc description;
-    void* image_data;
+  TextureDesc description;
+  void* image_data;
 } TextureData;
 
 // --- Supported materials
 typedef enum MaterialKind {
-  MAT_BLINN_PHONG, // NOTE: we're dropping support for this
-  MAT_PBR,         // uses textures for PBR properties
-  MAT_PBR_PARAMS,  // uses float values to represent a surface uniformly
+  MAT_BLINN_PHONG,  // NOTE: we're dropping support for this
+  MAT_PBR,          // uses textures for PBR properties
+  MAT_PBR_PARAMS,   // uses float values to represent a surface uniformly
   MAT_COUNT
 } MaterialKind;
 static const char* material_kind_names[] = { "Blinn Phong", "PBR (Textures)", "PBR (Params)",
@@ -107,11 +107,11 @@ typedef struct DirectionalLight {
 
 // A renderable 'thing'
 typedef struct RenderEnt {
-    Mesh* mesh;
-    Material* material;
-    Mat4 affine; // In the future this should be updated by the transform graph
-    // Bbox_3D bounding_box;
-    bool casts_shadows;
+  Mesh* mesh;
+  Material* material;
+  Mat4 affine;  // In the future this should be updated by the transform graph
+  // Bbox_3D bounding_box;
+  bool casts_shadows;
 } RenderEnt;
 
 #ifndef TYPED_RENDERENT_ARRAY

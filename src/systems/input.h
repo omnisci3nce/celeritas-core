@@ -39,4 +39,4 @@ bool key_just_released(keycode key);
 bool Input_Init(Input_State *input, struct GLFWwindow *window);
 void Input_Shutdown(Input_State *input);
 
-void Input_Update(Input_State *state); // must be run once per main loop
+void Input_Update(Input_State *state);  // must be run once per main loop

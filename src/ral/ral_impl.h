@@ -1,6 +1,6 @@
 /**
  * @brief
-*/
+ */
 #pragma once
 #include "buf.h"
 #include "defines.h"
@@ -20,7 +20,8 @@ typedef struct GPU_CmdBuffer GPU_CmdBuffer;    // Ready for submission
 typedef struct GPU_Buffer GPU_Buffer;
 typedef struct GPU_Texture GPU_Texture;
 
-bool GPU_Backend_Init(const char* window_name, struct GLFWwindow* window, struct ResourcePools* res_pools);
+bool GPU_Backend_Init(const char* window_name, struct GLFWwindow* window,
+                      struct ResourcePools* res_pools);
 void GPU_Backend_Shutdown();
 
 bool GPU_Device_Create(GPU_Device* out_device);
@@ -32,7 +33,8 @@ void GPU_Swapchain_Destroy(GPU_Swapchain* swapchain);
 PUB GPU_Renderpass* GPU_Renderpass_Create(GPU_RenderpassDesc description);
 PUB void GPU_Renderpass_Destroy(GPU_Renderpass* pass);
 
-PUB GPU_Pipeline* GPU_GraphicsPipeline_Create(GraphicsPipelineDesc description, GPU_Renderpass* renderpass);
+PUB GPU_Pipeline* GPU_GraphicsPipeline_Create(GraphicsPipelineDesc description,
+                                              GPU_Renderpass* renderpass);
 PUB void GraphicsPipeline_Destroy(GPU_Pipeline* pipeline);
 
 // --- Command buffer
@@ -46,7 +48,8 @@ PUB GPU_CmdEncoder* GPU_GetDefaultEncoder();
 PUB void GPU_QueueSubmit(GPU_CmdBuffer* cmd_buffer);
 
 // --- Buffers
-PUB BufferHandle GPU_BufferCreate(u64 size, GPU_BufferType buf_type, GPU_BufferFlags flags, const void* data);
+PUB BufferHandle GPU_BufferCreate(u64 size, GPU_BufferType buf_type, GPU_BufferFlags flags,
+                                  const void* data);
 PUB void GPU_BufferDestroy(BufferHandle handle);
 PUB void GPU_BufferUpload(BufferHandle buffer, size_t n_bytes, const void* data);
 
@@ -58,8 +61,8 @@ PUB void GPU_TextureUpload(TextureHandle handle, size_t n_bytes, const void* dat
 
 // --- Data copy commands
 // TODO: Rename these to reflect current coding style
-void encode_buffer_copy(GPU_CmdEncoder* encoder, BufferHandle src, u64 src_offset,
-                        BufferHandle dst, u64 dst_offset, u64 copy_size);
+void encode_buffer_copy(GPU_CmdEncoder* encoder, BufferHandle src, u64 src_offset, BufferHandle dst,
+                        u64 dst_offset, u64 copy_size);
 void buffer_upload_bytes(BufferHandle gpu_buf, bytebuffer cpu_buf, u64 offset, u64 size);
 
 void copy_buffer_to_buffer_oneshot(BufferHandle src, u64 src_offset, BufferHandle dst,

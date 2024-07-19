@@ -13,7 +13,7 @@
 
 typedef struct hashset hashset;
 
-/** @brief Describes a function that will take a pointer to a datatype (e.g. a u64 or a struct) 
+/** @brief Describes a function that will take a pointer to a datatype (e.g. a u64 or a struct)
            and return a hashed key. */
 typedef uint64_t (*hash_item)(void* item);
 

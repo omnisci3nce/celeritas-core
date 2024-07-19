@@ -4,8 +4,8 @@
 #include "ral_impl.h"
 #if defined(CEL_REND_BACKEND_OPENGL)
 #include "backend_opengl.h"
-#include "log.h"
 #include "file.h"
+#include "log.h"
 #include "ral_types.h"
 
 #include <glad/glad.h>

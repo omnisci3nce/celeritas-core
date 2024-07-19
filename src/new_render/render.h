@@ -11,18 +11,18 @@
 typedef struct Renderer Renderer;
 typedef struct GLFWwindow GLFWwindow;
 typedef struct RendererConfig {
-    char window_name[256];
-    u32 scr_width, scr_height;
-    Vec3 clear_colour;
+  char window_name[256];
+  u32 scr_width, scr_height;
+  Vec3 clear_colour;
 } RendererConfig;
 
 typedef struct RenderFlags {
-    bool wireframe;
+  bool wireframe;
 } RenderFlags;
 
 typedef struct RenderCtx {
-    Mat4 view;
-    Mat4 projection;
+  Mat4 view;
+  Mat4 projection;
 } RenderCtx;
 
 // --- Lifecycle

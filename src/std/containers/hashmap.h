@@ -9,7 +9,6 @@
  *
  */
 
-
 typedef struct hashmap hashmap;
 
 /*
@@ -18,7 +17,7 @@ Example usage
 init hashmap
 insert (string, material)
 get (string) -> material_opt or material* ?
- 
+
 */
 
 void hashmap_init(hashmap* map);

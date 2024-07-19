@@ -1,8 +1,8 @@
 #pragma once
 
 #include "input.h"
-#include "render_types.h"
 #include "mem.h"
+#include "render_types.h"
 #include "scene.h"
 #include "screenspace.h"
 #include "terrain.h"
@@ -14,11 +14,11 @@ TYPED_POOL(Model, Model)
 typedef struct GLFWwindow GLFWwindow;
 
 typedef struct Core {
-    const char* app_name;
-    GLFWwindow* window;
-    Renderer* renderer;
-    Input_State input;
-    Model_pool models;
+  const char* app_name;
+  GLFWwindow* window;
+  Renderer* renderer;
+  Input_State input;
+  Model_pool models;
 } Core;
 extern Core g_core;
 

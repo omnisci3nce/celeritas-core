@@ -50,7 +50,9 @@ static inline Vec3 vec3_cross(Vec3 a, Vec3 b) {
 #define VEC3_Z ((Vec3){ .x = 0.0, .y = 0.0, .z = 1.0 })
 #define VEC3_NEG_Z ((Vec3){ .x = 0.0, .y = 0.0, .z = -1.0 })
 
-static inline void print_vec3(Vec3 v) { printf("{ x: %f, y: %f, z: %f )\n", (f64)v.x, (f64)v.y, (f64)v.z); }
+static inline void print_vec3(Vec3 v) {
+  printf("{ x: %f, y: %f, z: %f )\n", (f64)v.x, (f64)v.y, (f64)v.z);
+}
 
 // TODO: Dimension 2
 static inline Vec2 vec2_create(f32 x, f32 y) { return (Vec2){ x, y }; }
@@ -127,7 +129,8 @@ static inline Quat quat_slerp(Quat a, Quat b, f32 percentage) {
   f64 sin_theta = sin((f64)theta);        // compute this value only once
   f64 sin_theta_0 = sin((f64)theta_0);    // compute this value only once
 
-  f32 s0 = cos(theta) - (f64)dot * sin_theta / sin_theta_0;  // == sin(theta_0 - theta) / sin(theta_0)
+  f32 s0 =
+      cos(theta) - (f64)dot * sin_theta / sin_theta_0;  // == sin(theta_0 - theta) / sin(theta_0)
   f32 s1 = sin_theta / sin_theta_0;
 
   return (Quat){ (q0.x * s0) + (q1.x * s1), (q0.y * s0) + (q1.y * s1), (q0.z * s0) + (q1.z * s1),

@@ -21,7 +21,7 @@ typedef struct gpu_pipeline_layout {
 } gpu_pipeline_layout;
 typedef struct gpu_pipeline {
   u32 shader_id;
-  gpu_renderpass* renderpass;
+  gpu_renderpass *renderpass;
   vertex_description vertex_desc;
   buffer_handle uniform_bindings[MAX_PIPELINE_UNIFORM_BUFFERS];
   u32 uniform_count;
@@ -47,13 +47,13 @@ typedef struct gpu_buffer {
   union {
     u32 vao;
     u32 ubo_binding_point
-  }; // Optional
-  char* name;
+  };  // Optional
+  char *name;
   u64 size;
 } gpu_buffer;
 typedef struct gpu_texture {
   u32 id;
-  void* pad;
+  void *pad;
 } gpu_texture;
 
 typedef struct opengl_support {

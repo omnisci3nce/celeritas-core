@@ -23,7 +23,6 @@ gpu_renderpass* renderpass_blinn_phong_create();
 void renderpass_blinn_phong_execute(gpu_renderpass* pass, render_entity* entities,
                                     size_t entity_count);
 
-
 typedef struct ren_shadowmaps {
   u32 width;
   u32 height;
@@ -41,11 +40,11 @@ typedef struct lightspace_tf_uniform {
 } lightspace_tf_uniform;
 
 typedef struct debug_quad_uniform {
- texture_handle depthMap;
+  texture_handle depthMap;
 } debug_quad_uniform;
 
 shader_data_layout model_uniform_layout(void* data);
-shader_data_layout lightspace_uniform_layout(void* data); 
+shader_data_layout lightspace_uniform_layout(void* data);
 shader_data_layout debug_quad_layout(void* data);
 
 void ren_shadowmaps_init(ren_shadowmaps* storage);
@@ -53,4 +52,5 @@ void ren_shadowmaps_init(ren_shadowmaps* storage);
 gpu_renderpass* shadowmaps_renderpass_create();
 gpu_pipeline* shadowmaps_pipeline_create(gpu_renderpass* rpass);
 
-void renderpass_shadowmap_execute(gpu_renderpass* pass, render_entity* entities, size_t entity_count);
+void renderpass_shadowmap_execute(gpu_renderpass* pass, render_entity* entities,
+                                  size_t entity_count);

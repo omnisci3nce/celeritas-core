@@ -86,7 +86,7 @@
       size_t new_capacity =                                                               \
           d->capacity > 0 ? d->capacity * DARRAY_RESIZE_FACTOR : DARRAY_DEFAULT_CAPACITY; \
       T *resized = Type##_darray_resize(d, new_capacity);                                 \
-      (void)resized; \
+      (void)resized;                                                                      \
     }                                                                                     \
                                                                                           \
     d->data[d->len] = value;                                                              \
@@ -98,7 +98,7 @@
       size_t new_capacity =                                                               \
           d->capacity > 0 ? d->capacity * DARRAY_RESIZE_FACTOR : DARRAY_DEFAULT_CAPACITY; \
       T *resized = Type##_darray_resize(d, new_capacity);                                 \
-      (void)resized; \
+      (void)resized;                                                                      \
     }                                                                                     \
                                                                                           \
     T *place = d->data + d->len;                                                          \
@@ -118,7 +118,7 @@
       size_t new_capacity =                                                               \
           d->capacity > 0 ? d->capacity * DARRAY_RESIZE_FACTOR : DARRAY_DEFAULT_CAPACITY; \
       T *resized = Type##_darray_resize(d, new_capacity);                                 \
-      (void)resized; \
+      (void)resized;                                                                      \
     }                                                                                     \
                                                                                           \
     /* shift existing data after index */                                                 \

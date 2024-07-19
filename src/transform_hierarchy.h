@@ -39,7 +39,8 @@ TransformHierarchy* TransformHierarchy_Create();
 
 // // --- Main usecase
 
-// /** @brief Updates matrices of any invalidated nodes based on the `is_dirty` flag inside `transform`
+// /** @brief Updates matrices of any invalidated nodes based on the `is_dirty` flag inside
+// `transform`
 //  */
 // void transform_hierarchy_propagate_transforms(transform_hierarchy* tfh);
 
@@ -58,15 +59,16 @@ TransformHierarchy* TransformHierarchy_Create();
 // /**
 //  * @brief Perform a depth-first search traversal starting from `start_node`.
 //  * @param start_node The starting node of the traversal.
-//  * @param visit_node The function to call for each node visited. The callback should return false to
-//  stop the traversal early.
-//  * @param is_pre_order Indicates whether to do pre-order or post-order traversal i.e. when to call
-//  the `visit_node` function.
-//  * @param ctx_data An optional pointer to data that is be passed on each call to `visit_node`. Can
-//  be used to carry additional information or context.
+//  * @param visit_node The function to call for each node visited. The callback should return false
+//  to stop the traversal early.
+//  * @param is_pre_order Indicates whether to do pre-order or post-order traversal i.e. when to
+//  call the `visit_node` function.
+//  * @param ctx_data An optional pointer to data that is be passed on each call to `visit_node`.
+//  Can be used to carry additional information or context.
 //  *
 //  * @note The main use-cases are:
-//             1. traversing the whole tree to update cached 4x4 affine transform matrices (post-order)
+//             1. traversing the whole tree to update cached 4x4 affine transform matrices
+//             (post-order)
 //             2. freeing child nodes after deleting a node in the tree (post-order)
 //             3. debug pretty printing the whole tree (post-order)
 //  */
