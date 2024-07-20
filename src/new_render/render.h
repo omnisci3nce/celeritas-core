@@ -7,6 +7,7 @@
 #include "maths_types.h"
 #include "ral_types.h"
 #include "render_types.h"
+#include "shadows.h"
 
 typedef struct Renderer Renderer;
 typedef struct GLFWwindow GLFWwindow;
@@ -68,3 +69,9 @@ PUB void Render_DrawTerrain();
 
 // --- Getters (not in love with this but I'm finding keeping Renderer internals private to be okay)
 arena* GetRenderFrameArena(Renderer* r);
+
+typedef struct Shadow_Storage Shadow_Storage;
+typedef struct RenderScene RenderScene;
+
+RenderScene* Render_GetScene();
+Shadow_Storage* Render_GetShadowStorage();

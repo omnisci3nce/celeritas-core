@@ -25,7 +25,7 @@ Vec3 plane_vertex_positions[] = {
   (Vec3){ 0.5, 0, 0.5 },
 };
 
-Geometry geo_create_plane(f32x2 extents) {
+Geometry Geo_CreatePlane(f32x2 extents) {
   Vertex_darray* vertices = Vertex_darray_new(4);
   u32_darray* indices = u32_darray_new(vertices->len);
 

@@ -6,12 +6,15 @@
 #include <assert.h>
 #include "camera.h"
 #include "core.h"
+#include "input.h"
+#include "keys.h"
 #include "maths.h"
 #include "primitives.h"
 #include "ral_types.h"
 #include "render.h"
 #include "render_scene.h"
 #include "render_types.h"
+#include "shadows.h"
 #include "skybox.h"
 
 static const char* faces[6] = { "assets/demo/skybox/right.jpg", "assets/demo/skybox/left.jpg",
@@ -83,17 +86,29 @@ int main() {
 
   // RenderEnt entities[] = { player_r };
 
+  bool draw_debug = true;
+
   while (!ShouldExit()) {
     Frame_Begin();
+    if (key_just_released(KEYCODE_TAB)) {
+      draw_debug = !draw_debug;
+    }
+
     Camera_Update(&cam);
     SetCamera(cam);
 
     // BEGIN Draw calls
 
-    // draw the player model with shadows
-    Render_RenderEntities(entities, entity_count);
-    // Render_DrawTerrain();
-    Skybox_Draw(&skybox, cam);
+    Shadow_Run(entities, entity_count);
+
+    if (draw_debug) {
+      // draw the player model with shadows
+      Render_RenderEntities(entities, entity_count);
+      // Render_DrawTerrain();
+      Skybox_Draw(&skybox, cam);
+    } else {
+      Shadow_DrawDebugQuad();
+    }
 
     // END Draw calls
     Frame_Draw();

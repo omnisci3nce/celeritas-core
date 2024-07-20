@@ -5,11 +5,9 @@
 #include "render.h"
 #include <glfw3.h>
 #include "camera.h"
-#include "colours.h"
 #include "core.h"
 #include "log.h"
 #include "maths.h"
-#include "maths_types.h"
 #include "mem.h"
 #include "pbr.h"
 #include "ral_common.h"
@@ -101,7 +99,7 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
 
   // create our renderpasses
   ren->shadows = malloc(sizeof(Shadow_Storage));
-  Shadow_Init(ren->shadows, u32x2(512, 512));
+  Shadow_Init(ren->shadows, 1024, 1024);
 
   ren->pbr = malloc(sizeof(PBR_Storage));
   PBR_Init(ren->pbr);
@@ -236,3 +234,13 @@ void SetCamera(Camera camera) { g_core.renderer->scene.camera = camera; }
 void SetMainLight(DirectionalLight light) { g_core.renderer->scene.sun = light; }
 
 arena* GetRenderFrameArena(Renderer* r) { return &r->frame_arena; }
+
+RenderScene* Render_GetScene() {
+  Renderer* ren = Core_GetRenderer(&g_core);
+  return &ren->scene;
+}
+
+Shadow_Storage* Render_GetShadowStorage() {
+  Renderer* ren = Core_GetRenderer(&g_core);
+  return ren->shadows;
+}

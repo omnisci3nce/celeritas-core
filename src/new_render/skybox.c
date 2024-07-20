@@ -109,7 +109,7 @@ Skybox Skybox_Create(const char** face_paths, int n) {
     .fs = { .debug_name = "Skybox Fragment Shader",
             .filepath = frag_path,
             .code = fragment_shader.contents },
-    .wireframe = true,
+    .wireframe = false,
     .depth_test = true,
   };
 

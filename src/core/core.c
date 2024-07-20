@@ -68,3 +68,5 @@ void Frame_Begin() {
 }
 void Frame_Draw() {}
 void Frame_End() { Render_FrameEnd(g_core.renderer); }
+
+struct Renderer* Core_GetRenderer(Core* core) { return core->renderer; }

@@ -10,9 +10,12 @@
 
 typedef struct Shadow_Storage {
   GPU_Renderpass* shadowmap_pass;
-  GPU_Pipeline* pipeline;
-  bool debug_quad_enabled;
+  GPU_Pipeline* shadowmap_pipeline;
   TextureHandle depth_texture;
+  bool debug_quad_enabled;
+  Mesh quad;
+  GPU_Renderpass* debugquad_pass;
+  GPU_Pipeline* debugquad_pipeline;
   // TODO: Some statistics tracking
 } Shadow_Storage;
 
@@ -25,11 +28,13 @@ typedef struct Camera Camera;
 typedef struct Mat4 Mat4;
 
 // --- Public API
-PUB void Shadow_Init(Shadow_Storage* storage, u32x2 shadowmap_extents);
+PUB void Shadow_Init(Shadow_Storage* storage, u32 shadowmap_width, u32 shadowmap_height);
 
 /** @brief Run shadow map generation for given entities, and store in a texture.
  *  @note Uses active directional light for now */
-PUB void Shadow_Run(Shadow_Storage* storage, RenderEnt* entities, size_t entity_count);
+PUB void Shadow_Run(RenderEnt* entities, size_t entity_count);
+
+PUB void Shadow_DrawDebugQuad();
 
 /** @brief Get the shadow texture generated from shadowmap pass */
 PUB Handle Shadow_GetShadowMapTexture(Shadow_Storage* storage);

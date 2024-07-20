@@ -1,4 +1,5 @@
 #include "backend_opengl.h"
+#include "colours.h"
 #include "maths_types.h"
 #if defined(CEL_REND_BACKEND_OPENGL)
 #include <assert.h>
@@ -62,8 +63,20 @@ void GPU_Device_Destroy(GPU_Device* device) {}
 bool GPU_Swapchain_Create(GPU_Swapchain* out_swapchain) { return true; }
 void GPU_Swapchain_Destroy(GPU_Swapchain* swapchain) {}
 void GPU_CmdEncoder_Destroy(GPU_CmdEncoder* encoder) {}
-void GPU_CmdEncoder_BeginRender(GPU_CmdEncoder* encoder, GPU_Renderpass* renderpass) {}
-void GPU_CmdEncoder_EndRender(GPU_CmdEncoder* encoder) {}
+
+void GPU_CmdEncoder_BeginRender(GPU_CmdEncoder* encoder, GPU_Renderpass* renderpass) {
+  glBindFramebuffer(GL_FRAMEBUFFER, renderpass->fbo);
+  // rgba clear_colour = STONE_800;
+  // glClearColor(clear_colour.r, clear_colour.g, clear_colour.b, 1.0f);
+  // if (renderpass->description.has_depth_stencil) {
+  //   glClear(GL_DEPTH_BUFFER_BIT);
+  // } else {
+  //   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  // }
+}
+
+void GPU_CmdEncoder_EndRender(GPU_CmdEncoder* encoder) { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+
 GPU_CmdEncoder* GPU_GetDefaultEncoder() { return &context.main_encoder; }
 void GPU_QueueSubmit(GPU_CmdBuffer* cmd_buffer) {}
 
@@ -319,6 +332,12 @@ void GPU_EncodeBindPipeline(GPU_CmdEncoder* encoder, GPU_Pipeline* pipeline) {
 
   // In OpenGL binding a pipeline is more or less equivalent to just setting the shader
   glUseProgram(pipeline->shader_id);
+
+  if (pipeline->wireframe) {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  } else {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  }
 }
 
 PUB void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData data) {
