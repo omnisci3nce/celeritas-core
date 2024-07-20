@@ -29,6 +29,8 @@ void GPU_Device_Destroy(GPU_Device* device);
 
 bool GPU_Swapchain_Create(GPU_Swapchain* out_swapchain);
 void GPU_Swapchain_Destroy(GPU_Swapchain* swapchain);
+void GPU_Swapchain_Resize(i32 new_width, i32 new_height);
+u32x2 GPU_Swapchain_GetDimensions();
 
 PUB GPU_Renderpass* GPU_Renderpass_Create(GPU_RenderpassDesc description);
 PUB void GPU_Renderpass_Destroy(GPU_Renderpass* pass);

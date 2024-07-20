@@ -30,6 +30,7 @@ typedef struct RenderCtx {
 PUB bool Renderer_Init(RendererConfig config, Renderer* renderer, GLFWwindow** out_window);
 PUB void Renderer_Shutdown(Renderer* renderer);
 PUB size_t Renderer_GetMemReqs();
+void Render_WindowSizeChanged(GLFWwindow* window, i32 new_width, i32 new_height);
 
 // internal init functions
 void DefaultPipelinesInit(Renderer* renderer);

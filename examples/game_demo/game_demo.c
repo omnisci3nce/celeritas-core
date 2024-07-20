@@ -13,11 +13,10 @@
 #include "render_scene.h"
 #include "render_types.h"
 #include "skybox.h"
-#include "str.h"
 
 static const char* faces[6] = { "assets/demo/skybox/right.jpg", "assets/demo/skybox/left.jpg",
                                 "assets/demo/skybox/top.jpg",   "assets/demo/skybox/bottom.jpg",
-                                "assets/demo/skybox/back.jpg",  "assets/demo/skybox/front.jpg" };
+                                "assets/demo/skybox/front.jpg", "assets/demo/skybox/back.jpg" };
 
 int main() {
   Core_Bringup();

@@ -128,7 +128,8 @@ void Skybox_Draw(Skybox* skybox, Camera camera) {
   // Shader data
 
   Mat4 view, proj;
-  Camera_ViewProj(&camera, 1000, 1000, &view, &proj);
+  u32x2 dimensions = GPU_Swapchain_GetDimensions();
+  Camera_ViewProj(&camera, dimensions.x, dimensions.y, &view, &proj);
   Mat4 new = mat4_ident();
   new.data[0] = view.data[0];
   new.data[1] = view.data[1];

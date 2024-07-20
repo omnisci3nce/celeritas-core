@@ -81,6 +81,9 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
 
   glfwMakeContextCurrent(ren->window);
 
+  DEBUG("Set up GLFW window callbacks");
+  glfwSetWindowSizeCallback(window, Render_WindowSizeChanged);
+
   // set the RAL backend up
   if (!GPU_Backend_Init(config.window_name, window, ren->resource_pools)) {
     return false;
@@ -115,6 +118,13 @@ void Renderer_Shutdown(Renderer* ren) {
   DEBUG("Freed frame allocator buffer");
 }
 size_t Renderer_GetMemReqs() { return sizeof(Renderer); }
+
+void Render_WindowSizeChanged(GLFWwindow* window, i32 new_width, i32 new_height) {
+  (void)window;
+  INFO("Window size changed callback");
+  // Renderer* ren = Core_GetRenderer(&g_core);
+  GPU_Swapchain_Resize(new_width, new_height);
+}
 
 void Render_FrameBegin(Renderer* ren) {
   arena_free_all(&ren->frame_arena);

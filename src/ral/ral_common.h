@@ -41,6 +41,10 @@ void ResourcePools_Init(arena* a, struct ResourcePools* res_pools);
 PUB GPU_Renderpass* GPU_GetDefaultRenderpass();  // returns a renderpass that draws directly to
                                                  // default framebuffer with default depth
 
+// --
+// window resize callback
+void GPU_WindowResizedCallback(u32 x, u32 y);
+
 // --- Vertex formats
 VertexDescription static_3d_vertex_description();
 

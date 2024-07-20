@@ -47,6 +47,9 @@ bool renderer_init(renderer* ren) {
 
   glfwMakeContextCurrent(ren->window);
 
+  DEBUG("Set up GLFW window callbacks");
+  
+
   DEBUG("Start gpu backend init");
 
   if (!gpu_backend_init("Celeritas Engine - Vulkan", window)) {

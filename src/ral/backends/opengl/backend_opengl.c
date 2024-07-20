@@ -1,4 +1,5 @@
 #include "backend_opengl.h"
+#include "maths_types.h"
 #if defined(CEL_REND_BACKEND_OPENGL)
 #include <assert.h>
 #include "log.h"
@@ -14,6 +15,7 @@
 typedef struct OpenglCtx {
   GLFWwindow* window;
   arena pool_arena;
+  GPU_Swapchain swapchain;
   GPU_CmdEncoder main_encoder;
   GPU_BackendPools gpu_pools;
   ResourcePools* resource_pools;
@@ -48,12 +50,13 @@ bool GPU_Backend_Init(const char* window_name, struct GLFWwindow* window,
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
 
+  context.swapchain = (GPU_Swapchain){ .dimensions = u32x2(1000, 1000) };
+
   return true;
 }
 
 // All of these are no-ops in OpenGL
-void GPU_Backend_Shutdown() { /* TODO */
-}
+void GPU_Backend_Shutdown() { /* TODO */ }
 bool GPU_Device_Create(GPU_Device* out_device) { return true; }
 void GPU_Device_Destroy(GPU_Device* device) {}
 bool GPU_Swapchain_Create(GPU_Swapchain* out_swapchain) { return true; }
@@ -63,6 +66,12 @@ void GPU_CmdEncoder_BeginRender(GPU_CmdEncoder* encoder, GPU_Renderpass* renderp
 void GPU_CmdEncoder_EndRender(GPU_CmdEncoder* encoder) {}
 GPU_CmdEncoder* GPU_GetDefaultEncoder() { return &context.main_encoder; }
 void GPU_QueueSubmit(GPU_CmdBuffer* cmd_buffer) {}
+
+void GPU_Swapchain_Resize(i32 new_width, i32 new_height) {
+  context.swapchain.dimensions = u32x2(new_width, new_height);
+}
+
+u32x2 GPU_Swapchain_GetDimensions() { return context.swapchain.dimensions; }
 
 GPU_Renderpass* GPU_Renderpass_Create(GPU_RenderpassDesc description) {
   // allocate new pass
@@ -382,6 +391,7 @@ void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, u64 index_count) {
 }
 
 bool GPU_Backend_BeginFrame() {
+  glViewport(0, 0, context.swapchain.dimensions.x * 2, context.swapchain.dimensions.y * 2);
   glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   return true;

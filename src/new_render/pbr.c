@@ -71,7 +71,8 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
 
   // Feed shader data
   Mat4 view, proj;
-  Camera_ViewProj(&camera, 1000, 1000, &view, &proj);
+  u32x2 dimensions = GPU_Swapchain_GetDimensions();
+  Camera_ViewProj(&camera, (f32)dimensions.x, (f32)dimensions.y, &view, &proj);
   Binding_Camera camera_data = { .view = view,
                                  .projection = proj,
                                  .viewPos = vec4(camera.position.x, camera.position.y,
