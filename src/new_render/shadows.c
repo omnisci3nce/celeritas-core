@@ -209,6 +209,6 @@ void Shadow_ShadowmapExecute(Shadow_Storage* storage, Mat4 light_space_transform
   GPU_CmdEncoder_EndRender(&shadow_encoder);  // end renderpass
 }
 
-Handle Shadow_GetShadowMapTexture(Shadow_Storage* storage) {
-  return (Handle){ .raw = storage->depth_texture.raw };
+TextureHandle Shadow_GetShadowMapTexture(Shadow_Storage* storage) {
+  return storage->depth_texture;
 }

@@ -9,6 +9,7 @@
 #include "render_types.h"
 
 typedef struct Shadow_Storage {
+  bool enabled;
   GPU_Renderpass* shadowmap_pass;
   GPU_Pipeline* shadowmap_pipeline;
   TextureHandle depth_texture;
@@ -37,7 +38,7 @@ PUB void Shadow_Run(RenderEnt* entities, size_t entity_count);
 PUB void Shadow_DrawDebugQuad();
 
 /** @brief Get the shadow texture generated from shadowmap pass */
-PUB Handle Shadow_GetShadowMapTexture(Shadow_Storage* storage);
+PUB TextureHandle Shadow_GetShadowMapTexture(Shadow_Storage* storage);
 
 // --- Internal
 GPU_Renderpass* Shadow_RPassCreate();                        // Creates the render pass

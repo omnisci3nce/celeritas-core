@@ -146,14 +146,10 @@ void Render_RenderEntities(RenderEnt* entities, size_t entity_count) {
   Renderer* ren = get_renderer();
   RenderScene scene = ren->scene;
 
-  // TODO: -- Shadows
-  // f32 near_plane = 1.0, far_plane = 10.0;
-  // Mat4 light_projection = mat4_orthographic(-10.0, 10.0, -10.0, 10.0, near_plane, far_plane);
-  // Vec3 pos = vec3_negate(scene.sun.direction);
-  // Mat4 light_view = mat4_look_at(pos, VEC3_ZERO, VEC3_Y);
-  // Mat4 light_space_matrix = mat4_mult(light_view, light_projection);
-  // Shadow_ShadowmapExecute(ren->shadows, light_space_matrix, entities, entity_count);
-  PBR_Execute(ren->pbr, scene.camera, INVALID_TEX_HANDLE, entities, entity_count);
+  Shadow_Storage* shadow_storage = Render_GetShadowStorage();
+  TextureHandle depthmap = shadow_storage->enabled ? Shadow_GetShadowMapTexture(shadow_storage) : INVALID_TEX_HANDLE;
+
+  PBR_Execute(ren->pbr, scene.camera, depthmap, entities, entity_count);
 }
 
 TextureData TextureDataLoad(const char* path, bool invert_y) {
