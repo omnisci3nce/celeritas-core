@@ -13,5 +13,5 @@ out vec4 Color;
 void main() {
   gl_Position =  cam.proj * cam.view * vec4(inPosition, 1.0);
 
-  Color = vec4(inPosition.y / 255.0);
+  Color = vec4(inPosition.y / 126.0);
 }
