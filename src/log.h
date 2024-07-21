@@ -54,3 +54,26 @@ void log_output(log_level level, const char* message, ...);
 #else
 #define TRACE(message, ...)
 #endif
+
+// TODO: Move this to an asserts file
+
+void report_assertion_failure(const char *expression, const char *message, const char *file,
+                              int line);
+
+#define CASSERT(expr)                                          \
+  {                                                            \
+    if (expr) {                                                \
+    } else {                                                   \
+      report_assertion_failure(#expr, "", __FILE__, __LINE__); \
+      __builtin_trap();                                        \
+    }                                                          \
+  }
+
+#define CASSERT_MSG(expr, msg)                                  \
+  {                                                             \
+    if (expr) {                                                 \
+    } else {                                                    \
+      report_assertion_failure(#expr, msg, __FILE__, __LINE__); \
+      __builtin_trap();                                         \
+    }                                                           \
+  }

@@ -42,13 +42,14 @@ c_static_inline Vec3 vec3_cross(Vec3 a, Vec3 b) {
       Vec3){ .x = a.y * b.z - a.z * b.y, .y = a.z * b.x - a.x * b.z, .z = a.x * b.y - a.y * b.x };
 }
 
-#define VEC3_ZERO ((Vec3){ .x = 0.0, .y = 0.0, .z = 0.0 })
-#define VEC3_X ((Vec3){ .x = 1.0, .y = 0.0, .z = 0.0 })
-#define VEC3_NEG_X ((Vec3){ .x = -1.0, .y = 0.0, .z = 0.0 })
-#define VEC3_Y ((Vec3){ .x = 0.0, .y = 1.0, .z = 0.0 })
-#define VEC3_NEG_Y ((Vec3){ .x = 0.0, .y = -1.0, .z = 0.0 })
-#define VEC3_Z ((Vec3){ .x = 0.0, .y = 0.0, .z = 1.0 })
-#define VEC3_NEG_Z ((Vec3){ .x = 0.0, .y = 0.0, .z = -1.0 })
+static const Vec3 VEC3_X = vec3(1.0, 0.0, 0.0);
+static const Vec3 VEC3_NEG_X = vec3(-1.0, 0.0, 0.0);
+static const Vec3 VEC3_Y = vec3(0.0, 1.0, 0.0);
+static const Vec3 VEC3_NEG_Y = vec3(0.0, -1.0,  0.0);
+static const Vec3 VEC3_Z = vec3(0.0, 0.0, 1.0);
+static const Vec3 VEC3_NEG_Z = vec3(0.0, 0.0, -1.0);
+static const Vec3 VEC3_ZERO = vec3(0.0, 0.0, 0.0);
+static const Vec3 VEC3_ONES = vec3(1.0, 1.0, 1.0);
 
 c_static_inline void print_vec3(Vec3 v) {
   printf("{ x: %f, y: %f, z: %f )\n", (f64)v.x, (f64)v.y, (f64)v.z);

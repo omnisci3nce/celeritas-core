@@ -90,7 +90,7 @@ void Terrain_LoadHeightmap(Terrain_Storage* storage, Heightmap hmap, f32 grid_sc
       u8* bytes = hmap.image_data;
       u8 channel = bytes[position];
       float value = (float)channel / 255.0;
-      printf("(%d, %d) %d : %f \n", i, j, channel, value);
+      // printf("(%d, %d) %d : %f \n", i, j, channel, value);
 
       assert(index < num_vertices);
       f32 height = Heightmap_HeightXZ(&hmap, i, j);

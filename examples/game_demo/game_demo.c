@@ -8,6 +8,7 @@
 #include "core.h"
 #include "input.h"
 #include "keys.h"
+#include "loaders.h"
 #include "maths.h"
 #include "primitives.h"
 #include "ral_types.h"
@@ -32,8 +33,8 @@ int main() {
   // TODO: Move camera with model
 
   // --- Render Scene
-  Vec3 camera_pos = vec3(-8.0, 10.0, 0.);
-  Camera cam = Camera_Create(camera_pos, vec3_normalise(vec3_negate(camera_pos)), VEC3_Y, 45.0);
+  Vec3 camera_pos = vec3(0.0, 1.3, 3.0);
+  Camera cam = Camera_Create(camera_pos, VEC3_NEG_Z, VEC3_Y, 45.0);
   SetCamera(cam);  // update the camera in RenderScene
 
   DirectionalLight sun = {
@@ -72,21 +73,25 @@ int main() {
                          .pbr_normal_map = normal_map,
                          .pbr_ao_map = ao_map };
 
+  // ModelHandle cube_handle = ModelLoad_gltf("assets/models/gltf/Cube/glTF/Cube.gltf", false);
+  ModelHandle cube_handle = ModelLoad_gltf("../../assets/prototyper/prototyper_m.gltf", false);
+  Model* Cube = MODEL_GET(cube_handle);
+  RenderEnt cube_r = { .mesh = &Cube->meshes->data[0],
+                       .material = &Cube->materials->data[0],
+                       .affine = mat4_ident(),
+                       .casts_shadows = true };
+
   RenderEnt crate_renderable = {
     .mesh = &crate_mesh, .material = &crate_mat, .affine = mat4_scale(3.0), .casts_shadows = true
   };
 
-  RenderEnt entities[] = { crate_renderable };
+  RenderEnt entities[] = { cube_r, crate_renderable };
   size_t entity_count = 1;
 
   // --- Transforms
   // TransformHierarchy* scene_tree =  TransformHierarchy_Create();
   // TODO: parent camera to model - to start with I can just manually update it every frame
   // TODO: query joints of the gltf to get the hand bone to parent a sword to
-
-  // RenderEnt player_r = { .model = player_model, .affine = mat4_ident(), .casts_shadows = true };
-
-  // RenderEnt entities[] = { player_r };
 
   bool draw_debug = true;
 
@@ -103,7 +108,6 @@ int main() {
 
     Shadow_Run(entities, entity_count);
 
-    /*
     if (draw_debug) {
       // draw the player model with shadows
       Render_RenderEntities(entities, entity_count);
@@ -112,7 +116,7 @@ int main() {
     } else {
       Shadow_DrawDebugQuad();
     }
-    */
+
     Terrain_Draw(terrain);
 
     // END Draw calls

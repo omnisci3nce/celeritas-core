@@ -50,7 +50,7 @@ void log_output(log_level level, const char *message, ...) {
 }
 
 void report_assertion_failure(const char *expression, const char *message, const char *file,
-                              i32 line) {
+                              int line) {
   log_output(LOG_LEVEL_FATAL, "Assertion failure: %s, message: '%s', in file: %s, on line %d\n",
              expression, message, file, line);
 }

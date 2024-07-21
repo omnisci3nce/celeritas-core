@@ -45,8 +45,8 @@ void Core_Bringup() {
   arena model_arena = arena_create(malloc(model_data_max), model_data_max);
 
   Model_pool model_pool = Model_pool_create(&model_arena, 256, sizeof(Model));
-  // g_core.models = model_pool;
-  // INFO("Created model pool allocator");
+  g_core.models = model_pool;
+  INFO("Created model pool allocator");
 
   // INFO("Creating default scene");
   // scene_init(&g_core.default_scene);
