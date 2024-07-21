@@ -35,7 +35,7 @@ int main() {
   Camera cam = Camera_Create(camera_pos, vec3_normalise(vec3_negate(camera_pos)), VEC3_Y, 45.0);
   SetCamera(cam);  // update the camera in RenderScene
 
-  DirectionalLight sun = {
+  let sun = DirectionalLight {
     .ambient = vec3(1.0, 1.0, 1.0),
   };
   SetMainLight(sun);
