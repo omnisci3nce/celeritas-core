@@ -3,6 +3,7 @@
  */
 
 #include "render.h"
+#include <assert.h>
 #include <glfw3.h>
 #include "camera.h"
 #include "core.h"
@@ -185,9 +186,12 @@ TextureData TextureDataLoad(const char* path, bool invert_y) {
     channel_type = GL_RGB;
     format = TEXTURE_FORMAT_8_8_8_RGB_UNORM;
   }
-  TextureDesc desc = { .extents = { width, height },
-                       .format = format,
-                       .tex_type = TEXTURE_TYPE_2D };
+  TextureDesc desc = {
+    .extents = { width, height },
+    .format = format,
+    .num_channels = num_channels,
+    .tex_type = TEXTURE_TYPE_2D,
+  };
 
   return (TextureData){ .description = desc, .image_data = data };
 }

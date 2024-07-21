@@ -71,6 +71,7 @@ typedef struct TextureDesc {
   GPU_TextureType tex_type;
   GPU_TextureFormat format;
   u32x2 extents;
+  u32 num_channels;
 } TextureDesc;
 
 // --- Vertices

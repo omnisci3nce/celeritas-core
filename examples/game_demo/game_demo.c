@@ -44,7 +44,7 @@ int main() {
   // --- Terrain
   Heightmap hmap = Heightmap_FromImage(str8("assets/test_heightmap.png"));
   Terrain_Storage* terrain = Render_GetTerrainStorage();
-  Terrain_LoadHeightmap(terrain, hmap, false);
+  Terrain_LoadHeightmap(terrain, hmap, 2.0, false);
   // assert(Terrain_IsActive());
 
   // --- Skybox

@@ -15,8 +15,8 @@
 #include "shader_layouts.h"
 #include "str.h"
 
-#define TERRAIN_GRID_U 64
-#define TERRAIN_GRID_V 64
+#define TERRAIN_GRID_U 505
+#define TERRAIN_GRID_V 505
 
 bool Terrain_Init(Terrain_Storage* storage) {
   storage->grid_dimensions = u32x2(TERRAIN_GRID_U, TERRAIN_GRID_V);
@@ -67,12 +67,17 @@ bool Terrain_Init(Terrain_Storage* storage) {
 
 void Terrain_Shutdown(Terrain_Storage* storage) {}
 
-void Terrain_LoadHeightmap(Terrain_Storage* storage, Heightmap hmap, bool free_on_upload) {
+void Terrain_LoadHeightmap(Terrain_Storage* storage, Heightmap hmap, f32 grid_scale,
+                           bool free_on_upload) {
   // If there's a current one we will delete it and reallocate buffers
   if (storage->hmap_loaded) {
     GPU_BufferDestroy(storage->vertex_buffer);
     GPU_BufferDestroy(storage->index_buffer);
   }
+
+  u32 width = hmap.pixel_dimensions.x;
+  u32 height = hmap.pixel_dimensions.y;
+  storage->grid_scale = grid_scale;
 
   size_t num_vertices = storage->grid_dimensions.x * storage->grid_dimensions.y;
   storage->num_vertices = num_vertices;
@@ -81,34 +86,66 @@ void Terrain_LoadHeightmap(Terrain_Storage* storage, Heightmap hmap, bool free_o
   u32 index = 0;
   for (u32 i = 0; i < storage->grid_dimensions.x; i++) {
     for (u32 j = 0; j < storage->grid_dimensions.y; j++) {
+      size_t position = j * storage->grid_dimensions.x + i;
+      u8* bytes = hmap.image_data;
+      u8 channel = bytes[position];
+      float value = (float)channel / 255.0;
+      printf("(%d, %d) %d : %f \n", i, j, channel, value);
+
       assert(index < num_vertices);
-      Vertex v = { .pos_only.position = vec3_create(i, 0.0, j) };
+      f32 height = Heightmap_HeightXZ(&hmap, i, j);
+      Vertex v = { .pos_only.position = vec3_create(i * grid_scale, height, j * grid_scale) };
       Vertex_darray_push(vertices, v);
       index++;
     }
   }
-
   BufferHandle vertices_handle = GPU_BufferCreate(num_vertices * sizeof(Vertex), BUFFER_VERTEX,
                                                   BUFFER_FLAG_GPU, vertices->data);
-
   storage->vertex_buffer = vertices_handle;
+
+  u32 quad_count = (width - 1) * (height - 1);
+  u32 indices_count = quad_count * 6;
+  storage->indices_count = indices_count;
+  u32_darray* indices = u32_darray_new(indices_count);
+  for (u32 i = 0; i < (width - 1); i++) {     // row
+    for (u32 j = 0; j < (height - 1); j++) {  // col
+      u32 bot_left = i * width + j;
+      u32 top_left = (i + 1) * width + j;
+      u32 top_right = (i + 1) * width + (j + 1);
+      u32 bot_right = i * width + j + 1;
+
+      // top left tri
+      u32_darray_push(indices, top_right);
+      u32_darray_push(indices, top_left);
+      u32_darray_push(indices, bot_left);
+
+      // bottom right tri
+      u32_darray_push(indices, bot_right);
+      u32_darray_push(indices, top_right);
+      u32_darray_push(indices, bot_left);
+    }
+  }
+
+  BufferHandle indices_handle =
+      GPU_BufferCreate(indices_count * sizeof(u32), BUFFER_INDEX, BUFFER_FLAG_GPU, indices->data);
+  storage->index_buffer = indices_handle;
 }
 
 Heightmap Heightmap_FromImage(Str8 filepath) {
   size_t max_size = MB(16);
   arena arena = arena_create(malloc(max_size), max_size);
-  str8_opt maybe_file = str8_from_file(&arena, filepath);
-
-  assert(maybe_file.has_value);
+  // str8_opt maybe_file = str8_from_file(&arena, filepath);
+  // assert(maybe_file.has_value);
 
   TextureData hmap_tex = TextureDataLoad(Str8_to_cstr(&arena, filepath), false);
 
-  arena_free_storage(&arena);
+  // arena_free_storage(&arena);
 
   return (Heightmap){
     .pixel_dimensions = hmap_tex.description.extents,
     .filepath = filepath,
     .image_data = hmap_tex.image_data,
+    .num_channels = hmap_tex.description.num_channels,
     .is_uploaded = false,
   };
 }
@@ -129,7 +166,17 @@ void Terrain_Draw(Terrain_Storage* storage) {
       enc, 0, (ShaderData){ .data = &camera_data, .get_layout = &Binding_Camera_GetLayout });
 
   GPU_EncodeSetVertexBuffer(enc, storage->vertex_buffer);
+  GPU_EncodeSetIndexBuffer(enc, storage->index_buffer);
 
-  // GPU_EncodeDraw(enc, storage->num_vertices);
-  glDrawArrays(GL_POINTS, 0, storage->num_vertices);
+  GPU_EncodeDrawIndexed(enc, storage->indices_count);
+  // glDrawArrays(GL_POINTS, 0, storage->num_vertices);
+}
+
+f32 Heightmap_HeightXZ(const Heightmap* hmap, u32 x, u32 z) {
+  // its single channel so only one byte per pixel
+  size_t position = x * hmap->pixel_dimensions.x + z;
+  u8* bytes = hmap->image_data;
+  u8 channel = bytes[position];
+  float value = (float)channel / 2.0;  /// 255.0;
+  return value;
 }
