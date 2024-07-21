@@ -44,15 +44,28 @@ All third-party dependencies are licensed under their own license.
 - [ ] Embedded assets - shaders, textures, et al (probably will use C23's `#embed`?)
 - [ ] Shader hot-reloading
 - [ ] Cross-platform threadpool
+- [ ] Frame pacing
+- [ ] Logging
+  - [x] level-based logging
+  - [ ] log level with module granularity
+  - [ ] multithreaded buffered logging
 - Strings
   - [x] custom fat pointer string type
   - [ ] utf8 handling
 - Maths
   - [x] Vector functions
   - [x] Mat4 functions
+    - [ ] SIMD 4x4 multiply
   - [ ] Quaternion functions (not fully fleshed out)
-  - [ ] 
 - [ ] Transform gizmo
+- [ ] Mesh generation
+  - [x] Cube
+  - [x] Plane
+  - [x] Sphere
+  - [ ] Cylinder
+  - [ ] Cone
+  - [ ] Torus
+  - [ ] Prism
 
 #### Memory
 - [x] Arena allocator
@@ -60,7 +73,7 @@ All third-party dependencies are licensed under their own license.
   - [ ] overcommit address-space backed (`VirtualAlloc` & `mmap`)
 - [x] Pool allocator (typed)
   - [ ] Generational handles
-- [ ] SoA hot/cold pool allocator (pool for all entities of same type, split into two structs in SoA so we can have hot ,(`VkHandle`and cold `size`, `format` data separated))
+- [ ] SoA hot/cold pool allocator (pool for all entities of same type, split into two structs in SoA so we can have hot ,(`VkHandle`and cold `size`, `format` data separated)) (future)
 
 #### Scene
 - [ ] Transform hierarchy / Scene tree
@@ -87,6 +100,8 @@ All third-party dependencies are licensed under their own license.
   - [ ] Heightmaps
   - [ ] Chunking + culling
   - [ ] Terrain editing (in-game)
+- [ ] SSAO
+  - [ ] depth pre-pass
 - [ ] Water
   - [ ] water plane
 - [ ] Animation
@@ -94,6 +109,8 @@ All third-party dependencies are licensed under their own license.
   - [ ] Handle multiple animations in one GLTF
   - [ ] Animation Blending
 - [ ] Frustum culling (CPU)
+- [ ] Postprocessing stack
+  - *TBD*
 - [ ] Global illumination (future)
 - [ ] GPU-driven rendering (future)
 
@@ -101,6 +118,10 @@ All third-party dependencies are licensed under their own license.
 - [x] Buffer/texture creation
 - [x] Graphics pipeline creation/deletion
 - [ ] Compute shader
+
+### Physics
+- [ ] Jolt integration
+- [ ] In-house Collision detection
 
 ### UI
 *TBD*
