@@ -11,3 +11,6 @@ node_modules/
 
 # in case we accidentally use something not licensed properly, we will keep demo game assets ignored.
 assets/demo/
+
+# Rust
+target/
