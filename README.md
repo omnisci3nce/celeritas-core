@@ -46,6 +46,12 @@ All third-party dependencies are licensed under their own license.
 - [ ] Cross-platform threadpool
 - Strings
   - [x] custom fat pointer string type
+  - [ ] utf8 handling
+- Maths
+  - [x] Vector functions
+  - [x] Mat4 functions
+  - [ ] Quaternion functions (not fully fleshed out)
+  - [ ] 
 - [ ] Transform gizmo
 
 #### Memory
@@ -64,7 +70,7 @@ All third-party dependencies are licensed under their own license.
 ### Renderer
 - [ ] PBR
   - [x] Basic implementation using learnopengl
-  - [ ] Implementation using filament as a reference for first in class PBR
+  - [ ] Implementation using Google filament as a reference for first in class PBR
   - [ ] Handle metallic / roughness being in different channels, combined, or absent
 - [ ] Shadows
   - [x] Shadowmaps
@@ -72,19 +78,32 @@ All third-party dependencies are licensed under their own license.
   - [ ] Cascading shadowmaps (CSM)
   - [ ] Point light shadows
 - [ ] Resizing viewport
+- [ ] Debug views (shadow map quad, etc)
 - [ ] Cel shading
+  - [ ] rim light
+  - [ ] fresnel
+  - [ ] outline
 - [ ] Terrain
   - [ ] Heightmaps
+  - [ ] Chunking + culling
+  - [ ] Terrain editing (in-game)
 - [ ] Water
   - [ ] water plane
 - [ ] Animation
   - [x] Joint and keyframe loading
   - [ ] Handle multiple animations in one GLTF
   - [ ] Animation Blending
+- [ ] Frustum culling (CPU)
 - [ ] Global illumination (future)
+- [ ] GPU-driven rendering (future)
 
 ### RAL
 - [x] Buffer/texture creation
+- [x] Graphics pipeline creation/deletion
+- [ ] Compute shader
+
+### UI
+*TBD*
 
 ### Logistics
 
