@@ -66,6 +66,7 @@ All third-party dependencies are licensed under their own license.
   - [ ] Cone
   - [ ] Torus
   - [ ] Prism
+- [ ] Bindings generation (targets: rust, odin, zig, ocaml) (future)
 
 #### Memory
 - [x] Arena allocator
@@ -80,7 +81,7 @@ All third-party dependencies are licensed under their own license.
   - [ ] Transform propagation
 - [ ] Asset streaming
 
-### Renderer
+#### Renderer
 - [ ] PBR
   - [x] Basic implementation using learnopengl
   - [ ] Implementation using Google filament as a reference for first in class PBR
@@ -114,19 +115,19 @@ All third-party dependencies are licensed under their own license.
 - [ ] Global illumination (future)
 - [ ] GPU-driven rendering (future)
 
-### RAL
+#### RAL
 - [x] Buffer/texture creation
 - [x] Graphics pipeline creation/deletion
-- [ ] Compute shader
+- [ ] Compute shader pipeline creation/deletion/run
 
-### Physics
+#### Physics
 - [ ] Jolt integration
 - [ ] In-house Collision detection
 
-### UI
+#### UI
 *TBD*
 
-### Logistics
+#### Logistics
 
 - [ ] Replace screenshot with one using PBR + skybox + shadows
 - [ ] Update website
