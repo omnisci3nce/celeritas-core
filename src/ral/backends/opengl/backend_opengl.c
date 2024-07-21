@@ -246,6 +246,8 @@ BufferHandle GPU_BufferCreate(u64 size, GPU_BufferType buf_type, GPU_BufferFlags
   return handle;
 }
 
+void GPU_BufferDestroy(BufferHandle handle) { glDeleteBuffers(1, &handle.raw); }
+
 TextureHandle GPU_TextureCreate(TextureDesc desc, bool create_view, const void* data) {
   // "allocating" the cpu-side struct
   TextureHandle handle;

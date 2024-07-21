@@ -70,8 +70,10 @@ PUB void Render_DrawTerrain();
 // --- Getters (not in love with this but I'm finding keeping Renderer internals private to be okay)
 arena* GetRenderFrameArena(Renderer* r);
 
-typedef struct Shadow_Storage Shadow_Storage;
 typedef struct RenderScene RenderScene;
+typedef struct Shadow_Storage Shadow_Storage;
+typedef struct Terrain_Storage Terrain_Storage;
 
 RenderScene* Render_GetScene();
 Shadow_Storage* Render_GetShadowStorage();
+Terrain_Storage* Render_GetTerrainStorage();

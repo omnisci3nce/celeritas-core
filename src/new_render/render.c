@@ -16,6 +16,7 @@
 #include "render_scene.h"
 #include "render_types.h"
 #include "shadows.h"
+#include "terrain.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -34,7 +35,7 @@ struct Renderer {
   RenderScene scene;
   PBR_Storage* pbr;
   Shadow_Storage* shadows;
-  // Terrain_Storage terrain;
+  Terrain_Storage* terrain;
   // Text_Storage text;
   ResourcePools* resource_pools;
   arena frame_arena;
@@ -104,6 +105,9 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
   ren->pbr = malloc(sizeof(PBR_Storage));
   PBR_Init(ren->pbr);
 
+  ren->terrain = malloc(sizeof(Terrain_Storage));
+  Terrain_Init(ren->terrain);
+
   return true;
 }
 
@@ -112,6 +116,8 @@ void Renderer_Shutdown(Renderer* ren) {
   DEBUG("Freed Shadows storage");
   free(ren->pbr);
   DEBUG("Freed PBR storage");
+  free(ren->terrain);
+  DEBUG("Freed Terrain storage");
   arena_free_storage(&ren->frame_arena);
   DEBUG("Freed frame allocator buffer");
 }
@@ -147,7 +153,8 @@ void Render_RenderEntities(RenderEnt* entities, size_t entity_count) {
   RenderScene scene = ren->scene;
 
   Shadow_Storage* shadow_storage = Render_GetShadowStorage();
-  TextureHandle depthmap = shadow_storage->enabled ? Shadow_GetShadowMapTexture(shadow_storage) : INVALID_TEX_HANDLE;
+  TextureHandle depthmap =
+      shadow_storage->enabled ? Shadow_GetShadowMapTexture(shadow_storage) : INVALID_TEX_HANDLE;
 
   PBR_Execute(ren->pbr, scene.camera, depthmap, entities, entity_count);
 }
@@ -239,4 +246,9 @@ RenderScene* Render_GetScene() {
 Shadow_Storage* Render_GetShadowStorage() {
   Renderer* ren = Core_GetRenderer(&g_core);
   return ren->shadows;
+}
+
+Terrain_Storage* Render_GetTerrainStorage() {
+  Renderer* ren = Core_GetRenderer(&g_core);
+  return ren->terrain;
 }

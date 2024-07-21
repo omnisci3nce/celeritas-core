@@ -16,6 +16,7 @@
 #include "render_types.h"
 #include "shadows.h"
 #include "skybox.h"
+#include "terrain.h"
 
 static const char* faces[6] = { "assets/demo/skybox/right.jpg", "assets/demo/skybox/left.jpg",
                                 "assets/demo/skybox/top.jpg",   "assets/demo/skybox/bottom.jpg",
@@ -31,7 +32,7 @@ int main() {
   // TODO: Move camera with model
 
   // --- Render Scene
-  Vec3 camera_pos = vec3(0.0, 4.0, -8.0);
+  Vec3 camera_pos = vec3(-8.0, 10.0, 0.);
   Camera cam = Camera_Create(camera_pos, vec3_normalise(vec3_negate(camera_pos)), VEC3_Y, 45.0);
   SetCamera(cam);  // update the camera in RenderScene
 
@@ -41,8 +42,9 @@ int main() {
   SetMainLight(sun);
 
   // --- Terrain
-  // Heightmap terrain = Heightmap_FromImage(str8("assets/demo/heightmap.png"));
-  // Terrain_LoadHeightmap(terrain, true);
+  Heightmap hmap = Heightmap_FromImage(str8("assets/test_heightmap.png"));
+  Terrain_Storage* terrain = Render_GetTerrainStorage();
+  Terrain_LoadHeightmap(terrain, hmap, false);
   // assert(Terrain_IsActive());
 
   // --- Skybox
@@ -101,6 +103,7 @@ int main() {
 
     Shadow_Run(entities, entity_count);
 
+    /*
     if (draw_debug) {
       // draw the player model with shadows
       Render_RenderEntities(entities, entity_count);
@@ -109,6 +112,8 @@ int main() {
     } else {
       Shadow_DrawDebugQuad();
     }
+    */
+    Terrain_Draw(terrain);
 
     // END Draw calls
     Frame_Draw();

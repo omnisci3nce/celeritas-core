@@ -45,6 +45,14 @@ void Camera_Update(Camera *camera) {
     Vec3 displacement = vec3_mult(camera->front, -speed);
     camera->position = vec3_add(camera->position, displacement);
   }
+  if (key_is_pressed(KEYCODE_Q)) {
+    Vec3 displacement = vec3_mult(camera->up, speed);
+    camera->position = vec3_add(camera->position, displacement);
+  }
+  if (key_is_pressed(KEYCODE_E)) {
+    Vec3 displacement = vec3_mult(camera->up, -speed);
+    camera->position = vec3_add(camera->position, displacement);
+  }
 
   // Mouse
   if (MouseBtn_Held(MOUSEBTN_LEFT)) {
