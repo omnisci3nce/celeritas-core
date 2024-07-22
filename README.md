@@ -131,6 +131,12 @@ All third-party dependencies are licensed under their own license.
 
 #### UI
 *TBD*
+- buttons
+- text inputs
+- colour picker
+- file drag-and-drop
+- dock-able (sub)windows
+- node graph editor
 
 #### Logistics
 
