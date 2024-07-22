@@ -23,6 +23,13 @@ TYPED_POOL(GPU_Renderpass, Renderpass);
 #define BUFFER_GET(h) (Buffer_pool_get(&context.resource_pools->buffers, h))
 #define TEXTURE_GET(h) (Texture_pool_get(&context.resource_pools->textures, h))
 
+// --- Views
+typedef struct GPU_BufferView {
+  BufferHandle buf;
+  size_t offset;
+  size_t bytes;
+} GPU_BufferView;
+
 // --- Pools
 typedef struct GPU_BackendPools {
   Pipeline_pool pipelines;
