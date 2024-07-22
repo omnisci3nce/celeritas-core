@@ -79,6 +79,7 @@ PUB void GPU_EncodeSetVertexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf);
 PUB void GPU_EncodeSetIndexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf);
 PUB void GPU_EncodeDraw(GPU_CmdEncoder* encoder, u64 count);
 PUB void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, u64 index_count);
+PUB void GPU_EncodeDrawInstanced(GPU_CmdEncoder* encoder, u64 index_count, u64 instance_count); // TODO: implement instanced rendering
 
 // --- Frame cycle
 PUB bool GPU_Backend_BeginFrame();

@@ -97,6 +97,8 @@ All third-party dependencies are licensed under their own license.
   - [ ] rim light
   - [ ] fresnel
   - [ ] outline
+- [ ] Instanced rendering
+  - [ ] instanced grass
 - [ ] Terrain
   - [ ] Heightmaps
   - [ ] Chunking + culling
@@ -112,6 +114,8 @@ All third-party dependencies are licensed under their own license.
 - [ ] Frustum culling (CPU)
 - [ ] Postprocessing stack
   - *TBD*
+- [ ] Imposters
+- [ ] Volumetric clouds (future)
 - [ ] Global illumination (future)
 - [ ] GPU-driven rendering (future)
 
@@ -121,6 +125,7 @@ All third-party dependencies are licensed under their own license.
 - [ ] Compute shader pipeline creation/deletion/run
 
 #### Physics
+- [ ] Ground check against heightmap terrain or simple plane
 - [ ] Jolt integration
 - [ ] In-house Collision detection
 
