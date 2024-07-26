@@ -40,6 +40,7 @@ struct Renderer {
   // Text_Storage text;
   ResourcePools* resource_pools;
   arena frame_arena;
+  TextureHandle white_1x1;
 };
 
 Renderer* get_renderer() { return g_core.renderer; }
@@ -62,6 +63,7 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
     INFO("GLFWwindow pointer was provided!!!! Skipping generic glfw init..");
     window = optional_window;
   } else {
+    INFO("No GLFWwindow provided - creating one");
     // NOTE: all platforms use GLFW at the moment but thats subject to change
     glfwInit();
 
@@ -95,11 +97,11 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
   ren->window = window;
   *out_window = window;
 
-  // glfwMakeContextCurrent(ren->window);
+  glfwMakeContextCurrent(ren->window);
 
   // FIXME
   // DEBUG("Set up GLFW window callbacks");
-  // glfwSetWindowSizeCallback(window, Render_WindowSizeChanged);
+  glfwSetWindowSizeCallback(window, Render_WindowSizeChanged);
 
   // set the RAL backend up
   if (!GPU_Backend_Init(config.window_name, window, ren->resource_pools)) {
@@ -125,6 +127,9 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
 
   ren->terrain = malloc(sizeof(Terrain_Storage));
   // Terrain_Init(ren->terrain);
+
+  // load default textures
+  ren->white_1x1 = TextureLoadFromFile("assets/textures/white1x1.png");
 
   return true;
 }
@@ -273,4 +278,14 @@ Shadow_Storage* Render_GetShadowStorage() {
 Terrain_Storage* Render_GetTerrainStorage() {
   Renderer* ren = Core_GetRenderer(&g_core);
   return ren->terrain;
+}
+
+TextureHandle Render_GetWhiteTexture() {
+  Renderer* ren = Core_GetRenderer(&g_core);
+  return ren->white_1x1;
+}
+
+arena* Render_GetFrameArena() {
+  Renderer* ren = Core_GetRenderer(&g_core);
+  return &ren->frame_arena;
 }

@@ -53,22 +53,23 @@ typedef enum MaterialKind {
 static const char* material_kind_names[] = { "Blinn Phong", "PBR (Textures)", "PBR (Params)",
                                              "Count (This should be an error)" };
 
+/**
+ * @brief
+ * @note mostly references https://google.github.io/filament/Filament.html#materialsystem/standardmodel
+ */
 typedef struct Material {
   char name[64];
-  MaterialKind kind;
-  // parameterised pbr
-  Vec3 param_albedo;
-  f32 param_metallic;
-  f32 param_roughness;
-  f32 param_ao;
-  // textured pbr
-  TextureHandle pbr_albedo_map;
-  TextureHandle pbr_normal_map;
-  bool metal_roughness_combined;
-  TextureHandle pbr_metallic_map;
-  TextureHandle pbr_roughness_map;
-  TextureHandle pbr_ao_map;
+  MaterialKind kind; // at the moment all materials are PBR materials
+  Vec3 base_colour; // linear RGB {0,0,0} to {1,1,1}
+  f32 metallic;
+  f32 roughness;
+  f32 ambient_occlusion;
+  TextureHandle albedo_map;
+  TextureHandle normal_map;
+  TextureHandle metallic_roughness_map;
+  TextureHandle ambient_occlusion_map;
 } Material;
+
 #ifndef TYPED_MATERIAL_ARRAY
 KITC_DECL_TYPED_ARRAY(Material)
 #define TYPED_MATERIAL_ARRAY

@@ -21,11 +21,16 @@ uniform Lights {
     PointLight pointLights[NUM_POINT_LIGHTS];
 } scene;
 
+uniform PBR_Params {
+  vec3 albedo;
+  float metallic;
+  float roughness;
+  float ao;
+} params;
 
 // Material Textures
 uniform sampler2D albedoMap;
 uniform sampler2D metallicRoughnessMap;
-// uniform sampler2D roughnessMap;
 uniform sampler2D aoMap;
 uniform sampler2D normalMap;
 
@@ -56,9 +61,9 @@ vec3 getNormalFromMap()
 
 void main() {
   // vec3 albedo     = pow(texture(albedoMap, fragTexCoords).rgb, vec3(2.2));
-  vec3 albedo = texture(albedoMap, fragTexCoords).rgb;
-  float metallic  = texture(metallicRoughnessMap, fragTexCoords).b;
-  float roughness = texture(metallicRoughnessMap, fragTexCoords).g;
+  vec3 albedo     = params.albedo * texture(albedoMap, fragTexCoords).rgb;
+  float metallic  = params.metallic * texture(metallicRoughnessMap, fragTexCoords).b;
+  float roughness = params.roughness * texture(metallicRoughnessMap, fragTexCoords).g;
   float ao        = texture(aoMap, fragTexCoords).r;
 
   // vec3 norm = normalize(fragNormal); // N

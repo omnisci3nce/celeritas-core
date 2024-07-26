@@ -57,6 +57,8 @@ All third-party dependencies are licensed under their own license.
   - [x] Mat4 functions
     - [ ] SIMD 4x4 multiply
   - [ ] Quaternion functions (not fully fleshed out)
+- [x] Camera
+  - [ ] Swap to quaternion for internal orientation
 - [ ] Transform gizmo
 - [ ] Mesh generation
   - [x] Cube

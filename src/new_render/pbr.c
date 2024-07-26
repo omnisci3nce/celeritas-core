@@ -4,9 +4,11 @@
 #include "file.h"
 #include "log.h"
 #include "maths.h"
+#include "mem.h"
 #include "ral_common.h"
 #include "ral_impl.h"
 #include "ral_types.h"
+#include "render.h"
 #include "render_scene.h"
 #include "render_types.h"
 #include "shader_layouts.h"
@@ -145,13 +147,57 @@ ShaderDataLayout PBRMaterial_GetLayout(void* data) {
     .label = "normalMap",
     .kind = BINDING_TEXTURE,
   };
+  ShaderBinding b5 = { .label = "PBR_Params",
+                       .kind = BINDING_BYTES,
+                       .data.bytes.size = sizeof(PBR_Params) };
 
   if (has_data) {
-    b1.data.texture.handle = d->mat.pbr_albedo_map;
-    b2.data.texture.handle = d->mat.pbr_metallic_map;
-    b3.data.texture.handle = d->mat.pbr_ao_map;
-    b4.data.texture.handle = d->mat.pbr_normal_map;
+    TextureHandle white1x1 = Render_GetWhiteTexture();
+    if (d->mat.albedo_map.raw != INVALID_TEX_HANDLE.raw) {
+      b1.data.texture.handle = d->mat.albedo_map;
+    } else {
+      b1.data.texture.handle = white1x1;
+    }
+
+    if (d->mat.metallic_roughness_map.raw != INVALID_TEX_HANDLE.raw) {
+      b2.data.texture.handle = d->mat.metallic_roughness_map;
+    } else {
+      b2.data.texture.handle = white1x1;
+    }
+
+    if (d->mat.ambient_occlusion_map.raw != INVALID_TEX_HANDLE.raw) {
+      b3.data.texture.handle = d->mat.ambient_occlusion_map;
+    } else {
+      b3.data.texture.handle = white1x1;
+    }
+
+    if (d->mat.normal_map.raw != INVALID_TEX_HANDLE.raw) {
+      b4.data.texture.handle = d->mat.normal_map;
+    } else {
+      b4.data.texture.handle = white1x1;
+    }
+
+    arena* frame = Render_GetFrameArena();
+    PBR_Params* params = arena_alloc(frame, sizeof(PBR_Params));
+    params->albedo = d->mat.base_colour;
+    params->metallic = d->mat.metallic;
+    params->roughness = d->mat.roughness;
+    params->ambient_occlusion = d->mat.ambient_occlusion;
+    b5.data.bytes.data = params;
   }
 
-  return (ShaderDataLayout){ .bindings = { b1, b2, b3, b4 }, .binding_count = 4 };
+  return (ShaderDataLayout){ .bindings = { b1, b2, b3, b4, b5 }, .binding_count = 5 };
+}
+
+Material PBRMaterialDefault() {
+  return (Material){ .name = "Standard Material",
+                     .kind = MAT_PBR,
+                     .base_colour = vec3(1.0, 1.0, 1.0),
+                     .metallic = 0.0,
+                     .roughness = 0.5,
+                     .ambient_occlusion = 0.0,
+                     .albedo_map = INVALID_TEX_HANDLE,
+                     .metallic_roughness_map = INVALID_TEX_HANDLE,
+                     .normal_map = INVALID_TEX_HANDLE,
+                     .ambient_occlusion_map = INVALID_TEX_HANDLE };
 }

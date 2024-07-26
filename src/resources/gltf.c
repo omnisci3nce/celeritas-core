@@ -12,6 +12,7 @@
 #include "maths_types.h"
 #include "mem.h"
 #include "path.h"
+#include "pbr.h"
 #include "ral_types.h"
 #include "render.h"
 #include "render_types.h"
@@ -202,49 +203,53 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 rel
     cgltf_material gltf_material = data->materials[m];
     cgltf_pbr_metallic_roughness pbr = gltf_material.pbr_metallic_roughness;
 
+    Material our_material = PBRMaterialDefault();
+
     TRACE("Has PBR metallic roughness ");
     // we will use base color texture like blinn phong
     cgltf_texture_view albedo_tex_view = pbr.base_color_texture;  // albedo
-    char albedo_map_path[1024];
     if (albedo_tex_view.texture != NULL) {
+      char albedo_map_path[1024];
       snprintf(albedo_map_path, sizeof(albedo_map_path), "%s/%s", relative_path.buf,
                albedo_tex_view.texture->image->uri);
+      our_material.albedo_map = TextureLoadFromFile(albedo_map_path);
     } else {
       WARN("GLTF model has no albedo map");
     }
 
     cgltf_texture_view metal_rough_tex_view = pbr.metallic_roughness_texture;
-    char metal_rough_map_path[1024];
     if (metal_rough_tex_view.texture != NULL) {
+      char metal_rough_map_path[1024];
       snprintf(metal_rough_map_path, sizeof(metal_rough_map_path), "%s/%s", relative_path.buf,
                metal_rough_tex_view.texture->image->uri);
+      our_material.metallic_roughness_map = TextureLoadFromFile(metal_rough_map_path);
     } else {
-      WARN("GLTF model has no metal/rougnness map");
+      WARN("GLTF model has no metal/roughness map");
     }
 
     cgltf_texture_view normal_tex_view = gltf_material.normal_texture;
-    char normal_map_path[1024];
     if (normal_tex_view.texture != NULL) {
+      char normal_map_path[1024];
       snprintf(normal_map_path, sizeof(normal_map_path), "%s/%s", relative_path.buf,
                normal_tex_view.texture->image->uri);
+      our_material.normal_map = TextureLoadFromFile(normal_map_path);
     } else {
       WARN("GLTF model has no normal map");
     }
 
-    TextureHandle albedo_map = TextureLoadFromFile(albedo_map_path);
-    TextureHandle metal_roughness_map = TextureLoadFromFile(metal_rough_map_path);
-    TextureHandle normal_map = TextureLoadFromFile(normal_map_path);
+    // TextureHandle albedo_map = TextureLoadFromFile(albedo_map_path);
+    // TextureHandle metal_roughness_map = TextureLoadFromFile(metal_rough_map_path);
+    // TextureHandle normal_map = TextureLoadFromFile(normal_map_path);
 
-    // material our_material =
-    //     pbr_material_load(albedo_map_path, normal_map_path, true, metal_rough_map_path, NULL,
-    //     NULL);
-    Material our_material = {
-      .kind = MAT_PBR,
-      .metal_roughness_combined = true,
-      .pbr_albedo_map = albedo_map,
-      .pbr_metallic_map = metal_roughness_map,
-      .pbr_normal_map = normal_map,
-    };
+    // Material our_material = {
+    //   .kind = MAT_PBR,
+    //   // .metal_roughness_combined = true,
+    //   .albedo_map = albedo_map,
+    //   .metallic_roughness_map = metal_roughness_map,
+    //   .normal_map= normal_map,
+    //   .ambient_occlusion_map = INVALID_TEX_HANDLE,
+
+    // };
 
     // our_material.name = malloc(strlen(gltf_material.name) + 1);
     u32 string_length = strlen(gltf_material.name) + 1;

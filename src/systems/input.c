@@ -33,7 +33,7 @@ bool Input_Init(Input_State *input, GLFWwindow *window) {
 void Input_Shutdown(Input_State *input) {}
 
 void Input_Update(Input_State *input) {
-  // glfwPollEvents();
+  glfwPollEvents();
   // --- update keyboard input
 
   // if we go from un-pressed -> pressed, set as "just pressed"

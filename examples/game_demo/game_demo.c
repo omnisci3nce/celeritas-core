@@ -10,6 +10,7 @@
 #include "keys.h"
 #include "loaders.h"
 #include "maths.h"
+#include "pbr.h"
 #include "primitives.h"
 #include "ral_types.h"
 #include "render.h"
@@ -59,19 +60,21 @@ int main() {
   // gltf file
   Geometry cube_geo = Geo_CreateCuboid(f32x3(2.0, 2.0, 2.0));
   Mesh crate_mesh = Mesh_Create(&cube_geo, false);  // dont free as we may use later
-  TextureHandle albedo_map = TextureLoadFromFile("assets/demo/crate/Wood_Crate_001_basecolor.jpg");
+  // TextureHandle albedo_map =
+  // TextureLoadFromFile("assets/demo/crate/Wood_Crate_001_basecolor.jpg");
   TextureHandle roughness_map =
       TextureLoadFromFile("assets/demo/crate/Wood_Crate_001_roughness.jpg");
   TextureHandle normal_map = TextureLoadFromFile("assets/demo/crate/Wood_Crate_001_normal.jpg");
   TextureHandle ao_map =
       TextureLoadFromFile("assets/demo/crate/Wood_Crate_001_ambientOcclusion.jpg");
-  Material crate_mat = { .name = "Wood_Crate",
-                         .kind = MAT_PBR,
-                         .metal_roughness_combined = true,
-                         .pbr_albedo_map = albedo_map,
-                         .pbr_metallic_map = roughness_map,
-                         .pbr_normal_map = normal_map,
-                         .pbr_ao_map = ao_map };
+  Material crate_mat = PBRMaterialDefault();
+  // crate_mat.name = "Wood_Crate";
+  //  crate_mat.albedo_map = albedo_map;
+  crate_mat.metallic_roughness_map = roughness_map;
+  crate_mat.normal_map = normal_map;
+  crate_mat.ambient_occlusion_map = ao_map;
+  crate_mat.base_colour = vec3(1.0, 1.0, 1.0);
+  crate_mat.metallic = 0.0;
 
   // ModelHandle cube_handle = ModelLoad_gltf("assets/models/gltf/Cube/glTF/Cube.gltf", false);
   // ModelHandle cube_handle = ModelLoad_gltf("../../assets/prototyper/prototyper_m.gltf", false);
@@ -107,8 +110,8 @@ int main() {
     // BEGIN Draw calls
 
     // Shadow_Run(entities, entity_count);
-    printf("cam pos: %f %f %f cam frontL %f %f %f\n", cam.position.x, cam.position.y,
-           cam.position.z, cam.front.x, cam.front.y, cam.front.z);
+    // printf("cam pos: %f %f %f cam frontL %f %f %f\n", cam.position.x, cam.position.y,
+    //        cam.position.z, cam.front.x, cam.front.y, cam.front.z);
 
     if (draw_debug) {
       // draw the player model with shadows

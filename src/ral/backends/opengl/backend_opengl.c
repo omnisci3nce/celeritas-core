@@ -37,10 +37,10 @@ bool GPU_Backend_Init(const char* window_name, struct GLFWwindow* window,
   BackendPools_Init(&context.pool_arena, &context.gpu_pools);
   context.resource_pools = res_pools;
 
-  // glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  // glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-  // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
   // glad: load all opengl function pointers
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -57,8 +57,7 @@ bool GPU_Backend_Init(const char* window_name, struct GLFWwindow* window,
 }
 
 // All of these are no-ops in OpenGL
-void GPU_Backend_Shutdown() { /* TODO */
-}
+void GPU_Backend_Shutdown() { /* TODO */ }
 bool GPU_Device_Create(GPU_Device* out_device) { return true; }
 void GPU_Device_Destroy(GPU_Device* device) {}
 bool GPU_Swapchain_Create(GPU_Swapchain* out_swapchain) { return true; }

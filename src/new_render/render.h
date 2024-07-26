@@ -78,3 +78,5 @@ typedef struct Terrain_Storage Terrain_Storage;
 RenderScene* Render_GetScene();
 Shadow_Storage* Render_GetShadowStorage();
 Terrain_Storage* Render_GetTerrainStorage();
+TextureHandle Render_GetWhiteTexture();
+arena* Render_GetFrameArena();

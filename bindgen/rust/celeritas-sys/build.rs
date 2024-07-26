@@ -1,7 +1,33 @@
 use std::env;
 use std::path::PathBuf;
 
+use bindgen::callbacks::ParseCallbacks;
+
+const serializable_types: &[&'static str] = &[
+    "Vec2",
+    "Vec3",
+    "Vec4",
+    "Mat4",
+    "Quat",
+    "DirectionalLight",
+    "PointLight",
+];
+
+#[derive(Debug)]
+struct DeriveSerialize;
+impl ParseCallbacks for DeriveSerialize {
+    fn add_derives(&self, info: &bindgen::callbacks::DeriveInfo<'_>) -> Vec<String> {
+        if (serializable_types.contains(&info.name)) {
+            vec!["Serialize".to_string(), "Deserialize".to_string()]
+        } else {
+            vec![]
+        }
+    }
+}
+
 fn main() {
+    /* */
+
     // Tell cargo to look for shared libraries in the specified directory
     // TODO: we need to look based on OS
     println!("cargo:rustc-link-search=../../../build/macosx/arm64/debug");
@@ -43,6 +69,7 @@ fn main() {
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
+        .parse_callbacks(Box::new(DeriveSerialize))
         // Finish the builder and generate the bindings.
         .generate()
         // Unwrap the Result and panic on failure.

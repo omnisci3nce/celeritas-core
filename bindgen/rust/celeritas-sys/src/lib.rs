@@ -2,6 +2,8 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
+use serde::{Deserialize, Serialize};
+
 pub mod egui_utils;
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));

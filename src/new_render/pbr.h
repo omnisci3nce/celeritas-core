@@ -36,7 +36,7 @@ typedef struct PBR_Params {
   Vec3 albedo;
   f32 metallic;
   f32 roughness;
-  f32 ao;
+  f32 ambient_occlusion;
 } PBR_Params;
 
 typedef struct PBR_Textures {
@@ -48,9 +48,12 @@ typedef struct PBR_Textures {
   TextureHandle ao_map;
 } PBR_Textures;
 
+
 // --- Internal
 
 typedef struct MaterialMap MaterialMap;
+
+Material PBRMaterialDefault();
 
 GPU_Renderpass* PBR_RPassCreate();
 

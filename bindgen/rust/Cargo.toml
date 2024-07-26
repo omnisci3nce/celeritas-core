@@ -1,10 +1,12 @@
 [package]
-name = "celeritas-rs"
+name = "celeritas"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 celeritas-sys = { path = "./celeritas-sys" }
+serde = { version = "1.0.204", features = ["derive"] }
+serde_json = "1.0.120"
 
 egui = "0.27.1"
 egui_glfw = { git = "https://github.com/omnisci3nce/egui_glfw.git", rev = "67b432695433feb59761f3ae984b966ca3da31db" }

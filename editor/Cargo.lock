@@ -196,6 +196,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20930a432bbd57a6d55e07976089708d4893f3d556cf42a0d79e9e321fa73b10"
 
 [[package]]
+name = "editor"
+version = "0.1.0"
+dependencies = [
+ "celeritas",
+ "egui",
+ "egui_glfw",
+ "gl",
+]
+
+[[package]]
 name = "egui"
 version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
