@@ -1,7 +1,7 @@
 use std::ffi::CString;
 use std::ptr::addr_of_mut;
 
-use celeritas::*;
+use celeritas_sys::*;
 use egui_backend::egui::{vec2, Pos2, Rect};
 use egui_glfw as egui_backend;
 use egui_glfw::glfw::{fail_on_errors, Context};
@@ -41,7 +41,7 @@ fn main() {
         let window_ptr = window.window_ptr();
         unsafe {
             // Cast the window pointer to the expected type
-            let window_ptr = window_ptr as *mut celeritas::GLFWwindow;
+            let window_ptr = window_ptr as *mut celeritas_sys::GLFWwindow;
             Core_Bringup(window_ptr);
         };
 
@@ -50,8 +50,8 @@ fn main() {
 
         let (width, height) = window.get_framebuffer_size();
         let native_pixels_per_point = window.get_content_scale().0;
-        let native_pixels_per_point = 1.0;
-        // egui_ctx.set_pixels_per_point(2.0);
+        let native_pixels_per_point = 2.0;
+        egui_ctx.set_pixels_per_point(2.0);
 
         let mut egui_input_state = egui_backend::EguiInputState::new(egui::RawInput {
             screen_rect: Some(Rect::from_min_size(
@@ -77,7 +77,7 @@ fn main() {
             y: -0.2,
             z: -0.7,
         };
-        let camera = Camera_Create(
+        let mut camera = Camera_Create(
             camera_pos,
             camera_front,
             Vec3 {
@@ -158,6 +158,9 @@ fn main() {
             Frame_Begin();
             gl::Enable(gl::DEPTH_TEST);
             gl::Enable(gl::CULL_FACE);
+
+            Camera_Update(addr_of_mut!(camera));
+            SetCamera(camera);
 
             Skybox_Draw(addr_of_mut!(skybox), camera);
             Render_RenderEntities(render_ents.as_mut_ptr(), render_ents.len());

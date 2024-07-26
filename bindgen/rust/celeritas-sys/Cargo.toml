@@ -7,3 +7,8 @@ edition = "2021"
 
 [build-dependencies]
 bindgen = "0.69.4"
+
+[dev-dependencies]
+egui = "0.27.1"
+egui_glfw = { git = "https://github.com/omnisci3nce/egui_glfw.git", rev = "67b432695433feb59761f3ae984b966ca3da31db" }
+gl = "0.14.0"

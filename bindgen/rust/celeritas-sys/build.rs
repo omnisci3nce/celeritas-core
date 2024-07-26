@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 fn main() {
     // Tell cargo to look for shared libraries in the specified directory
+    // TODO: we need to look based on OS
     println!("cargo:rustc-link-search=../../../build/macosx/arm64/debug");
     // println!("cargo:rustc-link-search=../../build/windows/x64/debug");
 
@@ -10,6 +11,7 @@ fn main() {
     // shared library.
     println!("cargo:rustc-link-lib=core_static");
     println!("cargo:rustc-link-lib=glfw3");
+    // TODO: ^ use our locally compiled glfw
 
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for

@@ -4,6 +4,7 @@
 #include <glfw3.h>
 #include <string.h>
 
+#include "keys.h"
 #include "log.h"
 
 static Input_State *g_input;  // Use a global to simplify caller code
@@ -14,7 +15,7 @@ bool Input_Init(Input_State *input, GLFWwindow *window) {
 
   input->window = window;
   // Set everything to false. Could just set memory to zero but where's the fun in that
-  for (int i = 0; i < KEYCODE_MAX; i++) {
+  for (int i = KEYCODE_SPACE; i < KEYCODE_MAX; i++) {
     input->depressed_keys[i] = false;
     input->just_pressed_keys[i] = false;
     input->just_released_keys[i] = false;
@@ -37,7 +38,7 @@ void Input_Update(Input_State *input) {
 
   // if we go from un-pressed -> pressed, set as "just pressed"
   // if we go from pressed -> un-pressed, set as "just released"
-  for (int i = 0; i < KEYCODE_MAX; i++) {
+  for (int i = KEYCODE_SPACE; i < KEYCODE_MAX; i++) {
     bool new_state = false;
     if (glfwGetKey(input->window, i) == GLFW_PRESS) {
       new_state = true;
