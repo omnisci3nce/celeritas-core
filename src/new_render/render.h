@@ -28,7 +28,8 @@ typedef struct RenderCtx {
 
 // --- Lifecycle
 
-PUB bool Renderer_Init(RendererConfig config, Renderer* renderer, GLFWwindow** out_window, GLFWwindow* optional_window);
+PUB bool Renderer_Init(RendererConfig config, Renderer* renderer, GLFWwindow** out_window,
+                       GLFWwindow* optional_window);
 PUB void Renderer_Shutdown(Renderer* renderer);
 PUB size_t Renderer_GetMemReqs();
 void Render_WindowSizeChanged(GLFWwindow* window, i32 new_width, i32 new_height);

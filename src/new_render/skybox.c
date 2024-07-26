@@ -122,9 +122,7 @@ Skybox Skybox_Create(const char** face_paths, int n) {
   return (Skybox){ .cube = cube, .texture = handle, .pipeline = pipeline };
 }
 
-Skybox Skybox_Default() {
-  return Skybox_Create(faces, 6);
-}
+Skybox Skybox_Default() { return Skybox_Create(faces, 6); }
 
 void Skybox_Draw(Skybox* skybox, Camera camera) {
   GPU_CmdEncoder* enc = GPU_GetDefaultEncoder();

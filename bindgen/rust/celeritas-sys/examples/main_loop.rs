@@ -88,7 +88,6 @@ unsafe fn run_game() {
         casts_shadows: true,
     };
     let mut render_entities: [RenderEnt; 1] = [crate_renderent];
-    
 
     // main loop
     while !ShouldExit() {

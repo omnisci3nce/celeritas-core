@@ -55,7 +55,7 @@ typedef enum GPU_TextureType {
 } GPU_TextureType;
 
 static const char* texture_type_names[] = {
-  "RAL Texture 2D", "RAL Texture 3D", "RAL Texture 2D Array",
+  "RAL Texture 2D",      "RAL Texture 3D",    "RAL Texture 2D Array",
   "RAL Texture Cubemap", "RAL Texture Count",
 };
 

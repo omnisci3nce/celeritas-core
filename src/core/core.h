@@ -26,10 +26,10 @@ struct Renderer;
 
 Core* get_global_core();
 
-/** 
+/**
   @brief Throws error if the core cannot be instantiated
-  @param [in] optional_window - Leave NULL if you want Celeritas to instantiate its own window with GLFW, if you
-                                want to provide the glfw window then pass it in here.
+  @param [in] optional_window - Leave NULL if you want Celeritas to instantiate its own window with
+  GLFW, if you want to provide the glfw window then pass it in here.
 */
 void Core_Bringup(GLFWwindow* optional_window);
 void Core_Shutdown();

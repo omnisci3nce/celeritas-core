@@ -107,7 +107,8 @@ int main() {
     // BEGIN Draw calls
 
     // Shadow_Run(entities, entity_count);
-    printf("cam pos: %f %f %f cam frontL %f %f %f\n", cam.position.x, cam.position.y, cam.position.z, cam.front.x, cam.front.y, cam.front.z);
+    printf("cam pos: %f %f %f cam frontL %f %f %f\n", cam.position.x, cam.position.y,
+           cam.position.z, cam.front.x, cam.front.y, cam.front.z);
 
     if (draw_debug) {
       // draw the player model with shadows

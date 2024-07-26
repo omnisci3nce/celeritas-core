@@ -34,8 +34,8 @@ GPU_Pipeline* PBR_PipelineCreate(GPU_Renderpass* rpass) {
   // if (!vertex_shader.has_value || !fragment_shader.has_value) {
   //   ERROR_EXIT("Failed to load shaders from disk")
   // }
-  char* vert_shader = string_from_file(vert_path); 
-   char* frag_shader = string_from_file(frag_path); 
+  char* vert_shader = string_from_file(vert_path);
+  char* frag_shader = string_from_file(frag_path);
 
   ShaderData camera_data = { .get_layout = &Binding_Camera_GetLayout };
   ShaderData model_data = { .get_layout = &Binding_Model_GetLayout };

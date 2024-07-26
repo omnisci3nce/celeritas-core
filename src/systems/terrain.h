@@ -27,7 +27,7 @@ typedef struct Heightmap {
   bool is_uploaded;
 } Heightmap;
 
- typedef struct Terrain_Storage {
+typedef struct Terrain_Storage {
   // arena terrain_allocator;
   u32x2 grid_dimensions;
   f32 grid_scale;
@@ -50,7 +50,8 @@ PUB void Terrain_Draw(
     Terrain_Storage* storage);  // NOTE: For now it renders directly to main framebuffer
 
 /** @brief Sets the active heightmap to be rendered and collided against. */
-PUB void Terrain_LoadHeightmap(Terrain_Storage* storage, Heightmap hmap, f32 grid_scale, bool free_on_upload);
+PUB void Terrain_LoadHeightmap(Terrain_Storage* storage, Heightmap hmap, f32 grid_scale,
+                               bool free_on_upload);
 PUB Heightmap Heightmap_FromImage(Str8 filepath);
 PUB Heightmap Heightmap_FromPerlin(/* TODO: perlin noise generation parameters */);
 

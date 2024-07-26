@@ -4,7 +4,6 @@
 
 #include "render.h"
 #include <assert.h>
-#include "glad/glad.h"
 #include <glfw3.h>
 #include "camera.h"
 #include "core.h"
@@ -45,7 +44,8 @@ struct Renderer {
 
 Renderer* get_renderer() { return g_core.renderer; }
 
-bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window, GLFWwindow* optional_window) {
+bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window,
+                   GLFWwindow* optional_window) {
   INFO("Renderer init");
 
   ren->frame_arena = arena_create(malloc(FRAME_ARENA_SIZE), FRAME_ARENA_SIZE);
@@ -65,14 +65,14 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
     // NOTE: all platforms use GLFW at the moment but thats subject to change
     glfwInit();
 
-  #if defined(CEL_REND_BACKEND_OPENGL)
+#if defined(CEL_REND_BACKEND_OPENGL)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-  #elif defined(CEL_REND_BACKEND_VULKAN)
+#elif defined(CEL_REND_BACKEND_VULKAN)
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  #endif
+#endif
 
     window = glfwCreateWindow(config.scr_width, config.scr_height, config.window_name, NULL, NULL);
     INFO("Window created");

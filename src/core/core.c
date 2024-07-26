@@ -74,12 +74,10 @@ void Frame_Begin() {
 void Frame_Draw() {}
 void Frame_End() { Render_FrameEnd(g_core.renderer); }
 
-Core* get_global_core() {
-  return &g_core;
-}
+Core* get_global_core() { return &g_core; }
 
-GLFWwindow* Core_GetGlfwWindowPtr(Core* core) {
-  return g_core.window;
-}
+GLFWwindow* Core_GetGlfwWindowPtr(Core* core) { return g_core.window; }
 
-struct Renderer* Core_GetRenderer(Core* core) { return core->renderer; }
+struct Renderer* Core_GetRenderer(Core* core) {
+  return core->renderer;
+}

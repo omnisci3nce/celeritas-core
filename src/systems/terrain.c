@@ -39,7 +39,7 @@ bool Terrain_Init(Terrain_Storage* storage) {
   }
 
   ShaderData camera_data = { .get_layout = &Binding_Camera_GetLayout };
-  ShaderData terrain_data = { .get_layout = &TerrainUniforms_GetLayout};
+  ShaderData terrain_data = { .get_layout = &TerrainUniforms_GetLayout };
 
   GraphicsPipelineDesc pipeline_desc = {
     .debug_name = "terrain rendering pipeline",
@@ -97,8 +97,8 @@ void Terrain_LoadHeightmap(Terrain_Storage* storage, Heightmap hmap, f32 grid_sc
       Vec3 v_pos = vec3_create(i * grid_scale, height, j * grid_scale);
       Vec3 v_normal = VEC3_Y;
       float tiling_factor = 505.0f;
-      Vec2 v_uv = vec2((f32)i / width * tiling_factor , (f32)j / height * tiling_factor);
-      Vertex v = { .static_3d = {.position = v_pos, .normal = v_normal, .tex_coords = v_uv} };
+      Vec2 v_uv = vec2((f32)i / width * tiling_factor, (f32)j / height * tiling_factor);
+      Vertex v = { .static_3d = { .position = v_pos, .normal = v_normal, .tex_coords = v_uv } };
       Vertex_darray_push(vertices, v);
       index++;
     }
@@ -169,12 +169,9 @@ void Terrain_Draw(Terrain_Storage* storage) {
   GPU_EncodeBindShaderData(
       enc, 0, (ShaderData){ .data = &camera_data, .get_layout = &Binding_Camera_GetLayout });
 
-  TerrainUniforms uniforms = {
-    .tex_slot_1 = storage->texture
-  };
-  ShaderData terrain_data = { .data = &uniforms, .get_layout = &TerrainUniforms_GetLayout};
+  TerrainUniforms uniforms = { .tex_slot_1 = storage->texture };
+  ShaderData terrain_data = { .data = &uniforms, .get_layout = &TerrainUniforms_GetLayout };
   GPU_EncodeBindShaderData(enc, 1, terrain_data);
-
 
   GPU_EncodeSetVertexBuffer(enc, storage->vertex_buffer);
   GPU_EncodeSetIndexBuffer(enc, storage->index_buffer);

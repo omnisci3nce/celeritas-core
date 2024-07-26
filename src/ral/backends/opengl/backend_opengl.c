@@ -57,7 +57,8 @@ bool GPU_Backend_Init(const char* window_name, struct GLFWwindow* window,
 }
 
 // All of these are no-ops in OpenGL
-void GPU_Backend_Shutdown() { /* TODO */ }
+void GPU_Backend_Shutdown() { /* TODO */
+}
 bool GPU_Device_Create(GPU_Device* out_device) { return true; }
 void GPU_Device_Destroy(GPU_Device* device) {}
 bool GPU_Swapchain_Create(GPU_Swapchain* out_swapchain) { return true; }
