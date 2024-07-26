@@ -24,7 +24,7 @@ static const char* faces[6] = { "assets/demo/skybox/right.jpg", "assets/demo/sky
                                 "assets/demo/skybox/front.jpg", "assets/demo/skybox/back.jpg" };
 
 int main() {
-  Core_Bringup();
+  Core_Bringup(NULL);
 
   // TODO: Load humanoid model + weapon
   // TODO: Animate it with WASD keys
@@ -33,7 +33,7 @@ int main() {
   // TODO: Move camera with model
 
   // --- Render Scene
-  Vec3 camera_pos = vec3(0.0, 1.3, 3.0);
+  Vec3 camera_pos = vec3(0.0, 3.0, 3.0);
   Camera cam = Camera_Create(camera_pos, VEC3_NEG_Z, VEC3_Y, 45.0);
   SetCamera(cam);  // update the camera in RenderScene
 

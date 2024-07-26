@@ -4,6 +4,9 @@ unsafe fn run_game() {
     // init
     Core_Bringup();
 
+    let core = get_global_core();
+    let glfw_window_ptr = Core_GetGlfwWindowPtr(core);
+
     let camera_pos = Vec3 {
         x: 0.0,
         y: 2.0,
@@ -30,13 +33,13 @@ unsafe fn run_game() {
     };
     SetMainLight(sun);
 
-    let skybox = Skybox_Create(face_paths, 6);
+    // let skybox = Skybox_Create(face_paths, 6);
 
     // main loop
     while !ShouldExit() {
         Frame_Begin();
 
-        Skybox_Draw(&mut skybox, camera);
+        // Skybox_Draw(&mut skybox, camera);
 
         Frame_End();
     }

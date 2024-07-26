@@ -35,6 +35,7 @@ typedef struct Heightmap {
   Heightmap heightmap;  // NULL = no heightmap
   GPU_Renderpass* hmap_renderpass;
   GPU_Pipeline* hmap_pipeline;
+  TextureHandle texture;
 
   bool hmap_loaded;
   BufferHandle vertex_buffer;
@@ -68,5 +69,9 @@ Vec3 Heightmap_NormalXZ(const Heightmap* hmap, f32 x, f32 z);
 
 // /** @brief Generate the `geometry_data` for a heightmap ready to be uploaded to the GPU */
 // Geometry geo_heightmap(arena* a, Heightmap heightmap);
+
+typedef struct TerrainUniforms {
+  TextureHandle tex_slot_1;
+} TerrainUniforms;
 
 ShaderDataLayout TerrainUniforms_GetLayout(void* data);

@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+egui = "0.26"
+egui_overlay = {version = "0.8.1", default-features = false, features = ["three_d"] }
+egui_render_three_d = "0.8.0"
+egui_render_wgpu = "0.8.0"
+egui_window_glfw_passthrough = "0.8.1"
 
 [build-dependencies]
 bindgen = "0.69.4"

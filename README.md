@@ -66,6 +66,7 @@ All third-party dependencies are licensed under their own license.
   - [ ] Cone
   - [ ] Torus
   - [ ] Prism
+- Load sponza & bistro scenes
 - [ ] Bindings generation (targets: rust, odin, zig, ocaml) (future)
 
 #### Memory
@@ -77,7 +78,7 @@ All third-party dependencies are licensed under their own license.
 - [ ] SoA hot/cold pool allocator (pool for all entities of same type, split into two structs in SoA so we can have hot ,(`VkHandle`and cold `size`, `format` data separated)) (future)
 
 #### Scene
-- [ ] Transform hierarchy / Scene tree
+- [1/2] Transform hierarchy / Scene tree
   - [ ] Transform propagation
 - [ ] Asset streaming
 

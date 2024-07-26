@@ -44,7 +44,7 @@ struct Renderer {
 
 Renderer* get_renderer() { return g_core.renderer; }
 
-bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window) {
+bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window, GLFWwindow* optional_window) {
   INFO("Renderer init");
 
   ren->frame_arena = arena_create(malloc(FRAME_ARENA_SIZE), FRAME_ARENA_SIZE);
@@ -56,33 +56,49 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
   ResourcePools_Init(&pool_arena, ren->resource_pools);
 
   // GLFW window creation
+  GLFWwindow* window;
+  if (optional_window != NULL) {
+    INFO("GLFWwindow pointer was provided!!!! Skipping generic glfw init..");
+    window = optional_window;
+  } else {
+    // NOTE: all platforms use GLFW at the moment but thats subject to change
+    glfwInit();
 
-  // NOTE: all platforms use GLFW at the moment but thats subject to change
-  glfwInit();
+  #if defined(CEL_REND_BACKEND_OPENGL)
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  #elif defined(CEL_REND_BACKEND_VULKAN)
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+  #endif
 
-#if defined(CEL_REND_BACKEND_OPENGL)
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#elif defined(CEL_REND_BACKEND_VULKAN)
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-#endif
-
-  GLFWwindow* window =
-      glfwCreateWindow(config.scr_width, config.scr_height, config.window_name, NULL, NULL);
-  if (window == NULL) {
-    ERROR("Failed to create GLFW window\n");
-    glfwTerminate();
-    return false;
+    GLFWwindow* window =
+        glfwCreateWindow(config.scr_width, config.scr_height, config.window_name, NULL, NULL);
+    if (window == NULL) {
+      ERROR("Failed to create GLFW window\n");
+      glfwTerminate();
+      return false;
+    }
   }
+
+  // #if defined(CEL_REND_BACKEND_OPENGL)
+  //   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  //   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+  //   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  //   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  // #elif defined(CEL_REND_BACKEND_VULKAN)
+  //   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+  // #endif
+
   ren->window = window;
   *out_window = window;
 
   glfwMakeContextCurrent(ren->window);
 
-  DEBUG("Set up GLFW window callbacks");
-  glfwSetWindowSizeCallback(window, Render_WindowSizeChanged);
+  // FIXME
+  // DEBUG("Set up GLFW window callbacks");
+  // glfwSetWindowSizeCallback(window, Render_WindowSizeChanged);
 
   // set the RAL backend up
   if (!GPU_Backend_Init(config.window_name, window, ren->resource_pools)) {

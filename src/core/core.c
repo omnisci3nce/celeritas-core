@@ -20,7 +20,7 @@ Core g_core; /** @brief global `Core` that other files can use */
 /** @brief Gets the global `Core` singleton */
 inline Core* GetCore() { return &g_core; }
 
-void Core_Bringup() {
+void Core_Bringup(struct GLFWwindow* optional_window) {
   INFO("Initiate Core bringup");
   memset(&g_core, 0, sizeof(Core));
 
@@ -31,10 +31,15 @@ void Core_Bringup() {
 
   g_core.renderer = malloc(Renderer_GetMemReqs());
   // initialise all subsystems
-  if (!Renderer_Init(conf, g_core.renderer, &g_core.window)) {
+  // renderer config, renderer ptr, ptr to store a window, and optional preexisting glfw window
+  if (!Renderer_Init(conf, g_core.renderer, &g_core.window, optional_window)) {
     // FATAL("Failed to start renderer");
     ERROR_EXIT("Failed to start renderer\n");
   }
+  if (optional_window != NULL) {
+    g_core.window = optional_window;
+  }
+
   if (!Input_Init(&g_core.input, g_core.window)) {
     // the input system needs the glfw window which is created by the renderer
     // hence the order here is important

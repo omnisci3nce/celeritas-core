@@ -8,6 +8,7 @@
 #include "log.h"
 #include "maths.h"
 #include "mem.h"
+#include "ral_common.h"
 #include "ral_impl.h"
 #include "ral_types.h"
 #include "render.h"
@@ -27,10 +28,6 @@ bool Terrain_Init(Terrain_Storage* storage) {
   };
   storage->hmap_renderpass = GPU_Renderpass_Create(rpass_desc);
 
-  VertexDescription builder = { .debug_label = "pos only" };
-  VertexDesc_AddAttr(&builder, "inPosition", ATTR_F32x3);
-  builder.use_full_vertex_size = true;
-
   arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
 
   Str8 vert_path = str8("assets/shaders/terrain.vert");
@@ -42,12 +39,13 @@ bool Terrain_Init(Terrain_Storage* storage) {
   }
 
   ShaderData camera_data = { .get_layout = &Binding_Camera_GetLayout };
+  ShaderData terrain_data = { .get_layout = &TerrainUniforms_GetLayout};
 
   GraphicsPipelineDesc pipeline_desc = {
     .debug_name = "terrain rendering pipeline",
-    .vertex_desc = builder,
-    .data_layouts = { camera_data },
-    .data_layouts_count = 1,
+    .vertex_desc = static_3d_vertex_description(),
+    .data_layouts = { camera_data, terrain_data },
+    .data_layouts_count = 2,
     .vs = {
       .debug_name = "terrain vertex shader",
       .filepath = vert_path,
@@ -58,9 +56,11 @@ bool Terrain_Init(Terrain_Storage* storage) {
       .filepath = frag_path,
       .code = fragment_shader.contents,
     },
-    .wireframe = true,
+    .wireframe = false,
   };
   storage->hmap_pipeline = GPU_GraphicsPipeline_Create(pipeline_desc, storage->hmap_renderpass);
+
+  storage->texture = TextureLoadFromFile("assets/demo/textures/grass2.png");
 
   return true;
 }
@@ -94,7 +94,11 @@ void Terrain_LoadHeightmap(Terrain_Storage* storage, Heightmap hmap, f32 grid_sc
 
       assert(index < num_vertices);
       f32 height = Heightmap_HeightXZ(&hmap, i, j);
-      Vertex v = { .pos_only.position = vec3_create(i * grid_scale, height, j * grid_scale) };
+      Vec3 v_pos = vec3_create(i * grid_scale, height, j * grid_scale);
+      Vec3 v_normal = VEC3_Y;
+      float tiling_factor = 505.0f;
+      Vec2 v_uv = vec2((f32)i / width * tiling_factor , (f32)j / height * tiling_factor);
+      Vertex v = { .static_3d = {.position = v_pos, .normal = v_normal, .tex_coords = v_uv} };
       Vertex_darray_push(vertices, v);
       index++;
     }
@@ -165,6 +169,13 @@ void Terrain_Draw(Terrain_Storage* storage) {
   GPU_EncodeBindShaderData(
       enc, 0, (ShaderData){ .data = &camera_data, .get_layout = &Binding_Camera_GetLayout });
 
+  TerrainUniforms uniforms = {
+    .tex_slot_1 = storage->texture
+  };
+  ShaderData terrain_data = { .data = &uniforms, .get_layout = &TerrainUniforms_GetLayout};
+  GPU_EncodeBindShaderData(enc, 1, terrain_data);
+
+
   GPU_EncodeSetVertexBuffer(enc, storage->vertex_buffer);
   GPU_EncodeSetIndexBuffer(enc, storage->index_buffer);
 
@@ -179,4 +190,20 @@ f32 Heightmap_HeightXZ(const Heightmap* hmap, u32 x, u32 z) {
   u8 channel = bytes[position];
   float value = (float)channel / 2.0;  /// 255.0;
   return value;
+}
+
+ShaderDataLayout TerrainUniforms_GetLayout(void* data) {
+  TerrainUniforms* d = data;
+  bool has_data = data != NULL;
+
+  ShaderBinding b1 = {
+    .label = "TextureSlot1",
+    .kind = BINDING_TEXTURE,
+    .vis = VISIBILITY_FRAGMENT,
+  };
+
+  if (has_data) {
+    b1.data.texture.handle = d->tex_slot_1;
+  }
+  return (ShaderDataLayout){ .bindings = { b1 }, .binding_count = 1 };
 }
