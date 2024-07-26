@@ -143,9 +143,7 @@ c_static_inline Quat quat_slerp(Quat a, Quat b, f32 percentage) {
 
 // --- Matrix Implementations
 
-c_static_inline Mat4 mat4_ident() {
-  return (Mat4){ .data = { 1.0, 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.0 } };
-}
+Mat4 mat4_ident();
 
 c_static_inline Mat4 mat4_translation(Vec3 position) {
   Mat4 out_matrix = mat4_ident();

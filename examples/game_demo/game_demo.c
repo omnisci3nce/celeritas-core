@@ -33,7 +33,7 @@ int main() {
   // TODO: Move camera with model
 
   // --- Render Scene
-  Vec3 camera_pos = vec3(0.0, 3.0, 3.0);
+  Vec3 camera_pos = vec3(0.0, 5.0, 0.0);
   Camera cam = Camera_Create(camera_pos, VEC3_NEG_Z, VEC3_Y, 45.0);
   SetCamera(cam);  // update the camera in RenderScene
 
@@ -74,18 +74,18 @@ int main() {
                          .pbr_ao_map = ao_map };
 
   // ModelHandle cube_handle = ModelLoad_gltf("assets/models/gltf/Cube/glTF/Cube.gltf", false);
-  ModelHandle cube_handle = ModelLoad_gltf("../../assets/prototyper/prototyper_m.gltf", false);
-  Model* Cube = MODEL_GET(cube_handle);
-  RenderEnt cube_r = { .mesh = &Cube->meshes->data[0],
-                       .material = &Cube->materials->data[0],
-                       .affine = mat4_ident(),
-                       .casts_shadows = true };
+  // ModelHandle cube_handle = ModelLoad_gltf("../../assets/prototyper/prototyper_m.gltf", false);
+  // Model* Cube = MODEL_GET(cube_handle);
+  // RenderEnt cube_r = { .mesh = &Cube->meshes->data[0],
+  //                      .material = &Cube->materials->data[0],
+  //                      .affine = mat4_ident(),
+  //                      .casts_shadows = true };
 
   RenderEnt crate_renderable = {
     .mesh = &crate_mesh, .material = &crate_mat, .affine = mat4_scale(3.0), .casts_shadows = true
   };
 
-  RenderEnt entities[] = { cube_r, crate_renderable };
+  RenderEnt entities[] = { crate_renderable };
   size_t entity_count = 1;
 
   // --- Transforms
@@ -106,7 +106,8 @@ int main() {
 
     // BEGIN Draw calls
 
-    Shadow_Run(entities, entity_count);
+    // Shadow_Run(entities, entity_count);
+    printf("cam pos: %f %f %f cam frontL %f %f %f\n", cam.position.x, cam.position.y, cam.position.z, cam.front.x, cam.front.y, cam.front.z);
 
     if (draw_debug) {
       // draw the player model with shadows
@@ -117,7 +118,7 @@ int main() {
       Shadow_DrawDebugQuad();
     }
 
-    Terrain_Draw(terrain);
+    // Terrain_Draw(terrain);
 
     // END Draw calls
     Frame_Draw();

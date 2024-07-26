@@ -25,13 +25,17 @@ GPU_Renderpass* PBR_RPassCreate() {
 GPU_Pipeline* PBR_PipelineCreate(GPU_Renderpass* rpass) {
   arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
 
-  Str8 vert_path = str8("assets/shaders/pbr_textured.vert");
-  Str8 frag_path = str8("assets/shaders/pbr_textured.frag");
-  str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
-  str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
-  if (!vertex_shader.has_value || !fragment_shader.has_value) {
-    ERROR_EXIT("Failed to load shaders from disk")
-  }
+  const char* vert_path = "assets/shaders/pbr_textured.vert";
+  const char* frag_path = "assets/shaders/pbr_textured.frag";
+  // Str8 vert_path = str8("assets/shaders/pbr_textured.vert");
+  // Str8 frag_path = str8("assets/shaders/pbr_textured.frag");
+  // str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
+  // str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
+  // if (!vertex_shader.has_value || !fragment_shader.has_value) {
+  //   ERROR_EXIT("Failed to load shaders from disk")
+  // }
+  char* vert_shader = string_from_file(vert_path); 
+   char* frag_shader = string_from_file(frag_path); 
 
   ShaderData camera_data = { .get_layout = &Binding_Camera_GetLayout };
   ShaderData model_data = { .get_layout = &Binding_Model_GetLayout };
@@ -44,11 +48,14 @@ GPU_Pipeline* PBR_PipelineCreate(GPU_Renderpass* rpass) {
     .data_layouts = {camera_data,model_data,material_data, lights_data },
     .data_layouts_count = 4,
     .vs = { .debug_name = "PBR (textured) Vertex Shader",
-            .filepath = vert_path,
-            .code = vertex_shader.contents },
+            .filepath = str8(vert_path),
+            // .code = vertex_shader.contents
+            .code = vert_shader
+             },
     .fs = { .debug_name = "PBR (textured) Fragment Shader",
-            .filepath = frag_path,
-            .code = fragment_shader.contents,
+            .filepath = str8(frag_path),
+            .code = frag_shader
+            // .code = fragment_shader.contents,
             },
     .depth_test = true,
     .wireframe = false,

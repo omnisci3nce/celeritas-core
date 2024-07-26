@@ -33,6 +33,10 @@ float skyboxVertices[] = {
   1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f
 };
 
+static const char* faces[6] = { "assets/demo/skybox/right.jpg", "assets/demo/skybox/left.jpg",
+                                "assets/demo/skybox/top.jpg",   "assets/demo/skybox/bottom.jpg",
+                                "assets/demo/skybox/front.jpg", "assets/demo/skybox/back.jpg" };
+
 Skybox Skybox_Create(const char** face_paths, int n) {
   INFO("Creating a skybox");
   assert(n == 6);  // ! we're only supporting a full cubemap for now
@@ -116,6 +120,10 @@ Skybox Skybox_Create(const char** face_paths, int n) {
   GPU_Pipeline* pipeline = GPU_GraphicsPipeline_Create(pipeline_desc, pass);
 
   return (Skybox){ .cube = cube, .texture = handle, .pipeline = pipeline };
+}
+
+Skybox Skybox_Default() {
+  return Skybox_Create(faces, 6);
 }
 
 void Skybox_Draw(Skybox* skybox, Camera camera) {

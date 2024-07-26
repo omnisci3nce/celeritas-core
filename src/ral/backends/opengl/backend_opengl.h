@@ -16,6 +16,7 @@ typedef struct GPU_Swapchain {
 } GPU_Swapchain;
 
 typedef struct GPU_Device {
+  u32 pad;
 } GPU_Device;
 
 typedef struct GPU_PipelineLayout {
@@ -64,6 +65,7 @@ typedef struct GPU_Texture {
 } GPU_Texture;
 
 typedef struct opengl_support {
+  u32 pad;
 } opengl_support;
 
 // u32 shader_create_separate(const char *vert_shader, const char *frag_shader);

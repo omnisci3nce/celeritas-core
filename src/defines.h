@@ -55,7 +55,8 @@ CORE_DEFINE_HANDLE(
     Handle);  // Untyped handle that can be casted to a strongly typed resource handle
 
 #define PUB  // For collecting public APIs to expose in an amalgamation header file
-#define c_static_inline static inline
+// #define c_static_inline static inline
+#define c_static_inline static
 
 #define KB(x) ((size_t)x * 1000)
 #define MB(x) ((size_t)x * 1000 * 1000)

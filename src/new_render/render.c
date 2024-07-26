@@ -4,6 +4,7 @@
 
 #include "render.h"
 #include <assert.h>
+#include "glad/glad.h"
 #include <glfw3.h>
 #include "camera.h"
 #include "core.h"
@@ -73,8 +74,8 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   #endif
 
-    GLFWwindow* window =
-        glfwCreateWindow(config.scr_width, config.scr_height, config.window_name, NULL, NULL);
+    window = glfwCreateWindow(config.scr_width, config.scr_height, config.window_name, NULL, NULL);
+    INFO("Window created");
     if (window == NULL) {
       ERROR("Failed to create GLFW window\n");
       glfwTerminate();
@@ -94,7 +95,7 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
   ren->window = window;
   *out_window = window;
 
-  glfwMakeContextCurrent(ren->window);
+  // glfwMakeContextCurrent(ren->window);
 
   // FIXME
   // DEBUG("Set up GLFW window callbacks");
@@ -117,13 +118,13 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
 
   // create our renderpasses
   ren->shadows = malloc(sizeof(Shadow_Storage));
-  Shadow_Init(ren->shadows, 1024, 1024);
+  // Shadow_Init(ren->shadows, 1024, 1024);
 
   ren->pbr = malloc(sizeof(PBR_Storage));
   PBR_Init(ren->pbr);
 
   ren->terrain = malloc(sizeof(Terrain_Storage));
-  Terrain_Init(ren->terrain);
+  // Terrain_Init(ren->terrain);
 
   return true;
 }
@@ -170,6 +171,7 @@ void Render_RenderEntities(RenderEnt* entities, size_t entity_count) {
   RenderScene scene = ren->scene;
 
   Shadow_Storage* shadow_storage = Render_GetShadowStorage();
+  shadow_storage->enabled = false;
   TextureHandle depthmap =
       shadow_storage->enabled ? Shadow_GetShadowMapTexture(shadow_storage) : INVALID_TEX_HANDLE;
 

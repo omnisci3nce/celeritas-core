@@ -68,10 +68,18 @@ bool ShouldExit() {
 }
 
 void Frame_Begin() {
-  Input_Update(&g_core.input);
+  // Input_Update(&g_core.input);
   Render_FrameBegin(g_core.renderer);
 }
 void Frame_Draw() {}
 void Frame_End() { Render_FrameEnd(g_core.renderer); }
+
+Core* get_global_core() {
+  return &g_core;
+}
+
+GLFWwindow* Core_GetGlfwWindowPtr(Core* core) {
+  return g_core.window;
+}
 
 struct Renderer* Core_GetRenderer(Core* core) { return core->renderer; }

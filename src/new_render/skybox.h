@@ -37,3 +37,5 @@ static ShaderDataLayout Skybox_GetLayout(void* data) {
   }
   return (ShaderDataLayout){ .bindings = { b1 }, .binding_count = 1 };
 }
+
+Skybox Skybox_Default();

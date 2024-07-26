@@ -12,6 +12,7 @@
 #include "render.h"
 #include "render_scene.h"
 #include "render_types.h"
+#include "str.h"
 
 ShaderDataLayout ShadowUniforms_GetLayout(void* data) {
   ShadowUniforms* d = (ShadowUniforms*)data;
@@ -56,6 +57,7 @@ void Shadow_Init(Shadow_Storage* storage, u32 shadowmap_width, u32 shadowmap_hei
   TextureDesc depthmap_desc = { .extents = u32x2(shadowmap_width, shadowmap_height),
                                 .format = TEXTURE_FORMAT_DEPTH_DEFAULT,
                                 .tex_type = TEXTURE_TYPE_2D };
+  DEBUG("Creating depth map texture for shadows");
   TextureHandle depthmap = GPU_TextureCreate(depthmap_desc, false, NULL);
   storage->depth_texture = depthmap;
 
@@ -67,6 +69,8 @@ void Shadow_Init(Shadow_Storage* storage, u32 shadowmap_width, u32 shadowmap_hei
 
   storage->shadowmap_pass = GPU_Renderpass_Create(rpass_desc);
 
+  WARN("About to laod shaders");
+  WARN("Shader paths: %s %s", "assets/shaders/shadows.vert", "assets/shaders/shadows.frag");
   Str8 vert_path = str8("assets/shaders/shadows.vert");
   Str8 frag_path = str8("assets/shaders/shadows.frag");
   str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
