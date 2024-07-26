@@ -13,6 +13,9 @@
 #include "defines.h"
 #include "maths_types.h"
 
+// #undef c_static_inline
+// #define c_static_inline static
+
 // --- Helpers
 #define deg_to_rad(x) (x * 3.14 / 180.0)
 #define MIN(a, b) (a < b ? a : b)
