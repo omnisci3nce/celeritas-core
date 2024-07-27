@@ -273,20 +273,19 @@ void Geometry_Destroy(Geometry* geometry) {
   }
 }
 
-size_t ModelExtractRenderEnts(RenderEnt_darray* entities, ModelHandle model_handle, Mat4 affine, RenderEntityFlags flags) {
-   Model* model = MODEL_GET(model_handle);
-   for (u32 i = 0; i < model->mesh_count; i++) {
+size_t ModelExtractRenderEnts(RenderEnt_darray* entities, ModelHandle model_handle, Mat4 affine,
+                              RenderEntityFlags flags) {
+  Model* model = MODEL_GET(model_handle);
+  for (u32 i = 0; i < model->mesh_count; i++) {
     Mesh* m = Mesh_pool_get(Render_GetMeshPool(), model->meshes[i]);
-    RenderEnt data = {
-      .mesh = model->meshes[i],
-      .material = m->material,
-      .affine = affine,
-      // .bounding_box
-      .flags = flags
-    };
+    RenderEnt data = { .mesh = model->meshes[i],
+                       .material = m->material,
+                       .affine = affine,
+                       // .bounding_box
+                       .flags = flags };
     RenderEnt_darray_push(entities, data);
-   }
-   return model->mesh_count; // how many RenderEnts we pushed
+  }
+  return model->mesh_count;  // how many RenderEnts we pushed
 }
 
 void SetCamera(Camera camera) { g_core.renderer->scene.camera = camera; }
