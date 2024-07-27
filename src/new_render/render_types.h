@@ -5,20 +5,24 @@
 
 #pragma once
 #include "defines.h"
-#include "maths.h"
 #include "maths_types.h"
-#include "ral.h"
+#include "mem.h"
 #include "ral_types.h"
 
 // --- Handles
 CORE_DEFINE_HANDLE(ModelHandle);
-#define ABSENT_MODEL_HANDLE 999999999
+CORE_DEFINE_HANDLE(MaterialHandle);
+CORE_DEFINE_HANDLE(MeshHandle);
+#define INVALID_MODEL_HANDLE ((ModelHandle){ .raw = 9999991 })
+#define INVALID_MATERIAL_HANDLE ((MaterialHandle){ .raw = 9999992 })
+#define INVALID_MESH_HANDLE ((MeshHandle){ .raw = 9999993 })
 
 typedef struct Geometry {
   VertexFormat format;
   Vertex_darray* vertices;
-  bool has_indices;
   u32_darray* indices;
+  bool has_indices;
+  size_t index_count;
 } Geometry;
 
 typedef struct u32_opt {
@@ -29,13 +33,15 @@ typedef struct u32_opt {
 typedef struct Mesh {
   BufferHandle vertex_buffer;
   BufferHandle index_buffer;
-  Geometry geometry;   // NULL means it has been freed CPU-side
-  i32 material_index;  // -1 => no material
-  bool is_uploaded;    // has the data been uploaded to the GPU
+  Geometry geometry;  // NULL means it has been freed CPU-side
+  // i32 material_index;  // -1 => no material
+  MaterialHandle material;
+  bool is_uploaded;  // has the data been uploaded to the GPU
 } Mesh;
-#ifndef TYPED_MESH_ARRAY
+#ifndef TYPED_MESH_CONTAINERS
 KITC_DECL_TYPED_ARRAY(Mesh)
-#define TYPED_MESH_ARRAY
+TYPED_POOL(Mesh, Mesh)
+#define TYPED_MESH_CONTAINERS
 #endif
 
 typedef struct TextureData {
@@ -55,12 +61,12 @@ static const char* material_kind_names[] = { "Blinn Phong", "PBR (Textures)", "P
 
 /**
  * @brief
- * @note mostly references https://google.github.io/filament/Filament.html#materialsystem/standardmodel
+ * @note based on https://google.github.io/filament/Filament.html#materialsystem/standardmodel
  */
 typedef struct Material {
   char name[64];
-  MaterialKind kind; // at the moment all materials are PBR materials
-  Vec3 base_colour; // linear RGB {0,0,0} to {1,1,1}
+  MaterialKind kind;  // at the moment all materials are PBR materials
+  Vec3 base_colour;   // linear RGB {0,0,0} to {1,1,1}
   f32 metallic;
   f32 roughness;
   f32 ambient_occlusion;
@@ -70,16 +76,19 @@ typedef struct Material {
   TextureHandle ambient_occlusion_map;
 } Material;
 
-#ifndef TYPED_MATERIAL_ARRAY
+#ifndef TYPED_MATERIAL_CONTAINERS
 KITC_DECL_TYPED_ARRAY(Material)
-#define TYPED_MATERIAL_ARRAY
+TYPED_POOL(Material, Material)
+#define TYPED_MATERIAL_CONTAINERS
 #endif
 
+/** @brief Convenient wrapper around a number of meshes each with a material */
 typedef struct Model {
   Str8 name;
-  // meshes
-  Mesh_darray* meshes;
-  Material_darray* materials;
+  MeshHandle* meshes;
+  size_t mesh_count;
+  MaterialHandle* materials;
+  size_t material_count;
 } Model;
 #ifndef TYPED_MODEL_ARRAY
 KITC_DECL_TYPED_ARRAY(Model)
@@ -106,13 +115,19 @@ typedef struct DirectionalLight {
 
 // ---
 
-// A renderable 'thing'
+typedef enum RenderEntityFlag {
+  REND_ENT_CASTS_SHADOWS = 1 << 0,
+  REND_ENT_VISIBLE = 1 << 1,
+} RenderEntityFlag;
+typedef u32 RenderEntityFlags;
+
+/** @brief A renderable 'thing' */
 typedef struct RenderEnt {
-  Mesh* mesh;
-  Material* material;
+  MeshHandle mesh;
+  MaterialHandle material;
   Mat4 affine;  // In the future this should be updated by the transform graph
-  // Bbox_3D bounding_box;
-  bool casts_shadows;
+  Bbox_3D bounding_box;
+  RenderEntityFlags flags;
 } RenderEnt;
 
 #ifndef TYPED_RENDERENT_ARRAY

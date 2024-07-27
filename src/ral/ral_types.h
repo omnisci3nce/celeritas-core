@@ -21,7 +21,7 @@ CORE_DEFINE_HANDLE(ShaderHandle);
 CORE_DEFINE_HANDLE(PipelineLayoutHandle);
 CORE_DEFINE_HANDLE(PipelineHandle);
 CORE_DEFINE_HANDLE(RenderpassHandle);
-#define INVALID_TEX_HANDLE ((TextureHandle){ .raw = 9999999 })
+#define INVALID_TEX_HANDLE ((TextureHandle){ .raw = 9999981 })
 
 // --- Buffers
 typedef enum GPU_BufferType {

@@ -53,7 +53,7 @@ typedef struct GPU_Buffer {
   } id;
   union {
     u32 vao;
-    u32 ubo_binding_point
+    u32 ubo_binding_point;
   };  // Optional
   char *name;
   u64 size;

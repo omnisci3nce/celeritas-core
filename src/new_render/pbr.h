@@ -48,7 +48,6 @@ typedef struct PBR_Textures {
   TextureHandle ao_map;
 } PBR_Textures;
 
-
 // --- Internal
 
 typedef struct MaterialMap MaterialMap;

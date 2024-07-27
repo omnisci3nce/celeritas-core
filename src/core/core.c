@@ -78,4 +78,6 @@ Core* get_global_core() { return &g_core; }
 
 GLFWwindow* Core_GetGlfwWindowPtr(Core* core) { return g_core.window; }
 
-struct Renderer* Core_GetRenderer(Core* core) { return core->renderer; }
+struct Renderer* Core_GetRenderer(Core* core) {
+  return core->renderer;
+}

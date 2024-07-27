@@ -48,14 +48,14 @@ static const Vec3 VEC3_NEG_Z = vec3(0.0, 0.0, -1.0);
 static const Vec3 VEC3_ZERO = vec3(0.0, 0.0, 0.0);
 static const Vec3 VEC3_ONES = vec3(1.0, 1.0, 1.0);
 
-c_static_inline void print_vec3(Vec3 v) {
+static void print_vec3(Vec3 v) {
   printf("{ x: %f, y: %f, z: %f )\n", (f64)v.x, (f64)v.y, (f64)v.z);
 }
 
 // TODO: Dimension 2
-c_static_inline Vec2 vec2_create(f32 x, f32 y) { return (Vec2){ x, y }; }
+static Vec2 vec2_create(f32 x, f32 y) { return (Vec2){ x, y }; }
 #define vec2(x, y) ((Vec2){ x, y })
-c_static_inline Vec2 vec2_div(Vec2 a, f32 s) { return (Vec2){ a.x / s, a.y / s }; }
+static Vec2 vec2_div(Vec2 a, f32 s) { return (Vec2){ a.x / s, a.y / s }; }
 
 // TODO: Dimension 4
 static Vec4 vec4_create(f32 x, f32 y, f32 z, f32 w) { return (Vec4){ x, y, z, w }; }
@@ -64,17 +64,15 @@ static Vec4 vec4_create(f32 x, f32 y, f32 z, f32 w) { return (Vec4){ x, y, z, w 
 
 // --- Quaternion Implementations
 
-c_static_inline f32 quat_dot(Quat a, Quat b) {
-  return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
-}
+static f32 quat_dot(Quat a, Quat b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
 
-c_static_inline Quat quat_normalise(Quat a) {
+static Quat quat_normalise(Quat a) {
   f32 length = sqrtf(quat_dot(a, a));  // same as len squared
 
   return (Quat){ a.x / length, a.y / length, a.z / length, a.w / length };
 }
 
-c_static_inline Quat quat_ident() { return (Quat){ .x = 0.0, .y = 0.0, .z = 0.0, .w = 1.0 }; }
+static Quat quat_ident() { return (Quat){ .x = 0.0, .y = 0.0, .z = 0.0, .w = 1.0 }; }
 
 static Quat quat_from_axis_angle(Vec3 axis, f32 angle, bool normalize) {
   const f32 half_angle = 0.5f * angle;
@@ -89,7 +87,7 @@ static Quat quat_from_axis_angle(Vec3 axis, f32 angle, bool normalize) {
 }
 
 // TODO: grok this.
-c_static_inline Quat quat_slerp(Quat a, Quat b, f32 percentage) {
+static Quat quat_slerp(Quat a, Quat b, f32 percentage) {
   Quat out_quaternion;
 
   Quat q0 = quat_normalise(a);
@@ -158,7 +156,7 @@ static Mat4 mat4_scale(f32 scale) {
 }
 
 // TODO: double check this
-c_static_inline Mat4 mat4_rotation(Quat rotation) {
+static Mat4 mat4_rotation(Quat rotation) {
   Mat4 out_matrix = mat4_ident();
   Quat n = quat_normalise(rotation);
 
@@ -313,7 +311,7 @@ static Transform transform_create(Vec3 pos, Quat rot, f32 scale) {
   return (Transform){ .position = pos, .rotation = rot, .scale = scale, .is_dirty = true };
 }
 
-c_static_inline Mat4 transform_to_mat(Transform *tf) {
+static Mat4 transform_to_mat(Transform *tf) {
   Mat4 scale = mat4_scale(tf->scale);
   Mat4 rotation = mat4_rotation(tf->rotation);
   Mat4 translation = mat4_translation(tf->position);

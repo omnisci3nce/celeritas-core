@@ -66,6 +66,7 @@ bool void_pool_is_full(void_pool* pool);
 void* void_pool_get(void_pool* pool, u32 raw_handle);
 void* void_pool_alloc(void_pool* pool, u32* out_raw_handle);
 void void_pool_dealloc(void_pool* pool, u32 raw_handle);
+u32 void_pool_insert(void_pool* pool, void* item);
 // TODO: fn to dealloc from the pointer that was handed out
 
 // TODO: macro that lets us specialise
@@ -88,4 +89,8 @@ void void_pool_dealloc(void_pool* pool, u32 raw_handle);
   }                                                                                 \
   static inline void Name##_pool_dealloc(Name##_pool* pool, Name##Handle handle) {  \
     void_pool_dealloc(&pool->inner, handle.raw);                                    \
-  }\
+  }                                                                                 \
+  static Name##Handle Name##_pool_insert(Name##_pool* pool, T* item) {              \
+    u32 raw_handle = void_pool_insert(pool, item);                                  \
+    return (Name##Handle){ .raw = raw_handle };                                     \
+  }

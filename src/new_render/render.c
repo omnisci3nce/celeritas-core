@@ -23,6 +23,10 @@
 #include <stb_image.h>
 
 #define FRAME_ARENA_SIZE MB(1)
+#define POOL_SIZE_BYTES \
+  MB(10)  // we will reserve 10 megabytes up front to store resource, mesh, and material pools
+#define MAX_MESHES 1024
+#define MAX_MATERIALS 256
 
 extern Core g_core;
 
@@ -37,8 +41,10 @@ struct Renderer {
   PBR_Storage* pbr;
   Shadow_Storage* shadows;
   Terrain_Storage* terrain;
-  // Text_Storage text;
+  // Text_Storage* text;
   ResourcePools* resource_pools;
+  Mesh_pool mesh_pool;
+  Material_pool material_pool;
   arena frame_arena;
   TextureHandle white_1x1;
 };
@@ -53,9 +59,11 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
 
   // init resource pools
   DEBUG("Initialise GPU resource pools");
-  arena pool_arena = arena_create(malloc(1024 * 1024), 1024 * 1024);
+  arena pool_arena = arena_create(malloc(POOL_SIZE_BYTES), POOL_SIZE_BYTES);
   ren->resource_pools = arena_alloc(&pool_arena, sizeof(struct ResourcePools));
   ResourcePools_Init(&pool_arena, ren->resource_pools);
+  ren->mesh_pool = Mesh_pool_create(&pool_arena, MAX_MESHES, sizeof(Mesh));
+  ren->material_pool = Material_pool_create(&pool_arena, MAX_MATERIALS, sizeof(Material));
 
   // GLFW window creation
   GLFWwindow* window;
@@ -288,4 +296,13 @@ TextureHandle Render_GetWhiteTexture() {
 arena* Render_GetFrameArena() {
   Renderer* ren = Core_GetRenderer(&g_core);
   return &ren->frame_arena;
+}
+
+Mesh_pool* Render_GetMeshPool() {
+  Renderer* ren = Core_GetRenderer(&g_core);
+  return &ren->mesh_pool;
+}
+Material_pool* Render_GetMaterialPool() {
+  Renderer* ren = Core_GetRenderer(&g_core);
+  return &ren->material_pool;
 }

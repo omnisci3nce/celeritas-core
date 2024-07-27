@@ -126,3 +126,10 @@ void void_pool_dealloc(void_pool* pool, u32 raw_handle) {
 
   pool->count--;
 }
+
+u32 void_pool_insert(void_pool* pool, void* item) {
+  u32 raw_handle;
+  void* item_dest = void_pool_alloc(pool, &raw_handle);
+  memcpy(item_dest, item, pool->entry_size);
+  return raw_handle;
+}

@@ -1,9 +1,9 @@
 #include "shadows.h"
 #include <string.h>
-#include "core.h"
 #include "file.h"
 #include "glad/glad.h"
 #include "log.h"
+#include "maths.h"
 #include "maths_types.h"
 #include "primitives.h"
 #include "ral_common.h"
@@ -197,12 +197,12 @@ void Shadow_ShadowmapExecute(Shadow_Storage* storage, Mat4 light_space_transform
 
   for (size_t ent_i = 0; ent_i < entity_count; ent_i++) {
     RenderEnt renderable = entities[ent_i];
-    if (renderable.casts_shadows) {
+    if (renderable.flags && REND_ENT_CASTS_SHADOWS) {
       // Model* model = MODEL_GET(renderable.model);
 
       uniforms.model = renderable.affine;  // update the model transform
 
-      Mesh* mesh = renderable.mesh;
+      Mesh* mesh = Mesh_pool_get(Render_GetMeshPool(), renderable.mesh);
       GPU_EncodeBindShaderData(&shadow_encoder, 0, shader_data);
       GPU_EncodeSetVertexBuffer(&shadow_encoder, mesh->vertex_buffer);
       GPU_EncodeSetIndexBuffer(&shadow_encoder, mesh->index_buffer);

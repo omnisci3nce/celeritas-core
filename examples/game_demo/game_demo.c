@@ -60,6 +60,7 @@ int main() {
   // gltf file
   Geometry cube_geo = Geo_CreateCuboid(f32x3(2.0, 2.0, 2.0));
   Mesh crate_mesh = Mesh_Create(&cube_geo, false);  // dont free as we may use later
+  MeshHandle crate_mesh_handle = Mesh_pool_insert(Render_GetMeshPool(), &crate_mesh);
   // TextureHandle albedo_map =
   // TextureLoadFromFile("assets/demo/crate/Wood_Crate_001_basecolor.jpg");
   TextureHandle roughness_map =
@@ -75,6 +76,7 @@ int main() {
   crate_mat.ambient_occlusion_map = ao_map;
   crate_mat.base_colour = vec3(1.0, 1.0, 1.0);
   crate_mat.metallic = 0.0;
+  MaterialHandle crate_mat_handle = Material_pool_insert(Render_GetMaterialPool(), &crate_mat);
 
   // ModelHandle cube_handle = ModelLoad_gltf("assets/models/gltf/Cube/glTF/Cube.gltf", false);
   // ModelHandle cube_handle = ModelLoad_gltf("../../assets/prototyper/prototyper_m.gltf", false);
@@ -84,9 +86,10 @@ int main() {
   //                      .affine = mat4_ident(),
   //                      .casts_shadows = true };
 
-  RenderEnt crate_renderable = {
-    .mesh = &crate_mesh, .material = &crate_mat, .affine = mat4_scale(3.0), .casts_shadows = true
-  };
+  RenderEnt crate_renderable = { .mesh = crate_mesh_handle,
+                                 .material = crate_mat_handle,
+                                 .affine = mat4_scale(3.0),
+                                 .flags = (REND_ENT_CASTS_SHADOWS | REND_ENT_VISIBLE) };
 
   RenderEnt entities[] = { crate_renderable };
   size_t entity_count = 1;

@@ -103,12 +103,16 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
       enc, 3, (ShaderData){ .data = &lights_data, .get_layout = &Binding_Lights_GetLayout });
 
   // TODO: Add shadowmap texture to uniforms
+  Mesh_pool* mesh_pool = Render_GetMeshPool();
+  Material_pool* material_pool = Render_GetMaterialPool();
 
   for (size_t ent_i = 0; ent_i < entity_count; ent_i++) {
     RenderEnt renderable = entities[ent_i];
+    Mesh* mesh = Mesh_pool_get(mesh_pool, renderable.mesh);
+    Material* mat = Material_pool_get(material_pool, renderable.material);
 
     // upload material data
-    PBRMaterialUniforms material_data = { .mat = *renderable.material };
+    PBRMaterialUniforms material_data = { .mat = *mat };
     GPU_EncodeBindShaderData(
         enc, 2, (ShaderData){ .data = &material_data, .get_layout = PBRMaterial_GetLayout });
 
@@ -118,10 +122,10 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
         enc, 1, (ShaderData){ .data = &model_data, .get_layout = &Binding_Model_GetLayout });
 
     // set buffers
-    GPU_EncodeSetVertexBuffer(enc, renderable.mesh->vertex_buffer);
-    GPU_EncodeSetIndexBuffer(enc, renderable.mesh->index_buffer);
+    GPU_EncodeSetVertexBuffer(enc, mesh->vertex_buffer);
+    GPU_EncodeSetIndexBuffer(enc, mesh->index_buffer);
     // draw
-    GPU_EncodeDrawIndexed(enc, renderable.mesh->geometry.indices->len);
+    GPU_EncodeDrawIndexed(enc, mesh->geometry.index_count);
   }
 
   GPU_CmdEncoder_EndRender(enc);

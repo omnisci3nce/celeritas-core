@@ -5,7 +5,7 @@
 #pragma once
 #include "camera.h"
 #include "defines.h"
-#include "ral_types.h"
+#include "ral_impl.h"
 #include "render_types.h"
 
 typedef struct Skybox {

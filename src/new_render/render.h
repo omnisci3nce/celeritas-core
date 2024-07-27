@@ -26,6 +26,9 @@ typedef struct RenderCtx {
   Mat4 projection;
 } RenderCtx;
 
+// #define MESH_GET(h) (Mesh_pool_get(g_core.renderer->meshes, h))
+// #define MATERIAL_GET(h) (Material_pool_get(g_core.renderer->material, h))
+
 // --- Lifecycle
 
 PUB bool Renderer_Init(RendererConfig config, Renderer* renderer, GLFWwindow** out_window,
@@ -80,3 +83,5 @@ Shadow_Storage* Render_GetShadowStorage();
 Terrain_Storage* Render_GetTerrainStorage();
 TextureHandle Render_GetWhiteTexture();
 arena* Render_GetFrameArena();
+Mesh_pool* Render_GetMeshPool();
+Material_pool* Render_GetMaterialPool();

@@ -320,15 +320,16 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 rel
     i32 mat_idx = -1;
     if (primitive.material != NULL) {
       DEBUG("Primitive Material %s", primitive.material->name);
-      for (u32 i = 0; i < Material_darray_len(out_model->materials); i++) {
-        printf("%s vs %s \n", primitive.material->name, out_model->materials->data[i].name);
-        if (strcmp(primitive.material->name, out_model->materials->data[i].name) == 0) {
-          INFO("Found material");
-          mat_idx = i;
-          // mesh.material_index = i;
-          break;
-        }
-      }
+      // FIXME!
+      // for (u32 i = 0; i < Material_darray_len(out_model->materials); i++) {
+      //   printf("%s vs %s \n", primitive.material->name, out_model->materials->data[i].name);
+      //   if (strcmp(primitive.material->name, out_model->materials->data[i].name) == 0) {
+      //     INFO("Found material");
+      //     mat_idx = i;
+      //     // mesh.material_index = i;
+      //     break;
+      //   }
+      // }
     }
 
     TRACE("Vertex data has been loaded");
@@ -417,7 +418,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 rel
       // m.material_index = (u32_opt){ .has_value = mat_idx == 9999, .value = mat_idx };
 
       Mesh m = Mesh_Create(geometry, false);
-      m.material_index = mat_idx;
+      // m.material_index = mat_idx; FIXME
       Mesh_darray_push(out_model->meshes, m);
     }
 

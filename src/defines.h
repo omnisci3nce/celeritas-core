@@ -56,7 +56,7 @@ CORE_DEFINE_HANDLE(
 
 #define PUB  // For collecting public APIs to expose in an amalgamation header file
 // #define c_static_inline static inline
-#define c_static_inline inline
+#define c_static_inline
 
 #define KB(x) ((size_t)x * 1000)
 #define MB(x) ((size_t)x * 1000 * 1000)

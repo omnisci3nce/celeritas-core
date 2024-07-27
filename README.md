@@ -146,3 +146,7 @@ All third-party dependencies are licensed under their own license.
 - [ ] Replace screenshot with one using PBR + skybox + shadows
 - [ ] Update website
 - [ ] Check licenses of assets currently in `assets` folder
+
+## Questions
+
+- How to expose material properties in the immediate mode UI?
