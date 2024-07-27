@@ -45,9 +45,11 @@ Geometry Geo_CreatePlane(f32x2 extents) {
   push_triangle(indices, 2, 1, 0);
   push_triangle(indices, 3, 1, 2);
 
-  Geometry geo = {
-    .format = VERTEX_STATIC_3D, .vertices = vertices, .has_indices = true, .indices = indices
-  };
+  Geometry geo = { .format = VERTEX_STATIC_3D,
+                   .vertices = vertices,
+                   .has_indices = true,
+                   .index_count = indices->len,
+                   .indices = indices };
   // .colour = (rgba){ 0, 0, 0, 1 } };
 
   return geo;
@@ -126,6 +128,7 @@ Geometry Geo_CreateCuboid(f32x3 extents) {
     .format = VERTEX_STATIC_3D,
     .vertices = vertices,
     .has_indices = true,
+    .index_count = indices->len,
     .indices = indices,  // FIXME: make darray methods that return stack allocated struct
   };
 
@@ -233,6 +236,7 @@ Geometry geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_west_li
     .format = VERTEX_STATIC_3D,
     .vertices = vertices,
     .has_indices = true,
+    .index_count = indices->len,
     .indices = indices,
   };
   return geo;

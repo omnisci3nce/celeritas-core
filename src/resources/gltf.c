@@ -41,6 +41,8 @@ KITC_DECL_TYPED_ARRAY(face)
 bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 relative_path,
                          Model *out_model, bool invert_textures_y);
 
+size_t GLTF_LoadMaterials(cgltf_data *data, Str8 relative_path, Material_darray *out_materials);
+
 ModelHandle ModelLoad_gltf(const char *path, bool invert_texture_y) {
   size_t arena_size = MB(1);
   arena scratch = arena_create(malloc(arena_size), arena_size);
@@ -55,8 +57,6 @@ ModelHandle ModelLoad_gltf(const char *path, bool invert_texture_y) {
   ModelHandle handle;
   Model *model = Model_pool_alloc(&g_core.models, &handle);
   model->name = Str8_cstr_view(path);
-  model->meshes = Mesh_darray_new(1);
-  model->materials = Material_darray_new(1);
 
   bool success =
       model_load_gltf_str(file_string, path, relative_path.path, model, invert_texture_y);
@@ -132,6 +132,10 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 rel
   Vec2_darray *tmp_uvs = Vec2_darray_new(1000);
   Vec4u_darray *tmp_joint_indices = Vec4u_darray_new(1000);
   Vec4_darray *tmp_weights = Vec4_darray_new(1000);
+  Material_darray *tmp_materials = Material_darray_new(1);
+  Mesh_darray *tmp_meshes = Mesh_darray_new(1);
+  u32_darray *tmp_material_indexes = u32_darray_new(1);
+
   // FIXME
   // joint_darray *tmp_joints = joint_darray_new(256);
   // vertex_bone_data_darray *tmp_vertex_bone_data = vertex_bone_data_darray_new(1000);
@@ -197,239 +201,174 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 rel
   //   }
 
   // --- Materials
-  size_t num_materials = data->materials_count;
-  TRACE("Num materials %d", num_materials);
-  for (size_t m = 0; m < num_materials; m++) {
-    cgltf_material gltf_material = data->materials[m];
-    cgltf_pbr_metallic_roughness pbr = gltf_material.pbr_metallic_roughness;
-
-    Material our_material = PBRMaterialDefault();
-
-    TRACE("Has PBR metallic roughness ");
-    // we will use base color texture like blinn phong
-    cgltf_texture_view albedo_tex_view = pbr.base_color_texture;  // albedo
-    if (albedo_tex_view.texture != NULL) {
-      char albedo_map_path[1024];
-      snprintf(albedo_map_path, sizeof(albedo_map_path), "%s/%s", relative_path.buf,
-               albedo_tex_view.texture->image->uri);
-      our_material.albedo_map = TextureLoadFromFile(albedo_map_path);
-    } else {
-      WARN("GLTF model has no albedo map");
-    }
-
-    cgltf_texture_view metal_rough_tex_view = pbr.metallic_roughness_texture;
-    if (metal_rough_tex_view.texture != NULL) {
-      char metal_rough_map_path[1024];
-      snprintf(metal_rough_map_path, sizeof(metal_rough_map_path), "%s/%s", relative_path.buf,
-               metal_rough_tex_view.texture->image->uri);
-      our_material.metallic_roughness_map = TextureLoadFromFile(metal_rough_map_path);
-    } else {
-      WARN("GLTF model has no metal/roughness map");
-    }
-
-    cgltf_texture_view normal_tex_view = gltf_material.normal_texture;
-    if (normal_tex_view.texture != NULL) {
-      char normal_map_path[1024];
-      snprintf(normal_map_path, sizeof(normal_map_path), "%s/%s", relative_path.buf,
-               normal_tex_view.texture->image->uri);
-      our_material.normal_map = TextureLoadFromFile(normal_map_path);
-    } else {
-      WARN("GLTF model has no normal map");
-    }
-
-    // TextureHandle albedo_map = TextureLoadFromFile(albedo_map_path);
-    // TextureHandle metal_roughness_map = TextureLoadFromFile(metal_rough_map_path);
-    // TextureHandle normal_map = TextureLoadFromFile(normal_map_path);
-
-    // Material our_material = {
-    //   .kind = MAT_PBR,
-    //   // .metal_roughness_combined = true,
-    //   .albedo_map = albedo_map,
-    //   .metallic_roughness_map = metal_roughness_map,
-    //   .normal_map= normal_map,
-    //   .ambient_occlusion_map = INVALID_TEX_HANDLE,
-
-    // };
-
-    // our_material.name = malloc(strlen(gltf_material.name) + 1);
-    u32 string_length = strlen(gltf_material.name) + 1;
-    assert(string_length < 64);
-    strcpy(our_material.name, gltf_material.name);
-
-    Material_darray_push(out_model->materials, our_material);
-  }
+  size_t num_materials = GLTF_LoadMaterials(data, relative_path, tmp_materials);
 
   // --- Meshes
   size_t num_meshes = data->meshes_count;
   TRACE("Num meshes %d", num_meshes);
   for (size_t m = 0; m < num_meshes; m++) {
-    cgltf_primitive primitive = data->meshes[m].primitives[0];
-    DEBUG("Found %d attributes", primitive.attributes_count);
+    printf("Primitive count %d\n", data->meshes[m].primitives_count);
+    for (size_t prim_i = 0; prim_i < data->meshes[m].primitives_count; prim_i++) {
+      DEBUG("Primitive %d\n", prim_i);
 
-    for (cgltf_size a = 0; a < data->meshes[m].primitives[0].attributes_count; a++) {
-      cgltf_attribute attribute = data->meshes[m].primitives[0].attributes[a];
-      if (attribute.type == cgltf_attribute_type_position) {
-        cgltf_accessor *accessor = attribute.data;
-        load_position_components(tmp_positions, accessor);
-      } else if (attribute.type == cgltf_attribute_type_normal) {
-        cgltf_accessor *accessor = attribute.data;
-        load_normal_components(tmp_normals, accessor);
-      } else if (attribute.type == cgltf_attribute_type_texcoord) {
-        cgltf_accessor *accessor = attribute.data;
-        load_texcoord_components(tmp_uvs, accessor);
-      } else if (attribute.type == cgltf_attribute_type_joints) {
-        // FIXME: joints
-        // TRACE("Load joint indices from accessor");
-        // cgltf_accessor *accessor = attribute.data;
-        // assert(accessor->component_type == cgltf_component_type_r_16u);
-        // assert(accessor->type == cgltf_type_vec4);
-        // vec4u joint_indices;
-        // vec4 joints_as_floats;
-        // for (cgltf_size v = 0; v < accessor->count; ++v) {
-        //   cgltf_accessor_read_float(accessor, v, &joints_as_floats.x, 4);
-        //   joint_indices.x = (u32)joints_as_floats.x;
-        //   joint_indices.y = (u32)joints_as_floats.y;
-        //   joint_indices.z = (u32)joints_as_floats.z;
-        //   joint_indices.w = (u32)joints_as_floats.w;
-        //   printf("Joints affecting vertex %d :  %d %d %d %d\n", v, joint_indices.x,
-        //   joint_indices.y,
-        //          joint_indices.z, joint_indices.w);
-        //   vec4u_darray_push(tmp_joint_indices, joint_indices);
-        // }
+      cgltf_primitive primitive = data->meshes[m].primitives[prim_i];
+      DEBUG("Found %d attributes", primitive.attributes_count);
 
-      } else if (attribute.type == cgltf_attribute_type_weights) {
-        // FIXME: weights
-        // TRACE("Load joint weights from accessor");
-        // cgltf_accessor *accessor = attribute.data;
-        // assert(accessor->component_type == cgltf_component_type_r_32f);
-        // assert(accessor->type == cgltf_type_vec4);
+      for (cgltf_size a = 0; a < primitive.attributes_count; a++) {
+        cgltf_attribute attribute = primitive.attributes[a];
+        if (attribute.type == cgltf_attribute_type_position) {
+          cgltf_accessor *accessor = attribute.data;
+          load_position_components(tmp_positions, accessor);
+        } else if (attribute.type == cgltf_attribute_type_normal) {
+          cgltf_accessor *accessor = attribute.data;
+          load_normal_components(tmp_normals, accessor);
+        } else if (attribute.type == cgltf_attribute_type_texcoord) {
+          cgltf_accessor *accessor = attribute.data;
+          load_texcoord_components(tmp_uvs, accessor);
+        } else if (attribute.type == cgltf_attribute_type_joints) {
+          // FIXME: joints
+          // TRACE("Load joint indices from accessor");
+          // cgltf_accessor *accessor = attribute.data;
+          // assert(accessor->component_type == cgltf_component_type_r_16u);
+          // assert(accessor->type == cgltf_type_vec4);
+          // vec4u joint_indices;
+          // vec4 joints_as_floats;
+          // for (cgltf_size v = 0; v < accessor->count; ++v) {
+          //   cgltf_accessor_read_float(accessor, v, &joints_as_floats.x, 4);
+          //   joint_indices.x = (u32)joints_as_floats.x;
+          //   joint_indices.y = (u32)joints_as_floats.y;
+          //   joint_indices.z = (u32)joints_as_floats.z;
+          //   joint_indices.w = (u32)joints_as_floats.w;
+          //   printf("Joints affecting vertex %d :  %d %d %d %d\n", v, joint_indices.x,
+          //   joint_indices.y,
+          //          joint_indices.z, joint_indices.w);
+          //   vec4u_darray_push(tmp_joint_indices, joint_indices);
+          // }
 
-        // for (cgltf_size v = 0; v < accessor->count; ++v) {
-        //   vec4 weights;
-        //   cgltf_accessor_read_float(accessor, v, &weights.x, 4);
-        //   printf("Weights affecting vertex %d : %f %f %f %f\n", v, weights.x, weights.y,
-        //   weights.z,
-        //          weights.w);
-        //   vec4_darray_push(tmp_weights, weights);
-        // }
-      } else {
-        WARN("Unhandled cgltf_attribute_type: %s. skipping..", attribute.name);
+        } else if (attribute.type == cgltf_attribute_type_weights) {
+          // FIXME: weights
+          // TRACE("Load joint weights from accessor");
+          // cgltf_accessor *accessor = attribute.data;
+          // assert(accessor->component_type == cgltf_component_type_r_32f);
+          // assert(accessor->type == cgltf_type_vec4);
+
+          // for (cgltf_size v = 0; v < accessor->count; ++v) {
+          //   vec4 weights;
+          //   cgltf_accessor_read_float(accessor, v, &weights.x, 4);
+          //   printf("Weights affecting vertex %d : %f %f %f %f\n", v, weights.x, weights.y,
+          //   weights.z,
+          //          weights.w);
+          //   vec4_darray_push(tmp_weights, weights);
+          // }
+        } else {
+          WARN("Unhandled cgltf_attribute_type: %s. skipping..", attribute.name);
+        }
       }
-    }
-    // mesh.vertex_bone_data = vertex_bone_data_darray_new(1);
-    i32 mat_idx = -1;
-    if (primitive.material != NULL) {
-      DEBUG("Primitive Material %s", primitive.material->name);
-      // FIXME!
-      // for (u32 i = 0; i < Material_darray_len(out_model->materials); i++) {
-      //   printf("%s vs %s \n", primitive.material->name, out_model->materials->data[i].name);
-      //   if (strcmp(primitive.material->name, out_model->materials->data[i].name) == 0) {
-      //     INFO("Found material");
-      //     mat_idx = i;
-      //     // mesh.material_index = i;
-      //     break;
-      //   }
-      // }
-    }
-
-    TRACE("Vertex data has been loaded");
-
-    //     // FIXME
-    //     // if (is_skinned) {
-    //     //   mesh.is_skinned = true;
-    //     //   // mesh.vertex_bone_data = vertex_bone_data_darray_new(tmp_joint_indices->len);
-    //     //   mesh.bones = joint_darray_new(tmp_joints->len);
-    //     //   for (int i = 0; i < tmp_joint_indices->len; i++) {
-    //     //     vertex_bone_data data;
-    //     //     data.joints = tmp_joint_indices->data[i];
-    //     //     data.weights = tmp_weights->data[i];
-    //     //     vertex_bone_data_darray_push(tmp_vertex_bone_data,
-    //     //                                  data);  // Push the temp data that aligns with raw
-    //     vertices
-    //     //   }
-    //     //   for (int i = 0; i < tmp_joints->len; i++) {
-    //     //     joint data = tmp_joints->data[i];
-    //     //     joint_darray_push(mesh.bones, data);
-    //     //   }
-    //     // }
-
-    bool has_indices = false;
-    Vertex_darray *geo_vertices = Vertex_darray_new(3);
-    u32_darray *geo_indices = u32_darray_new(0);
-
-    // Store vertices
-    printf("Positions %d Normals %d UVs %d\n", tmp_positions->len, tmp_normals->len, tmp_uvs->len);
-    assert(tmp_positions->len == tmp_normals->len);
-    assert(tmp_normals->len == tmp_uvs->len);
-    for (u32 v_i = 0; v_i < tmp_positions->len; v_i++) {
-      Vertex v = { .static_3d = {
-                       .position = tmp_positions->data[v_i],
-                       .normal = tmp_normals->data[v_i],
-                       .tex_coords = tmp_uvs->data[v_i],
-                   } };
-      Vertex_darray_push(geo_vertices, v);
-    }
-
-    // Store indices
-    cgltf_accessor *indices = primitive.indices;
-    if (primitive.indices > 0) {
-      WARN("indices! %d", indices->count);
-      has_indices = true;
-
-      // store indices
-      for (cgltf_size i = 0; i < indices->count; ++i) {
-        cgltf_uint ei;
-        cgltf_accessor_read_uint(indices, i, &ei, 1);
-        u32_darray_push(geo_indices, ei);
+      // mesh.vertex_bone_data = vertex_bone_data_darray_new(1);
+      i32 mat_idx = -1;
+      if (primitive.material != NULL) {
+        DEBUG("Primitive Material %s", primitive.material->name);
+        // FIXME!
+        for (u32 i = 0; i < Material_darray_len(tmp_materials); i++) {
+          printf("%s vs %s \n", primitive.material->name, tmp_materials->data[i].name);
+          if (strcmp(primitive.material->name, tmp_materials->data[i].name) == 0) {
+            INFO("Found material");
+            mat_idx = i;
+            u32_darray_push(tmp_material_indexes, mat_idx);
+            break;
+          }
+        }
       }
 
-      // fetch and store vertices for each index
-      // for (cgltf_size i = 0; i < indices->count; ++i) {
-      //   Vertex vert;
-      //   cgltf_uint index = mesh.indices[i];
-      //   vert.position = tmp_positions->data[index];
-      //   vert.normal = tmp_normals->data[index];
-      //   vert.uv = tmp_uvs->data[index];
-      //   vertex_darray_push(mesh.vertices, vert);
+      TRACE("Vertex data has been loaded");
 
-      // if (is_skinned) {
-      //   vertex_bone_data vbd = tmp_vertex_bone_data->data[index];  // create a copy
-      //   vertex_bone_data_darray_push(mesh.vertex_bone_data, vbd);
-      // }
-      // for each vertex do the bone data
-      // }
-      // } else {
-      // has_indices = false;
-      // return false;  // TODO: handle this
-      // }
+      //     // FIXME
+      //     // if (is_skinned) {
+      //     //   mesh.is_skinned = true;
+      //     //   // mesh.vertex_bone_data = vertex_bone_data_darray_new(tmp_joint_indices->len);
+      //     //   mesh.bones = joint_darray_new(tmp_joints->len);
+      //     //   for (int i = 0; i < tmp_joint_indices->len; i++) {
+      //     //     vertex_bone_data data;
+      //     //     data.joints = tmp_joint_indices->data[i];
+      //     //     data.weights = tmp_weights->data[i];
+      //     //     vertex_bone_data_darray_push(tmp_vertex_bone_data,
+      //     //                                  data);  // Push the temp data that aligns with raw
+      //     vertices
+      //     //   }
+      //     //   for (int i = 0; i < tmp_joints->len; i++) {
+      //     //     joint data = tmp_joints->data[i];
+      //     //     joint_darray_push(mesh.bones, data);
+      //     //   }
+      //     // }
 
-      Geometry *geometry = malloc(sizeof(Geometry));
-      geometry->format = VERTEX_STATIC_3D;
-      geometry->has_indices = true;
-      geometry->vertices = geo_vertices;
-      geometry->indices = geo_indices;
-      // geometry->format = VERTEX_STATIC_3D;
-      // geometry->colour = (rgba){ 1, 1, 1, 1 };
-      // geometry->vertices = geo_vertices;
-      // geometry->indices = geo_indices;
-      // geometry->has_indices = has_indices;
+      bool has_indices = false;
+      Vertex_darray *geo_vertices = Vertex_darray_new(3);
+      u32_darray *geo_indices = u32_darray_new(0);
 
-      // mesh m = mesh_create(geometry, true);
-      // m.material_index = (u32_opt){ .has_value = mat_idx == 9999, .value = mat_idx };
+      // Store vertices
+      printf("Positions %d Normals %d UVs %d\n", tmp_positions->len, tmp_normals->len,
+             tmp_uvs->len);
+      assert(tmp_positions->len == tmp_normals->len);
+      assert(tmp_normals->len == tmp_uvs->len);
+      for (u32 v_i = 0; v_i < tmp_positions->len; v_i++) {
+        Vertex v = { .static_3d = {
+                         .position = tmp_positions->data[v_i],
+                         .normal = tmp_normals->data[v_i],
+                         .tex_coords = tmp_uvs->data[v_i],
+                     } };
+        Vertex_darray_push(geo_vertices, v);
+      }
 
-      Mesh m = Mesh_Create(geometry, false);
-      // m.material_index = mat_idx; FIXME
-      Mesh_darray_push(out_model->meshes, m);
+      // Store indices
+      cgltf_accessor *indices = primitive.indices;
+      if (primitive.indices > 0) {
+        WARN("indices! %d", indices->count);
+        has_indices = true;
+
+        // store indices
+        for (cgltf_size i = 0; i < indices->count; ++i) {
+          cgltf_uint ei;
+          cgltf_accessor_read_uint(indices, i, &ei, 1);
+          u32_darray_push(geo_indices, ei);
+        }
+
+        // fetch and store vertices for each index
+        // for (cgltf_size i = 0; i < indices->count; ++i) {
+        //   Vertex vert;
+        //   cgltf_uint index = mesh.indices[i];
+        //   vert.position = tmp_positions->data[index];
+        //   vert.normal = tmp_normals->data[index];
+        //   vert.uv = tmp_uvs->data[index];
+        //   vertex_darray_push(mesh.vertices, vert);
+
+        // if (is_skinned) {
+        //   vertex_bone_data vbd = tmp_vertex_bone_data->data[index];  // create a copy
+        //   vertex_bone_data_darray_push(mesh.vertex_bone_data, vbd);
+        // }
+        // for each vertex do the bone data
+        // }
+        // } else {
+        // has_indices = false;
+        // return false;  // TODO: handle this
+        // }
+
+        Geometry *geometry = malloc(sizeof(Geometry));
+        geometry->format = VERTEX_STATIC_3D;
+        geometry->has_indices = true;
+        geometry->vertices = geo_vertices;
+        geometry->indices = geo_indices;
+        geometry->index_count = geo_indices->len;
+
+        Mesh m = Mesh_Create(geometry, false);
+        Mesh_darray_push(tmp_meshes, m);
+
+        Vec3_darray_clear(tmp_positions);
+        Vec3_darray_clear(tmp_normals);
+        Vec2_darray_clear(tmp_uvs);
+        Vec4u_darray_clear(tmp_joint_indices);
+        Vec4_darray_clear(tmp_weights);
+      }
     }
-
-    //     // clear data for each mesh
-    //     vec3_darray_clear(tmp_positions);
-    //     vec3_darray_clear(tmp_normals);
-    //     vec2_darray_free(tmp_uvs);
-    //     vec4u_darray_clear(tmp_joint_indices);
-    //     vec4_darray_clear(tmp_weights);
-    //     joint_darray_clear(tmp_joints);
-    //   }
 
     //   for (int i = 0; i < out_model->meshes->len; i++) {
     //     u32 mat_idx = out_model->meshes->data[i].material_index;
@@ -437,6 +376,7 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 rel
     //            out_model->materials->data[mat_idx].name);
     //   }
 
+    // TODO: GLTF_LoadAnimations()
     //   // Animations
     //   TRACE("Num animations %d", data->animations_count);
     //   size_t num_animations = data->animations_count;
@@ -557,7 +497,97 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 rel
     //     }
   }
 
+  num_meshes = tmp_meshes->len;
+
+  // we now have an array of meshes, materials, and the material which each mesh should get
+  out_model->meshes = malloc(num_meshes * sizeof(MeshHandle));
+  out_model->mesh_count = num_meshes;
+  out_model->materials = malloc(num_materials * sizeof(MaterialHandle));
+  out_model->material_count = num_materials;
+
+  MaterialHandle *mat_handles = calloc(num_materials, sizeof(MaterialHandle));
+  for (u32 mat_i = 0; mat_i < num_materials; mat_i++) {
+    mat_handles[mat_i] =
+        Material_pool_insert(Render_GetMaterialPool(), &tmp_materials->data[mat_i]);
+  }
+  memcpy(out_model->materials, mat_handles, num_materials * sizeof(MaterialHandle));
+
+  for (u32 mesh_i = 0; mesh_i < num_meshes; mesh_i++) {
+    u32 mat_idx = tmp_material_indexes->data[mesh_i];
+    tmp_meshes->data[mesh_i].material = mat_handles[mat_idx];
+    MeshHandle mesh = Mesh_pool_insert(Render_GetMeshPool(), &tmp_meshes->data[mesh_i]);
+    out_model->meshes[mesh_i] = mesh;
+  }
+
+  free(mat_handles);
+
   return true;
+}
+
+const char *bool_yes_no(bool pred) { return pred ? "Yes" : "No"; }
+
+// Loads all materials
+size_t GLTF_LoadMaterials(cgltf_data *data, Str8 relative_path, Material_darray *out_materials) {
+  size_t num_materials = data->materials_count;
+  TRACE("Num materials %d", num_materials);
+  for (size_t m = 0; m < num_materials; m++) {
+    cgltf_material gltf_material = data->materials[m];
+    TRACE("Loading material '%s'", gltf_material.name);
+    cgltf_pbr_metallic_roughness pbr = gltf_material.pbr_metallic_roughness;
+
+    Material our_material = PBRMaterialDefault();  // focusing on PBR materials for now
+
+    our_material.base_colour =
+        vec3(pbr.base_color_factor[0], pbr.base_color_factor[1], pbr.base_color_factor[2]);
+    our_material.metallic = pbr.metallic_factor;
+    our_material.roughness = pbr.roughness_factor;
+
+    // -- albedo / base colour
+    cgltf_texture_view albedo_tex_view = pbr.base_color_texture;
+    bool has_albedo_texture = albedo_tex_view.texture != NULL;
+    TRACE("Has PBR base colour texture?    %s", bool_yes_no(has_albedo_texture));
+    printf("Base colour factor: %f %f %f\n", pbr.base_color_factor[0], pbr.base_color_factor[1],
+           pbr.base_color_factor[2]);
+    if (has_albedo_texture) {
+      char albedo_map_path[1024];
+      snprintf(albedo_map_path, sizeof(albedo_map_path), "%s/%s", relative_path.buf,
+               albedo_tex_view.texture->image->uri);
+      our_material.albedo_map = TextureLoadFromFile(albedo_map_path);
+    } else {
+      our_material.albedo_map = Render_GetWhiteTexture();
+      WARN("GLTF model has no albedo map");
+    }
+
+    // -- metallic
+    cgltf_texture_view metal_rough_tex_view = pbr.metallic_roughness_texture;
+    // bool has_metal_
+    if (metal_rough_tex_view.texture != NULL) {
+      char metal_rough_map_path[1024];
+      snprintf(metal_rough_map_path, sizeof(metal_rough_map_path), "%s/%s", relative_path.buf,
+               metal_rough_tex_view.texture->image->uri);
+      our_material.metallic_roughness_map = TextureLoadFromFile(metal_rough_map_path);
+    } else {
+      WARN("GLTF model has no metal/roughness map");
+    }
+
+    cgltf_texture_view normal_tex_view = gltf_material.normal_texture;
+    if (normal_tex_view.texture != NULL) {
+      char normal_map_path[1024];
+      snprintf(normal_map_path, sizeof(normal_map_path), "%s/%s", relative_path.buf,
+               normal_tex_view.texture->image->uri);
+      our_material.normal_map = TextureLoadFromFile(normal_map_path);
+    } else {
+      WARN("GLTF model has no normal map");
+    }
+
+    u32 string_length = strlen(gltf_material.name) + 1;
+    assert(string_length < 64);
+    strcpy(our_material.name, gltf_material.name);
+
+    Material_darray_push(out_materials, our_material);
+  }
+
+  return out_materials->len;
 }
 
 /*

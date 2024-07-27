@@ -33,7 +33,7 @@ page_start = """
 
 page_header = """
 <header>
-    <h1>CELERITAS CORE DOCS</h1>
+    <h1>CELERITAS CORE API DOCS</h1>
 </header>
 """
 
@@ -56,9 +56,11 @@ def emit_function_sig(signature: str) -> str:
     """
 
 categories = {
-    "RAL": "src/ral",
+    "Core": "src/core",
     "Render": "src/new_render",
-    "Maths": "src/maths"
+    "Maths": "src/maths",
+    "RAL": "src/ral",
+    "Systems": "src/systems",
 }
 
 def find_pub_functions_in_folder(folder_path):
@@ -85,6 +87,8 @@ def find_pub_functions_in_file(file_path):
         signature = match.group(0)
         if signature.startswith("PUB "):
             signature = signature[4:]
+        if signature.startswith("c_static_inline "):
+            signature = signature[16:]
 
         print(signature)
         functions.append(signature)

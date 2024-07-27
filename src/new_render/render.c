@@ -37,6 +37,7 @@ struct Renderer {
   GPU_Swapchain swapchain;
   GPU_Renderpass* default_renderpass;
   bool frame_aborted;
+  RenderMode render_mode;
   RenderScene scene;
   PBR_Storage* pbr;
   Shadow_Storage* shadows;
@@ -54,6 +55,7 @@ Renderer* get_renderer() { return g_core.renderer; }
 bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window,
                    GLFWwindow* optional_window) {
   INFO("Renderer init");
+  ren->render_mode = RENDER_MODE_DEFAULT;
 
   ren->frame_arena = arena_create(malloc(FRAME_ARENA_SIZE), FRAME_ARENA_SIZE);
 
@@ -293,6 +295,7 @@ TextureHandle Render_GetWhiteTexture() {
   return ren->white_1x1;
 }
 
+/** @return an arena allocator that gets cleared at the beginning of every render frame */
 arena* Render_GetFrameArena() {
   Renderer* ren = Core_GetRenderer(&g_core);
   return &ren->frame_arena;
@@ -305,4 +308,9 @@ Mesh_pool* Render_GetMeshPool() {
 Material_pool* Render_GetMaterialPool() {
   Renderer* ren = Core_GetRenderer(&g_core);
   return &ren->material_pool;
+}
+
+void Render_SetRenderMode(RenderMode mode) {
+  Renderer* ren = Core_GetRenderer(&g_core);
+  ren->render_mode = mode;
 }

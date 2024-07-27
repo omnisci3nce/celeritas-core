@@ -15,7 +15,7 @@ typedef struct Camera {
 } Camera;
 
 /** @brief create a camera */
-Camera Camera_Create(Vec3 pos, Vec3 front, Vec3 up, f32 fov);
+PUB Camera Camera_Create(Vec3 pos, Vec3 front, Vec3 up, f32 fov);
 
 /**
  * @brief Get 3D camera transform matrix
@@ -31,7 +31,7 @@ PUB Mat4 Camera_View2D(Camera* c);  // TODO: 2D cameras
 
 struct Input_State;
 
-void Camera_Update(Camera* camera);
+PUB void FlyCamera_Update(Camera* camera);
 
 // TODO: (HIGH) Basic reusable camera controls
 /*

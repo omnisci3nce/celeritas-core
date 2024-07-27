@@ -17,6 +17,13 @@ CORE_DEFINE_HANDLE(MeshHandle);
 #define INVALID_MATERIAL_HANDLE ((MaterialHandle){ .raw = 9999992 })
 #define INVALID_MESH_HANDLE ((MeshHandle){ .raw = 9999993 })
 
+typedef enum RenderMode {
+  RENDER_MODE_DEFAULT,
+  RENDER_MODE_WIREFRAME,
+  RENDER_MODE_WIREFRAME_ON_LIT,
+  RENDER_MODE_COUNT
+} RenderMode;
+
 typedef struct Geometry {
   VertexFormat format;
   Vertex_darray* vertices;

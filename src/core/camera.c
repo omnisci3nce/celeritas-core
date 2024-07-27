@@ -4,6 +4,9 @@
 #include "keys.h"
 #include "maths.h"
 
+#define CAMERA_SPEED 0.2
+#define CAMERA_SENSITIVITY 0.5
+
 Camera Camera_Create(Vec3 pos, Vec3 front, Vec3 up, f32 fov) {
   Camera c = { .position = pos, .front = front, .up = up, .fov = fov };
   return c;
@@ -22,12 +25,12 @@ Mat4 Camera_ViewProj(Camera *c, f32 lens_height, f32 lens_width, Mat4 *out_view,
   return mat4_mult(view, proj);
 }
 
-void Camera_Update(Camera *camera) {
+void FlyCamera_Update(Camera *camera) {
   static f32 yaw = 0.0;
   static f32 pitch = 0.0;
 
   // Keyboard
-  f32 speed = 0.25;
+  f32 speed = CAMERA_SPEED;
   Vec3 horizontal = vec3_cross(camera->front, camera->up);
   if (key_is_pressed(KEYCODE_A) || key_is_pressed(KEYCODE_KEY_LEFT)) {
     Vec3 displacement = vec3_mult(horizontal, -speed);
@@ -62,7 +65,7 @@ void Camera_Update(Camera *camera) {
     f32 x_offset = mouse.x_delta;
     f32 y_offset = -mouse.y_delta;
 
-    f32 sensitivity = 0.7f;  // change this value to your liking
+    f32 sensitivity = CAMERA_SENSITIVITY;  // change this value to your liking
     x_offset *= sensitivity;
     y_offset *= sensitivity;
 

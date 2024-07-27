@@ -20,9 +20,197 @@
 <main>
 
 <header>
-    <h1>CELERITAS CORE DOCS</h1>
+    <h1>CELERITAS CORE API DOCS</h1>
 </header>
-<h3>RAL</h3><ul class="category-list">
+<h3>Core</h3><ul class="category-list">
+    <li class="signature">
+    <pre><code class="language-c">Camera Camera_Create(Vec3 pos, Vec3 front, Vec3 up, f32 fov)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Mat4 Camera_View2D(Camera* c)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void FlyCamera_Update(Camera* camera)</code></pre>
+    </li>
+    </ul><h3>Render</h3><ul class="category-list">
+    <li class="signature">
+    <pre><code class="language-c">Skybox Skybox_Create(const char** face_paths, int n)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Skybox_Draw(Skybox* skybox, Camera camera)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void SetCamera(Camera camera)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void SetMainLight(DirectionalLight light)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void PBR_Init(PBR_Storage* storage)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Material PBRMaterialDefault()</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">ShaderDataLayout PBRMaterial_GetLayout(void* data)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Shadow_Init(Shadow_Storage* storage, u32 shadowmap_width, u32 shadowmap_height)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Shadow_Run(RenderEnt* entities, size_t entity_count)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Shadow_DrawDebugQuad()</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">TextureHandle Shadow_GetShadowMapTexture(Shadow_Storage* storage)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Immdraw_Init(Immdraw_Storage* storage)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Immdraw_Shutdown(Immdraw_Storage* storage)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Immdraw_Plane(Transform tf, Vec4 colour, bool wireframe)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Immdraw_Cuboid(Transform tf, Vec4 colour, bool wireframe)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Immdraw_Sphere(Transform tf, f32 size, Vec4 colour, bool wireframe)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Immdraw_TransformGizmo(Transform tf, f32 size)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void EncodeDrawModel(Handle model, Mat4 transform)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void EncodeDrawMesh(Mesh* mesh, Material* material, Mat4 affine)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Renderer_Shutdown(Renderer* renderer)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">size_t Renderer_GetMemReqs()</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Render_FrameBegin(Renderer* renderer)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Render_FrameEnd(Renderer* renderer)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Render_RenderEntities(RenderEnt* entities, size_t entity_count)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">TextureData TextureDataLoad(const char* path, bool invert_y)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void TextureUpload(TextureHandle handle, size_t n_bytes, const void* data)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">TextureHandle TextureLoadFromFile(const char* path)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">ModelHandle ModelLoad(const char* debug_name, const char* filepath)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Mesh Mesh_Create(Geometry* geometry, bool free_on_upload)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Mesh_Delete(Mesh* mesh)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void DrawMesh(Mesh* mesh, Material* material, Mat4 model)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">void Render_DrawTerrain()</code></pre>
+    </li>
+    </ul><h3>Maths</h3><ul class="category-list">
+    <li class="signature">
+    <pre><code class="language-c">Vec3 vec3_normalise(Vec3 a)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Vec3 vec3_create(f32 x, f32 y, f32 z)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Vec3 vec3_add(Vec3 a, Vec3 b)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Vec3 vec3_sub(Vec3 a, Vec3 b)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Vec3 vec3_mult(Vec3 a, f32 s)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Vec3 vec3_div(Vec3 a, f32 s)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">f32 vec3_len_squared(Vec3 a)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">f32 vec3_len(Vec3 a)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Vec3 vec3_negate(Vec3 a)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Vec3 vec3_normalise(Vec3 a)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">f32 vec3_dot(Vec3 a, Vec3 b)</code></pre>
+    </li>
+    
+    <li class="signature">
+    <pre><code class="language-c">Vec3 vec3_cross(Vec3 a, Vec3 b)</code></pre>
+    </li>
+    </ul><h3>RAL</h3><ul class="category-list">
     <li class="signature">
     <pre><code class="language-c">void GPU_Renderpass_Destroy(GPU_Renderpass* pass)</code></pre>
     </li>
@@ -57,10 +245,6 @@
     
     <li class="signature">
     <pre><code class="language-c">void GPU_QueueSubmit(GPU_CmdBuffer* cmd_buffer)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">BufferHandle GPU_BufferCreate(u64 size, GPU_BufferType buf_type, GPU_BufferFlags flags, const void* data)</code></pre>
     </li>
     
     <li class="signature">
@@ -113,134 +297,6 @@
     
     <li class="signature">
     <pre><code class="language-c">void GPU_Backend_EndFrame()</code></pre>
-    </li>
-    </ul><h3>Render</h3><ul class="category-list">
-    <li class="signature">
-    <pre><code class="language-c">void EncodeDrawModel(Handle model, Mat4 transform)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void EncodeDrawMesh(Mesh* mesh, Material* material, Mat4 affine)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Immdraw_Init(Immdraw_Storage* storage)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Immdraw_Shutdown(Immdraw_Storage* storage)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Immdraw_Plane(Transform tf, Vec4 colour, bool wireframe)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Immdraw_Cuboid(Transform tf, Vec4 colour, bool wireframe)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Immdraw_Sphere(Transform tf, f32 size, Vec4 colour, bool wireframe)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Immdraw_TransformGizmo(Transform tf, f32 size)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void PBR_Init(PBR_Storage* storage)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">bool Renderer_Init(RendererConfig config, Renderer* renderer)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Renderer_Shutdown(Renderer* renderer)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">size_t Renderer_GetMemReqs()</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Render_FrameBegin(Renderer* renderer)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Render_FrameEnd(Renderer* renderer)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Render_RenderEntities(RenderEnt* entities, size_t entity_count)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">TextureHandle TextureUpload()</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">ModelHandle ModelLoad(const char* debug_name, const char* filepath)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">Mesh Mesh_Create(Geometry* geometry, bool free_on_upload)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Mesh_Delete(Mesh* mesh)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void DrawMesh(Mesh* mesh, Material* material, Mat4 model)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Render_DrawTerrain()</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void SetCamera(Camera camera)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void SetPointLight(PointLight light)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Shadow_Init(Shadow_Storage* storage, u32x2 shadowmap_extents)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Shadow_Run(Shadow_Storage* storage, RenderEnt* entities, size_t entity_count)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">Handle Shadow_GetShadowMapTexture(Shadow_Storage* storage)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void CubeMapData_Load(const char** face_paths, int n)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void CubeMapData_Free(CubeMapData* cubemap)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">TextureHandle CubeMapData_Upload(CubeMapData* cubemap)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">Skybox Skybox_Create(const char** face_paths, int n)</code></pre>
-    </li>
-    
-    <li class="signature">
-    <pre><code class="language-c">void Skybox_Draw(Skybox* skybox)</code></pre>
-    </li>
-    </ul><h3>Maths</h3><ul class="category-list">
-    <li class="signature">
-    <pre><code class="language-c">static inline Vec3 vec3_create(f32 x, f32 y, f32 z)</code></pre>
     </li>
     </ul>
 </main>

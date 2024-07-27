@@ -85,3 +85,6 @@ TextureHandle Render_GetWhiteTexture();
 arena* Render_GetFrameArena();
 Mesh_pool* Render_GetMeshPool();
 Material_pool* Render_GetMaterialPool();
+
+// --- Setters
+void Render_SetRenderMode(RenderMode mode);

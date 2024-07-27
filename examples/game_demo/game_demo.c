@@ -34,7 +34,7 @@ int main() {
   // TODO: Move camera with model
 
   // --- Render Scene
-  Vec3 camera_pos = vec3(0.0, 5.0, 0.0);
+  Vec3 camera_pos = vec3(0.0, 1.0, 2.0);
   Camera cam = Camera_Create(camera_pos, VEC3_NEG_Z, VEC3_Y, 45.0);
   SetCamera(cam);  // update the camera in RenderScene
 
@@ -79,20 +79,24 @@ int main() {
   MaterialHandle crate_mat_handle = Material_pool_insert(Render_GetMaterialPool(), &crate_mat);
 
   // ModelHandle cube_handle = ModelLoad_gltf("assets/models/gltf/Cube/glTF/Cube.gltf", false);
-  // ModelHandle cube_handle = ModelLoad_gltf("../../assets/prototyper/prototyper_m.gltf", false);
-  // Model* Cube = MODEL_GET(cube_handle);
-  // RenderEnt cube_r = { .mesh = &Cube->meshes->data[0],
-  //                      .material = &Cube->materials->data[0],
-  //                      .affine = mat4_ident(),
-  //                      .casts_shadows = true };
+  ModelHandle cube_handle = ModelLoad_gltf("../../assets/prototyper/prototyper_m.gltf", false);
+  Model* Cube = MODEL_GET(cube_handle);
+  RenderEnt proto_1 = { .mesh = Cube->meshes[0],
+                        .material = Cube->materials[0],
+                        .affine = mat4_ident(),
+                        .flags = (REND_ENT_CASTS_SHADOWS | REND_ENT_VISIBLE) };
+  RenderEnt proto_2 = { .mesh = Cube->meshes[1],
+                        .material = Cube->materials[1],
+                        .affine = mat4_ident(),
+                        .flags = (REND_ENT_CASTS_SHADOWS | REND_ENT_VISIBLE) };
 
   RenderEnt crate_renderable = { .mesh = crate_mesh_handle,
                                  .material = crate_mat_handle,
                                  .affine = mat4_scale(3.0),
                                  .flags = (REND_ENT_CASTS_SHADOWS | REND_ENT_VISIBLE) };
 
-  RenderEnt entities[] = { crate_renderable };
-  size_t entity_count = 1;
+  RenderEnt entities[] = { proto_1, proto_2, crate_renderable };
+  size_t entity_count = 2;
 
   // --- Transforms
   // TransformHierarchy* scene_tree =  TransformHierarchy_Create();
@@ -107,7 +111,7 @@ int main() {
       draw_debug = !draw_debug;
     }
 
-    Camera_Update(&cam);
+    FlyCamera_Update(&cam);
     SetCamera(cam);
 
     // BEGIN Draw calls

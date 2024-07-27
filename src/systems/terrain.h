@@ -13,8 +13,6 @@ Future:
 
 #include "defines.h"
 #include "maths_types.h"
-#include "mem.h"
-#include "ral.h"
 #include "ral_types.h"
 #include "render.h"
 #include "str.h"
@@ -57,16 +55,12 @@ PUB Heightmap Heightmap_FromPerlin(/* TODO: perlin noise generation parameters *
 
 PUB bool Terrain_IsActive();  // checks whether we have a loaded heightmap and it's being rendered
 
-// --- Internal
-
-// TODO: void terrain_system_render_hmap(renderer* rend, terrain_state* state);
-
 /** @brief Get the height (the Y component) for a vertex at a particular coordinate in the heightmap
  */
-f32 Heightmap_HeightXZ(const Heightmap* hmap, u32 x, u32 z);
+PUB f32 Heightmap_HeightXZ(const Heightmap* hmap, u32 x, u32 z);
 
 /** @brief Calculate the normal vector of a vertex at a particular coordinate in the heightmap */
-Vec3 Heightmap_NormalXZ(const Heightmap* hmap, f32 x, f32 z);
+PUB Vec3 Heightmap_NormalXZ(const Heightmap* hmap, f32 x, f32 z);
 
 // /** @brief Generate the `geometry_data` for a heightmap ready to be uploaded to the GPU */
 // Geometry geo_heightmap(arena* a, Heightmap heightmap);
