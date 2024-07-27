@@ -9,6 +9,7 @@
 #include "core.h"
 #include "log.h"
 #include "maths.h"
+#include "maths_types.h"
 #include "mem.h"
 #include "pbr.h"
 #include "ral_common.h"
@@ -185,12 +186,14 @@ void Render_RenderEntities(RenderEnt* entities, size_t entity_count) {
   Renderer* ren = get_renderer();
   RenderScene scene = ren->scene;
 
+  // FUTURE: Depth pre-pass
+
   Shadow_Storage* shadow_storage = Render_GetShadowStorage();
   shadow_storage->enabled = false;
-  TextureHandle depthmap =
+  TextureHandle sun_shadowmap =
       shadow_storage->enabled ? Shadow_GetShadowMapTexture(shadow_storage) : INVALID_TEX_HANDLE;
 
-  PBR_Execute(ren->pbr, scene.camera, depthmap, entities, entity_count);
+  PBR_Execute(ren->pbr, scene.camera, sun_shadowmap, entities, entity_count);
 }
 
 TextureData TextureDataLoad(const char* path, bool invert_y) {
@@ -268,6 +271,22 @@ void Geometry_Destroy(Geometry* geometry) {
   if (geometry->vertices) {
     Vertex_darray_free(geometry->vertices);
   }
+}
+
+size_t ModelExtractRenderEnts(RenderEnt_darray* entities, ModelHandle model_handle, Mat4 affine, RenderEntityFlags flags) {
+   Model* model = MODEL_GET(model_handle);
+   for (u32 i = 0; i < model->mesh_count; i++) {
+    Mesh* m = Mesh_pool_get(Render_GetMeshPool(), model->meshes[i]);
+    RenderEnt data = {
+      .mesh = model->meshes[i],
+      .material = m->material,
+      .affine = affine,
+      // .bounding_box
+      .flags = flags
+    };
+    RenderEnt_darray_push(entities, data);
+   }
+   return model->mesh_count; // how many RenderEnts we pushed
 }
 
 void SetCamera(Camera camera) { g_core.renderer->scene.camera = camera; }

@@ -94,7 +94,7 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
       lights_data = { .pointLights = {
                           // FIXME: add lights to our RenderScene structure. for now these are
                           // hardcoded
-                          (pbr_point_light){ .pos = vec3(0.0, 2.0, 2.0), .color = light_color },
+                          (pbr_point_light){ .pos = vec3(0.0, 6.0, 6.0), .color = light_color },
                           (pbr_point_light){ .pos = vec3(-10, 10, 10), .color = light_color },
                           (pbr_point_light){ .pos = vec3(10, -10, 10), .color = light_color },
                           (pbr_point_light){ .pos = vec3(-10, -10, 10), .color = light_color },

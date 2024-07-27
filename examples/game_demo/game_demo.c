@@ -77,27 +77,11 @@ int main() {
   crate_mat.base_colour = vec3(1.0, 1.0, 1.0);
   crate_mat.metallic = 0.0;
   MaterialHandle crate_mat_handle = Material_pool_insert(Render_GetMaterialPool(), &crate_mat);
-
   // ModelHandle cube_handle = ModelLoad_gltf("assets/models/gltf/Cube/glTF/Cube.gltf", false);
-  ModelHandle cube_handle = ModelLoad_gltf("../../assets/prototyper/prototyper_m.gltf", false);
-  Model* Cube = MODEL_GET(cube_handle);
-  RenderEnt proto_1 = { .mesh = Cube->meshes[0],
-                        .material = Cube->materials[0],
-                        .affine = mat4_ident(),
-                        .flags = (REND_ENT_CASTS_SHADOWS | REND_ENT_VISIBLE) };
-  RenderEnt proto_2 = { .mesh = Cube->meshes[1],
-                        .material = Cube->materials[1],
-                        .affine = mat4_ident(),
-                        .flags = (REND_ENT_CASTS_SHADOWS | REND_ENT_VISIBLE) };
-
-  RenderEnt crate_renderable = { .mesh = crate_mesh_handle,
-                                 .material = crate_mat_handle,
-                                 .affine = mat4_scale(3.0),
-                                 .flags = (REND_ENT_CASTS_SHADOWS | REND_ENT_VISIBLE) };
-
-  RenderEnt entities[] = { proto_1, proto_2, crate_renderable };
-  size_t entity_count = 2;
-
+  ModelHandle cube_handle = ModelLoad_gltf("assets/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf", false);
+ 
+  RenderEnt_darray* render_entities = RenderEnt_darray_new(1);
+  
   // --- Transforms
   // TransformHierarchy* scene_tree =  TransformHierarchy_Create();
   // TODO: parent camera to model - to start with I can just manually update it every frame
@@ -115,14 +99,15 @@ int main() {
     SetCamera(cam);
 
     // BEGIN Draw calls
+    RenderEnt_darray_clear(render_entities); // we re-extract every frame
+    Quat rot = quat_from_axis_angle(VEC3_X, -HALF_PI, true);
+    ModelExtractRenderEnts(render_entities, cube_handle, mat4_rotation(rot), REND_ENT_CASTS_SHADOWS);
 
     // Shadow_Run(entities, entity_count);
-    // printf("cam pos: %f %f %f cam frontL %f %f %f\n", cam.position.x, cam.position.y,
-    //        cam.position.z, cam.front.x, cam.front.y, cam.front.z);
 
     if (draw_debug) {
       // draw the player model with shadows
-      Render_RenderEntities(entities, entity_count);
+      Render_RenderEntities(render_entities->data, render_entities->len);
       // Render_DrawTerrain();
       Skybox_Draw(&skybox, cam);
     } else {

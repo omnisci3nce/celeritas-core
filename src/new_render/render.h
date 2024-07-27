@@ -62,6 +62,9 @@ PUB Mesh Mesh_Create(Geometry* geometry, bool free_on_upload);
 PUB void Mesh_Delete(Mesh* mesh);
 void Geometry_Destroy(Geometry* geometry);
 
+/** @brief gets render entities from a model and pushes them into a dynamic array for rendering */
+size_t ModelExtractRenderEnts(RenderEnt_darray* entities, ModelHandle model_handle, Mat4 affine, RenderEntityFlags flags);
+
 // --- Drawing
 
 // NOTE: These functions use the globally bound camera in RenderScene
