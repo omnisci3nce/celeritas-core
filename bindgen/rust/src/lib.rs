@@ -36,7 +36,7 @@ impl SerializableScene {
     pub fn store_to_file(&self, filepath: &Path) {
         let mut file = File::create(filepath).expect("creation failed");
         let json = serde_json::to_string(&self).expect("serialize failed");
-        file.write(&json.as_bytes()).expect("writing failed");
+        file.write(json.as_bytes()).expect("writing failed");
     }
     /// TODO: docs
     pub fn load_from_file(filepath: &Path) -> Self {

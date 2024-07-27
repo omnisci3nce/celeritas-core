@@ -4,6 +4,4 @@
 
 use serde::{Deserialize, Serialize};
 
-pub mod egui_utils;
-
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));

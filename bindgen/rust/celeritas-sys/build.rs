@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use bindgen::callbacks::ParseCallbacks;
 
-const serializable_types: &[&'static str] = &[
+const SERIALIZABLE_TYPES: &[&'static str] = &[
     "Vec2",
     "Vec3",
     "Vec4",
@@ -17,7 +17,7 @@ const serializable_types: &[&'static str] = &[
 struct DeriveSerialize;
 impl ParseCallbacks for DeriveSerialize {
     fn add_derives(&self, info: &bindgen::callbacks::DeriveInfo<'_>) -> Vec<String> {
-        if (serializable_types.contains(&info.name)) {
+        if SERIALIZABLE_TYPES.contains(&info.name) {
             vec!["Serialize".to_string(), "Deserialize".to_string()]
         } else {
             vec![]
