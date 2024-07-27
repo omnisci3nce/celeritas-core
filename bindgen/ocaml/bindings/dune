@@ -1,0 +1,13 @@
+(library
+ (name bindings)
+ (libraries bindgen))
+
+(rule
+ (alias gen_bindings)
+ (deps celeritas.h)
+ (targets bindings_sys.ml caml_bindings.c)
+ (action 
+  (run 
+   %{bin:ocaml-bindgen} celeritas.h bindings)
+ )
+ (mode (promote (until-clean))))
