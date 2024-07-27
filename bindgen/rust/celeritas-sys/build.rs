@@ -9,6 +9,7 @@ const SERIALIZABLE_TYPES: &[&'static str] = &[
     "Vec4",
     "Mat4",
     "Quat",
+    "Transform",
     "DirectionalLight",
     "PointLight",
 ];

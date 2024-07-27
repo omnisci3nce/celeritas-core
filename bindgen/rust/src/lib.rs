@@ -3,6 +3,9 @@
 #![warn(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+pub use celeritas_sys as ffi;
+
+/// Commonly used types
 pub mod prelude;
 
 use std::{
@@ -11,8 +14,7 @@ use std::{
     path::Path,
 };
 
-pub use celeritas_sys as ffi;
-use celeritas_sys::{DirectionalLight, PointLight, Vec3};
+use celeritas_sys::{DirectionalLight, PointLight, Transform, Vec3};
 use serde::{Deserialize, Serialize};
 
 /// Wrapper around a string that is the path to a gltf model **relative** to the configured
@@ -20,13 +22,21 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ModelPath(String);
 
+///
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ModelNode {
+    model_path: ModelPath,
+    transform: Transform
+}
+
 /// Scene that can be saved and loaded from disk
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SerializableScene {
+    /// main light
     pub sun: DirectionalLight,
     pub point_lights: [Option<PointLight>; 4],
     pub camera_orientation: (Vec3, Vec3),
-    pub models: Vec<ModelPath>,
+    pub models: Vec<ModelNode>,
 }
 
 // Runtime Scene <-> Serialized Scene

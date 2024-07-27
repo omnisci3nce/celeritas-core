@@ -137,7 +137,7 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
   PBR_Init(ren->pbr);
 
   ren->terrain = malloc(sizeof(Terrain_Storage));
-  // Terrain_Init(ren->terrain);
+  Terrain_Init(ren->terrain);
 
   // load default textures
   ren->white_1x1 = TextureLoadFromFile("assets/textures/white1x1.png");

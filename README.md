@@ -58,7 +58,9 @@ All third-party dependencies are licensed under their own license.
     - [ ] SIMD 4x4 multiply
   - [ ] Quaternion functions (not fully fleshed out)
 - [x] Camera
+  - [x] Fly camera
   - [ ] Swap to quaternion for internal orientation
+  - [ ] Arcball / Orbit camera
 - [ ] Transform gizmo
 - [ ] Mesh generation
   - [x] Cube

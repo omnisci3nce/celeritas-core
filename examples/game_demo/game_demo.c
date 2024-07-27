@@ -47,15 +47,11 @@ int main() {
   Heightmap hmap = Heightmap_FromImage(str8("assets/test_heightmap.png"));
   Terrain_Storage* terrain = Render_GetTerrainStorage();
   Terrain_LoadHeightmap(terrain, hmap, 2.0, false);
-  // assert(Terrain_IsActive());
 
   // --- Skybox
   Skybox skybox = Skybox_Create(faces, 6);
 
   // --- Models
-  // ModelHandle player_model = ModelLoad_gltf("Player Model", "assets/demo/player.gltf");
-  // ModelHandle sword_model = ModelLoad("Sword Model", "assets/demo/sword.gltf");
-
   // create a wooden crate - loads mesh and material directly rather than via loading a model from a
   // gltf file
   Geometry cube_geo = Geo_CreateCuboid(f32x3(2.0, 2.0, 2.0));
@@ -114,7 +110,7 @@ int main() {
       Shadow_DrawDebugQuad();
     }
 
-    // Terrain_Draw(terrain);
+    Terrain_Draw(terrain);
 
     // END Draw calls
     Frame_Draw();
