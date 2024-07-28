@@ -55,3 +55,10 @@ impl SerializableScene {
         serde_json::from_str(&contents).expect("Should be deserializable")
     }
 }
+
+#[derive(Debug, Clone)]
+pub enum Light {
+    Point(ffi::PointLight),
+    Directional(ffi::DirectionalLight),
+    // Spot(ffi::Spotlight)
+}

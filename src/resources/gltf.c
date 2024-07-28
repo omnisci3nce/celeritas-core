@@ -38,9 +38,6 @@ KITC_DECL_TYPED_ARRAY(Vec4)
 KITC_DECL_TYPED_ARRAY(face)
 // KITC_DECL_TYPED_ARRAY(joint)
 
-bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 relative_path,
-                         Model *out_model, bool invert_textures_y);
-
 size_t GLTF_LoadMaterials(cgltf_data *data, Str8 relative_path, Material_darray *out_materials);
 
 ModelHandle ModelLoad_gltf(const char *path, bool invert_texture_y) {
