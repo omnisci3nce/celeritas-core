@@ -56,7 +56,7 @@ impl SerializableScene {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Light {
     Point(ffi::PointLight),
     Directional(ffi::DirectionalLight),
