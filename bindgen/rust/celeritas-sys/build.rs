@@ -33,8 +33,9 @@ fn main() {
     // TODO: we need to look based on OS
     // println!("cargo:rustc-link-search=../../build/windows/x64/debug");
     
-    let static_lib_path = std::env::var("CELERITAS_CORE_LIB")
-        .unwrap_or("../../../build/macosx/arm64/debug".to_string());
+    let static_lib_path = "/Users/josh/code/CodenameVentus/deps/celeritas-core/build/macosx/arm64/debug".to_string();
+    // let static_lib_path = std::env::var("CELERITAS_CORE_LIB")
+    //     .unwrap_or("../../../build/macosx/arm64/debug".to_string());
 
     println!("cargo:rustc-link-search={static_lib_path}");
 
