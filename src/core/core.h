@@ -10,6 +10,7 @@
 
 TYPED_POOL(Model, Model)
 #define MODEL_GET(h) (Model_pool_get(&g_core.models, h))
+Model* Model_Get(ModelHandle h);
 
 typedef struct GLFWwindow GLFWwindow;
 

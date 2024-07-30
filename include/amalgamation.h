@@ -16,3 +16,4 @@
 #include "maths.h"
 #include "skybox.h"
 #include "shadows.h"
+#include "loaders.h"

@@ -1,7 +1,7 @@
 //! Wrapper around the RAL code in celeritas-core
 
 use celeritas_sys::{
-    BufferHandle, GPU_Buffer, GPU_CmdEncoder, GPU_CmdEncoder_BeginRender, GPU_CmdEncoder_EndRender, GPU_GetDefaultEncoder
+    BufferHandle, GPU_CmdEncoder, GPU_CmdEncoder_BeginRender, GPU_CmdEncoder_EndRender, GPU_GetDefaultEncoder
 };
 
 pub struct FrameRenderEncoder(*mut GPU_CmdEncoder);

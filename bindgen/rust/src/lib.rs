@@ -21,14 +21,14 @@ use serde::{Deserialize, Serialize};
 
 /// Wrapper around a string that is the path to a gltf model **relative** to the configured
 /// `ASSETS` folder
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ModelPath(String);
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModelPath(pub String);
 
 ///
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ModelNode {
-    model_path: ModelPath,
-    transform: Transform,
+    pub model_path: ModelPath,
+    pub transform: Transform,
 }
 
 /// Scene that can be saved and loaded from disk
