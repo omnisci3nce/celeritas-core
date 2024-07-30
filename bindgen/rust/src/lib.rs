@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelPath(pub String);
 
-///
+#[deprecated]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ModelNode {
     pub model_path: ModelPath,
