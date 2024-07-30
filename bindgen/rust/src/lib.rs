@@ -8,6 +8,8 @@ pub use celeritas_sys as ffi;
 /// Commonly used types
 pub mod prelude;
 
+pub mod ral;
+
 use std::{
     fs::{self, File},
     io::Write,
@@ -26,7 +28,7 @@ pub struct ModelPath(String);
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ModelNode {
     model_path: ModelPath,
-    transform: Transform
+    transform: Transform,
 }
 
 /// Scene that can be saved and loaded from disk
