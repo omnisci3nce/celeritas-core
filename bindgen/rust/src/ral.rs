@@ -1,7 +1,8 @@
 //! Wrapper around the RAL code in celeritas-core
 
 use celeritas_sys::{
-    BufferHandle, GPU_CmdEncoder, GPU_CmdEncoder_BeginRender, GPU_CmdEncoder_EndRender, GPU_GetDefaultEncoder
+    BufferHandle, GPU_CmdEncoder, GPU_CmdEncoder_BeginRender, GPU_CmdEncoder_EndRender,
+    GPU_GetDefaultEncoder,
 };
 
 pub struct FrameRenderEncoder(*mut GPU_CmdEncoder);
@@ -30,13 +31,13 @@ impl Drop for FrameRenderEncoder {
 
 impl FrameRenderEncoder {
     pub fn set_vertex_buffer(&self, buf: BufferHandle) {
-      // TODO: Get buffer ptr from handle
-      // TODO: assert that buffer type is vertex
+        // TODO: Get buffer ptr from handle
+        // TODO: assert that buffer type is vertex
         todo!()
     }
     pub fn set_index_buffer(&self, buf: BufferHandle) {
-      // TODO: Get buffer ptr from handle
-      // TODO: assert that buffer type is index
+        // TODO: Get buffer ptr from handle
+        // TODO: assert that buffer type is index
         todo!()
     }
 }
@@ -52,10 +53,12 @@ pub enum PrimitiveTopology {
 impl From<celeritas_sys::PrimitiveTopology> for PrimitiveTopology {
     fn from(value: celeritas_sys::PrimitiveTopology) -> Self {
         match value {
-          celeritas_sys::PrimitiveTopology_PRIMITIVE_TOPOLOGY_POINT => PrimitiveTopology::Point,
-          celeritas_sys::PrimitiveTopology_PRIMITIVE_TOPOLOGY_LINE => PrimitiveTopology::Line,
-          celeritas_sys::PrimitiveTopology_PRIMITIVE_TOPOLOGY_TRIANGLE => PrimitiveTopology::Triangle,
-          _ => unreachable!("enum conversion should be infallible")
+            celeritas_sys::PrimitiveTopology_PRIMITIVE_TOPOLOGY_POINT => PrimitiveTopology::Point,
+            celeritas_sys::PrimitiveTopology_PRIMITIVE_TOPOLOGY_LINE => PrimitiveTopology::Line,
+            celeritas_sys::PrimitiveTopology_PRIMITIVE_TOPOLOGY_TRIANGLE => {
+                PrimitiveTopology::Triangle
+            }
+            _ => unreachable!("enum conversion should be infallible"),
         }
     }
 }
