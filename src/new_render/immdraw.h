@@ -5,8 +5,14 @@
 #pragma once
 #include "defines.h"
 #include "maths_types.h"
+#include "ral_impl.h"
+#include "render_types.h"
 
 typedef struct Immdraw_Storage {
+  Mesh plane;
+  Mesh cube;
+  Mesh sphere;
+  GPU_Pipeline* colour_pipeline;
 } Immdraw_Storage;
 
 // --- Public API

@@ -3,7 +3,9 @@
 use std::{os::raw::c_void, ptr};
 
 use celeritas_sys::{
-    BufferHandle, GPU_CmdEncoder, GPU_CmdEncoder_BeginRender, GPU_CmdEncoder_EndRender, GPU_GetDefaultEncoder, GPU_GetDefaultRenderpass, GPU_GraphicsPipeline_Create, GraphicsPipelineDesc, ShaderData
+    BufferHandle, GPU_CmdEncoder, GPU_CmdEncoder_BeginRender, GPU_CmdEncoder_EndRender,
+    GPU_GetDefaultEncoder, GPU_GetDefaultRenderpass, GPU_GraphicsPipeline_Create,
+    GraphicsPipelineDesc, ShaderData,
 };
 
 /// Holds a pointer to the raw `GPU_CmdEncoder`
@@ -50,7 +52,6 @@ impl FrameRenderEncoder {
 pub struct PipelineBuilder {
     renderpass: Option<RenderPass>,
     data_layouts: Vec<()>,
-
 }
 impl PipelineBuilder {
     // pub fn add_
@@ -58,7 +59,7 @@ impl PipelineBuilder {
     pub fn build(self) -> Pipeline {
         let shad = ShaderData {
             get_layout: todo!(),
-            data: ptr::null_mut()
+            data: ptr::null_mut(),
         };
         let desc = GraphicsPipelineDesc {
             debug_name: todo!(),
@@ -70,10 +71,14 @@ impl PipelineBuilder {
             wireframe: todo!(),
             depth_test: todo!(),
         };
-        let p = unsafe { GPU_GraphicsPipeline_Create(
-            todo!(),
-            self.renderpass.map(|r| r.0).unwrap_or(GPU_GetDefaultRenderpass())
-        ) };
+        let p = unsafe {
+            GPU_GraphicsPipeline_Create(
+                todo!(),
+                self.renderpass
+                    .map(|r| r.0)
+                    .unwrap_or(GPU_GetDefaultRenderpass()),
+            )
+        };
         Pipeline(p)
     }
 }
@@ -81,7 +86,7 @@ impl PipelineBuilder {
 //     fn default() -> Self {
 //         Self {
 //             renderpass: Default::default(),
-            
+
 //         }
 //     }
 // }

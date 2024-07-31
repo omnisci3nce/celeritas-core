@@ -114,7 +114,7 @@ int main() {
     }
 
     // Terrain_Draw(terrain);
-    Grid_Draw();
+    // Grid_Draw();
 
     // END Draw calls
     Frame_Draw();

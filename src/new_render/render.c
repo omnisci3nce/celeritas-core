@@ -5,9 +5,11 @@
 #include "render.h"
 #include <assert.h>
 #include <glfw3.h>
+#include <stdio.h>
 #include "camera.h"
 #include "core.h"
 #include "grid.h"
+#include "immdraw.h"
 #include "log.h"
 #include "maths.h"
 #include "maths_types.h"
@@ -45,6 +47,7 @@ struct Renderer {
   Shadow_Storage* shadows;
   Terrain_Storage* terrain;
   Grid_Storage* grid;
+  Immdraw_Storage* immediate;
   // Text_Storage* text;
   ResourcePools* resource_pools;
   Mesh_pool mesh_pool;
@@ -133,16 +136,19 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
 
   // create our renderpasses
   ren->shadows = malloc(sizeof(Shadow_Storage));
-  // Shadow_Init(ren->shadows, 1024, 1024);
+  Shadow_Init(ren->shadows, 1024, 1024);
 
-  ren->pbr = malloc(sizeof(PBR_Storage));
+  ren->pbr = calloc(1, sizeof(PBR_Storage));
   PBR_Init(ren->pbr);
 
-  ren->terrain = malloc(sizeof(Terrain_Storage));
+  ren->terrain = calloc(1, sizeof(Terrain_Storage));
   Terrain_Init(ren->terrain);
 
   ren->grid = calloc(1, sizeof(Grid_Storage));
   Grid_Init(ren->grid);
+
+  ren->immediate = calloc(1, sizeof(Immdraw_Storage));
+  Immdraw_Init(ren->immediate);
 
   // load default textures
   ren->white_1x1 = TextureLoadFromFile("assets/textures/white1x1.png");
