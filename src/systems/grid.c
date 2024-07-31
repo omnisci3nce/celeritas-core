@@ -8,8 +8,8 @@
 #include "ral_impl.h"
 #include "ral_types.h"
 #include "render.h"
-#include "render_types.h"
 #include "render_scene.h"
+#include "render_types.h"
 #include "shader_layouts.h"
 
 void Grid_Init(Grid_Storage* storage) {
@@ -18,8 +18,9 @@ void Grid_Init(Grid_Storage* storage) {
   Mesh plane_mesh = Mesh_Create(&plane_geo, true);
   storage->plane_vertices = plane_mesh.vertex_buffer;
 
-  u32 indices[6] = { 5,4,3,2,1,0};
-  storage->plane_indices = GPU_BufferCreate(6 * sizeof(u32),BUFFER_INDEX, BUFFER_FLAG_GPU, &indices);
+  u32 indices[6] = { 5, 4, 3, 2, 1, 0 };
+  storage->plane_indices =
+      GPU_BufferCreate(6 * sizeof(u32), BUFFER_INDEX, BUFFER_FLAG_GPU, &indices);
 
   GPU_RenderpassDesc rpass_desc = {
     .default_framebuffer = true,
@@ -63,8 +64,7 @@ void Grid_Draw() {
   Grid_Execute(grid);
 }
 
-void Grid_Execute(Grid_Storage *storage) {
-  WARN("Draw Grid");
+void Grid_Execute(Grid_Storage* storage) {
   RenderScene* scene = Render_GetScene();
   GPU_CmdEncoder* enc = GPU_GetDefaultEncoder();
   GPU_CmdEncoder_BeginRender(enc, storage->renderpass);

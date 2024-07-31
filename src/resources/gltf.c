@@ -118,6 +118,24 @@ void load_texcoord_components(Vec2_darray *texcoords, cgltf_accessor *accessor) 
   }
 }
 
+void load_joint_index_components(Vec4u_darray *joint_indices, cgltf_accessor *accessor) {
+  TRACE("Load joint indices from accessor");
+  CASSERT(accessor->component_type == cgltf_component_type_r_16u);
+  CASSERT_MSG(accessor->type == cgltf_type_vec4, "Joint indices should be a vec4");
+  Vec4u tmp_joint_index;
+  Vec4 joints_as_floats;
+  for (cgltf_size v = 0; v < accessor->count; ++v) {
+    cgltf_accessor_read_float(accessor, v, &joints_as_floats.x, 4);
+    tmp_joint_index.x = (u32)joints_as_floats.x;
+    tmp_joint_index.y = (u32)joints_as_floats.y;
+    tmp_joint_index.z = (u32)joints_as_floats.z;
+    tmp_joint_index.w = (u32)joints_as_floats.w;
+    printf("Joints affecting vertex %d :  %d %d %d %d\n", v, tmp_joint_index.x, tmp_joint_index.y,
+           tmp_joint_index.z, tmp_joint_index.w);
+    Vec4u_darray_push(joint_indices, tmp_joint_index);
+  }
+}
+
 bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 relative_path,
                          Model *out_model, bool invert_textures_y) {
   TRACE("Load GLTF from string");
@@ -222,25 +240,9 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 rel
           cgltf_accessor *accessor = attribute.data;
           load_texcoord_components(tmp_uvs, accessor);
         } else if (attribute.type == cgltf_attribute_type_joints) {
-          // FIXME: joints
-          // TRACE("Load joint indices from accessor");
-          // cgltf_accessor *accessor = attribute.data;
-          // assert(accessor->component_type == cgltf_component_type_r_16u);
-          // assert(accessor->type == cgltf_type_vec4);
-          // vec4u joint_indices;
-          // vec4 joints_as_floats;
-          // for (cgltf_size v = 0; v < accessor->count; ++v) {
-          //   cgltf_accessor_read_float(accessor, v, &joints_as_floats.x, 4);
-          //   joint_indices.x = (u32)joints_as_floats.x;
-          //   joint_indices.y = (u32)joints_as_floats.y;
-          //   joint_indices.z = (u32)joints_as_floats.z;
-          //   joint_indices.w = (u32)joints_as_floats.w;
-          //   printf("Joints affecting vertex %d :  %d %d %d %d\n", v, joint_indices.x,
-          //   joint_indices.y,
-          //          joint_indices.z, joint_indices.w);
-          //   vec4u_darray_push(tmp_joint_indices, joint_indices);
-          // }
-
+          TRACE("Load joint indices from accessor");
+          cgltf_accessor *accessor = attribute.data;
+          load_joint_index_components(tmp_joint_indices, accessor);
         } else if (attribute.type == cgltf_attribute_type_weights) {
           // FIXME: weights
           // TRACE("Load joint weights from accessor");

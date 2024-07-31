@@ -106,7 +106,7 @@ int main() {
 
     if (draw_debug) {
       // draw the player model with shadows
-      // Render_RenderEntities(render_entities->data, render_entities->len);
+      Render_RenderEntities(render_entities->data, render_entities->len);
       // Render_DrawTerrain();
       Skybox_Draw(&skybox, cam);
     } else {
