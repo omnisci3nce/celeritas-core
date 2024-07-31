@@ -4,6 +4,7 @@
 
 #pragma once
 #include "defines.h"
+#include "grid.h"
 #include "maths_types.h"
 #include "ral_types.h"
 #include "render_types.h"
@@ -84,6 +85,7 @@ typedef struct Terrain_Storage Terrain_Storage;
 RenderScene* Render_GetScene();
 Shadow_Storage* Render_GetShadowStorage();
 Terrain_Storage* Render_GetTerrainStorage();
+Grid_Storage* Render_GetGridStorage();
 TextureHandle Render_GetWhiteTexture();
 arena* Render_GetFrameArena();
 Mesh_pool* Render_GetMeshPool();

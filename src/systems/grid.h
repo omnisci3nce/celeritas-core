@@ -11,10 +11,11 @@ typedef struct Grid_Storage {
 } Grid_Storage;
 
 // --- Public API
-void Grid_Init(Grid_Storage* storage);
+PUB void Grid_Init(Grid_Storage* storage);
 // void Grid_Shutdown(Grid_Storage* storage);
-void Grid_Draw(Grid_Storage* storage);
+PUB void Grid_Draw();
 
 // --- Internal
+void Grid_Execute(Grid_Storage* storage);
 // typedef struct GridUniforms {} GridUniforms;
 // ShaderDataLayout GridUniforms_GetLayout(void* data);

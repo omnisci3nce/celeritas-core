@@ -314,6 +314,11 @@ Terrain_Storage* Render_GetTerrainStorage() {
   return ren->terrain;
 }
 
+Grid_Storage* Render_GetGridStorage() {
+  Renderer* ren = Core_GetRenderer(&g_core);
+  return ren->grid;
+}
+
 TextureHandle Render_GetWhiteTexture() {
   Renderer* ren = Core_GetRenderer(&g_core);
   return ren->white_1x1;

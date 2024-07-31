@@ -54,6 +54,11 @@ void Grid_Init(Grid_Storage* storage) {
   storage->pipeline = GPU_GraphicsPipeline_Create(pipeline_desc, storage->renderpass);
 }
 
-void Grid_Draw(Grid_Storage* storage) {
+void Grid_Draw() {
+  Grid_Storage* grid = Render_GetGridStorage();
+  Grid_Execute(grid);
+}
 
+void Grid_Execute(Grid_Storage *storage) {
+  // TODO: draw calls
 }
