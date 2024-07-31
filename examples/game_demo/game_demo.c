@@ -6,6 +6,7 @@
 #include <assert.h>
 #include "camera.h"
 #include "core.h"
+#include "grid.h"
 #include "input.h"
 #include "keys.h"
 #include "loaders.h"
@@ -105,14 +106,15 @@ int main() {
 
     if (draw_debug) {
       // draw the player model with shadows
-      Render_RenderEntities(render_entities->data, render_entities->len);
+      // Render_RenderEntities(render_entities->data, render_entities->len);
       // Render_DrawTerrain();
       Skybox_Draw(&skybox, cam);
     } else {
       Shadow_DrawDebugQuad();
     }
 
-    Terrain_Draw(terrain);
+    // Terrain_Draw(terrain);
+    Grid_Draw();
 
     // END Draw calls
     Frame_Draw();

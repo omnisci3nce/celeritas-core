@@ -1,6 +1,7 @@
 #include "grid.h"
 #include "file.h"
 #include "log.h"
+#include "maths.h"
 #include "maths_types.h"
 #include "primitives.h"
 #include "ral_common.h"
@@ -8,6 +9,7 @@
 #include "ral_types.h"
 #include "render.h"
 #include "render_types.h"
+#include "render_scene.h"
 #include "shader_layouts.h"
 
 void Grid_Init(Grid_Storage* storage) {
@@ -15,7 +17,9 @@ void Grid_Init(Grid_Storage* storage) {
   Geometry plane_geo = Geo_CreatePlane(f32x2(1.0, 1.0));
   Mesh plane_mesh = Mesh_Create(&plane_geo, true);
   storage->plane_vertices = plane_mesh.vertex_buffer;
-  storage->plane_indices = plane_mesh.index_buffer;
+
+  u32 indices[6] = { 5,4,3,2,1,0};
+  storage->plane_indices = GPU_BufferCreate(6 * sizeof(u32),BUFFER_INDEX, BUFFER_FLAG_GPU, &indices);
 
   GPU_RenderpassDesc rpass_desc = {
     .default_framebuffer = true,
@@ -60,5 +64,23 @@ void Grid_Draw() {
 }
 
 void Grid_Execute(Grid_Storage *storage) {
-  // TODO: draw calls
+  WARN("Draw Grid");
+  RenderScene* scene = Render_GetScene();
+  GPU_CmdEncoder* enc = GPU_GetDefaultEncoder();
+  GPU_CmdEncoder_BeginRender(enc, storage->renderpass);
+  GPU_EncodeBindPipeline(enc, storage->pipeline);
+  Mat4 view, proj;
+  u32x2 dimensions = GPU_Swapchain_GetDimensions();
+  Camera camera = scene->camera;
+  Camera_ViewProj(&camera, (f32)dimensions.x, (f32)dimensions.y, &view, &proj);
+  Binding_Camera camera_data = { .view = view,
+                                 .projection = proj,
+                                 .viewPos = vec4(camera.position.x, camera.position.y,
+                                                 camera.position.z, 1.0) };
+  GPU_EncodeBindShaderData(
+      enc, 0, (ShaderData){ .data = &camera_data, .get_layout = &Binding_Camera_GetLayout });
+  GPU_EncodeSetVertexBuffer(enc, storage->plane_vertices);
+  GPU_EncodeSetIndexBuffer(enc, storage->plane_indices);
+  GPU_EncodeDrawIndexed(enc, 6);
+  GPU_CmdEncoder_EndRender(enc);
 }
