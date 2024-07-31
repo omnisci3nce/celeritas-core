@@ -1,14 +1,19 @@
 //! Wrapper around the RAL code in celeritas-core
 
+use std::{os::raw::c_void, ptr};
+
 use celeritas_sys::{
-    BufferHandle, GPU_CmdEncoder, GPU_CmdEncoder_BeginRender, GPU_CmdEncoder_EndRender,
-    GPU_GetDefaultEncoder,
+    BufferHandle, GPU_CmdEncoder, GPU_CmdEncoder_BeginRender, GPU_CmdEncoder_EndRender, GPU_GetDefaultEncoder, GPU_GetDefaultRenderpass, GPU_GraphicsPipeline_Create, GraphicsPipelineDesc, ShaderData
 };
 
+/// Holds a pointer to the raw `GPU_CmdEncoder`
 pub struct FrameRenderEncoder(*mut GPU_CmdEncoder);
 
-/// Holds a pointer into the raw `GPU_Renderpass`
+/// Holds a pointer to the raw `GPU_Renderpass`
 pub struct RenderPass(*mut celeritas_sys::GPU_Renderpass);
+
+/// Holds a pointer to the raw `GPU_Pipeline`
+pub struct Pipeline(*mut celeritas_sys::GPU_Pipeline);
 
 impl FrameRenderEncoder {
     pub fn new(renderpass: &RenderPass) -> Self {
@@ -41,6 +46,45 @@ impl FrameRenderEncoder {
         todo!()
     }
 }
+
+pub struct PipelineBuilder {
+    renderpass: Option<RenderPass>,
+    data_layouts: Vec<()>,
+
+}
+impl PipelineBuilder {
+    // pub fn add_
+
+    pub fn build(self) -> Pipeline {
+        let shad = ShaderData {
+            get_layout: todo!(),
+            data: ptr::null_mut()
+        };
+        let desc = GraphicsPipelineDesc {
+            debug_name: todo!(),
+            vertex_desc: todo!(),
+            vs: todo!(),
+            fs: todo!(),
+            data_layouts: todo!(),
+            data_layouts_count: todo!(),
+            wireframe: todo!(),
+            depth_test: todo!(),
+        };
+        let p = unsafe { GPU_GraphicsPipeline_Create(
+            todo!(),
+            self.renderpass.map(|r| r.0).unwrap_or(GPU_GetDefaultRenderpass())
+        ) };
+        Pipeline(p)
+    }
+}
+// impl Default for PipelineBuilder {
+//     fn default() -> Self {
+//         Self {
+//             renderpass: Default::default(),
+            
+//         }
+//     }
+// }
 
 // --- types
 

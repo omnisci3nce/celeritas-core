@@ -80,6 +80,4 @@ GLFWwindow* Core_GetGlfwWindowPtr(Core* core) { return g_core.window; }
 
 struct Renderer* Core_GetRenderer(Core* core) { return core->renderer; }
 
-Model* Model_Get(ModelHandle h) {
-  return Model_pool_get(&g_core.models, h);
-}
+Model* Model_Get(ModelHandle h) { return Model_pool_get(&g_core.models, h); }

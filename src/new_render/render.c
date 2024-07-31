@@ -7,6 +7,7 @@
 #include <glfw3.h>
 #include "camera.h"
 #include "core.h"
+#include "grid.h"
 #include "log.h"
 #include "maths.h"
 #include "maths_types.h"
@@ -43,6 +44,7 @@ struct Renderer {
   PBR_Storage* pbr;
   Shadow_Storage* shadows;
   Terrain_Storage* terrain;
+  Grid_Storage* grid;
   // Text_Storage* text;
   ResourcePools* resource_pools;
   Mesh_pool mesh_pool;
@@ -139,8 +141,12 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
   ren->terrain = malloc(sizeof(Terrain_Storage));
   Terrain_Init(ren->terrain);
 
+  ren->grid = calloc(1, sizeof(Grid_Storage));
+  Grid_Init(ren->grid);
+
   // load default textures
   ren->white_1x1 = TextureLoadFromFile("assets/textures/white1x1.png");
+  // TODO: black_1x1
 
   return true;
 }

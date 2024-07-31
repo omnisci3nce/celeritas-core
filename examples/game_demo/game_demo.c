@@ -74,10 +74,11 @@ int main() {
   crate_mat.metallic = 0.0;
   MaterialHandle crate_mat_handle = Material_pool_insert(Render_GetMaterialPool(), &crate_mat);
   // ModelHandle cube_handle = ModelLoad_gltf("assets/models/gltf/Cube/glTF/Cube.gltf", false);
-  ModelHandle cube_handle = ModelLoad_gltf("assets/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf", false);
- 
+  ModelHandle cube_handle =
+      ModelLoad_gltf("assets/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf", false);
+
   RenderEnt_darray* render_entities = RenderEnt_darray_new(1);
-  
+
   // --- Transforms
   // TransformHierarchy* scene_tree =  TransformHierarchy_Create();
   // TODO: parent camera to model - to start with I can just manually update it every frame
@@ -95,9 +96,10 @@ int main() {
     SetCamera(cam);
 
     // BEGIN Draw calls
-    RenderEnt_darray_clear(render_entities); // we re-extract every frame
+    RenderEnt_darray_clear(render_entities);  // we re-extract every frame
     Quat rot = quat_from_axis_angle(VEC3_X, -HALF_PI, true);
-    ModelExtractRenderEnts(render_entities, cube_handle, mat4_rotation(rot), REND_ENT_CASTS_SHADOWS);
+    ModelExtractRenderEnts(render_entities, cube_handle, mat4_rotation(rot),
+                           REND_ENT_CASTS_SHADOWS);
 
     // Shadow_Run(entities, entity_count);
 
