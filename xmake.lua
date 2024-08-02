@@ -24,7 +24,7 @@ if is_plat("linux") then
 elseif is_plat("windows") then
     add_defines("CEL_PLATFORM_WINDOWS")
     add_syslinks("user32", "gdi32", "kernel32", "shell32")
-    add_requires("vulkansdk", { system = true })
+    -- add_requires("vulkansdk", { system = true })
 
     -- add_links("pthreadVC2-w64")
 elseif is_plat("macosx") then
@@ -138,9 +138,9 @@ add_files("src/empty.c") -- for some reason we need this on Mac so it doesnt cal
 -- add_files("assets/shaders/cube.frag")
 -- add_files("assets/shaders/*.frag")
 if is_plat("windows") then
-    add_includedirs("$(env VULKAN_SDK)/Include", { public = true })
-    add_linkdirs("$(env VULKAN_SDK)/Lib", { public = true })
-    add_links("vulkan-1")
+    -- add_includedirs("$(env VULKAN_SDK)/Include", { public = true })
+    -- add_linkdirs("$(env VULKAN_SDK)/Lib", { public = true })
+    -- add_links("vulkan-1")
 end
 if is_plat("macosx") then
     -- add_files("src/renderer/backends/metal/*.m")
@@ -155,7 +155,7 @@ set_policy("build.merge_archive", true)
 add_files(core_sources)
 -- Link against static CRT
 if is_plat("windows") then
-    add_links("libcmt", "legacy_stdio_definitions")  -- for release builds
+    -- add_links("libcmt", "legacy_stdio_definitions")  -- for release builds
     add_links("libcmtd", "legacy_stdio_definitions") -- for debug builds
 end
 
@@ -165,7 +165,7 @@ add_deps("core_config") -- inherit common configurations
 add_files(core_sources)
 -- Link against dynamic CRT
 if is_plat("windows") then
-    add_links("msvcrt", "legacy_stdio_definitions")  -- for release builds
+    -- add_links("msvcrt", "legacy_stdio_definitions")  -- for release builds
     add_links("msvcrtd", "legacy_stdio_definitions") -- for debug builds
 end
 
