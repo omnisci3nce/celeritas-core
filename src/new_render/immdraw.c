@@ -10,8 +10,8 @@
 void Immdraw_Init(Immdraw_Storage* storage) {
   INFO("Immediate drawing initialisation");
   // meshes
-  Geometry sphere_geo = Geo_CreateUVsphere(1.0, 8, 8);
-  storage->sphere = Mesh_Create(&sphere_geo, false);
+  // Geometry sphere_geo = Geo_CreateUVsphere(1.0, 8, 8);
+  // storage->sphere = Mesh_Create(&sphere_geo, false);
 
   // pipeline / material
   ShaderData camera_data = { .get_layout = &Binding_Camera_GetLayout };
@@ -21,7 +21,7 @@ void Immdraw_Init(Immdraw_Storage* storage) {
     .data_layouts_count = 1,
 
   };
-  storage->colour_pipeline = GPU_GraphicsPipeline_Create(pipeline_desc, GPU_GetDefaultRenderpass());
+  // storage->colour_pipeline = GPU_GraphicsPipeline_Create(pipeline_desc, GPU_GetDefaultRenderpass());
 }
 
 void Immdraw_Sphere(Transform tf, f32 size, Vec4 colour, bool wireframe) {}
