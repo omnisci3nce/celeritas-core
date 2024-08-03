@@ -57,7 +57,8 @@ bool GPU_Backend_Init(const char* window_name, struct GLFWwindow* window,
 }
 
 // All of these are no-ops in OpenGL
-void GPU_Backend_Shutdown() { /* TODO */ }
+void GPU_Backend_Shutdown() { /* TODO */
+}
 bool GPU_Device_Create(GPU_Device* out_device) { return true; }
 void GPU_Device_Destroy(GPU_Device* device) {}
 bool GPU_Swapchain_Create(GPU_Swapchain* out_swapchain) { return true; }
@@ -342,56 +343,6 @@ void GPU_EncodeBindPipeline(GPU_CmdEncoder* encoder, GPU_Pipeline* pipeline) {
   }
 }
 
-// PUB void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData data) {
-//   ShaderDataLayout sdl = data.get_layout(data.data);
-
-//   for (u32 i = 0; i < sdl.binding_count; i++) {
-//     ShaderBinding binding = sdl.bindings[i];
-//     /* print_shader_binding(binding); */
-
-//     if (binding.kind == BINDING_BYTES) {
-//       BufferHandle b;
-//       GPU_Buffer* ubo_buf;
-//       bool found = false;
-//       for (u32 i = 0; i < encoder->pipeline->uniform_count; i++) {
-//         b = encoder->pipeline->uniform_bindings[i];
-//         ubo_buf = BUFFER_GET(b);
-//         assert(ubo_buf->name != NULL);
-//         if (strcmp(ubo_buf->name, binding.label) == 0) {
-//           found = true;
-//           break;
-//         }
-//       }
-//       if (!found) {
-//         ERROR("Couldnt find uniform buffer object for %s!!", binding.label);
-//       }
-
-//       i32 blockIndex = glGetUniformBlockIndex(encoder->pipeline->shader_id, binding.label);
-//       if (blockIndex < 0) {
-//         WARN("Couldn't retrieve block index for uniform block '%s'", binding.label);
-//       } else {
-//         // DEBUG("Retrived block index %d for %s", blockIndex, binding.label);
-//       }
-
-//       glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
-//       glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, binding.data.bytes.data);
-
-//     } else if (binding.kind == BINDING_TEXTURE) {
-//       GPU_Texture* tex = TEXTURE_GET(binding.data.texture.handle);
-//       GLint tex_slot = glGetUniformLocation(encoder->pipeline->shader_id, binding.label);
-//       // printf("%d slot \n", tex_slot);
-//       if (tex_slot == GL_INVALID_VALUE || tex_slot < 0) {
-//         WARN("Invalid binding label for texture %s - couldn't fetch texture slot uniform",
-//              binding.label);
-//       }
-//       glUniform1i(tex_slot, i);
-//       glActiveTexture(GL_TEXTURE0 + i);
-//       GLenum gl_tex_type = opengl_tex_type(tex->type);
-//       glBindTexture(gl_tex_type, tex->id);
-//     }
-//   }
-// }
-
 void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderDataLayout layout) {
   for (u32 binding_i = 0; binding_i < layout.binding_count; binding_i++) {
     ShaderBinding binding = layout.bindings[binding_i];
@@ -402,31 +353,31 @@ void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderDataLayo
         CASSERT_MSG(binding.data.bytes.data, "void* data pointer should be non null");
         CASSERT_MSG(binding.data.bytes.size > 0, "size should be greater than 0 bytes");
 #endif
-         BufferHandle b;
-      GPU_Buffer* ubo_buf;
-      bool found = false;
-      for (u32 i = 0; i < encoder->pipeline->uniform_count; i++) {
-        b = encoder->pipeline->uniform_bindings[i];
-        ubo_buf = BUFFER_GET(b);
-        assert(ubo_buf->name != NULL);
-        if (strcmp(ubo_buf->name, binding.label) == 0) {
-          found = true;
+        BufferHandle b;
+        GPU_Buffer* ubo_buf;
+        bool found = false;
+        for (u32 i = 0; i < encoder->pipeline->uniform_count; i++) {
+          b = encoder->pipeline->uniform_bindings[i];
+          ubo_buf = BUFFER_GET(b);
+          assert(ubo_buf->name != NULL);
+          if (strcmp(ubo_buf->name, binding.label) == 0) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          ERROR("Couldnt find uniform buffer object for %s!!", binding.label);
           break;
         }
-      }
-      if (!found) {
-        ERROR("Couldnt find uniform buffer object for %s!!", binding.label);
-      }
 
-      i32 blockIndex = glGetUniformBlockIndex(encoder->pipeline->shader_id, binding.label);
-      if (blockIndex < 0) {
-        WARN("Couldn't retrieve block index for uniform block '%s'", binding.label);
-      } else {
-        // DEBUG("Retrived block index %d for %s", blockIndex, binding.label);
-      }
+        i32 blockIndex = glGetUniformBlockIndex(encoder->pipeline->shader_id, binding.label);
+        if (blockIndex < 0) {
+          WARN("Couldn't retrieve block index for uniform block '%s'", binding.label);
+          break;
+        }
 
-      glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
-      glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, binding.data.bytes.data);
+        glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, binding.data.bytes.data);
         break;
       }
       case BINDING_TEXTURE: {
