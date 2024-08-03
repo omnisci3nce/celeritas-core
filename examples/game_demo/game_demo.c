@@ -21,9 +21,9 @@
 #include "skybox.h"
 #include "terrain.h"
 
-static const char* faces[6] = { "assets/demo/skybox/right.jpg", "assets/demo/skybox/left.jpg",
-                                "assets/demo/skybox/top.jpg",   "assets/demo/skybox/bottom.jpg",
-                                "assets/demo/skybox/front.jpg", "assets/demo/skybox/back.jpg" };
+static const char* faces[6] = { "assets/skybox/right.jpg", "assets/skybox/left.jpg",
+                                "assets/skybox/top.jpg",   "assets/skybox/bottom.jpg",
+                                "assets/skybox/front.jpg", "assets/skybox/back.jpg" };
 
 int main() {
   Core_Bringup(NULL);
@@ -106,7 +106,7 @@ int main() {
 
     if (draw_debug) {
       // draw the player model with shadows
-      Render_RenderEntities(render_entities->data, render_entities->len);
+      // Render_RenderEntities(render_entities->data, render_entities->len);
       // Render_DrawTerrain();
       Skybox_Draw(&skybox, cam);
     } else {

@@ -402,7 +402,32 @@ void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderDataLayo
         CASSERT_MSG(binding.data.bytes.data, "void* data pointer should be non null");
         CASSERT_MSG(binding.data.bytes.size > 0, "size should be greater than 0 bytes");
 #endif
-        // TODO
+         BufferHandle b;
+      GPU_Buffer* ubo_buf;
+      bool found = false;
+      for (u32 i = 0; i < encoder->pipeline->uniform_count; i++) {
+        b = encoder->pipeline->uniform_bindings[i];
+        ubo_buf = BUFFER_GET(b);
+        assert(ubo_buf->name != NULL);
+        if (strcmp(ubo_buf->name, binding.label) == 0) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        ERROR("Couldnt find uniform buffer object for %s!!", binding.label);
+      }
+
+      i32 blockIndex = glGetUniformBlockIndex(encoder->pipeline->shader_id, binding.label);
+      if (blockIndex < 0) {
+        WARN("Couldn't retrieve block index for uniform block '%s'", binding.label);
+      } else {
+        // DEBUG("Retrived block index %d for %s", blockIndex, binding.label);
+      }
+
+      glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
+      glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, binding.data.bytes.data);
+        break;
       }
       case BINDING_TEXTURE: {
         GPU_Texture* tex = TEXTURE_GET(binding.data.texture.handle);
@@ -414,6 +439,7 @@ void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderDataLayo
         glUniform1i(tex_slot, binding_i);
         glActiveTexture(GL_TEXTURE0 + binding_i);
         glBindTexture(opengl_tex_type(tex->type), tex->id);
+        break;
       }
       default:
         WARN("Unsupported binding kind");
