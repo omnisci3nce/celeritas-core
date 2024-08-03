@@ -13,3 +13,4 @@ egui_glfw = { git = "https://github.com/omnisci3nce/egui_glfw.git", rev = "67b43
 gl = "0.14.0"
 thiserror = "1.0.63"
 bitflags = "2.6.0"
+heapless = "0.8.0"

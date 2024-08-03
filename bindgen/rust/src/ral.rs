@@ -5,9 +5,10 @@ use std::{ffi::c_void, ptr::addr_of_mut};
 use celeritas_sys::{
     BufferHandle, GPU_CmdEncoder, GPU_CmdEncoder_BeginRender, GPU_CmdEncoder_EndRender,
     GPU_EncodeBindShaderData, GPU_GetDefaultEncoder, GPU_GetDefaultRenderpass,
-    GPU_GraphicsPipeline_Create, GraphicsPipelineDesc, ShaderVisibility_VISIBILITY_COMPUTE,
-    ShaderVisibility_VISIBILITY_FRAGMENT, ShaderVisibility_VISIBILITY_VERTEX, TextureHandle,
-    MAX_SHADER_DATA_LAYOUTS,
+    GPU_GraphicsPipeline_Create, GraphicsPipelineDesc, ShaderBindingKind_BINDING_BYTES,
+    ShaderBinding__bindgen_ty_1, ShaderBinding__bindgen_ty_1__bindgen_ty_1,
+    ShaderVisibility_VISIBILITY_COMPUTE, ShaderVisibility_VISIBILITY_FRAGMENT,
+    ShaderVisibility_VISIBILITY_VERTEX, TextureHandle, MAX_SHADER_DATA_LAYOUTS,
 };
 use thiserror::Error;
 
@@ -72,12 +73,12 @@ pub enum RALError {
 
 impl PipelineBuilder {
     pub fn build(self) -> Result<Pipeline, RALError> {
-        let mut layouts = [celeritas_sys::ShaderDataLayout::default(); 8];
+        let layouts = [celeritas_sys::ShaderDataLayout::default(); 8];
         if self.data_layouts.len() > MAX_SHADER_DATA_LAYOUTS as usize {
             return Err(RALError::TooManyShaderDataLayouts);
         }
         for (i, layout) in self.data_layouts.iter().enumerate().take(8) {
-            layouts[i] = celeritas_sys::ShaderDataLayout::from(layout);
+            // layouts[i] = celeritas_sys::ShaderDataLayout::from(layout);
         }
 
         let mut desc = GraphicsPipelineDesc {
@@ -108,11 +109,18 @@ impl PipelineBuilder {
     }
 }
 
+///
 pub trait ShaderData {
+    ///
     fn layout() -> ShaderDataLayout;
+    ///
     fn bind(&self);
+
+    // fn bind_texture(&self, binding_name: &str, handle: TextureHandle);
+    // fn bind_buffer(&self, binding_name: &str, handle: BufferHandle);
 }
 
+#[derive(Clone)]
 pub struct ShaderBinding {
     pub label: String,
     // pub label: *const ::std::os::raw::c_char,
@@ -121,10 +129,11 @@ pub struct ShaderBinding {
     // pub data: ShaderBinding__bindgen_ty_1,
 }
 
+#[derive(Clone)]
 pub enum ShaderBindingKind {
-    Bytes(u32),
-    Buffer(BufferHandle),
-    Texture(TextureHandle),
+    Bytes { size: usize, data: Option<*mut u8> },
+    Buffer(Option<BufferHandle>),
+    Texture(Option<TextureHandle>),
 }
 
 bitflags::bitflags! {
@@ -143,14 +152,39 @@ impl Default for ShaderVisibility {
 
 #[derive(Default)]
 pub struct ShaderDataLayout {
-    pub bindings: [Option<ShaderBinding>; 8],
-    pub binding_count: usize,
+    pub bindings: heapless::Vec<ShaderBinding, 8>,
 }
-impl From<&ShaderDataLayout> for celeritas_sys::ShaderDataLayout {
-    fn from(value: &ShaderDataLayout) -> Self {
-        todo!()
+impl ShaderDataLayout {
+    pub fn into_ffi_type(self) -> celeritas_sys::ShaderDataLayout {
+        let mut bindings = [celeritas_sys::ShaderBinding::default(); 8];
+        for (i, b) in self.bindings.iter().enumerate().take(8) {
+            bindings[i] = match b.kind {
+                ShaderBindingKind::Bytes { size, data } => celeritas_sys::ShaderBinding {
+                    label: b.label.as_ptr() as *const i8,
+                    kind: ShaderBindingKind_BINDING_BYTES,
+                    vis: ShaderVisibility_VISIBILITY_VERTEX,
+                    data: ShaderBinding__bindgen_ty_1 {
+                        bytes: ShaderBinding__bindgen_ty_1__bindgen_ty_1 {
+                            size: size as u32,
+                            data: data.unwrap() as *mut c_void,
+                        },
+                    },
+                },
+                ShaderBindingKind::Buffer(_) => todo!(),
+                ShaderBindingKind::Texture(_) => todo!(),
+            };
+        }
+        celeritas_sys::ShaderDataLayout {
+            bindings,
+            binding_count: bindings.len(),
+        }
     }
 }
+// impl<'a> From<&ShaderDataLayout<'a>> for celeritas_sys::ShaderDataLayout {
+//     fn from(value: &ShaderDataLayout) -> Self {
+//         todo!()
+//     }
+// }
 
 // --- types
 

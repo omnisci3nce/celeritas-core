@@ -392,6 +392,35 @@ PUB void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData
   }
 }
 
+void GPU_EncodeBindShaderDataRaw(GPU_CmdEncoder* encoder, u32 group, ShaderDataLayout layout) {
+  for (u32 binding_i = 0; binding_i < layout.binding_count; binding_i++) {
+    ShaderBinding binding = layout.bindings[binding_i];
+
+    switch (binding.kind) {
+      case BINDING_BYTES: {
+        #ifdef RAL_ASSERTS
+        CASSERT_MSG(binding.data.bytes.data, "void* data pointer should be non null");
+        CASSERT_MSG(binding.data.bytes.size > 0, "size should be greater than 0 bytes");
+        #endif
+        // TODO
+      }
+      case BINDING_TEXTURE: {
+        GPU_Texture* tex = TEXTURE_GET(binding.data.texture.handle);
+        GLint tex_slot = glGetUniformLocation(encoder->pipeline->shader_id, binding.label);
+        if (tex_slot == GL_INVALID_VALUE || tex_slot < 0) {
+          WARN("Invalid binding label for texture %s - couldn't fetch texture slot uniform",
+              binding.label);
+        }
+        glUniform1i(tex_slot, binding_i);
+        glActiveTexture(GL_TEXTURE0 + binding_i);
+        glBindTexture(opengl_tex_type(tex->type), tex->id);
+      }
+      default:
+        WARN("Unsupported binding kind");
+    }
+  }
+}
+
 void GPU_EncodeSetDefaults(GPU_CmdEncoder* encoder) {}
 
 void GPU_EncodeSetVertexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf) {
