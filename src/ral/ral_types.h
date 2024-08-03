@@ -246,6 +246,8 @@ typedef struct GraphicsPipelineDesc {
   bool depth_test;
 } GraphicsPipelineDesc;
 
+bool GraphicsPipelineDesc_AddShaderDataLayout(GraphicsPipelineDesc* desc, ShaderDataLayout layout);
+
 typedef struct GPU_RenderpassDesc {
   bool default_framebuffer;
   bool has_color_target;

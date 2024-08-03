@@ -5,3 +5,20 @@
 use serde::{Deserialize, Serialize};
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+
+
+impl Default for ShaderBinding {
+    fn default() -> Self {
+        Self { label: todo!(),
+          kind: ShaderBindingKind_BINDING_COUNT,
+          vis: ShaderVisibility_VISIBILITY_VERTEX,
+          data: todo!()
+        }
+    }
+}
+
+impl Default for ShaderDataLayout {
+    fn default() -> Self {
+        Self { bindings: [ShaderBinding::default(); 8], binding_count: 0 }
+    }
+}

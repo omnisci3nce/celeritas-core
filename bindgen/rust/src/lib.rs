@@ -9,6 +9,7 @@ pub use celeritas_sys as ffi;
 pub mod prelude;
 
 pub mod ral;
+pub mod shader;
 
 use std::{
     fs::{self, File},

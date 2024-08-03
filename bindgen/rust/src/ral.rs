@@ -1,12 +1,15 @@
 //! Wrapper around the RAL code in celeritas-core
 
-use std::{os::raw::c_void, ptr};
+use std::{ffi::c_void, ptr::addr_of_mut};
 
 use celeritas_sys::{
     BufferHandle, GPU_CmdEncoder, GPU_CmdEncoder_BeginRender, GPU_CmdEncoder_EndRender,
-    GPU_GetDefaultEncoder, GPU_GetDefaultRenderpass, GPU_GraphicsPipeline_Create,
-    GraphicsPipelineDesc, ShaderData,
+    GPU_EncodeBindShaderData, GPU_GetDefaultEncoder, GPU_GetDefaultRenderpass,
+    GPU_GraphicsPipeline_Create, GraphicsPipelineDesc, ShaderVisibility_VISIBILITY_COMPUTE,
+    ShaderVisibility_VISIBILITY_FRAGMENT, ShaderVisibility_VISIBILITY_VERTEX, TextureHandle,
+    MAX_SHADER_DATA_LAYOUTS,
 };
+use thiserror::Error;
 
 /// Holds a pointer to the raw `GPU_CmdEncoder`
 pub struct FrameRenderEncoder(*mut GPU_CmdEncoder);
@@ -47,49 +50,107 @@ impl FrameRenderEncoder {
         // TODO: assert that buffer type is index
         todo!()
     }
+    pub fn bind<S: ShaderData>(&mut self, data: &S) {
+        let sd = celeritas_sys::ShaderData {
+            get_layout: todo!(),
+            data: addr_of_mut!(data) as *mut c_void,
+        };
+        unsafe { GPU_EncodeBindShaderData(self.0, 0, todo!()) }
+    }
 }
 
 pub struct PipelineBuilder {
     renderpass: Option<RenderPass>,
-    data_layouts: Vec<()>,
+    data_layouts: Vec<ShaderDataLayout>,
 }
-impl PipelineBuilder {
-    // pub fn add_
 
-    pub fn build(self) -> Pipeline {
-        let shad = ShaderData {
-            get_layout: todo!(),
-            data: ptr::null_mut(),
-        };
-        let desc = GraphicsPipelineDesc {
+#[derive(Debug, Error)]
+pub enum RALError {
+    #[error("exceeded maximum of 8 layouts for a pipeline")]
+    TooManyShaderDataLayouts,
+}
+
+impl PipelineBuilder {
+    pub fn build(self) -> Result<Pipeline, RALError> {
+        let mut layouts = [celeritas_sys::ShaderDataLayout::default(); 8];
+        if self.data_layouts.len() > MAX_SHADER_DATA_LAYOUTS as usize {
+            return Err(RALError::TooManyShaderDataLayouts);
+        }
+        for (i, layout) in self.data_layouts.iter().enumerate().take(8) {
+            layouts[i] = celeritas_sys::ShaderDataLayout::from(layout);
+        }
+
+        let mut desc = GraphicsPipelineDesc {
             debug_name: todo!(),
             vertex_desc: todo!(),
             vs: todo!(),
             fs: todo!(),
-            data_layouts: todo!(),
-            data_layouts_count: todo!(),
-            wireframe: todo!(),
-            depth_test: todo!(),
+            data_layouts: layouts,
+            data_layouts_count: layouts.len() as u32,
+            wireframe: false,
+            depth_test: true,
         };
         let p = unsafe {
             GPU_GraphicsPipeline_Create(
-                todo!(),
+                desc,
                 self.renderpass
                     .map(|r| r.0)
                     .unwrap_or(GPU_GetDefaultRenderpass()),
             )
         };
-        Pipeline(p)
+        Ok(Pipeline(p))
+    }
+
+    pub fn add_shader_layout<S: ShaderData>(&mut self) -> &mut Self {
+        let layout = S::layout();
+        self.data_layouts.push(layout);
+        self
     }
 }
-// impl Default for PipelineBuilder {
-//     fn default() -> Self {
-//         Self {
-//             renderpass: Default::default(),
 
-//         }
-//     }
-// }
+pub trait ShaderData {
+    fn layout() -> ShaderDataLayout;
+    fn bind(&self);
+}
+
+pub struct ShaderBinding {
+    pub label: String,
+    // pub label: *const ::std::os::raw::c_char,
+    pub kind: ShaderBindingKind,
+    pub vis: ShaderVisibility,
+    // pub data: ShaderBinding__bindgen_ty_1,
+}
+
+pub enum ShaderBindingKind {
+    Bytes(u32),
+    Buffer(BufferHandle),
+    Texture(TextureHandle),
+}
+
+bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct ShaderVisibility : u32 {
+        const VERTEX = 1 << ShaderVisibility_VISIBILITY_VERTEX;
+        const FRAGMENT = 1 << ShaderVisibility_VISIBILITY_FRAGMENT;
+        const COMPUTE = 1 << ShaderVisibility_VISIBILITY_COMPUTE;
+    }
+}
+impl Default for ShaderVisibility {
+    fn default() -> Self {
+        ShaderVisibility::all()
+    }
+}
+
+#[derive(Default)]
+pub struct ShaderDataLayout {
+    pub bindings: [Option<ShaderBinding>; 8],
+    pub binding_count: usize,
+}
+impl From<&ShaderDataLayout> for celeritas_sys::ShaderDataLayout {
+    fn from(value: &ShaderDataLayout) -> Self {
+        todo!()
+    }
+}
 
 // --- types
 
