@@ -16,8 +16,8 @@ path_opt path_parent(arena* a, const char* path) {
 }
 #endif
 #ifdef CEL_PLATFORM_WINDOWS
-#include <windows.h>
 #include <shlwapi.h>
+#include <windows.h>
 #pragma comment(lib, "Shlwapi.lib")
 
 path_opt path_parent(arena* a, const char* path) {
@@ -29,7 +29,7 @@ path_opt path_parent(arena* a, const char* path) {
   if (PathRemoveFileSpecA(path_copy)) {
     return (path_opt){ .path = Str8_cstr_view(path_copy), .has_value = true };
   } else {
-    return (path_opt){ .has_value = false};
+    return (path_opt){ .has_value = false };
   }
 }
 #endif

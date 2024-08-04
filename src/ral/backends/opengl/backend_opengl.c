@@ -141,7 +141,7 @@ GPU_Pipeline* GPU_GraphicsPipeline_Create(GraphicsPipelineDesc description,
   u32 ubo_count = 0;
   // printf("data layouts %d\n", description.data_layouts_count);
   for (u32 layout_i = 0; layout_i < description.data_layouts_count; layout_i++) {
-    ShaderDataLayout sdl = description.data_layouts[layout_i].get_layout(NULL);
+    ShaderDataLayout sdl = description.data_layouts[layout_i];
     TRACE("Got shader data layout %d's bindings! . found %d", layout_i, sdl.binding_count);
 
     for (u32 binding_j = 0; binding_j < sdl.binding_count; binding_j++) {
@@ -342,66 +342,66 @@ void GPU_EncodeBindPipeline(GPU_CmdEncoder* encoder, GPU_Pipeline* pipeline) {
   }
 }
 
-PUB void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData data) {
-  ShaderDataLayout sdl = data.get_layout(data.data);
+// PUB void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData data) {
+//   ShaderDataLayout sdl = data.get_layout(data.data);
 
-  for (u32 i = 0; i < sdl.binding_count; i++) {
-    ShaderBinding binding = sdl.bindings[i];
-    /* print_shader_binding(binding); */
+//   for (u32 i = 0; i < sdl.binding_count; i++) {
+//     ShaderBinding binding = sdl.bindings[i];
+//     /* print_shader_binding(binding); */
 
-    if (binding.kind == BINDING_BYTES) {
-      BufferHandle b;
-      GPU_Buffer* ubo_buf;
-      bool found = false;
-      for (u32 i = 0; i < encoder->pipeline->uniform_count; i++) {
-        b = encoder->pipeline->uniform_bindings[i];
-        ubo_buf = BUFFER_GET(b);
-        assert(ubo_buf->name != NULL);
-        if (strcmp(ubo_buf->name, binding.label) == 0) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        ERROR("Couldnt find uniform buffer object for %s!!", binding.label);
-      }
+//     if (binding.kind == BINDING_BYTES) {
+//       BufferHandle b;
+//       GPU_Buffer* ubo_buf;
+//       bool found = false;
+//       for (u32 i = 0; i < encoder->pipeline->uniform_count; i++) {
+//         b = encoder->pipeline->uniform_bindings[i];
+//         ubo_buf = BUFFER_GET(b);
+//         assert(ubo_buf->name != NULL);
+//         if (strcmp(ubo_buf->name, binding.label) == 0) {
+//           found = true;
+//           break;
+//         }
+//       }
+//       if (!found) {
+//         ERROR("Couldnt find uniform buffer object for %s!!", binding.label);
+//       }
 
-      i32 blockIndex = glGetUniformBlockIndex(encoder->pipeline->shader_id, binding.label);
-      if (blockIndex < 0) {
-        WARN("Couldn't retrieve block index for uniform block '%s'", binding.label);
-      } else {
-        // DEBUG("Retrived block index %d for %s", blockIndex, binding.label);
-      }
+//       i32 blockIndex = glGetUniformBlockIndex(encoder->pipeline->shader_id, binding.label);
+//       if (blockIndex < 0) {
+//         WARN("Couldn't retrieve block index for uniform block '%s'", binding.label);
+//       } else {
+//         // DEBUG("Retrived block index %d for %s", blockIndex, binding.label);
+//       }
 
-      glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
-      glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, binding.data.bytes.data);
+//       glBindBuffer(GL_UNIFORM_BUFFER, ubo_buf->id.ubo);
+//       glBufferSubData(GL_UNIFORM_BUFFER, 0, ubo_buf->size, binding.data.bytes.data);
 
-    } else if (binding.kind == BINDING_TEXTURE) {
-      GPU_Texture* tex = TEXTURE_GET(binding.data.texture.handle);
-      GLint tex_slot = glGetUniformLocation(encoder->pipeline->shader_id, binding.label);
-      // printf("%d slot \n", tex_slot);
-      if (tex_slot == GL_INVALID_VALUE || tex_slot < 0) {
-        WARN("Invalid binding label for texture %s - couldn't fetch texture slot uniform",
-             binding.label);
-      }
-      glUniform1i(tex_slot, i);
-      glActiveTexture(GL_TEXTURE0 + i);
-      GLenum gl_tex_type = opengl_tex_type(tex->type);
-      glBindTexture(gl_tex_type, tex->id);
-    }
-  }
-}
+//     } else if (binding.kind == BINDING_TEXTURE) {
+//       GPU_Texture* tex = TEXTURE_GET(binding.data.texture.handle);
+//       GLint tex_slot = glGetUniformLocation(encoder->pipeline->shader_id, binding.label);
+//       // printf("%d slot \n", tex_slot);
+//       if (tex_slot == GL_INVALID_VALUE || tex_slot < 0) {
+//         WARN("Invalid binding label for texture %s - couldn't fetch texture slot uniform",
+//              binding.label);
+//       }
+//       glUniform1i(tex_slot, i);
+//       glActiveTexture(GL_TEXTURE0 + i);
+//       GLenum gl_tex_type = opengl_tex_type(tex->type);
+//       glBindTexture(gl_tex_type, tex->id);
+//     }
+//   }
+// }
 
-void GPU_EncodeBindShaderDataRaw(GPU_CmdEncoder* encoder, u32 group, ShaderDataLayout layout) {
+void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderDataLayout layout) {
   for (u32 binding_i = 0; binding_i < layout.binding_count; binding_i++) {
     ShaderBinding binding = layout.bindings[binding_i];
 
     switch (binding.kind) {
       case BINDING_BYTES: {
-        #ifdef RAL_ASSERTS
+#ifdef RAL_ASSERTS
         CASSERT_MSG(binding.data.bytes.data, "void* data pointer should be non null");
         CASSERT_MSG(binding.data.bytes.size > 0, "size should be greater than 0 bytes");
-        #endif
+#endif
         // TODO
       }
       case BINDING_TEXTURE: {
@@ -409,7 +409,7 @@ void GPU_EncodeBindShaderDataRaw(GPU_CmdEncoder* encoder, u32 group, ShaderDataL
         GLint tex_slot = glGetUniformLocation(encoder->pipeline->shader_id, binding.label);
         if (tex_slot == GL_INVALID_VALUE || tex_slot < 0) {
           WARN("Invalid binding label for texture %s - couldn't fetch texture slot uniform",
-              binding.label);
+               binding.label);
         }
         glUniform1i(tex_slot, binding_i);
         glActiveTexture(GL_TEXTURE0 + binding_i);

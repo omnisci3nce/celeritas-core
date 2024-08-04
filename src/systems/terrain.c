@@ -38,8 +38,8 @@ bool Terrain_Init(Terrain_Storage* storage) {
     ERROR_EXIT("Failed to load shaders from disk")
   }
 
-  ShaderData camera_data = { .get_layout = &Binding_Camera_GetLayout };
-  ShaderData terrain_data = { .get_layout = &TerrainUniforms_GetLayout };
+  ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
+  ShaderDataLayout terrain_data = TerrainUniforms_GetLayout(NULL);
 
   GraphicsPipelineDesc pipeline_desc = {
     .debug_name = "terrain rendering pipeline",
@@ -166,11 +166,10 @@ void Terrain_Draw(Terrain_Storage* storage) {
                                  .projection = proj,
                                  .viewPos = vec4(scene->camera.position.x, scene->camera.position.y,
                                                  scene->camera.position.z, 1.0) };
-  GPU_EncodeBindShaderData(
-      enc, 0, (ShaderData){ .data = &camera_data, .get_layout = &Binding_Camera_GetLayout });
+  GPU_EncodeBindShaderData(enc, 0, Binding_Camera_GetLayout(&camera_data));
 
   TerrainUniforms uniforms = { .tex_slot_1 = storage->texture };
-  ShaderData terrain_data = { .data = &uniforms, .get_layout = &TerrainUniforms_GetLayout };
+  ShaderDataLayout terrain_data = TerrainUniforms_GetLayout(&uniforms);
   GPU_EncodeBindShaderData(enc, 1, terrain_data);
 
   GPU_EncodeSetVertexBuffer(enc, storage->vertex_buffer);

@@ -79,7 +79,7 @@ void Shadow_Init(Shadow_Storage* storage, u32 shadowmap_width, u32 shadowmap_hei
     ERROR_EXIT("Failed to load shaders from disk");
   }
 
-  ShaderData uniforms = { .data = NULL, .get_layout = &ShadowUniforms_GetLayout };
+  ShaderDataLayout uniforms = ShadowUniforms_GetLayout(NULL);
 
   GraphicsPipelineDesc pipeline_desc = {
     .debug_name = "Shadows Pipeline",
@@ -109,7 +109,7 @@ void Shadow_Init(Shadow_Storage* storage, u32 shadowmap_width, u32 shadowmap_hei
     ERROR_EXIT("Failed to load shaders from disk");
   }
 
-  ShaderData debugquad_uniforms = { .data = NULL, .get_layout = &ShadowDebugQuad_GetLayout };
+  ShaderDataLayout debugquad_uniforms = ShadowDebugQuad_GetLayout(NULL);
 
   GraphicsPipelineDesc debugquad_pipeline_desc = {
     .debug_name = "Shadows debug quad Pipeline",
@@ -164,8 +164,7 @@ void Shadow_DrawDebugQuad() {
   GPU_CmdEncoder_BeginRender(enc, shadow_storage->debugquad_pass);
 
   GPU_EncodeBindPipeline(enc, shadow_storage->debugquad_pipeline);
-  ShaderData quad_data = { .data = &shadow_storage->depth_texture,
-                           .get_layout = ShadowDebugQuad_GetLayout };
+  ShaderDataLayout quad_data = ShadowDebugQuad_GetLayout(&shadow_storage->depth_texture);
   GPU_EncodeBindShaderData(enc, 0, quad_data);
   GPU_EncodeSetVertexBuffer(enc, shadow_storage->quad.vertex_buffer);
   GPU_EncodeSetIndexBuffer(enc, shadow_storage->quad.index_buffer);
@@ -190,10 +189,7 @@ void Shadow_ShadowmapExecute(Shadow_Storage* storage, Mat4 light_space_transform
     .light_space = light_space_transform,
     .model = mat4_ident()  // this will be overwritten for each Model
   };
-  ShaderData shader_data = {
-    .data = &uniforms,
-    .get_layout = &ShadowUniforms_GetLayout,
-  };
+  ShaderDataLayout shader_data = ShadowUniforms_GetLayout(&uniforms);
 
   for (size_t ent_i = 0; ent_i < entity_count; ent_i++) {
     RenderEnt renderable = entities[ent_i];

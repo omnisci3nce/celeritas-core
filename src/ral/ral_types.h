@@ -211,10 +211,13 @@ typedef struct ShaderDataLayout {
 
 typedef ShaderDataLayout (*FN_GetBindingLayout)(void* data);
 
-typedef struct ShaderData {
-  FN_GetBindingLayout get_layout;
-  void* data;
-} ShaderData;
+/** @brief takes a `ShaderDataLayout` without data, and puts the correct data into each binding */
+typedef void (*FN_BindShaderData)(ShaderDataLayout* layout, const void* data);
+
+// typedef struct ShaderData {
+//   FN_GetBindingLayout get_layout;
+//   void* data;
+// } ShaderData;
 
 // --- Miscellaneous
 
@@ -239,7 +242,7 @@ typedef struct GraphicsPipelineDesc {
   // examples:
   // - uniform buffer representing view projection matrix
   // - texture for shadow map
-  ShaderData data_layouts[MAX_SHADER_DATA_LAYOUTS];
+  ShaderDataLayout data_layouts[MAX_SHADER_DATA_LAYOUTS];
   u32 data_layouts_count;
 
   bool wireframe;

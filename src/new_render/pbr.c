@@ -39,10 +39,10 @@ GPU_Pipeline* PBR_PipelineCreate(GPU_Renderpass* rpass) {
   char* vert_shader = string_from_file(vert_path);
   char* frag_shader = string_from_file(frag_path);
 
-  ShaderData camera_data = { .get_layout = &Binding_Camera_GetLayout };
-  ShaderData model_data = { .get_layout = &Binding_Model_GetLayout };
-  ShaderData material_data = { .get_layout = &PBRMaterial_GetLayout };
-  ShaderData lights_data = { .get_layout = &Binding_Lights_GetLayout };
+  ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
+  ShaderDataLayout model_data = Binding_Model_GetLayout(NULL);
+  ShaderDataLayout material_data = PBRMaterial_GetLayout(NULL);
+  ShaderDataLayout lights_data = Binding_Lights_GetLayout(NULL);
 
   GraphicsPipelineDesc desc = {
     .debug_name = "PBR Pipeline",
@@ -86,8 +86,7 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
                                  .projection = proj,
                                  .viewPos = vec4(camera.position.x, camera.position.y,
                                                  camera.position.z, 1.0) };
-  GPU_EncodeBindShaderData(
-      enc, 0, (ShaderData){ .data = &camera_data, .get_layout = &Binding_Camera_GetLayout });
+  GPU_EncodeBindShaderData(enc, 0, Binding_Camera_GetLayout(&camera_data));
 
   Vec3 light_color = vec3(300.0, 300.0, 300.0);
   Binding_Lights
@@ -99,8 +98,7 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
                           (pbr_point_light){ .pos = vec3(10, -10, 10), .color = light_color },
                           (pbr_point_light){ .pos = vec3(-10, -10, 10), .color = light_color },
                       } };
-  GPU_EncodeBindShaderData(
-      enc, 3, (ShaderData){ .data = &lights_data, .get_layout = &Binding_Lights_GetLayout });
+  GPU_EncodeBindShaderData(enc, 3, Binding_Lights_GetLayout(&lights_data));
 
   // TODO: Add shadowmap texture to uniforms
   Mesh_pool* mesh_pool = Render_GetMeshPool();
@@ -113,13 +111,11 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
 
     // upload material data
     PBRMaterialUniforms material_data = { .mat = *mat };
-    GPU_EncodeBindShaderData(
-        enc, 2, (ShaderData){ .data = &material_data, .get_layout = PBRMaterial_GetLayout });
+    GPU_EncodeBindShaderData(enc, 2, PBRMaterial_GetLayout(&material_data));
 
     // upload model transform
     Binding_Model model_data = { .model = renderable.affine };
-    GPU_EncodeBindShaderData(
-        enc, 1, (ShaderData){ .data = &model_data, .get_layout = &Binding_Model_GetLayout });
+    GPU_EncodeBindShaderData(enc, 1, Binding_Model_GetLayout(&model_data));
 
     // set buffers
     GPU_EncodeSetVertexBuffer(enc, mesh->vertex_buffer);
@@ -129,6 +125,20 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
   }
 
   GPU_CmdEncoder_EndRender(enc);
+}
+
+void PBRMaterial_BindData(ShaderDataLayout* layout, const void* data) {
+  PBRMaterialUniforms* d = (PBRMaterialUniforms*)data;
+  CASSERT(data);
+  CASSERT(layout->binding_count == 5);
+
+  TextureHandle white1x1 = Render_GetWhiteTexture();
+  if (d->mat.albedo_map.raw != INVALID_TEX_HANDLE.raw) {
+    layout->bindings[0].data.texture.handle = d->mat.albedo_map;
+  } else {
+    layout->bindings[0].data.texture.handle = white1x1;
+  }
+  // TODO .. the rest
 }
 
 ShaderDataLayout PBRMaterial_GetLayout(void* data) {

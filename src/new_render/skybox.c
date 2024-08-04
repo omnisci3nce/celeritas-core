@@ -95,8 +95,8 @@ Skybox Skybox_Create(const char** face_paths, int n) {
   // VertexDesc_AddAttr(&pos_only, "inPos", ATTR_F32x3);
   // pos_only.use_full_vertex_size = true;
 
-  ShaderData camera_data = { .data = NULL, .get_layout = &Binding_Camera_GetLayout };
-  ShaderData shader_data = { .data = NULL, .get_layout = &Skybox_GetLayout };
+  ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
+  ShaderDataLayout shader_data = Skybox_GetLayout(NULL);
 
   VertexDescription builder = { .debug_label = "pos only" };
   VertexDesc_AddAttr(&builder, "inPosition", ATTR_F32x3);
@@ -151,11 +151,10 @@ void Skybox_Draw(Skybox* skybox, Camera camera) {
                                  .projection = proj,
                                  .viewPos = vec4(camera.position.x, camera.position.y,
                                                  camera.position.z, 1.0) };
-  GPU_EncodeBindShaderData(
-      enc, 0, (ShaderData){ .data = &camera_data, .get_layout = &Binding_Camera_GetLayout });
+  GPU_EncodeBindShaderData(enc, 0, Binding_Camera_GetLayout(&camera_data));
 
   SkyboxUniforms uniforms = { .cubemap = skybox->texture };
-  ShaderData skybox_data = { .data = &uniforms, .get_layout = &Skybox_GetLayout };
+  ShaderDataLayout skybox_data = Skybox_GetLayout(&uniforms);
   GPU_EncodeBindShaderData(enc, 0, skybox_data);
 
   GPU_EncodeSetVertexBuffer(enc, skybox->cube.vertex_buffer);

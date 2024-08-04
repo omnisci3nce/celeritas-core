@@ -37,7 +37,7 @@ void Grid_Init(Grid_Storage* storage) {
     ERROR_EXIT("Failed to load shaders from disk")
   }
 
-  ShaderData camera_data = { .get_layout = &Binding_Camera_GetLayout };
+  ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
 
   GraphicsPipelineDesc pipeline_desc = {
     .debug_name = "Infinite grid pipeline",
@@ -77,8 +77,7 @@ void Grid_Execute(Grid_Storage* storage) {
                                  .projection = proj,
                                  .viewPos = vec4(camera.position.x, camera.position.y,
                                                  camera.position.z, 1.0) };
-  GPU_EncodeBindShaderData(
-      enc, 0, (ShaderData){ .data = &camera_data, .get_layout = &Binding_Camera_GetLayout });
+  GPU_EncodeBindShaderData(enc, 0, Binding_Camera_GetLayout(&camera_data));
   GPU_EncodeSetVertexBuffer(enc, storage->plane_vertices);
   GPU_EncodeSetIndexBuffer(enc, storage->plane_indices);
   GPU_EncodeDrawIndexed(enc, 6);

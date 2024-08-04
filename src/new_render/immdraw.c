@@ -14,14 +14,15 @@ void Immdraw_Init(Immdraw_Storage* storage) {
   // storage->sphere = Mesh_Create(&sphere_geo, false);
 
   // pipeline / material
-  ShaderData camera_data = { .get_layout = &Binding_Camera_GetLayout };
+  ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
   GraphicsPipelineDesc pipeline_desc = {
     .debug_name = "Immediate Draw Pipeline",
     .data_layouts = { camera_data },
     .data_layouts_count = 1,
 
   };
-  // storage->colour_pipeline = GPU_GraphicsPipeline_Create(pipeline_desc, GPU_GetDefaultRenderpass());
+  // storage->colour_pipeline = GPU_GraphicsPipeline_Create(pipeline_desc,
+  // GPU_GetDefaultRenderpass());
 }
 
 void Immdraw_Sphere(Transform tf, f32 size, Vec4 colour, bool wireframe) {}
