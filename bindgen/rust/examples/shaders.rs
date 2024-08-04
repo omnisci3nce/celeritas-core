@@ -2,7 +2,7 @@ use celeritas::ral::{
     ShaderBinding, ShaderBindingKind, ShaderData, ShaderDataLayout, ShaderVisibility,
 };
 use celeritas_sys::{
-    GPU_EncodeBindShaderDataRaw, GPU_GetDefaultEncoder, Mat4, ShaderVisibility_VISIBILITY_COMPUTE,
+    GPU_EncodeBindShaderData, GPU_GetDefaultEncoder, Mat4, ShaderVisibility_VISIBILITY_COMPUTE,
     ShaderVisibility_VISIBILITY_FRAGMENT, ShaderVisibility_VISIBILITY_VERTEX,
 };
 
@@ -42,7 +42,7 @@ impl ShaderData for MVP {
         };
 
         unsafe {
-            GPU_EncodeBindShaderDataRaw(GPU_GetDefaultEncoder(), 0, layout.into_ffi_type());
+            GPU_EncodeBindShaderData(GPU_GetDefaultEncoder(), 0, layout.into_ffi_type());
         }
     }
 }

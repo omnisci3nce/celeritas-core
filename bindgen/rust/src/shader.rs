@@ -1,7 +1,5 @@
 use std::{ffi::c_void, path::Path};
 
-use celeritas_sys::ShaderData;
-
 use crate::ral::{Pipeline, ShaderBinding};
 
 pub struct Shader {
@@ -19,10 +17,7 @@ impl Shader {
         todo!()
     }
     pub fn add_layout(&mut self) -> &mut Self {
-        let sd = ShaderData {
-            get_layout: Some(rust_function),
-            data: std::ptr::null_mut(),
-        };
+        // TODO
         self
     }
 }

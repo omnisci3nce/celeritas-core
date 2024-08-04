@@ -1,6 +1,6 @@
 //! Wrapper around the RAL code in celeritas-core
 
-use std::{ffi::c_void, ptr::addr_of_mut};
+use std::ffi::c_void;
 
 use celeritas_sys::{
     BufferHandle, GPU_CmdEncoder, GPU_CmdEncoder_BeginRender, GPU_CmdEncoder_EndRender,
@@ -52,10 +52,7 @@ impl FrameRenderEncoder {
         todo!()
     }
     pub fn bind<S: ShaderData>(&mut self, data: &S) {
-        let sd = celeritas_sys::ShaderData {
-            get_layout: todo!(),
-            data: addr_of_mut!(data) as *mut c_void,
-        };
+        // TODO: fill ShaderDataLayout with correct data
         unsafe { GPU_EncodeBindShaderData(self.0, 0, todo!()) }
     }
 }
