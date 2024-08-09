@@ -13,7 +13,7 @@
 typedef struct Renderer Renderer;
 typedef struct GLFWwindow GLFWwindow;
 typedef struct RendererConfig {
-  char window_name[256];
+  const char* window_name;
   u32 scr_width, scr_height;
   Vec3 clear_colour;
 } RendererConfig;
@@ -62,6 +62,8 @@ PUB ModelHandle ModelLoad(const char* debug_name, const char* filepath);
 PUB Mesh Mesh_Create(Geometry* geometry, bool free_on_upload);
 PUB void Mesh_Delete(Mesh* mesh);
 void Geometry_Destroy(Geometry* geometry);
+MeshHandle Mesh_Insert(Mesh* mesh);
+MaterialHandle Material_Insert(Material* material);
 
 /** @brief gets render entities from a model and pushes them into a dynamic array for rendering */
 size_t ModelExtractRenderEnts(RenderEnt_darray* entities, ModelHandle model_handle, Mat4 affine, RenderEntityFlags flags);

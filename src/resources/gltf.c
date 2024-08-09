@@ -554,11 +554,14 @@ size_t GLTF_LoadMaterials(cgltf_data *data, Str8 relative_path, Material_darray 
     } else {
       our_material.albedo_map = Render_GetWhiteTexture();
       WARN("GLTF model has no albedo map");
+      our_material.base_colour = vec3_create(pbr.base_color_factor[0],pbr.base_color_factor[1], pbr.base_color_factor[2]);
     }
 
     // -- metallic
     cgltf_texture_view metal_rough_tex_view = pbr.metallic_roughness_texture;
     // bool has_metal_
+    printf("Metal factor: %f\n", pbr.metallic_factor);
+    printf("Roughness factor: %f\n", pbr.roughness_factor);
     if (metal_rough_tex_view.texture != NULL) {
       char metal_rough_map_path[1024];
       snprintf(metal_rough_map_path, sizeof(metal_rough_map_path), "%s/%s", relative_path.buf,
@@ -566,6 +569,8 @@ size_t GLTF_LoadMaterials(cgltf_data *data, Str8 relative_path, Material_darray 
       our_material.metallic_roughness_map = TextureLoadFromFile(metal_rough_map_path);
     } else {
       WARN("GLTF model has no metal/roughness map");
+      our_material.metallic = pbr.metallic_factor;
+      our_material.roughness = pbr.roughness_factor;
     }
 
     cgltf_texture_view normal_tex_view = gltf_material.normal_texture;

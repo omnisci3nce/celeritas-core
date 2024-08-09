@@ -5,10 +5,11 @@ use std::ffi::c_void;
 use celeritas_sys::{
     BufferHandle, GPU_CmdEncoder, GPU_CmdEncoder_BeginRender, GPU_CmdEncoder_EndRender,
     GPU_EncodeBindShaderData, GPU_GetDefaultEncoder, GPU_GetDefaultRenderpass,
-    GPU_GraphicsPipeline_Create, GraphicsPipelineDesc, ShaderBindingKind_BINDING_BYTES,
-    ShaderBinding__bindgen_ty_1, ShaderBinding__bindgen_ty_1__bindgen_ty_1,
-    ShaderVisibility_VISIBILITY_COMPUTE, ShaderVisibility_VISIBILITY_FRAGMENT,
-    ShaderVisibility_VISIBILITY_VERTEX, TextureHandle, MAX_SHADER_DATA_LAYOUTS,
+    GPU_GraphicsPipeline_Create, GPU_Pipeline, GraphicsPipelineDesc,
+    ShaderBindingKind_BINDING_BYTES, ShaderBinding__bindgen_ty_1,
+    ShaderBinding__bindgen_ty_1__bindgen_ty_1, ShaderVisibility_VISIBILITY_COMPUTE,
+    ShaderVisibility_VISIBILITY_FRAGMENT, ShaderVisibility_VISIBILITY_VERTEX, TextureHandle,
+    MAX_SHADER_DATA_LAYOUTS,
 };
 use thiserror::Error;
 
@@ -103,6 +104,12 @@ impl PipelineBuilder {
         let layout = S::layout();
         self.data_layouts.push(layout);
         self
+    }
+}
+
+impl Pipeline {
+    pub fn raw_ptr(&self) -> *mut GPU_Pipeline {
+        self.0
     }
 }
 

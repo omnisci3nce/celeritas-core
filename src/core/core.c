@@ -20,11 +20,11 @@ Core g_core; /** @brief global `Core` that other files can use */
 /** @brief Gets the global `Core` singleton */
 inline Core* GetCore() { return &g_core; }
 
-void Core_Bringup(struct GLFWwindow* optional_window) {
+void Core_Bringup(const char* window_name, struct GLFWwindow* optional_window) {
   INFO("Initiate Core bringup");
   memset(&g_core, 0, sizeof(Core));
 
-  RendererConfig conf = { .window_name = { "Celeritas Engine Core" },
+  RendererConfig conf = { .window_name = window_name,
                           .scr_width = SCR_WIDTH,
                           .scr_height = SCR_HEIGHT,
                           .clear_colour = (Vec3){ .08, .08, .1 } };

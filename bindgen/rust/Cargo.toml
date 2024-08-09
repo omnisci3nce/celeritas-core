@@ -11,6 +11,7 @@ serde_json = "1.0.120"
 egui = "0.27.1"
 egui_glfw = { git = "https://github.com/omnisci3nce/egui_glfw.git", rev = "67b432695433feb59761f3ae984b966ca3da31db" }
 gl = "0.14.0"
+glam = { version = "0.28.0", features = ["approx", "serde"] }
 thiserror = "1.0.63"
 bitflags = "2.6.0"
 heapless = "0.8.0"

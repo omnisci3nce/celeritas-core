@@ -26,7 +26,7 @@ static const char* faces[6] = { "assets/skybox/right.jpg", "assets/skybox/left.j
                                 "assets/skybox/front.jpg", "assets/skybox/back.jpg" };
 
 int main() {
-  Core_Bringup(NULL);
+  Core_Bringup("Celeritas: Game Demo", NULL);
 
   // TODO: Load humanoid model + weapon
   // TODO: Animate it with WASD keys
@@ -76,7 +76,8 @@ int main() {
   MaterialHandle crate_mat_handle = Material_pool_insert(Render_GetMaterialPool(), &crate_mat);
   // ModelHandle cube_handle = ModelLoad_gltf("assets/models/gltf/Cube/glTF/Cube.gltf", false);
   ModelHandle cube_handle =
-      ModelLoad_gltf("assets/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf", false);
+      // ModelLoad_gltf("assets/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf", false);
+      ModelLoad_gltf("../../assets/prototyper/prototyper_m.gltf", false);
 
   RenderEnt_darray* render_entities = RenderEnt_darray_new(1);
 
@@ -99,14 +100,16 @@ int main() {
     // BEGIN Draw calls
     RenderEnt_darray_clear(render_entities);  // we re-extract every frame
     Quat rot = quat_from_axis_angle(VEC3_X, -HALF_PI, true);
-    ModelExtractRenderEnts(render_entities, cube_handle, mat4_rotation(rot),
+    // Mat4 affine = mat4_rotation(rot);
+    Mat4 affine = mat4_ident();
+    ModelExtractRenderEnts(render_entities, cube_handle, affine,
                            REND_ENT_CASTS_SHADOWS);
 
     // Shadow_Run(entities, entity_count);
 
     if (draw_debug) {
       // draw the player model with shadows
-      // Render_RenderEntities(render_entities->data, render_entities->len);
+      Render_RenderEntities(render_entities->data, render_entities->len);
       // Render_DrawTerrain();
       Skybox_Draw(&skybox, cam);
     } else {

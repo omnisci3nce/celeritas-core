@@ -9,15 +9,19 @@ pub use celeritas_sys as ffi;
 pub mod prelude;
 
 pub mod ral;
+pub mod resources;
 pub mod shader;
 
 use std::{
+    ffi::CString,
     fs::{self, File},
     io::Write,
     path::Path,
 };
 
-use celeritas_sys::{DirectionalLight, PointLight, Transform, Vec3};
+use celeritas_sys::{
+    Core_Bringup, Core_Shutdown, DirectionalLight, PointLight, RenderEnt, Transform, Vec3,
+};
 use serde::{Deserialize, Serialize};
 
 /// Wrapper around a string that is the path to a gltf model **relative** to the configured
@@ -64,4 +68,37 @@ pub enum Light {
     Point(ffi::PointLight),
     Directional(ffi::DirectionalLight),
     // Spot(ffi::Spotlight)
+}
+
+pub struct Core {
+    _window_name: CString,
+}
+impl Core {
+    pub fn init(window_name: &str, window: Option<*mut ffi::GLFWwindow>) -> Self {
+        let name = CString::new(window_name).unwrap();
+        let window_ptr = window.unwrap_or(std::ptr::null_mut());
+        unsafe { Core_Bringup(name.as_ptr() as *const _, window_ptr) };
+        Self { _window_name: name }
+    }
+}
+
+impl Drop for Core {
+    fn drop(&mut self) {
+        unsafe { Core_Shutdown() }
+    }
+}
+
+// pub struct Renderable {
+//     pub mesh: MeshHandle,
+//     pub material: MaterialHandle,
+//     pub affine: Mat4,
+//     pub bounding_box: Bbox_3D,
+//     pub flags: RenderEntityFlags,
+// }
+
+bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct RenderableFlags : u32 {
+
+    }
 }

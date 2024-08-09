@@ -419,7 +419,7 @@ void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, u64 index_count) {
 
 bool GPU_Backend_BeginFrame() {
   glViewport(0, 0, context.swapchain.dimensions.x * 2, context.swapchain.dimensions.y * 2);
-  glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+  glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   return true;
 }

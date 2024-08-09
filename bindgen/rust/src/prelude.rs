@@ -13,3 +13,6 @@ pub use celeritas_sys::PipelineHandle;
 pub use celeritas_sys::PipelineLayoutHandle;
 pub use celeritas_sys::RenderpassHandle;
 pub use celeritas_sys::TextureHandle;
+
+// --- conversions
+pub use celeritas_sys::conversions;

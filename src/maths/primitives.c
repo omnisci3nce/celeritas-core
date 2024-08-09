@@ -144,7 +144,7 @@ Vec3 spherical_to_cartesian_coords(f32 rho, f32 theta, f32 phi) {
   return vec3(x, y, z);
 }
 
-Geometry geo_create_uvsphere(f32 radius, u32 north_south_lines, u32 east_west_lines) {
+Geometry Geo_CreateUVsphere(f32 radius, u32 north_south_lines, u32 east_west_lines) {
   assert(east_west_lines >= 3);  // sphere will be degenerate and look gacked without at least 3
   assert(north_south_lines >= 3);
 

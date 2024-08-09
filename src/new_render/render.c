@@ -284,6 +284,12 @@ void Geometry_Destroy(Geometry* geometry) {
     Vertex_darray_free(geometry->vertices);
   }
 }
+PUB MeshHandle Mesh_Insert(Mesh* mesh) {
+    return Mesh_pool_insert(Render_GetMeshPool(), mesh);
+}
+PUB MaterialHandle Material_Insert(Material* material) {
+    return Material_pool_insert(Render_GetMaterialPool(), material);
+}
 
 size_t ModelExtractRenderEnts(RenderEnt_darray* entities, ModelHandle model_handle, Mat4 affine,
                               RenderEntityFlags flags) {
