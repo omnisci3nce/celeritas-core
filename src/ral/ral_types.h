@@ -148,11 +148,11 @@ typedef enum VertexAttribType {
 } VertexAttribType;
 
 typedef struct VertexDescription {
-  char* debug_label;
+  const char* debug_label;
   const char* attr_names[MAX_VERTEX_ATTRIBUTES];
   VertexAttribType attributes[MAX_VERTEX_ATTRIBUTES];
   u32 attributes_count;
-  size_t stride;
+  // size_t stride;
   bool use_full_vertex_size;
 } VertexDescription;
 

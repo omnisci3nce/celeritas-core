@@ -56,5 +56,6 @@ void GPU_WindowResizedCallback(u32 x, u32 y);
 VertexDescription static_3d_vertex_description();
 
 void VertexDesc_AddAttr(VertexDescription* builder, const char* name, VertexAttribType type);
+size_t VertexDesc_CalcStride(VertexDescription* desc);
 
 size_t VertexAttribSize(VertexAttribType attr);

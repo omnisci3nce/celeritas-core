@@ -73,11 +73,19 @@ void copy_buffer_to_image_oneshot(BufferHandle src, TextureHandle dst);
 
 // --- Render commands
 PUB void GPU_EncodeBindPipeline(GPU_CmdEncoder* encoder, GPU_Pipeline* pipeline);
-// PUB void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderData data);
 PUB void GPU_EncodeBindShaderData(GPU_CmdEncoder* encoder, u32 group, ShaderDataLayout layout);
 void GPU_EncodeSetDefaults(GPU_CmdEncoder* encoder);
 PUB void GPU_EncodeSetVertexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf);
 PUB void GPU_EncodeSetIndexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf);
+PUB void GPU_EncodeCopyBufToBuf();
+
+// PUB void GPU_EncodeCopyBufToTex(GPU_CmdEncoder* encoder, BufferHandle src, TextureHandle dst,
+//     u32 x_offset, u32 y_offset, u32 width, u32 height, const void* data);
+/** @brief Convenience method for writing data directly into a texture. Staging memory is handled internally. */
+PUB void GPU_WriteTextureRegion(GPU_CmdEncoder* encoder, TextureHandle dst,
+    u32 x_offset, u32 y_offset, u32 width, u32 height, const void* data);
+PUB void GPU_WriteBuffer(GPU_CmdEncoder* encoder, BufferHandle buf, u64 offset, u64 size, const void* data);
+
 PUB void GPU_EncodeDraw(GPU_CmdEncoder* encoder, u64 count);
 PUB void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, u64 index_count);
 PUB void GPU_EncodeDrawInstanced(GPU_CmdEncoder* encoder, u64 index_count,

@@ -87,6 +87,19 @@ impl Transform {
     }
 }
 
+impl Vec3 {
+    pub const ZERO: Self = Vec3 {
+        x: 0.,
+        y: 0.,
+        z: 0.,
+    };
+    pub const ONE: Self = Vec3 {
+        x: 1.,
+        y: 1.,
+        z: 1.,
+    };
+}
+
 impl Default for ShaderBinding {
     fn default() -> Self {
         Self {
@@ -137,5 +150,18 @@ impl Default for Camera {
             )
         };
         camera
+    }
+}
+
+// -- fat pointer string type
+
+impl Str8 {
+    pub fn from_str(s: &str) -> Self {
+        let s = s.to_owned();
+        let s = s.leak(); // TODO: a better way than just leaking string memory :P
+        Self {
+            buf: s.as_mut_ptr(),
+            len: 0,
+        }
     }
 }

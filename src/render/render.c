@@ -287,9 +287,7 @@ PUB MeshHandle Mesh_Insert(Mesh* mesh) { return Mesh_pool_insert(Render_GetMeshP
 PUB MaterialHandle Material_Insert(Material* material) {
   return Material_pool_insert(Render_GetMaterialPool(), material);
 }
-Mesh* Mesh_Get(MeshHandle handle) {
-    return Mesh_pool_get(Render_GetMeshPool(), handle);
-}
+Mesh* Mesh_Get(MeshHandle handle) { return Mesh_pool_get(Render_GetMeshPool(), handle); }
 
 size_t ModelExtractRenderEnts(RenderEnt_darray* entities, ModelHandle model_handle, Mat4 affine,
                               RenderEntityFlags flags) {

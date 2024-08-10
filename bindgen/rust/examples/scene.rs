@@ -56,7 +56,7 @@ fn main() {
                 },
             },
             point_lights: [None, None, None, None],
-            camera_orientation: (camera_pos, camera_front),
+            camera_orientation: (camera_pos.into(), camera_front.into()),
             models: vec![],
         };
 

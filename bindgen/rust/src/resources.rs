@@ -1,6 +1,6 @@
-use std::{ffi::CString, path::Path};
+use std::ffi::CString;
 
-use celeritas_sys::{ModelHandle, ModelLoad, ModelLoad_gltf};
+use celeritas_sys::{ModelHandle, ModelLoad_gltf};
 
 /// Load a gltf from disk
 pub fn model_load_gltf(path: &str) -> Option<ModelHandle> {

@@ -416,6 +416,17 @@ void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, u64 index_count) {
   glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0);
 }
 
+PUB void GPU_WriteTextureRegion(GPU_CmdEncoder* encoder, TextureHandle dst, u32 x_offset,
+                                u32 y_offset, u32 width, u32 height, const void* data) {
+  CASSERT_MSG(data, "const void* data must not be NULL");
+
+  GPU_Texture* tex = TEXTURE_GET(dst);
+
+  glBindTexture(GL_TEXTURE_2D, tex->id);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, x_offset, y_offset, width, height, GL_RGBA, GL_UNSIGNED_BYTE,
+                  data);
+}
+
 bool GPU_Backend_BeginFrame() {
   glViewport(0, 0, context.swapchain.dimensions.x * 2, context.swapchain.dimensions.y * 2);
   glClearColor(0.8f, 0.8f, 0.8f, 1.0f);

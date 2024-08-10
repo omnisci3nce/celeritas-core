@@ -13,16 +13,26 @@ const SERIALIZABLE_TYPES: &[&'static str] = &[
     "DirectionalLight",
     "PointLight",
 ];
+const EQ_TYPES: &[&'static str] = &[
+    "BufferHandle",
+    "TextureHandle",
+    "MeshHandle",
+    "MaterialHandle",
+    "ModelHandle",
+];
 
 #[derive(Debug)]
-struct DeriveSerialize;
-impl ParseCallbacks for DeriveSerialize {
+struct AdditionalDerives;
+impl ParseCallbacks for AdditionalDerives {
     fn add_derives(&self, info: &bindgen::callbacks::DeriveInfo<'_>) -> Vec<String> {
+        let mut derives = vec![];
         if SERIALIZABLE_TYPES.contains(&info.name) {
-            vec!["Serialize".to_string(), "Deserialize".to_string()]
-        } else {
-            vec![]
+            derives.extend_from_slice(&["Serialize".to_string(), "Deserialize".to_string()]);
         }
+        if EQ_TYPES.contains(&info.name) {
+            derives.extend_from_slice(&["PartialEq".to_string()]);
+        }
+        derives
     }
 }
 
@@ -34,7 +44,8 @@ fn main() {
     // println!("cargo:rustc-link-search=../../build/windows/x64/debug");
 
     let static_lib_path =
-        "/Users/josh/code/CodenameVentus/deps/celeritas-core/build/macosx/arm64/debug".to_string();
+        "/Users/josh/code/CodenameVentus/deps/celeritas-core/build/macosx/arm64/release"
+            .to_string();
     // let static_lib_path = std::env::var("CELERITAS_CORE_LIB")
     //     .unwrap_or("../../../build/macosx/arm64/debug".to_string());
 
@@ -75,8 +86,10 @@ fn main() {
         .generate_inline_functions(true)
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
+        .rustified_enum("GPU_TextureType")
+        .rustified_enum("GPU_TextureFormat")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
-        .parse_callbacks(Box::new(DeriveSerialize))
+        .parse_callbacks(Box::new(AdditionalDerives))
         // Finish the builder and generate the bindings.
         .generate()
         // Unwrap the Result and panic on failure.

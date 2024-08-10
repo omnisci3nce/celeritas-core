@@ -32,7 +32,7 @@ void VertexDesc_AddAttr(VertexDescription* builder, const char* name, VertexAttr
 
   size_t size = VertexAttribSize(type);
   builder->attributes[i] = type;
-  builder->stride += size;
+  // builder->stride += size;
   builder->attr_names[i] = name;
 
   builder->attributes_count++;
@@ -58,4 +58,13 @@ size_t VertexAttribSize(VertexAttribType attr) {
       return 16;
       break;
   }
+}
+
+size_t VertexDesc_CalcStride(VertexDescription* desc) {
+    size_t stride = 0;
+    for (int i = 0; i < desc->attributes_count; i++) {
+        size_t size =VertexAttribSize(desc->attributes[i]);
+        stride += size;
+    }
+    return stride;
 }

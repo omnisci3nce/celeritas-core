@@ -11,6 +11,7 @@
 #include "ral.h"
 #include "input.h"
 #include "primitives.h"
+#include "immdraw.h"
 #include "maths_types.h"
 #include "maths.h"
 #include "skybox.h"

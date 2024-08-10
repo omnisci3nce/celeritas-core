@@ -65,7 +65,7 @@ CORE_DEFINE_HANDLE(
 // NOTE: The below is now handled in xmake.lua
 // Platform will inform renderer backend (unless user overrides)
 #if defined(CEL_PLATFORM_LINUX)
-#define CEL_REND_BACKEND_OPENGL 1
+// #define CEL_REND_BACKEND_OPENGL 1
 // #define CEL_REND_BACKEND_VULKAN 1
 #endif
 
