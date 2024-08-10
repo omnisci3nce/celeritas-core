@@ -128,6 +128,7 @@ All third-party dependencies are licensed under their own license.
 - [x] Buffer/texture creation
 - [x] Graphics pipeline creation/deletion
 - [ ] Compute shader pipeline creation/deletion/run
+- [ ] Enums for graphics pipeline state (blending, wrapping, etc)
 
 #### Physics
 - [ ] Ground check against heightmap terrain or simple plane
