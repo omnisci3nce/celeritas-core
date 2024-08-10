@@ -111,3 +111,31 @@ impl Default for ShaderDataLayout {
         }
     }
 }
+
+impl Default for Camera {
+    fn default() -> Self {
+        let camera_pos = Vec3 {
+            x: 18.9,
+            y: 10.6,
+            z: 11.6,
+        };
+        let camera_front = Vec3 {
+            x: -0.6,
+            y: -0.2,
+            z: -0.7,
+        };
+        let camera = unsafe {
+            Camera_Create(
+                camera_pos,
+                camera_front,
+                Vec3 {
+                    x: 0.0,
+                    y: 1.0,
+                    z: 0.0,
+                },
+                45.0,
+            )
+        };
+        camera
+    }
+}

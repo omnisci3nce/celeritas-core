@@ -20,7 +20,8 @@ use std::{
 };
 
 use celeritas_sys::{
-    Core_Bringup, Core_Shutdown, DirectionalLight, PointLight, RenderEnt, Transform, Vec3,
+    Camera, Camera_Create, Core_Bringup, Core_Shutdown, DirectionalLight, PointLight, RenderEnt,
+    Transform, Vec3,
 };
 use serde::{Deserialize, Serialize};
 
