@@ -15,7 +15,6 @@
 #include "primitives.h"
 #include "ral_types.h"
 #include "render.h"
-#include "render_scene.h"
 #include "render_types.h"
 #include "shadows.h"
 #include "skybox.h"
@@ -102,8 +101,7 @@ int main() {
     Quat rot = quat_from_axis_angle(VEC3_X, -HALF_PI, true);
     // Mat4 affine = mat4_rotation(rot);
     Mat4 affine = mat4_ident();
-    ModelExtractRenderEnts(render_entities, cube_handle, affine,
-                           REND_ENT_CASTS_SHADOWS);
+    ModelExtractRenderEnts(render_entities, cube_handle, affine, REND_ENT_CASTS_SHADOWS);
 
     // Shadow_Run(entities, entity_count);
 

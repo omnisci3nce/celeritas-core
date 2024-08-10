@@ -9,7 +9,6 @@
 #include "ral_impl.h"
 #include "ral_types.h"
 #include "render.h"
-#include "render_scene.h"
 #include "render_types.h"
 #include "shader_layouts.h"
 

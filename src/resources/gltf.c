@@ -554,7 +554,8 @@ size_t GLTF_LoadMaterials(cgltf_data *data, Str8 relative_path, Material_darray 
     } else {
       our_material.albedo_map = Render_GetWhiteTexture();
       WARN("GLTF model has no albedo map");
-      our_material.base_colour = vec3_create(pbr.base_color_factor[0],pbr.base_color_factor[1], pbr.base_color_factor[2]);
+      our_material.base_colour =
+          vec3_create(pbr.base_color_factor[0], pbr.base_color_factor[1], pbr.base_color_factor[2]);
     }
 
     // -- metallic

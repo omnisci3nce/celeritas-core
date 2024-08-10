@@ -18,7 +18,6 @@
 #include "ral_common.h"
 #include "ral_impl.h"
 #include "ral_types.h"
-#include "render_scene.h"
 #include "render_types.h"
 #include "shadows.h"
 #include "terrain.h"
@@ -284,11 +283,12 @@ void Geometry_Destroy(Geometry* geometry) {
     Vertex_darray_free(geometry->vertices);
   }
 }
-PUB MeshHandle Mesh_Insert(Mesh* mesh) {
-    return Mesh_pool_insert(Render_GetMeshPool(), mesh);
-}
+PUB MeshHandle Mesh_Insert(Mesh* mesh) { return Mesh_pool_insert(Render_GetMeshPool(), mesh); }
 PUB MaterialHandle Material_Insert(Material* material) {
-    return Material_pool_insert(Render_GetMaterialPool(), material);
+  return Material_pool_insert(Render_GetMaterialPool(), material);
+}
+Mesh* Mesh_Get(MeshHandle handle) {
+    return Mesh_pool_get(Render_GetMeshPool(), handle);
 }
 
 size_t ModelExtractRenderEnts(RenderEnt_darray* entities, ModelHandle model_handle, Mat4 affine,

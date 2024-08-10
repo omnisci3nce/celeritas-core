@@ -8,7 +8,6 @@
 
 #include "core.h"
 #include "render.h"
-#include "render_scene.h"
 #include "ral.h"
 #include "input.h"
 #include "primitives.h"

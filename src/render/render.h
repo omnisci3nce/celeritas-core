@@ -9,6 +9,7 @@
 #include "ral_types.h"
 #include "render_types.h"
 #include "shadows.h"
+#include "camera.h"
 
 typedef struct Renderer Renderer;
 typedef struct GLFWwindow GLFWwindow;
@@ -26,6 +27,16 @@ typedef struct RenderCtx {
   Mat4 view;
   Mat4 projection;
 } RenderCtx;
+
+/** @brief Holds globally bound data for rendering a scene. Typically held by the renderer.
+ *         Whenever you call draw functions you can think of this as an implicit parameter. */
+typedef struct RenderScene {
+  Camera camera;
+  DirectionalLight sun;
+} RenderScene;
+
+PUB void SetCamera(Camera camera);
+PUB void SetMainLight(DirectionalLight light);
 
 // #define MESH_GET(h) (Mesh_pool_get(g_core.renderer->meshes, h))
 // #define MATERIAL_GET(h) (Material_pool_get(g_core.renderer->material, h))
@@ -61,6 +72,7 @@ PUB ModelHandle ModelLoad(const char* debug_name, const char* filepath);
 
 PUB Mesh Mesh_Create(Geometry* geometry, bool free_on_upload);
 PUB void Mesh_Delete(Mesh* mesh);
+Mesh* Mesh_Get(MeshHandle handle);
 void Geometry_Destroy(Geometry* geometry);
 MeshHandle Mesh_Insert(Mesh* mesh);
 MaterialHandle Material_Insert(Material* material);
@@ -95,3 +107,40 @@ Material_pool* Render_GetMaterialPool();
 
 // --- Setters
 void Render_SetRenderMode(RenderMode mode);
+
+// -------------------------------------------------
+
+// Frame lifecycle on CPU
+
+// 1. extract
+// 2. culling
+// 3. render
+// 4. dispatch (combined with render for now)
+
+// typedef struct Cull_Result {
+//   u64 n_visible_objects;
+//   u64 n_culled_objects;
+//   u32* visible_ent_indices;  // allocated on frame arena
+//   size_t index_count;
+// } Cull_Result;
+
+// // everything that can be in the world, knows how to extract rendering data
+// typedef void (*ExtractRenderData)(void* world_data);
+
+// typedef struct Renderer Renderer;
+
+// /** @brief Produces a smaller set of only those meshes visible in the camera frustum on the CPU */
+// Cull_Result Frame_Cull(Renderer* ren, RenderEnt* entities, size_t entity_count, Camera* camera);
+
+// Cull_Result Frame_Cull(Renderer* ren, RenderEnt* entities, size_t entity_count, Camera* camera) {
+//   // TODO: u32 chunk_count = Tpool_GetNumWorkers();
+
+//   arena* frame_arena = GetRenderFrameArena(ren);
+
+//   Cull_Result result = { 0 };
+//   result.visible_ent_indices = arena_alloc(
+//       frame_arena, sizeof(u32) * entity_count);  // make space for if all ents are visible
+
+//   assert((result.n_visible_objects + result.n_culled_objects == entity_count));
+//   return result;
+// }

@@ -64,9 +64,7 @@ local core_sources = {
     "src/physics/*.c",
     "src/ral/*.c",
     "src/ral/backends/opengl/*.c",
-    "src/new_render/*.c",
-    -- "src/renderer/*.c",
-    -- "src/renderer/backends/*.c",
+    "src/render/*.c",
     "src/resources/*.c",
     "src/std/*.c",
     "src/std/containers/*.c",
@@ -119,11 +117,7 @@ add_includedirs("src/platform/", { public = true })
 add_includedirs("src/physics/", { public = true })
 add_includedirs("src/ral", { public = true })
 add_includedirs("src/ral/backends/opengl", { public = true })
-add_includedirs("src/new_render", { public = true })
--- add_includedirs("src/renderer/", {public = true})
--- add_includedirs("src/renderer/backends/", {public = true})
--- add_includedirs("src/renderer/backends/opengl", {public = true})
--- add_includedirs("src/renderer/backends/metal", {public = true})
+add_includedirs("src/render", { public = true })
 add_includedirs("src/ral/backends/vulkan", {public = true})
 add_includedirs("src/resources/", { public = true })
 add_includedirs("src/std/", { public = true })

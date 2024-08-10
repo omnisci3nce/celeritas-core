@@ -101,7 +101,7 @@ void* void_pool_alloc(void_pool* pool, u32* out_raw_handle) {
   // What index does this become?
   uintptr_t start = (uintptr_t)pool->backing_buffer;
   uintptr_t cur = (uintptr_t)free_node;
-  TRACE("%ld %ld ", start, cur);
+  // TRACE("%ld %ld ", start, cur);
   assert(cur > start);
   u32 index = (u32)((cur - start) / pool->entry_size);
   /* printf("Index %d\n", index); */

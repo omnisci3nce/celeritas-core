@@ -12,7 +12,6 @@
 #include "ral_impl.h"
 #include "ral_types.h"
 #include "render.h"
-#include "render_scene.h"
 #include "shader_layouts.h"
 #include "str.h"
 
