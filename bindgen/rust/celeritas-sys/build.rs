@@ -57,7 +57,7 @@ fn main() {
         .clang_arg("-I../../../src")
         .clang_arg("-I../../../src/core")
         .clang_arg("-I../../../src/maths")
-        .clang_arg("-I../../../src/new_render")
+        .clang_arg("-I../../../src/render")
         .clang_arg("-I../../../src/platform")
         .clang_arg("-I../../../src/ral")
         .clang_arg("-I../../../src/ral/backends/opengl")
