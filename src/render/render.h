@@ -3,13 +3,13 @@
  */
 
 #pragma once
+#include "camera.h"
 #include "defines.h"
 #include "grid.h"
 #include "maths_types.h"
 #include "ral_types.h"
 #include "render_types.h"
 #include "shadows.h"
-#include "camera.h"
 
 typedef struct Renderer Renderer;
 typedef struct GLFWwindow GLFWwindow;
@@ -78,7 +78,8 @@ MeshHandle Mesh_Insert(Mesh* mesh);
 MaterialHandle Material_Insert(Material* material);
 
 /** @brief gets render entities from a model and pushes them into a dynamic array for rendering */
-size_t ModelExtractRenderEnts(RenderEnt_darray* entities, ModelHandle model_handle, Mat4 affine, RenderEntityFlags flags);
+size_t ModelExtractRenderEnts(RenderEnt_darray* entities, ModelHandle model_handle, Mat4 affine,
+                              RenderEntityFlags flags);
 
 // --- Drawing
 
@@ -129,8 +130,9 @@ void Render_SetRenderMode(RenderMode mode);
 
 // typedef struct Renderer Renderer;
 
-// /** @brief Produces a smaller set of only those meshes visible in the camera frustum on the CPU */
-// Cull_Result Frame_Cull(Renderer* ren, RenderEnt* entities, size_t entity_count, Camera* camera);
+// /** @brief Produces a smaller set of only those meshes visible in the camera frustum on the CPU
+// */ Cull_Result Frame_Cull(Renderer* ren, RenderEnt* entities, size_t entity_count, Camera*
+// camera);
 
 // Cull_Result Frame_Cull(Renderer* ren, RenderEnt* entities, size_t entity_count, Camera* camera) {
 //   // TODO: u32 chunk_count = Tpool_GetNumWorkers();

@@ -81,10 +81,12 @@ PUB void GPU_EncodeCopyBufToBuf();
 
 // PUB void GPU_EncodeCopyBufToTex(GPU_CmdEncoder* encoder, BufferHandle src, TextureHandle dst,
 //     u32 x_offset, u32 y_offset, u32 width, u32 height, const void* data);
-/** @brief Convenience method for writing data directly into a texture. Staging memory is handled internally. */
-PUB void GPU_WriteTextureRegion(GPU_CmdEncoder* encoder, TextureHandle dst,
-    u32 x_offset, u32 y_offset, u32 width, u32 height, const void* data);
-PUB void GPU_WriteBuffer(GPU_CmdEncoder* encoder, BufferHandle buf, u64 offset, u64 size, const void* data);
+/** @brief Convenience method for writing data directly into a texture. Staging memory is handled
+ * internally. */
+PUB void GPU_WriteTextureRegion(GPU_CmdEncoder* encoder, TextureHandle dst, u32 x_offset,
+                                u32 y_offset, u32 width, u32 height, const void* data);
+PUB void GPU_WriteBuffer(GPU_CmdEncoder* encoder, BufferHandle buf, u64 offset, u64 size,
+                         const void* data);
 
 PUB void GPU_EncodeDraw(GPU_CmdEncoder* encoder, u64 count);
 PUB void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, u64 index_count);

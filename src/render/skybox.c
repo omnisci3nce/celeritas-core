@@ -39,7 +39,9 @@ static const char* faces[6] = { "assets/demo/skybox/right.jpg", "assets/demo/sky
 
 Skybox Skybox_Create(const char** face_paths, int n) {
   INFO("Creating a skybox");
-  assert(n == 6);  // ! we're only supporting a full cubemap for now
+  CASSERT_MSG(
+      n == 6,
+      "We only support full cubemaps for now");  // ! we're only supporting a full cubemap for now
 
   // -- cube verts
   Geometry geom = { .format = VERTEX_POS_ONLY,  // doesnt matter
@@ -59,12 +61,8 @@ Skybox Skybox_Create(const char** face_paths, int n) {
   GPU_Texture* tex = GPU_TextureAlloc(&handle);
   glBindTexture(GL_TEXTURE_CUBE_MAP, tex->id);
 
-  int width, height, nrChannels;
-  // unsigned char *data;
   for (unsigned int i = 0; i < n; i++) {
-    TextureData data = TextureDataLoad(
-        face_paths[i],
-        false);  // stbi_load(textures_faces[i].c_str(), &width, &height, &nrChannels, 0);
+    TextureData data = TextureDataLoad(face_paths[i], false);
     assert(data.description.format == TEXTURE_FORMAT_8_8_8_RGB_UNORM);
     glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, data.description.extents.x,
                  data.description.extents.y, 0, GL_RGB, GL_UNSIGNED_BYTE, data.image_data);
@@ -90,10 +88,6 @@ Skybox Skybox_Create(const char** face_paths, int n) {
   if (!vertex_shader.has_value || !fragment_shader.has_value) {
     ERROR_EXIT("Failed to load shaders from disk")
   }
-
-  // VertexDescription pos_only = { .debug_label = "Position only verts" };
-  // VertexDesc_AddAttr(&pos_only, "inPos", ATTR_F32x3);
-  // pos_only.use_full_vertex_size = true;
 
   ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
   ShaderDataLayout shader_data = Skybox_GetLayout(NULL);

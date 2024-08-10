@@ -61,10 +61,10 @@ size_t VertexAttribSize(VertexAttribType attr) {
 }
 
 size_t VertexDesc_CalcStride(VertexDescription* desc) {
-    size_t stride = 0;
-    for (int i = 0; i < desc->attributes_count; i++) {
-        size_t size =VertexAttribSize(desc->attributes[i]);
-        stride += size;
-    }
-    return stride;
+  size_t stride = 0;
+  for (int i = 0; i < desc->attributes_count; i++) {
+    size_t size = VertexAttribSize(desc->attributes[i]);
+    stride += size;
+  }
+  return stride;
 }

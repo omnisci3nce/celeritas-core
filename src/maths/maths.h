@@ -311,7 +311,7 @@ static Transform transform_create(Vec3 pos, Quat rot, f32 scale) {
   return (Transform){ .position = pos, .rotation = rot, .scale = scale, .is_dirty = true };
 }
 
- Mat4 transform_to_mat(Transform *tf);
+Mat4 transform_to_mat(Transform *tf);
 
 // --- Sizing asserts
 
