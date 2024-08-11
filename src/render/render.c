@@ -100,22 +100,12 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
     }
   }
 
-  // #if defined(CEL_REND_BACKEND_OPENGL)
-  //   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  //   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-  //   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  //   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-  // #elif defined(CEL_REND_BACKEND_VULKAN)
-  //   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  // #endif
-
   ren->window = window;
   *out_window = window;
 
   glfwMakeContextCurrent(ren->window);
 
-  // FIXME
-  // DEBUG("Set up GLFW window callbacks");
+  DEBUG("Set up GLFW window callbacks");
   glfwSetWindowSizeCallback(window, Render_WindowSizeChanged);
 
   // set the RAL backend up
@@ -143,8 +133,8 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
   ren->terrain = calloc(1, sizeof(Terrain_Storage));
   Terrain_Init(ren->terrain);
 
-  ren->grid = calloc(1, sizeof(Grid_Storage));
-  Grid_Init(ren->grid);
+  // ren->grid = calloc(1, sizeof(Grid_Storage));
+  // Grid_Init(ren->grid);
 
   ren->immediate = calloc(1, sizeof(Immdraw_Storage));
   Immdraw_Init(ren->immediate);
@@ -327,6 +317,11 @@ Terrain_Storage* Render_GetTerrainStorage() {
 Grid_Storage* Render_GetGridStorage() {
   Renderer* ren = Core_GetRenderer(&g_core);
   return ren->grid;
+}
+
+Immdraw_Storage* Render_GetImmdrawStorage() {
+  Renderer* ren = Core_GetRenderer(&g_core);
+  return ren->immediate;
 }
 
 TextureHandle Render_GetWhiteTexture() {

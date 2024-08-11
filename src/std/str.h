@@ -33,6 +33,8 @@ typedef struct {
 
 Str8 Str8_create(u8* buf, size_t len);
 
+// TODO: Str8_OntoArena(arena* a, Str8 s);
+
 /** @brief Return a null-terminated C string cloned onto an arena */
 char* Str8_to_cstr(arena* a, Str8 s);
 

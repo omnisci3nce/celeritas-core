@@ -57,7 +57,7 @@ static u32 opengl_bindcreate_vao(GPU_Buffer* buf, VertexDescription desc) {
 
   // Attributes
   u32 attr_count = desc.attributes_count;
-  printf("N attributes %d\n", attr_count);
+  // printf("N attributes %d\n", attr_count);
   u64 offset = 0;
   size_t vertex_size = desc.use_full_vertex_size ? sizeof(Vertex) : VertexDesc_CalcStride(&desc);
   for (u32 i = 0; i < desc.attributes_count; i++) {
@@ -67,7 +67,7 @@ static u32 opengl_bindcreate_vao(GPU_Buffer* buf, VertexDescription desc) {
           desc.attr_names[i]);
     glEnableVertexAttribArray(i);  // nth index
     size_t this_offset = VertexAttribSize(desc.attributes[i]);
-    printf("offset total %lld this attr %zu\n", offset, this_offset);
+    // printf("offset total %lld this attr %zu\n", offset, this_offset);
     offset += this_offset;
   }
   glBindBuffer(GL_ARRAY_BUFFER, 0);

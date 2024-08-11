@@ -4,7 +4,11 @@
 #include "defines.h"
 #include "maths_types.h"
 
-typedef enum Interpolation { INTERPOLATION_LINEAR, INTERPOLATION_COUNT } Interpolation;
+typedef enum Interpolation {
+    INTERPOLATION_STEP,
+    INTERPOLATION_LINEAR,
+    INTERPOLATION_CUBIC, /** @brief Cubic spline interpolation */
+    INTERPOLATION_COUNT } Interpolation;
 
 typedef enum KeyframeKind {
   KEYFRAME_ROTATION,

@@ -7,10 +7,12 @@
 #include "camera.h"
 #include "core.h"
 #include "grid.h"
+#include "immdraw.h"
 #include "input.h"
 #include "keys.h"
 #include "loaders.h"
 #include "maths.h"
+#include "maths_types.h"
 #include "pbr.h"
 #include "primitives.h"
 #include "ral_types.h"
@@ -98,21 +100,23 @@ int main() {
 
     // BEGIN Draw calls
     RenderEnt_darray_clear(render_entities);  // we re-extract every frame
-    Quat rot = quat_from_axis_angle(VEC3_X, -HALF_PI, true);
+    // Quat rot = quat_from_axis_angle(VEC3_X, -HALF_PI, true);
     // Mat4 affine = mat4_rotation(rot);
     Mat4 affine = mat4_ident();
     ModelExtractRenderEnts(render_entities, cube_handle, affine, REND_ENT_CASTS_SHADOWS);
 
     // Shadow_Run(entities, entity_count);
+    Quat rot = quat_from_axis_angle(VEC3_X, HALF_PI, true);
+    Immdraw_Sphere(transform_create(VEC3_ZERO, rot, 1.0), 1.0, vec4(1.0, 0.0, 0.0, 1.0), false);
 
-    if (draw_debug) {
-      // draw the player model with shadows
-      Render_RenderEntities(render_entities->data, render_entities->len);
-      // Render_DrawTerrain();
-      Skybox_Draw(&skybox, cam);
-    } else {
-      Shadow_DrawDebugQuad();
-    }
+    // if (draw_debug) {
+    //   // draw the player model with shadows
+    //   Render_RenderEntities(render_entities->data, render_entities->len);
+    //   // Render_DrawTerrain();
+    //   Skybox_Draw(&skybox, cam);
+    // } else {
+    //   Shadow_DrawDebugQuad();
+    // }
 
     // Terrain_Draw(terrain);
     // Grid_Draw();

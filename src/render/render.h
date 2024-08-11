@@ -6,6 +6,7 @@
 #include "camera.h"
 #include "defines.h"
 #include "grid.h"
+#include "immdraw.h"
 #include "maths_types.h"
 #include "ral_types.h"
 #include "render_types.h"
@@ -101,6 +102,7 @@ RenderScene* Render_GetScene();
 Shadow_Storage* Render_GetShadowStorage();
 Terrain_Storage* Render_GetTerrainStorage();
 Grid_Storage* Render_GetGridStorage();
+Immdraw_Storage* Render_GetImmdrawStorage();
 TextureHandle Render_GetWhiteTexture();
 arena* Render_GetFrameArena();
 Mesh_pool* Render_GetMeshPool();

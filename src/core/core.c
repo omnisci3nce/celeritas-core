@@ -9,7 +9,6 @@
 #include "mem.h"
 #include "render.h"
 #include "render_types.h"
-#include "scene.h"
 
 // These are only the initial window dimensions
 #define SCR_WIDTH 1000
@@ -30,7 +29,9 @@ void Core_Bringup(const char* window_name, struct GLFWwindow* optional_window) {
                           .clear_colour = (Vec3){ .08, .08, .1 } };
 
   g_core.renderer = malloc(Renderer_GetMemReqs());
-  // initialise all subsystems
+
+  // Initialise all subsystems
+
   // renderer config, renderer ptr, ptr to store a window, and optional preexisting glfw window
   if (!Renderer_Init(conf, g_core.renderer, &g_core.window, optional_window)) {
     // FATAL("Failed to start renderer");
@@ -52,9 +53,6 @@ void Core_Bringup(const char* window_name, struct GLFWwindow* optional_window) {
   Model_pool model_pool = Model_pool_create(&model_arena, 256, sizeof(Model));
   g_core.models = model_pool;
   INFO("Created model pool allocator");
-
-  // INFO("Creating default scene");
-  // scene_init(&g_core.default_scene);
 }
 
 void Core_Shutdown() {
@@ -78,8 +76,6 @@ Core* get_global_core() { return &g_core; }
 
 GLFWwindow* Core_GetGlfwWindowPtr(Core* core) { return g_core.window; }
 
-struct Renderer* Core_GetRenderer(Core* core) {
-  return core->renderer;
-}
+struct Renderer* Core_GetRenderer(Core* core) { return core->renderer; }
 
 Model* Model_Get(ModelHandle h) { return Model_pool_get(&g_core.models, h); }

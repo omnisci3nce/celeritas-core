@@ -57,8 +57,7 @@ bool GPU_Backend_Init(const char* window_name, struct GLFWwindow* window,
 }
 
 // All of these are no-ops in OpenGL
-void GPU_Backend_Shutdown() { /* TODO */
-}
+void GPU_Backend_Shutdown() { /* TODO */ }
 bool GPU_Device_Create(GPU_Device* out_device) { return true; }
 void GPU_Device_Destroy(GPU_Device* device) {}
 bool GPU_Swapchain_Create(GPU_Swapchain* out_swapchain) { return true; }
@@ -430,7 +429,7 @@ PUB void GPU_WriteTextureRegion(GPU_CmdEncoder* encoder, TextureHandle dst, u32 
 
 bool GPU_Backend_BeginFrame() {
   glViewport(0, 0, context.swapchain.dimensions.x * 2, context.swapchain.dimensions.y * 2);
-  glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+  glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   return true;
 }

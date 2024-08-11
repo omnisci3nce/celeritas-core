@@ -1,6 +1,9 @@
 # celeritas-core
 
-Celeritas is an engine 'core' written in C that acts as an extendable base layer for creating custom game-specific "engines" (frameworks). It includes helpful wrappers around input handling, cameras, rendering abstractions, and other helpful APIs for making games and binding to other languages' FFIs.
+Celeritas is an engine 'core' written in C that acts as an extendable base layer for creating custom game-specific "engines" (frameworks).
+Celeritas Core focuses on rendering and platform abstractions, helpful wrappers around input handling, and common components needed by 3D game or interactive applications
+such as cameras, collision detection, etc.
+Bindings to Rust are WIP and other languages are planned for the future.
 
 Higher-level concepts can then be overlaid on top of this core!
 
@@ -10,14 +13,18 @@ Higher-level concepts can then be overlaid on top of this core!
 
 All third-party dependencies are licensed under their own license.
 
-## Project Structure
+## Features
 
-```
-/bindgen - bindings code generation for other languages
-/deps    - third-party dependencies
-/docs    - high-level documentation
-/scripts
-```
+- Log level based logging
+- Arena allocator
+- Pool allocator
+- Physically based rendering (PBR)
+- GLTF loading
+
+#### RAL (Render Abstraction Layer)
+- [x] Buffer/texture creation
+- [x] Graphics pipeline creation/deletion
+- [ ] Compute shader pipeline creation/deletion/run
 
 ## Developing
 
@@ -38,111 +45,6 @@ All third-party dependencies are licensed under their own license.
     * Build docs static site
         * `docker run --rm -it -v ${PWD}:/docs squidfunk/mkdocs-material build`
 
-## TODO
-
-#### Engine
-- [ ] Embedded assets - shaders, textures, et al (probably will use C23's `#embed`?)
-- [ ] Shader hot-reloading
-- [ ] Cross-platform threadpool
-- [ ] Frame pacing
-- [ ] Logging
-  - [x] level-based logging
-  - [ ] log level with module granularity
-  - [ ] multithreaded buffered logging
-- Strings
-  - [x] custom fat pointer string type
-  - [ ] utf8 handling
-- Maths
-  - [x] Vector functions
-  - [x] Mat4 functions
-    - [ ] SIMD 4x4 multiply
-  - [ ] Quaternion functions (not fully fleshed out)
-- [x] Camera
-  - [x] Fly camera
-  - [ ] Swap to quaternion for internal orientation
-  - [ ] Arcball / Orbit camera
-- [ ] Transform gizmo
-- [ ] Mesh generation
-  - [x] Cube
-  - [x] Plane
-  - [x] Sphere
-  - [ ] Cylinder
-  - [ ] Cone
-  - [ ] Torus
-  - [ ] Prism
-- Load sponza & bistro scenes
-- [ ] Bindings generation (targets: rust, odin, zig, ocaml) (future)
-
-#### Memory
-- [x] Arena allocator
-  - [x] malloc backed
-  - [ ] overcommit address-space backed (`VirtualAlloc` & `mmap`)
-- [x] Pool allocator (typed)
-  - [ ] Generational handles
-- [ ] SoA hot/cold pool allocator (pool for all entities of same type, split into two structs in SoA so we can have hot ,(`VkHandle`and cold `size`, `format` data separated)) (future)
-
-#### Scene
-- [1/2] Transform hierarchy / Scene tree
-  - [ ] Transform propagation
-- [ ] Asset streaming
-
-#### Renderer
-- [ ] PBR
-  - [x] Basic implementation using learnopengl
-  - [ ] Implementation using Google filament as a reference for first in class PBR
-  - [ ] Handle metallic / roughness being in different channels, combined, or absent
-- [ ] Shadows
-  - [x] Shadowmaps
-  - [ ] PCF
-  - [ ] Cascading shadowmaps (CSM)
-  - [ ] Point light shadows
-- [ ] Resizing viewport
-- [ ] Debug views (shadow map quad, etc)
-- [ ] Cel shading
-  - [ ] rim light
-  - [ ] fresnel
-  - [ ] outline
-- [ ] Instanced rendering
-  - [ ] instanced grass
-- [ ] Terrain
-  - [ ] Heightmaps
-  - [ ] Chunking + culling
-  - [ ] Terrain editing (in-game)
-- [ ] SSAO
-  - [ ] depth pre-pass
-- [ ] Water
-  - [ ] water plane
-- [ ] Animation
-  - [x] Joint and keyframe loading
-  - [ ] Handle multiple animations in one GLTF
-  - [ ] Animation Blending
-- [ ] Frustum culling (CPU)
-- [ ] Postprocessing stack
-  - *TBD*
-- [ ] Imposters
-- [ ] Volumetric clouds (future)
-- [ ] Global illumination (future)
-- [ ] GPU-driven rendering (future)
-
-#### RAL
-- [x] Buffer/texture creation
-- [x] Graphics pipeline creation/deletion
-- [ ] Compute shader pipeline creation/deletion/run
-- [ ] Enums for graphics pipeline state (blending, wrapping, etc)
-
-#### Physics
-- [ ] Ground check against heightmap terrain or simple plane
-- [ ] Jolt integration
-- [ ] In-house Collision detection
-
-#### UI
-*TBD*
-- buttons
-- text inputs
-- colour picker
-- file drag-and-drop
-- dock-able (sub)windows
-- node graph editor
 
 #### Logistics
 

@@ -58,10 +58,9 @@ local core_sources = {
     "deps/glad/src/glad.c",
     "src/*.c",
     "src/core/*.c",
-    -- "src/logos/*.c",
+    "src/logos/*.c",
     "src/maths/*.c",
     "src/platform/*.c",
-    "src/physics/*.c",
     "src/ral/*.c",
     "src/ral/backends/opengl/*.c",
     "src/render/*.c",
@@ -111,14 +110,13 @@ add_includedirs("deps/stb_truetype", { public = true })
 add_includedirs("include/", { public = true })
 add_includedirs("src/", { public = true })
 add_includedirs("src/core", { public = true })
--- add_includedirs("src/logos/", {public = true})
+add_includedirs("src/logos/", { public = true })
 add_includedirs("src/maths/", { public = true })
 add_includedirs("src/platform/", { public = true })
-add_includedirs("src/physics/", { public = true })
 add_includedirs("src/ral", { public = true })
 add_includedirs("src/ral/backends/opengl", { public = true })
 add_includedirs("src/render", { public = true })
-add_includedirs("src/ral/backends/vulkan", {public = true})
+add_includedirs("src/ral/backends/vulkan", { public = true })
 add_includedirs("src/resources/", { public = true })
 add_includedirs("src/std/", { public = true })
 add_includedirs("src/std/containers", { public = true })
@@ -263,12 +261,12 @@ end
 --     add_files("examples/property_animation/ex_property_animation.c")
 --     set_rundir("$(projectdir)")
 
--- target("skinned")
---     set_kind("binary")
---     set_group("examples")
---     add_deps("core_shared")
---     add_files("examples/skinned_animation/ex_skinned_animation.c")
---     set_rundir("$(projectdir)")
+target("skinned")
+set_kind("binary")
+set_group("examples")
+add_deps("core_shared")
+add_files("examples/skinned_animation/ex_skinned_animation.c")
+set_rundir("$(projectdir)")
 
 -- target("input")
 --     set_kind("binary")

@@ -3,7 +3,6 @@
 #include "input.h"
 #include "mem.h"
 #include "render_types.h"
-#include "scene.h"
 #include "screenspace.h"
 #include "terrain.h"
 #include "text.h"

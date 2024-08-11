@@ -38,12 +38,6 @@
 
 #define PREFIX static
 
-/* if (arena != NULL) {\ */
-/* d = arena_alloc(arena, sizeof(T##_darray));\ */
-/* data = arena_alloc(arena, starting_capacity * sizeof(T));\ */
-/* } else {\ */
-/* }\ */
-
 #define KITC_DECL_TYPED_ARRAY(T) DECL_TYPED_ARRAY(T, T)
 
 #define DECL_TYPED_ARRAY(T, Type)                                                         \

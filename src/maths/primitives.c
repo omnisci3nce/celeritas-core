@@ -35,22 +35,25 @@ Geometry Geo_CreatePlane(f32x2 extents) {
     vert_pos[i].x *= extents.x;
     vert_pos[i].z *= extents.y;
   }
-  VERT_3D(vertices, vert_pos[0], VEC3_Y, vec2(0, 0));
-  VERT_3D(vertices, vert_pos[1], VEC3_Y, vec2(1, 0));
-  VERT_3D(vertices, vert_pos[2], VEC3_Y, vec2(0, 1));
-  VERT_3D(vertices, vert_pos[3], VEC3_Y, vec2(1, 1));
+  VERT_3D(vertices, vert_pos[0], VEC3_Y, vec2(0, 0));  // back left
+  VERT_3D(vertices, vert_pos[1], VEC3_Y, vec2(1, 0));  // back right
+  VERT_3D(vertices, vert_pos[2], VEC3_Y, vec2(0, 1));  // front left
+  VERT_3D(vertices, vert_pos[3], VEC3_Y, vec2(1, 1));  // front right
 
-  /* push_triangle(indices, 0, 1, 2); */
-  /* push_triangle(indices, 2, 1, 3); */
-  push_triangle(indices, 2, 1, 0);
-  push_triangle(indices, 3, 1, 2);
+  push_triangle(indices, 0, 1, 2);
+  push_triangle(indices, 2, 1, 3);
+  // push_triangle(indices, 2, 1, 0);
+  // push_triangle(indices, 3, 2, 1);
+
+  for (int i = 0; i < 4; i++) {
+    printf("Vertex %d: (%f, %f, %f)\n", i, vert_pos[i].x, vert_pos[i].y, vert_pos[i].z);
+  }
 
   Geometry geo = { .format = VERTEX_STATIC_3D,
                    .vertices = vertices,
                    .has_indices = true,
                    .index_count = indices->len,
                    .indices = indices };
-  // .colour = (rgba){ 0, 0, 0, 1 } };
 
   return geo;
 }
@@ -239,5 +242,6 @@ Geometry Geo_CreateUVsphere(f32 radius, u32 north_south_lines, u32 east_west_lin
     .index_count = indices->len,
     .indices = indices,
   };
+
   return geo;
 }

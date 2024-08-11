@@ -16,9 +16,8 @@
 #include "log.h"
 #include "maths.h"
 #include "mem.h"
-#include "path.h"
+#include "platform.h"
 #include "render.h"
-// #include "render_backend.h"
 #include "render_types.h"
 #include "str.h"
 

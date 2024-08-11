@@ -11,8 +11,8 @@
 #include "maths.h"
 #include "maths_types.h"
 #include "mem.h"
-#include "path.h"
 #include "pbr.h"
+#include "platform.h"
 #include "ral_types.h"
 #include "render.h"
 #include "render_types.h"
@@ -149,9 +149,9 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 rel
   Material_darray *tmp_materials = Material_darray_new(1);
   Mesh_darray *tmp_meshes = Mesh_darray_new(1);
   u32_darray *tmp_material_indexes = u32_darray_new(1);
+  Joint_darray *tmp_joints = Joint_darray_new(256);
 
   // FIXME
-  // joint_darray *tmp_joints = joint_darray_new(256);
   // vertex_bone_data_darray *tmp_vertex_bone_data = vertex_bone_data_darray_new(1000);
 
   cgltf_options options = { 0 };
@@ -306,13 +306,15 @@ bool model_load_gltf_str(const char *file_string, const char *filepath, Str8 rel
       // Store vertices
       printf("Positions %d Normals %d UVs %d\n", tmp_positions->len, tmp_normals->len,
              tmp_uvs->len);
-      assert(tmp_positions->len == tmp_normals->len);
-      assert(tmp_normals->len == tmp_uvs->len);
+      // assert(tmp_positions->len == tmp_normals->len);
+      // assert(tmp_normals->len == tmp_uvs->len);
+      bool has_normals = tmp_normals->len > 0;
+      bool has_uvs = tmp_uvs->len > 0;
       for (u32 v_i = 0; v_i < tmp_positions->len; v_i++) {
         Vertex v = { .static_3d = {
                          .position = tmp_positions->data[v_i],
-                         .normal = tmp_normals->data[v_i],
-                         .tex_coords = tmp_uvs->data[v_i],
+                         .normal = has_normals ? tmp_normals->data[v_i] : VEC3_ZERO,
+                         .tex_coords = has_uvs ? tmp_uvs->data[v_i] : vec2_create(0., 0.),
                      } };
         Vertex_darray_push(geo_vertices, v);
       }

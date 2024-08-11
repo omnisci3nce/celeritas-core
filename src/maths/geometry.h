@@ -19,13 +19,13 @@
 //   vec3 normal;
 // } plane;
 
-// typedef struct cuboid {
-//   vec3 half_extents;
-// } cuboid;
+typedef struct Cuboid {
+  Vec3 half_extents;
+} Cuboid;
 
-// typedef struct sphere {
-//   f32 radius;
-// } sphere;
+typedef struct Sphere {
+  f32 radius;
+} Sphere;
 
 // typedef struct cylinder {
 //   f32 radius;
