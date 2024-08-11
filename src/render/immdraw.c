@@ -10,17 +10,20 @@
 #include "render.h"
 #include "shader_layouts.h"
 
+// Forward declares
+void Immdraw_Primitive(Transform tf, f32 size, Vec4 colour, bool wireframe, Mesh mesh);
+
 void Immdraw_Init(Immdraw_Storage* storage) {
   INFO("Immediate drawing initialisation");
 
   // Meshes
-  Geometry sphere_geo = Geo_CreateUVsphere(1.0, 8, 8);
+  Geometry sphere_geo = Geo_CreateUVsphere(1.0, 16, 16);
   storage->sphere = Mesh_Create(&sphere_geo, false);
 
-  Geometry cube_geo = Geo_CreateCuboid(f32x3(2.0, 2.0, 2.0));
+  Geometry cube_geo = Geo_CreateCuboid(f32x3(1.0, 1.0, 1.0));
   storage->cube = Mesh_Create(&cube_geo, false);
 
-  Geometry plane_geo = Geo_CreatePlane(f32x2(2.0, 2.0));
+  Geometry plane_geo = Geo_CreatePlane(f32x2(1.0, 1.0));
   storage->plane = Mesh_Create(&plane_geo, false);
 
   // Pipeline / material
@@ -31,14 +34,10 @@ void Immdraw_Init(Immdraw_Storage* storage) {
   VertexDesc_AddAttr(&vertex_desc, "position", ATTR_F32x3);
   VertexDesc_AddAttr(&vertex_desc, "normal", ATTR_F32x3);
 
-  arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
-  Str8 vert_path = str8("assets/shaders/immdraw.vert");
-  Str8 frag_path = str8("assets/shaders/immdraw.frag");
-  str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
-  str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
-  if (!vertex_shader.has_value || !fragment_shader.has_value) {
-    ERROR_EXIT("Failed to load shaders from disk");
-  }
+  const char* vert_path = "assets/shaders/immdraw.vert";
+  const char* frag_path = "assets/shaders/immdraw.frag";
+  const char* vert_shader = string_from_file(vert_path);
+  const char* frag_shader = string_from_file(frag_path);
 
   ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
   ShaderDataLayout imm_uniform_data = ImmediateUniforms_GetLayout(NULL);
@@ -48,12 +47,8 @@ void Immdraw_Init(Immdraw_Storage* storage) {
     .vertex_desc = static_3d_vertex_description(),
     .data_layouts = { camera_data, imm_uniform_data },
     .data_layouts_count = 2,
-    .vs = { .debug_name = "Immdraw Vertex Shader",
-            .filepath = vert_path,
-            .code = vertex_shader.contents },
-    .fs = { .debug_name = "Immdraw Fragment Shader",
-            .filepath = frag_path,
-            .code = fragment_shader.contents },
+    .vs = { .debug_name = "Immdraw Vertex Shader", .filepath = vert_path, .code = vert_shader },
+    .fs = { .debug_name = "Immdraw Fragment Shader", .filepath = frag_path, .code = frag_shader },
     .depth_test = true,
     .wireframe = false,
   };
@@ -66,8 +61,23 @@ void Immdraw_Shutdown(Immdraw_Storage* storage) {
   GraphicsPipeline_Destroy(storage->colour_pipeline);
 }
 
-void Immdraw_Sphere(Transform tf, f32 size, Vec4 colour, bool wireframe) {
-  INFO("Draw sphere");
+void Immdraw_Sphere(Transform tf, Vec4 colour, bool wireframe) {
+  TRACE("Draw sphere");
+  Immdraw_Storage* imm = Render_GetImmdrawStorage();
+  Immdraw_Primitive(tf, 1.0, colour, wireframe, imm->sphere);
+}
+void Immdraw_Cuboid(Transform tf, Vec4 colour, bool wireframe) {
+  TRACE("Draw cube");
+  Immdraw_Storage* imm = Render_GetImmdrawStorage();
+  Immdraw_Primitive(tf, 1.0, colour, wireframe, imm->cube);
+}
+void Immdraw_Plane(Transform tf, Vec4 colour, bool wireframe) {
+  TRACE("Draw plane");
+  Immdraw_Storage* imm = Render_GetImmdrawStorage();
+  Immdraw_Primitive(tf, 1.0, colour, wireframe, imm->plane);
+}
+
+void Immdraw_Primitive(Transform tf, f32 size, Vec4 colour, bool wireframe, Mesh mesh) {
   Immdraw_Storage* imm = Render_GetImmdrawStorage();
   GPU_CmdEncoder* enc = GPU_GetDefaultEncoder();
 
@@ -93,9 +103,9 @@ void Immdraw_Sphere(Transform tf, f32 size, Vec4 colour, bool wireframe) {
   GPU_EncodeBindShaderData(enc, 1, ImmediateUniforms_GetLayout(&uniforms));
 
   // draw call
-  GPU_EncodeSetVertexBuffer(enc, imm->plane.vertex_buffer);
-  GPU_EncodeSetIndexBuffer(enc, imm->plane.index_buffer);
-  GPU_EncodeDrawIndexed(enc, imm->plane.geometry.index_count);
+  GPU_EncodeSetVertexBuffer(enc, mesh.vertex_buffer);
+  GPU_EncodeSetIndexBuffer(enc, mesh.index_buffer);
+  GPU_EncodeDrawIndexed(enc, mesh.geometry.index_count);
 
   // end renderpass
   GPU_CmdEncoder_EndRender(enc);

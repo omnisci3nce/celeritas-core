@@ -53,6 +53,7 @@ struct Renderer {
   Material_pool material_pool;
   arena frame_arena;
   TextureHandle white_1x1;
+  TextureHandle black_1x1;
 };
 
 Renderer* get_renderer() { return g_core.renderer; }
@@ -133,6 +134,7 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
   ren->terrain = calloc(1, sizeof(Terrain_Storage));
   Terrain_Init(ren->terrain);
 
+  // FIXME
   // ren->grid = calloc(1, sizeof(Grid_Storage));
   // Grid_Init(ren->grid);
 
@@ -141,7 +143,7 @@ bool Renderer_Init(RendererConfig config, Renderer* ren, GLFWwindow** out_window
 
   // load default textures
   ren->white_1x1 = TextureLoadFromFile("assets/textures/white1x1.png");
-  // TODO: black_1x1
+  ren->black_1x1 = TextureLoadFromFile("assets/textures/black1x1.png");
 
   return true;
 }

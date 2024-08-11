@@ -106,8 +106,10 @@ int main() {
     ModelExtractRenderEnts(render_entities, cube_handle, affine, REND_ENT_CASTS_SHADOWS);
 
     // Shadow_Run(entities, entity_count);
-    Quat rot = quat_from_axis_angle(VEC3_X, HALF_PI, true);
-    Immdraw_Sphere(transform_create(VEC3_ZERO, rot, 1.0), 1.0, vec4(1.0, 0.0, 0.0, 1.0), false);
+    // Quat rot = quat_from_axis_angle(VEC3_X, HALF_PI, true);
+    Immdraw_Sphere(transform_create(VEC3_ZERO, quat_ident(), 0.5), vec4(1.0, 0.0, 0.0, 1.0), false);
+    Immdraw_Cuboid(transform_create(vec3(2.0, 0.0, 0.0), quat_ident(), 1.0),
+                   vec4(1.0, 0.0, 0.0, 1.0), false);
 
     // if (draw_debug) {
     //   // draw the player model with shadows

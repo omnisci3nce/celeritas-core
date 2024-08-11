@@ -199,7 +199,7 @@ Geometry Geo_CreateUVsphere(f32 radius, u32 north_south_lines, u32 east_west_lin
   for (u32 i = 0; i < north_south_lines; i++) {
     u32 i1 = i + 1;
     u32 i2 = (i + 1) % north_south_lines + 1;
-    push_triangle(indices, 0, i1, i2);
+    push_triangle(indices, 0, i2, i1);
     /* TRACE("Push triangle (%.2f %.2f %.2f)->(%.2f %.2f %.2f)->(%.2f %.2f %.2f)\n", */
     /*       vertices->data[0].static_3d.position.x, vertices->data[0].static_3d.position.y, */
     /*       vertices->data[0].static_3d.position.z, vertices->data[i1].static_3d.position.x, */
@@ -209,7 +209,7 @@ Geometry Geo_CreateUVsphere(f32 radius, u32 north_south_lines, u32 east_west_lin
     u32 bot = vertices->len - 1;
     u32 i3 = i + north_south_lines * (east_west_lines - 2) + 1;
     u32 i4 = (i + 1) % north_south_lines + north_south_lines * (east_west_lines - 2) + 1;
-    push_triangle(indices, i3, bot, i4);
+    push_triangle(indices, bot, i3, i4);
   }
 
   // quads
