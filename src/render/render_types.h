@@ -1,5 +1,4 @@
 /**
- * @file render_types.h
  * @brief
  */
 

@@ -68,10 +68,43 @@ typedef struct opengl_support {
   u32 pad;
 } opengl_support;
 
-// u32 shader_create_separate(const char *vert_shader, const char *frag_shader);
 
 void uniform_vec3f(u32 program_id, const char *uniform_name, Vec3 *value);
 void uniform_f32(u32 program_id, const char *uniform_name, f32 value);
 void uniform_i32(u32 program_id, const char *uniform_name, i32 value);
 void uniform_mat4f(u32 program_id, const char *uniform_name, Mat4 *value);
+
+typedef enum GlCommandType {
+    GLCMD_DRAW,
+    GLCMD_DRAW_INDEXED,
+    GLCMD_BIND_VBUF,
+    GLCMD_BIND_IBUF,
+    GLCMD_SET_PROGRAM,
+} GlCommandType;
+
+typedef struct GlCommand {
+    GlCommandType cmd_type;
+    union {
+        struct {
+            PrimitiveTopology topology;
+            u32 start_vertex;
+            u32 vertex_count;
+            // TODO: instance
+        } draw;
+        struct {
+            PrimitiveTopology topology;
+            u32 index_count;
+        } draw_indexed;
+        struct {
+            u32 buffer_id;
+        } bind_vbuf;
+        struct {
+            u32 buffer_id;
+        } bind_ibuf;
+        struct {
+            u32 program_id;
+        } set_program;
+    } data;
+} GlCommand;
+
 #endif

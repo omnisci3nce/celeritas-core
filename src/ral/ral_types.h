@@ -232,6 +232,24 @@ typedef enum PrimitiveTopology {
 
 typedef enum CullMode { CULL_BACK_FACE, CULL_FRONT_FACE, CULL_COUNT } CullMode;
 
+typedef enum Winding {
+    WINDING_CCW,
+    WINDING_CW
+} Winding;
+
+// based on https://registry.khronos.org/OpenGL-Refpages/gl4/html/glDepthFunc.xhtml
+typedef enum CompareFunc {
+    COMPARE_NEVER,
+    COMPARE_LESS,
+    COMPARE_EQUAL,
+    COMPARE_LESS_EQUAL,
+    COMPARE_GREATER,
+    COMPARE_NOT_EQUAL,
+    COMPARE_GREATER_EQUAL,
+    COMPARE_ALWAYS,
+    COMPARE_COUNT
+} CompareFunc;
+
 typedef struct GraphicsPipelineDesc {
   const char* debug_name;
   VertexDescription vertex_desc;

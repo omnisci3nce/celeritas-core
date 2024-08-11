@@ -19,6 +19,8 @@ e.g.
 
 #### 2. Long-running systems
 
+in celeritas a "system" is roughly something that runs every frame
+
 systems that run for the lifetime of the application or for a very long time should have:
 
 * `bool system_init(system_state* state)` a `init` function

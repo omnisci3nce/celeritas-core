@@ -1,11 +1,9 @@
-/**
- * @file camera.h
- * @brief
- */
 #pragma once
 
 #include "defines.h"
 #include "maths_types.h"
+
+// TODO: swap to position + quaternion
 
 typedef struct Camera {
   Vec3 position;

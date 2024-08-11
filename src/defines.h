@@ -2,7 +2,6 @@
  * @file defines.h
  * @brief Typedefs for common integer/floating point types and very basic macros
  * @date 2024-02-24
- * @copyright Copyright (c) 2024
  */
 #pragma once
 
