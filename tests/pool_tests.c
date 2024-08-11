@@ -38,9 +38,9 @@ typedef struct foo {
 } foo;
 
 CORE_DEFINE_HANDLE(bar);
-typedef struct bar_handle {
+typedef struct barHandle {
   u32 raw;
-} bar_handle;
+} barHandle;
 TYPED_POOL(foo, bar);
 
 TEST(Pool, TypedPool) {
@@ -48,7 +48,7 @@ TEST(Pool, TypedPool) {
   // create pool
   bar_pool pool = bar_pool_create(&a, 2, sizeof(foo));
 
-  bar_handle first_handle, second_handle, third_handle;
+  barHandle first_handle, second_handle, third_handle;
   foo* first = bar_pool_alloc(&pool, &first_handle);
   foo* second = bar_pool_alloc(&pool, &second_handle);
   // Third one shouldnt work

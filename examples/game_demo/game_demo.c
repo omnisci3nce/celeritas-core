@@ -107,18 +107,18 @@ int main() {
 
     // Shadow_Run(entities, entity_count);
     // Quat rot = quat_from_axis_angle(VEC3_X, HALF_PI, true);
-    Immdraw_Sphere(transform_create(VEC3_ZERO, quat_ident(), 0.5), vec4(1.0, 0.0, 0.0, 1.0), false);
-    Immdraw_Cuboid(transform_create(vec3(2.0, 0.0, 0.0), quat_ident(), 1.0),
-                   vec4(1.0, 0.0, 0.0, 1.0), false);
+    // Immdraw_Sphere(transform_create(VEC3_ZERO, quat_ident(), 0.5), vec4(1.0, 0.0, 0.0, 1.0),
+    // false); Immdraw_Cuboid(transform_create(vec3(2.0, 0.0, 0.0), quat_ident(), 1.0),
+    //                vec4(1.0, 0.0, 0.0, 1.0), false);
 
-    // if (draw_debug) {
-    //   // draw the player model with shadows
-    //   Render_RenderEntities(render_entities->data, render_entities->len);
-    //   // Render_DrawTerrain();
-    //   Skybox_Draw(&skybox, cam);
-    // } else {
-    //   Shadow_DrawDebugQuad();
-    // }
+    if (draw_debug) {
+      // draw the player model with shadows
+      Render_RenderEntities(render_entities->data, render_entities->len);
+      // Render_DrawTerrain();
+      Skybox_Draw(&skybox, cam);
+    } else {
+      Shadow_DrawDebugQuad();
+    }
 
     // Terrain_Draw(terrain);
     // Grid_Draw();

@@ -66,6 +66,8 @@ int main() {
     // quat rot = quat_ident();
     Transform tf = transform_create(VEC3_ZERO, quat_ident(), 1.0);
 
+    // TODO: Drawing should still just use the PBR pipeline
+
     // draw_skinned_model(&core->renderer, &game.camera, simple_skin, tf, &our_scene);
 
     Frame_End();
