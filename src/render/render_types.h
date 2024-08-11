@@ -42,7 +42,7 @@ typedef struct Mesh {
   BufferHandle index_buffer;
   Geometry geometry;  // NULL means it has been freed CPU-side
   MaterialHandle material;
-  bool is_skinned; // false = its static
+  bool is_skinned;   // false = its static
   bool is_uploaded;  // has the data been uploaded to the GPU
 } Mesh;
 #ifndef TYPED_MESH_CONTAINERS

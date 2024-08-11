@@ -17,8 +17,8 @@ typedef struct Immdraw_Storage {
 } Immdraw_Storage;
 
 typedef struct ImmediateUniforms {
-    Mat4 model;
-    Vec4 colour;
+  Mat4 model;
+  Vec4 colour;
 } ImmediateUniforms;
 
 // --- Public API
@@ -36,19 +36,17 @@ PUB void Immdraw_TransformGizmo(Transform tf, f32 size);
 // --- Internal
 
 static ShaderDataLayout ImmediateUniforms_GetLayout(void* data) {
-    ImmediateUniforms* d = (ImmediateUniforms*)data;
-    bool has_data = data != NULL;
+  ImmediateUniforms* d = (ImmediateUniforms*)data;
+  bool has_data = data != NULL;
 
-    ShaderBinding b1 = {
-        .label = "ImmUniforms",
-        .kind = BINDING_BYTES,
-        // .vis = VISIBILITY_VERTEX,
-        .data.bytes.size = sizeof(ImmediateUniforms)
-    };
+  ShaderBinding b1 = { .label = "ImmUniforms",
+                       .kind = BINDING_BYTES,
+                       // .vis = VISIBILITY_VERTEX,
+                       .data.bytes.size = sizeof(ImmediateUniforms) };
 
-    if (has_data) {
-        b1.data.bytes.data = d;
-    }
+  if (has_data) {
+    b1.data.bytes.data = d;
+  }
 
-    return (ShaderDataLayout) {.bindings = { b1 }, .binding_count = 1};
+  return (ShaderDataLayout){ .bindings = { b1 }, .binding_count = 1 };
 }
