@@ -2,8 +2,6 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
-use std::ffi::c_void;
-
 use serde::{Deserialize, Serialize};
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
@@ -81,7 +79,11 @@ impl Transform {
                 z: 0.,
                 w: 1.0,
             },
-            scale: 1.,
+            scale: Vec3 {
+                x: 1.,
+                y: 1.,
+                z: 1.,
+            },
             is_dirty: true,
         }
     }
@@ -116,15 +118,6 @@ impl Default for ShaderBinding {
     }
 }
 
-impl Default for ShaderDataLayout {
-    fn default() -> Self {
-        Self {
-            bindings: [ShaderBinding::default(); 8],
-            binding_count: 0,
-        }
-    }
-}
-
 impl Default for Camera {
     fn default() -> Self {
         let camera_pos = Vec3 {
@@ -137,7 +130,8 @@ impl Default for Camera {
             y: -0.2,
             z: -0.7,
         };
-        let camera = unsafe {
+
+        unsafe {
             Camera_Create(
                 camera_pos,
                 camera_front,
@@ -148,8 +142,7 @@ impl Default for Camera {
                 },
                 45.0,
             )
-        };
-        camera
+        }
     }
 }
 

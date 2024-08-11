@@ -14,6 +14,7 @@
 #include "immdraw.h"
 #include "maths_types.h"
 #include "maths.h"
+#include "physics.h"
 #include "skybox.h"
 #include "shadows.h"
 #include "loaders.h"

@@ -53,7 +53,7 @@ typedef Bbox_3D Aabb_3D;
 typedef struct Transform {
   Vec3 position;
   Quat rotation;
-  f32 scale;
+  Vec3 scale;
   bool is_dirty;
 } Transform;
 

@@ -64,7 +64,7 @@ int main() {
     // m->bones->data[1].transform_components.rotation = rot;
 
     // quat rot = quat_ident();
-    Transform tf = transform_create(VEC3_ZERO, quat_ident(), 1.0);
+    // Transform tf = transform_create(VEC3_ZERO, quat_ident(), 1.0);
 
     // TODO: Drawing should still just use the PBR pipeline
 

@@ -3,23 +3,26 @@ use std::path::PathBuf;
 
 use bindgen::callbacks::ParseCallbacks;
 
-const SERIALIZABLE_TYPES: &[&'static str] = &[
+const SERIALIZABLE_TYPES: &[&str] = &[
     "Vec2",
     "Vec3",
     "Vec4",
     "Mat4",
     "Quat",
     "Transform",
+    "Bbox_3D",
+    "OBB",
     "DirectionalLight",
     "PointLight",
 ];
-const EQ_TYPES: &[&'static str] = &[
+const EQ_TYPES: &[&str] = &[
     "BufferHandle",
     "TextureHandle",
     "MeshHandle",
     "MaterialHandle",
     "ModelHandle",
 ];
+const DEFAULT_TYPES: &[&str] = &["ShaderDataLayout"];
 
 #[derive(Debug)]
 struct AdditionalDerives;
@@ -31,6 +34,9 @@ impl ParseCallbacks for AdditionalDerives {
         }
         if EQ_TYPES.contains(&info.name) {
             derives.extend_from_slice(&["PartialEq".to_string()]);
+        }
+        if DEFAULT_TYPES.contains(&info.name) {
+            derives.push("Default".to_string());
         }
         derives
     }
@@ -44,8 +50,7 @@ fn main() {
     // println!("cargo:rustc-link-search=../../build/windows/x64/debug");
 
     let static_lib_path =
-        "/Users/josh/code/CodenameVentus/deps/celeritas-core/build/macosx/arm64/debug"
-            .to_string();
+        "/Users/josh/code/CodenameVentus/deps/celeritas-core/build/macosx/arm64/debug".to_string();
     // let static_lib_path = std::env::var("CELERITAS_CORE_LIB")
     //     .unwrap_or("../../../build/macosx/arm64/debug".to_string());
 

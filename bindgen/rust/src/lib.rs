@@ -22,7 +22,7 @@ use std::{
 };
 
 use celeritas_sys::{
-    Core_Bringup, Core_Shutdown, DirectionalLight, Material, Material_Insert, Model, PointLight,
+    Core_Bringup, Core_Shutdown, DirectionalLight, Material, Material_Insert, PointLight,
     TextureHandle, Transform,
 };
 use serde::{Deserialize, Serialize};

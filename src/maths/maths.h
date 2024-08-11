@@ -147,11 +147,11 @@ static Mat4 mat4_translation(Vec3 position) {
   return out_matrix;
 }
 
-static Mat4 mat4_scale(f32 scale) {
+static Mat4 mat4_scale(Vec3 scale) {
   Mat4 out_matrix = mat4_ident();
-  out_matrix.data[0] = scale;
-  out_matrix.data[5] = scale;
-  out_matrix.data[10] = scale;
+  out_matrix.data[0] = scale.x;
+  out_matrix.data[5] = scale.y;
+  out_matrix.data[10] = scale.z;
   return out_matrix;
 }
 
@@ -307,7 +307,7 @@ static inline Mat4 mat4_look_at(Vec3 position, Vec3 target, Vec3 up) {
                 .scale = 1.0,                                             \
                 .is_dirty = false })
 
-static Transform transform_create(Vec3 pos, Quat rot, f32 scale) {
+static Transform transform_create(Vec3 pos, Quat rot, Vec3 scale) {
   return (Transform){ .position = pos, .rotation = rot, .scale = scale, .is_dirty = true };
 }
 

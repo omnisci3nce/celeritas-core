@@ -86,6 +86,16 @@ void Immdraw_Primitive(Transform tf, f32 size, Vec4 colour, bool wireframe, Mesh
   // bind pipeline
   GPU_EncodeBindPipeline(enc, imm->colour_pipeline);
 
+  // TODO: implement wireframe in other apis
+#if defined(CEL_REND_BACKEND_OPENGL)
+#include <glad/glad.h>
+  if (wireframe) {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  } else {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  }
+#endif
+
   // update uniforms
   ImmediateUniforms uniforms = {
     .model = transform_to_mat(&tf),

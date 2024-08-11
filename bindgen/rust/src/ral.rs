@@ -1,6 +1,6 @@
 //! Wrapper around the RAL code in celeritas-core
 
-use std::ffi::{c_void, CString};
+use std::ffi::c_void;
 
 use celeritas_sys::{
     BufferHandle, GPU_CmdEncoder, GPU_CmdEncoder_BeginRender, GPU_CmdEncoder_EndRender,
@@ -319,8 +319,8 @@ mod test {
     use super::*;
 
     struct TestData {
-        a: [f32; 2],
-        b: [f32; 4],
+        _a: [f32; 2],
+        _b: [f32; 4],
     }
     impl ShaderData for TestData {
         fn layout() -> ShaderDataLayout {
@@ -338,7 +338,7 @@ mod test {
             .add_attr("position", VertexAttrKind::Floatx2)
             .add_attr("color", VertexAttrKind::Floatx4);
 
-        let mut builder = PipelineBuilder::new("Test Pipeline".into())
+        let builder = PipelineBuilder::new("Test Pipeline".into())
             .add_shader_layout::<TestData>()
             .add_vertex_desc(vertex_desc);
 

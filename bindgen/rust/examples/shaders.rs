@@ -6,6 +6,7 @@ use celeritas_sys::{
     ShaderVisibility_VISIBILITY_FRAGMENT, ShaderVisibility_VISIBILITY_VERTEX,
 };
 
+#[allow(clippy::upper_case_acronyms)]
 #[repr(C)]
 struct MVP {
     model: Mat4,
@@ -13,7 +14,7 @@ struct MVP {
     proj: Mat4,
 }
 
-fn shader_vis_all() -> u32 {
+pub fn shader_vis_all() -> u32 {
     ShaderVisibility_VISIBILITY_VERTEX
         | ShaderVisibility_VISIBILITY_FRAGMENT
         | ShaderVisibility_VISIBILITY_COMPUTE
