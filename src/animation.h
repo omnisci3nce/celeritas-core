@@ -4,6 +4,7 @@
 #include "defines.h"
 #include "maths_types.h"
 #include "mem.h"
+#include "ral_types.h"
 
 typedef enum Interpolation {
   INTERPOLATION_STEP,
@@ -18,6 +19,8 @@ typedef enum KeyframeKind {
   KEYFRAME_SCALE,
   KEYFRAME_WEIGHTS,
 } KeyframeKind;
+
+static const char* keyframe_kind_strings[4] = { "ROTATION", "TRANSLATION", "SCALE", "WEIGHTS"};
 
 typedef union Keyframe {
   Quat rotation;
@@ -70,12 +73,13 @@ typedef struct AnimationSampler {
 } AnimationSampler;
 
 /** @brief Sample an animation at a given time `t` returning an interpolated keyframe */
-Keyframe Animation_Sample(AnimationSampler* sampler, f32 t);
+PUB Keyframe Animation_Sample(AnimationSampler* sampler, f32 t);
 
 typedef struct AnimationClip {
-  // A clip contains one or more animation curves
-  // for now I think we can just enumerate all of the properties (assuming *only* one per type is in
-  // a clip) NULL = this property is not animated in this clip
+  // A clip contains one or more animation curves.
+  // For now I think we can just enumerate all of the properties (assuming *only* one per type is in
+  // a clip) and NULL = the property is not animated in this clip
+  // NOTE: when I call 'property' is typically referred to as a 'channel' by GLTF
   AnimationSampler* rotation;
   AnimationSampler* translation;
   AnimationSampler* scale;
@@ -91,4 +95,11 @@ typedef struct SkinnedAnimation {
   size_t n_joints;
 } SkinnedAnimation;
 
-void animation_play(AnimationClip* clip);
+PUB void Animation_Play(AnimationClip* clip);
+
+void Animation_VisualiseJoints(Armature* armature);
+
+typedef struct AnimDataUniform {
+    Mat4 bone_matrices[4];
+} AnimDataUniform;
+ShaderDataLayout AnimData_GetLayout(void* data);

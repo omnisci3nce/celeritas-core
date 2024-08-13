@@ -1,4 +1,5 @@
 #include "pbr.h"
+#include "animation.h"
 #include "camera.h"
 #include "core.h"
 #include "file.h"
@@ -24,17 +25,18 @@ GPU_Renderpass* PBR_RPassCreate() {
 }
 
 void PBR_PipelinesCreate(PBR_Storage* storage, GPU_Renderpass* rpass) {
+    // Common shader bindings
+    ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
+    ShaderDataLayout model_data = Binding_Model_GetLayout(NULL);
+    ShaderDataLayout material_data = PBRMaterial_GetLayout(NULL);
+    ShaderDataLayout lights_data = Binding_Lights_GetLayout(NULL);
+
   // Static
   {
     const char* vert_path = "assets/shaders/static_geometry.vert";
     const char* frag_path = "assets/shaders/pbr_textured.frag";
     char* vert_shader = string_from_file(vert_path);
     char* frag_shader = string_from_file(frag_path);
-
-    ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
-    ShaderDataLayout model_data = Binding_Model_GetLayout(NULL);
-    ShaderDataLayout material_data = PBRMaterial_GetLayout(NULL);
-    ShaderDataLayout lights_data = Binding_Lights_GetLayout(NULL);
 
     GraphicsPipelineDesc desc = {
       .debug_name = "PBR (Static) Pipeline",
@@ -60,14 +62,11 @@ void PBR_PipelinesCreate(PBR_Storage* storage, GPU_Renderpass* rpass) {
     char* vert_shader = string_from_file(vert_path);
     char* frag_shader = string_from_file(frag_path);
 
-    ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
-    ShaderDataLayout model_data = Binding_Model_GetLayout(NULL);
-    ShaderDataLayout material_data = PBRMaterial_GetLayout(NULL);
-    ShaderDataLayout lights_data = Binding_Lights_GetLayout(NULL);
+    ShaderDataLayout anim_uniform = AnimData_GetLayout(NULL);
 
     VertexDescription vertex_desc = { .debug_label = "Skinned vertices",
                                       .use_full_vertex_size = true };
-    VertexDesc_AddAttr(&vertex_desc, "inPos", ATTR_F32x3);
+    VertexDesc_AddAttr(&vertex_desc, "inPosition", ATTR_F32x3);
     VertexDesc_AddAttr(&vertex_desc, "inNormal", ATTR_F32x3);
     VertexDesc_AddAttr(&vertex_desc, "inTexCoords", ATTR_F32x2);
     VertexDesc_AddAttr(&vertex_desc, "inBoneIndices", ATTR_I32x4);
@@ -76,8 +75,8 @@ void PBR_PipelinesCreate(PBR_Storage* storage, GPU_Renderpass* rpass) {
     GraphicsPipelineDesc desc = {
       .debug_name = "PBR (Skinned) Pipeline",
       .vertex_desc = vertex_desc,
-      .data_layouts = { camera_data, model_data, material_data, lights_data },
-      .data_layouts_count = 4,
+      .data_layouts = { camera_data, model_data, material_data, lights_data, anim_uniform },
+      .data_layouts_count = 5,
       .vs = { .debug_name = "PBR (textured) Vertex Shader",
               .filepath = str8(vert_path),
               .code = vert_shader },
@@ -102,7 +101,9 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
 
   GPU_CmdEncoder* enc = GPU_GetDefaultEncoder();
   GPU_CmdEncoder_BeginRender(enc, storage->pbr_pass);
-  GPU_EncodeBindPipeline(enc, storage->pbr_static_pipeline);
+
+  // TEMP: only do skinned
+  GPU_EncodeBindPipeline(enc, storage->pbr_skinned_pipeline);
 
   // Feed shader data
   Mat4 view, proj;
@@ -142,6 +143,13 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
     // upload model transform
     Binding_Model model_data = { .model = renderable.affine };
     GPU_EncodeBindShaderData(enc, 1, Binding_Model_GetLayout(&model_data));
+
+    AnimDataUniform anim_data = {0};
+    for (int i =0; i < 4; i++) {
+        anim_data.bone_matrices[i] = mat4_ident();
+    }
+    GPU_EncodeBindShaderData(enc, 3, AnimData_GetLayout(&anim_data));
+    // Calculate matrices here
 
     // set buffers
     GPU_EncodeSetVertexBuffer(enc, mesh->vertex_buffer);

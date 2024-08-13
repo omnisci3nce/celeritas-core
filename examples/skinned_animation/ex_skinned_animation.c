@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <glfw3.h>
 
+#include "animation.h"
 #include "camera.h"
 #include "core.h"
 #include "loaders.h"
@@ -39,9 +40,9 @@ int main() {
 
   // scene our_scene = make_default_scene();
 
-  Vec3 cam_pos = vec3_create(0, 5, -8);
-  Camera camera =
-      Camera_Create(cam_pos, vec3_normalise(vec3_negate(cam_pos)), VEC3_Y, deg_to_rad(45.0));
+  Vec3 cam_pos = vec3_create(0, 1.2, 4);
+  Camera cam = Camera_Create(cam_pos, VEC3_NEG_Z, VEC3_Y, deg_to_rad(45.0));
+  SetCamera(cam);
 
   // Main loop
   const f32 camera_lateral_speed = 0.2;
@@ -71,10 +72,22 @@ int main() {
     // Transform tf = transform_create(VEC3_ZERO, quat_ident(), 1.0);
 
     // TODO: Drawing should still just use the PBR pipeline
-    ModelExtractRenderEnts(rend_ents, handle, mat4_translation(vec3(0, -1, 0)), 0);
+    Mesh* m = Mesh_Get(simple_skin->meshes[0]);
+    RenderEnt render_ents[1] = {
+        (RenderEnt ){ .mesh = simple_skin->meshes[0],
+                           .material = m->material,
+                           .animation_clip = simple_skin->animations->data[0],
+                           .is_playing = true,
+                           .t = 0.0,
+                           .affine = mat4_ident(),
+                           .flags = 0 }
+    };
+    // ModelExtractRenderEnts(rend_ents, handle, mat4_translation(vec3(0, 0, 0)), 0);
 
     // draw_skinned_model(&core->renderer, &game.camera, simple_skin, tf, &our_scene);
-    Render_RenderEntities(rend_ents->data, rend_ents->len);
+    Render_RenderEntities(render_ents, 1);
+
+    // Animation_VisualiseJoints(&m->armature);
 
     RenderEnt_darray_clear(rend_ents);
 

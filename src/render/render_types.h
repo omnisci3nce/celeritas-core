@@ -43,6 +43,7 @@ typedef struct Mesh {
   Geometry geometry;  // NULL means it has been freed CPU-side
   MaterialHandle material;
   bool is_skinned;   // false = its static
+  Armature armature;
   bool is_uploaded;  // has the data been uploaded to the GPU
 } Mesh;
 #ifndef TYPED_MESH_CONTAINERS
@@ -96,8 +97,7 @@ typedef struct Model {
   size_t mesh_count;
   MaterialHandle* materials;
   size_t material_count;
-  Armature armature;
-  bool has_joints;
+  arena anim_arena;
   AnimationClip_darray* animations;
 } Model;
 #ifndef TYPED_MODEL_ARRAY
@@ -135,6 +135,9 @@ typedef u32 RenderEntityFlags;
 typedef struct RenderEnt {
   MeshHandle mesh;
   MaterialHandle material;
+  AnimationClip animation_clip;
+  bool is_playing;
+  f32 t;
   Mat4 affine;  // In the future this should be updated by the transform graph
   Bbox_3D bounding_box;
   RenderEntityFlags flags;

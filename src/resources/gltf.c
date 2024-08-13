@@ -119,11 +119,11 @@ void load_texcoord_components(Vec2_darray* texcoords, cgltf_accessor* accessor) 
   }
 }
 
-void load_joint_index_components(Vec4u_darray* joint_indices, cgltf_accessor* accessor) {
+void load_joint_index_components(Vec4i_darray* joint_indices, cgltf_accessor* accessor) {
   TRACE("Load joint indices from accessor");
   CASSERT(accessor->component_type == cgltf_component_type_r_16u);
   CASSERT_MSG(accessor->type == cgltf_type_vec4, "Joint indices should be a vec4");
-  Vec4u tmp_joint_index;
+  Vec4i tmp_joint_index;
   Vec4 joints_as_floats;
   for (cgltf_size v = 0; v < accessor->count; ++v) {
     cgltf_accessor_read_float(accessor, v, &joints_as_floats.x, 4);
@@ -133,7 +133,7 @@ void load_joint_index_components(Vec4u_darray* joint_indices, cgltf_accessor* ac
     tmp_joint_index.w = (u32)joints_as_floats.w;
     printf("Joints affecting vertex %d :  %d %d %d %d\n", v, tmp_joint_index.x, tmp_joint_index.y,
            tmp_joint_index.z, tmp_joint_index.w);
-    Vec4u_darray_push(joint_indices, tmp_joint_index);
+    Vec4i_darray_push(joint_indices, tmp_joint_index);
   }
 }
 
@@ -168,6 +168,7 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
   // --- Skin
   size_t num_skins = data->skins_count;
   bool is_skinned = false;
+  Armature main_skeleton = {0};
   if (num_skins == 1) {
     is_skinned = true;
   } else if (num_skins > 1) {
@@ -218,9 +219,9 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
                                 16);
       Joint_darray_push(armature.joints, joint_i);
     }
-
-    out_model->armature = armature;
-    out_model->has_joints = true;
+    main_skeleton = armature;
+    // out_model->armature = armature;
+    // out_model->has_joints = true;
   }
 
   // --- Materials
@@ -335,6 +336,7 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
         Mesh m = Mesh_Create(geometry, false);
         if (is_skinned) {
           m.is_skinned = true;
+          m.armature = main_skeleton;
         }
         Mesh_darray_push(tmp_meshes, m);
 
@@ -356,7 +358,8 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
       if (!out_model->animations) {
         out_model->animations = AnimationClip_darray_new(num_animations);
       }
-      arena* arena = &out_model->armature.arena;
+      out_model->anim_arena = arena_create(malloc(MB(1)), MB(1));
+      arena* arena = &out_model->anim_arena;
 
       for (int anim_idx = 0; anim_idx < data->animations_count; anim_idx++) {
         cgltf_animation animation = data->animations[anim_idx];
@@ -395,21 +398,16 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
           }
 
           sampler->current_index = 0;
-          // printf("1 %d index\n", sampler->current_index);
           sampler->animation.interpolation = INTERPOLATION_LINEAR;  // NOTE: hardcoded for now
 
           // Keyframe times
           size_t n_frames = channel.sampler->input->count;
-          assert(channel.sampler->input->component_type == cgltf_component_type_r_32f);
           CASSERT_MSG(channel.sampler->input->component_type == cgltf_component_type_r_32f,
                       "Expected animation sampler input component to be type f32");
           f32* times = arena_alloc(arena, n_frames * sizeof(f32));
           sampler->animation.n_timestamps = n_frames;
           sampler->animation.timestamps = times;
           cgltf_accessor_unpack_floats(channel.sampler->input, times, n_frames);
-
-          // assert_path_type_matches_component_type(channel.target_path,
-          // channel.sampler->output);
 
           // Keyframe values
           size_t n_values = channel.sampler->output->count;
@@ -451,8 +449,8 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
           sampler->max = channel.sampler->input->max[0];
 
           *target_property = sampler;
-          printf("%d timestamps\n", sampler->animation.n_timestamps);
-          printf("%d index\n", sampler->current_index);
+          printf("%d timestamps between %f and %f\n", sampler->animation.n_timestamps, sampler->min,
+                 sampler->max);
         }
 
         AnimationClip_darray_push(out_model->animations, clip);
