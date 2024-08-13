@@ -155,6 +155,8 @@ void Renderer_Shutdown(Renderer* ren) {
   DEBUG("Freed PBR storage");
   free(ren->terrain);
   DEBUG("Freed Terrain storage");
+  free(ren->immediate);
+  DEBUG("Freed Immdraw storage");
   arena_free_storage(&ren->frame_arena);
   DEBUG("Freed frame allocator buffer");
 }

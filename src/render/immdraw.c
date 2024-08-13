@@ -22,7 +22,7 @@ void Immdraw_Init(Immdraw_Storage* storage) {
   Geometry cube_geo = Geo_CreateCuboid(f32x3(1.0, 1.0, 1.0));
   storage->cube = Mesh_Create(&cube_geo, true);
 
-  Geometry plane_geo = Geo_CreatePlane(f32x2(1.0, 1.0));
+  Geometry plane_geo = Geo_CreatePlane(f32x2(1.0, 1.0), 1, 1);
   storage->plane = Mesh_Create(&plane_geo, true);
 
   storage->bbox = GenBboxMesh();

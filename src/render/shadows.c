@@ -127,7 +127,7 @@ void Shadow_Init(Shadow_Storage* storage, u32 shadowmap_width, u32 shadowmap_hei
   storage->debugquad_pipeline =
       GPU_GraphicsPipeline_Create(debugquad_pipeline_desc, storage->debugquad_pass);
 
-  Geometry quad_geo = Geo_CreatePlane(f32x2(1, 1));
+  Geometry quad_geo = Geo_CreatePlane(f32x2(1, 1), 1,1 );
   // HACK: Swap vertices to make it face us
   Vertex top0 = quad_geo.vertices->data[0];
   quad_geo.vertices->data[0] = quad_geo.vertices->data[2];

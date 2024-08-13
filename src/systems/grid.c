@@ -13,7 +13,7 @@
 
 void Grid_Init(Grid_Storage* storage) {
   INFO("Infinite Grid initialisation");
-  Geometry plane_geo = Geo_CreatePlane(f32x2(1.0, 1.0));
+  Geometry plane_geo = Geo_CreatePlane(f32x2(1.0, 1.0), 1, 1);
   Mesh plane_mesh = Mesh_Create(&plane_geo, true);
   storage->plane_vertices = plane_mesh.vertex_buffer;
 
