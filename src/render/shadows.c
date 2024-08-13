@@ -167,7 +167,7 @@ void Shadow_DrawDebugQuad() {
   GPU_EncodeBindShaderData(enc, 0, quad_data);
   GPU_EncodeSetVertexBuffer(enc, shadow_storage->quad.vertex_buffer);
   GPU_EncodeSetIndexBuffer(enc, shadow_storage->quad.index_buffer);
-  GPU_EncodeDrawIndexed(enc, shadow_storage->quad.geometry.indices->len);
+  GPU_EncodeDrawIndexedTris(enc, shadow_storage->quad.geometry.indices->len);
 
   GPU_CmdEncoder_EndRender(enc);
 }
@@ -201,7 +201,7 @@ void Shadow_ShadowmapExecute(Shadow_Storage* storage, Mat4 light_space_transform
       GPU_EncodeBindShaderData(&shadow_encoder, 0, shader_data);
       GPU_EncodeSetVertexBuffer(&shadow_encoder, mesh->vertex_buffer);
       GPU_EncodeSetIndexBuffer(&shadow_encoder, mesh->index_buffer);
-      GPU_EncodeDrawIndexed(&shadow_encoder, mesh->geometry.indices->len);
+      GPU_EncodeDrawIndexedTris(&shadow_encoder, mesh->geometry.indices->len);
     }
   }
 

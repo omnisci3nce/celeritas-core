@@ -80,8 +80,11 @@ void GPU_EncodeSetDefaults(GPU_CmdEncoder* encoder);
 PUB void GPU_EncodeSetVertexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf);
 PUB void GPU_EncodeSetIndexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf);
 
-PUB void GPU_EncodeDraw(GPU_CmdEncoder* encoder, u64 count);
-PUB void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, u64 index_count);
+PUB void GPU_EncodeDraw(GPU_CmdEncoder* encoder, PrimitiveTopology topology, u64 count);
+PUB void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, PrimitiveTopology topology, u64 index_count);
+// convenience versions of the above
+PUB void GPU_EncodeDrawTris(GPU_CmdEncoder* encoder, u64 count);
+PUB void GPU_EncodeDrawIndexedTris(GPU_CmdEncoder* encoder, u64 index_count);
 PUB void GPU_EncodeDrawInstanced(GPU_CmdEncoder* encoder, u64 index_count,
                                  u64 instance_count);  // TODO: implement instanced rendering
 

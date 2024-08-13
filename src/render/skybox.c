@@ -154,7 +154,7 @@ void Skybox_Draw(Skybox* skybox, Camera camera) {
   GPU_EncodeSetVertexBuffer(enc, skybox->cube.vertex_buffer);
   GPU_EncodeSetIndexBuffer(enc, skybox->cube.index_buffer);
 
-  GPU_EncodeDraw(enc, 36);
+  GPU_EncodeDrawTris(enc, 36);
 
   GPU_CmdEncoder_EndRender(enc);
   glDepthFunc(GL_LESS);

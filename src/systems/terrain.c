@@ -174,7 +174,7 @@ void Terrain_Draw(Terrain_Storage* storage) {
   GPU_EncodeSetVertexBuffer(enc, storage->vertex_buffer);
   GPU_EncodeSetIndexBuffer(enc, storage->index_buffer);
 
-  GPU_EncodeDrawIndexed(enc, storage->indices_count);
+  GPU_EncodeDrawIndexedTris(enc, storage->indices_count);
   // glDrawArrays(GL_POINTS, 0, storage->num_vertices);
 }
 

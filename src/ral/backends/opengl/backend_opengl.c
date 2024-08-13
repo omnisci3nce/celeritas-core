@@ -411,9 +411,19 @@ void GPU_EncodeSetIndexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf) {
   GPU_Buffer* buffer = BUFFER_GET(buf);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->id.ibo);
 }
-void GPU_EncodeDraw(GPU_CmdEncoder* encoder, u64 count) { glDrawArrays(GL_TRIANGLES, 0, count); }
-void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, u64 index_count) {
+void GPU_EncodeDrawTris(GPU_CmdEncoder* encoder, u64 count) {
+  glDrawArrays(GL_TRIANGLES, 0, count);
+}
+void GPU_EncodeDrawIndexedTris(GPU_CmdEncoder* encoder, u64 index_count) {
   glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0);
+}
+
+PUB void GPU_EncodeDraw(GPU_CmdEncoder* encoder, PrimitiveTopology topology, u64 count) {
+  glDrawArrays(opengl_prim_topology(topology), 0, count);
+}
+PUB void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, PrimitiveTopology topology,
+                               u64 index_count) {
+  glDrawElements(opengl_prim_topology(topology), index_count, GL_UNSIGNED_INT, 0);
 }
 
 PUB void GPU_WriteTextureRegion(GPU_CmdEncoder* encoder, TextureHandle dst, u32 x_offset,

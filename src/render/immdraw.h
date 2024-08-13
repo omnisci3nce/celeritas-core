@@ -13,6 +13,7 @@ typedef struct Immdraw_Storage {
   Mesh plane;
   Mesh cube;
   Mesh sphere;
+  Mesh bbox;
   GPU_Pipeline* colour_pipeline; /** @brief Pipeline for drawing geometry that has vertex colours */
 } Immdraw_Storage;
 
@@ -30,10 +31,15 @@ PUB void Immdraw_Shutdown(Immdraw_Storage* storage);
 PUB void Immdraw_Plane(Transform tf, Vec4 colour, bool wireframe);
 PUB void Immdraw_Cuboid(Transform tf, Vec4 colour, bool wireframe);
 PUB void Immdraw_Sphere(Transform tf, Vec4 colour, bool wireframe);
+PUB void Immdraw_Bbox(Transform tf, Vec4 colour, bool wireframe);
 
 PUB void Immdraw_TransformGizmo(Transform tf, f32 size);
 
 // --- Internal
+
+void Immdraw_Primitive(Transform tf, PrimitiveTopology topology, f32 size, Vec4 colour, bool wireframe, Mesh mesh);
+
+Mesh GenBboxMesh();
 
 static ShaderDataLayout ImmediateUniforms_GetLayout(void* data) {
   ImmediateUniforms* d = (ImmediateUniforms*)data;

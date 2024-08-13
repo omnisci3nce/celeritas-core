@@ -120,7 +120,7 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
     GPU_EncodeSetVertexBuffer(enc, mesh->vertex_buffer);
     GPU_EncodeSetIndexBuffer(enc, mesh->index_buffer);
     // draw
-    GPU_EncodeDrawIndexed(enc, mesh->geometry.index_count);
+    GPU_EncodeDrawIndexedTris(enc, mesh->geometry.index_count);
   }
 
   GPU_CmdEncoder_EndRender(enc);

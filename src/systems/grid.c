@@ -79,6 +79,6 @@ void Grid_Execute(Grid_Storage* storage) {
   GPU_EncodeBindShaderData(enc, 0, Binding_Camera_GetLayout(&camera_data));
   GPU_EncodeSetVertexBuffer(enc, storage->plane_vertices);
   GPU_EncodeSetIndexBuffer(enc, storage->plane_indices);
-  GPU_EncodeDrawIndexed(enc, 6);
+  GPU_EncodeDrawIndexedTris(enc, 6);
   GPU_CmdEncoder_EndRender(enc);
 }

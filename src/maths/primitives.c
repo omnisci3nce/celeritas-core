@@ -6,11 +6,6 @@
 #include "render_types.h"
 
 // --- Helpers
-#define VERT_3D(arr, pos, norm, uv)                                                    \
-  {                                                                                    \
-    Vertex v = { .static_3d = { .position = pos, .normal = norm, .tex_coords = uv } }; \
-    Vertex_darray_push(arr, v);                                                        \
-  }
 
 void push_triangle(u32_darray* arr, u32 i0, u32 i1, u32 i2) {
   u32_darray_push(arr, i0);
@@ -57,15 +52,6 @@ Geometry Geo_CreatePlane(f32x2 extents) {
 
   return geo;
 }
-
-static const Vec3 BACK_BOT_LEFT = (Vec3){ 0, 0, 0 };
-static const Vec3 BACK_BOT_RIGHT = (Vec3){ 1, 0, 0 };
-static const Vec3 BACK_TOP_LEFT = (Vec3){ 0, 1, 0 };
-static const Vec3 BACK_TOP_RIGHT = (Vec3){ 1, 1, 0 };
-static const Vec3 FRONT_BOT_LEFT = (Vec3){ 0, 0, 1 };
-static const Vec3 FRONT_BOT_RIGHT = (Vec3){ 1, 0, 1 };
-static const Vec3 FRONT_TOP_LEFT = (Vec3){ 0, 1, 1 };
-static const Vec3 FRONT_TOP_RIGHT = (Vec3){ 1, 1, 1 };
 
 Geometry Geo_CreateCuboid(f32x3 extents) {
   Vertex_darray* vertices = Vertex_darray_new(36);

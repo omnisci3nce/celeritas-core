@@ -221,13 +221,24 @@ typedef void (*FN_BindShaderData)(ShaderDataLayout* layout, const void* data);
 
 // --- Miscellaneous
 
+#define TOPOLOGY_SHORT_NAMES
+
 typedef enum PrimitiveTopology {
+#ifdef TOPOLOGY_SHORT_NAMES
+  CEL_POINT,
+  CEL_LINE,
+  CEL_LINE_STRIP,
+  CEL_TRI,
+  CEL_TRI_STRIP,
+  PRIMITIVE_TOPOLOGY_COUNT
+#else
   PRIMITIVE_TOPOLOGY_POINT,
   PRIMITIVE_TOPOLOGY_LINE,
   PRIMITIVE_TOPOLOGY_LINE_STRIP,
   PRIMITIVE_TOPOLOGY_TRIANGLE,
   PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
   PRIMITIVE_TOPOLOGY_COUNT
+#endif
 } PrimitiveTopology;
 
 typedef enum CullMode { CULL_BACK_FACE, CULL_FRONT_FACE, CULL_COUNT } CullMode;
