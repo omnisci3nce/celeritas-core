@@ -42,7 +42,7 @@ KITC_DECL_TYPED_ARRAY(face)
 // bool model_load_obj_str(const char *file_string, str8 relative_path, Model *out_model,
 //                         bool invert_textures_y);
 
-ModelHandle model_load_obj(Core *core, const char *path, bool invert_textures_y) {
+ModelHandle model_load_obj(Core* core, const char* path, bool invert_textures_y) {
   size_t arena_size = 1024;
   arena scratch = arena_create(malloc(arena_size), arena_size);
 
@@ -51,7 +51,7 @@ ModelHandle model_load_obj(Core *core, const char *path, bool invert_textures_y)
   if (!relative_path.has_value) {
     WARN("Couldnt get a relative path for the path to use for loading materials & textures later");
   }
-  const char *file_string = string_from_file(path);
+  const char* file_string = string_from_file(path);
 
   ModelHandle handle;
   // model *model = model_pool_alloc(&g_core.models, &handle);
@@ -70,7 +70,7 @@ ModelHandle model_load_obj(Core *core, const char *path, bool invert_textures_y)
   return handle;
 }
 
-bool model_load_obj_str(const char *file_string, Str8 relative_path, Model *out_model,
+bool model_load_obj_str(const char* file_string, Str8 relative_path, Model* out_model,
                         bool invert_textures_y) {
   TRACE("Load OBJ from string");
 

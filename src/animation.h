@@ -3,6 +3,7 @@
 #include "darray.h"
 #include "defines.h"
 #include "maths_types.h"
+#include "mem.h"
 
 typedef enum Interpolation {
   INTERPOLATION_STEP,
@@ -46,6 +47,7 @@ typedef u32 JointIdx;
 
 typedef struct Armature {
   char* label;
+  arena arena;
   Joint_darray* joints;
 } Armature;
 
@@ -79,6 +81,10 @@ typedef struct AnimationClip {
   AnimationSampler* scale;
   AnimationSampler* weights;
 } AnimationClip;
+#ifndef TYPED_ANIM_CLIP_ARRAY
+KITC_DECL_TYPED_ARRAY(AnimationClip);
+#define TYPED_ANIM_CLIP_ARRAY
+#endif
 
 typedef struct SkinnedAnimation {
   Mat4* joint_matrices;

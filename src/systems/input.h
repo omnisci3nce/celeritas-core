@@ -24,7 +24,7 @@ typedef struct mouse_state {
 } mouse_state;
 
 typedef struct Input_State {
-  struct GLFWwindow *window;
+  struct GLFWwindow* window;
   mouse_state mouse;
   bool depressed_keys[KEYCODE_MAX];
   bool just_pressed_keys[KEYCODE_MAX];
@@ -45,9 +45,9 @@ PUB bool MouseBtn_Held(MouseBtn btn);
 
 // --- Lifecycle
 
-PUB bool Input_Init(Input_State *input, struct GLFWwindow *window);
-PUB void Input_Shutdown(Input_State *input);
+PUB bool Input_Init(Input_State* input, struct GLFWwindow* window);
+PUB void Input_Shutdown(Input_State* input);
 
-PUB void Input_Update(Input_State *state);  // must be run once per main loop
+PUB void Input_Update(Input_State* state);  // must be run once per main loop
 
 PUB mouse_state Input_GetMouseState();

@@ -31,15 +31,15 @@ Geometry Geo_CreatePlane(f32x2 extents, u32 tiling_u, u32 tiling_v) {
     vert_pos[i].x *= extents.x;
     vert_pos[i].z *= extents.y;
   }
-  VERT_3D(vertices, vert_pos[0], VEC3_Y, vec2(0, 0));                       // back left
-  VERT_3D(vertices, vert_pos[1], VEC3_Y, vec2(1 * tiling_u, 0 * tiling_v)); // back right
-  VERT_3D(vertices, vert_pos[2], VEC3_Y, vec2(0, 1 * tiling_v));            // front left
-  VERT_3D(vertices, vert_pos[3], VEC3_Y, vec2(1 * tiling_u, 1 * tiling_v)); // front right
+  VERT_3D(vertices, vert_pos[0], VEC3_Y, vec2(0, 0));                        // back left
+  VERT_3D(vertices, vert_pos[1], VEC3_Y, vec2(1 * tiling_u, 0 * tiling_v));  // back right
+  VERT_3D(vertices, vert_pos[2], VEC3_Y, vec2(0, 1 * tiling_v));             // front left
+  VERT_3D(vertices, vert_pos[3], VEC3_Y, vec2(1 * tiling_u, 1 * tiling_v));  // front right
 
   // push_triangle(indices, 0, 1, 2);
   // push_triangle(indices, 2, 1, 3);
   push_triangle(indices, 2, 1, 0);
-  push_triangle(indices, 1,2,3);
+  push_triangle(indices, 1, 2, 3);
 
   for (int i = 0; i < 4; i++) {
     printf("Vertex %d: (%f, %f, %f)\n", i, vert_pos[i].x, vert_pos[i].y, vert_pos[i].z);

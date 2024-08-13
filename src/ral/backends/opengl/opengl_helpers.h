@@ -140,11 +140,16 @@ static GLenum opengl_tex_type(GPU_TextureType tex_type) {
 
 static GLenum opengl_prim_topology(PrimitiveTopology t) {
   switch (t) {
-    case CEL_POINT: return GL_POINT;
-    case CEL_LINE: return GL_LINES;
-    case CEL_LINE_STRIP: return GL_LINE_STRIP;
-    case CEL_TRI: return GL_TRIANGLES;
-    case CEL_TRI_STRIP: return GL_TRIANGLE_STRIP;
+    case CEL_POINT:
+      return GL_POINT;
+    case CEL_LINE:
+      return GL_LINES;
+    case CEL_LINE_STRIP:
+      return GL_LINE_STRIP;
+    case CEL_TRI:
+      return GL_TRIANGLES;
+    case CEL_TRI_STRIP:
+      return GL_TRIANGLE_STRIP;
     case PRIMITIVE_TOPOLOGY_COUNT:
       WARN("Invalid PrimitiveTopology value");
       break;

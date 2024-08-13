@@ -1,6 +1,7 @@
 #include "str.h"
 #include <assert.h>
 #include <string.h>
+#include "log.h"
 #include "mem.h"
 
 Str8 Str8_create(u8* buf, size_t len) { return (Str8){ .buf = buf, .len = len }; }
@@ -31,6 +32,15 @@ char* Str8_to_cstr(arena* a, Str8 s) {
     dest[s.len] = '\0';
   }
   return (char*)dest;
+}
+
+char* Clone_cstr(arena* a, const char* s) {
+  if (s == NULL) {
+    WARN("Tried to clone a NULL char*");
+    return NULL;
+  }
+  Str8 st = Str8_cstr_view(s);
+  return Str8_to_cstr(a, st);
 }
 
 Str8 Str8_concat(arena* a, Str8 left, Str8 right) {

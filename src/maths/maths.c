@@ -26,7 +26,7 @@ Mat4 mat4_ident() {
   return (Mat4){ .data = { 1.0, 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.0 } };
 }
 
-Mat4 transform_to_mat(Transform *tf) {
+Mat4 transform_to_mat(Transform* tf) {
   Mat4 scale = mat4_scale(tf->scale);
   Mat4 rotation = mat4_rotation(tf->rotation);
   Mat4 translation = mat4_translation(tf->position);

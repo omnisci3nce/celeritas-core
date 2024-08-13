@@ -15,7 +15,7 @@
 void PBR_Init(PBR_Storage* storage) {
   INFO("PBR shaders init");
   storage->pbr_pass = PBR_RPassCreate();
-  storage->pbr_pipeline = PBR_PipelineCreate(storage->pbr_pass);
+  PBR_PipelinesCreate(storage, storage->pbr_pass);
 }
 
 GPU_Renderpass* PBR_RPassCreate() {
@@ -23,45 +23,72 @@ GPU_Renderpass* PBR_RPassCreate() {
   return GPU_Renderpass_Create(desc);
 }
 
-GPU_Pipeline* PBR_PipelineCreate(GPU_Renderpass* rpass) {
-  arena scratch = arena_create(malloc(1024 * 1024), 1024 * 1024);
+void PBR_PipelinesCreate(PBR_Storage* storage, GPU_Renderpass* rpass) {
+  // Static
+  {
+    const char* vert_path = "assets/shaders/static_geometry.vert";
+    const char* frag_path = "assets/shaders/pbr_textured.frag";
+    char* vert_shader = string_from_file(vert_path);
+    char* frag_shader = string_from_file(frag_path);
 
-  const char* vert_path = "assets/shaders/pbr_textured.vert";
-  const char* frag_path = "assets/shaders/pbr_textured.frag";
-  // Str8 vert_path = str8("assets/shaders/pbr_textured.vert");
-  // Str8 frag_path = str8("assets/shaders/pbr_textured.frag");
-  // str8_opt vertex_shader = str8_from_file(&scratch, vert_path);
-  // str8_opt fragment_shader = str8_from_file(&scratch, frag_path);
-  // if (!vertex_shader.has_value || !fragment_shader.has_value) {
-  //   ERROR_EXIT("Failed to load shaders from disk")
-  // }
-  char* vert_shader = string_from_file(vert_path);
-  char* frag_shader = string_from_file(frag_path);
+    ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
+    ShaderDataLayout model_data = Binding_Model_GetLayout(NULL);
+    ShaderDataLayout material_data = PBRMaterial_GetLayout(NULL);
+    ShaderDataLayout lights_data = Binding_Lights_GetLayout(NULL);
 
-  ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
-  ShaderDataLayout model_data = Binding_Model_GetLayout(NULL);
-  ShaderDataLayout material_data = PBRMaterial_GetLayout(NULL);
-  ShaderDataLayout lights_data = Binding_Lights_GetLayout(NULL);
+    GraphicsPipelineDesc desc = {
+      .debug_name = "PBR (Static) Pipeline",
+      .vertex_desc = static_3d_vertex_description(),
+      .data_layouts = { camera_data, model_data, material_data, lights_data },
+      .data_layouts_count = 4,
+      .vs = { .debug_name = "PBR (textured) Vertex Shader",
+              .filepath = str8(vert_path),
+              .code = vert_shader },
+      .fs = { .debug_name = "PBR (textured) Fragment Shader",
+              .filepath = str8(frag_path),
+              .code = frag_shader },
+      .depth_test = true,
+      .wireframe = true,
+    };
+    storage->pbr_static_pipeline = GPU_GraphicsPipeline_Create(desc, rpass);
+  }
 
-  GraphicsPipelineDesc desc = {
-    .debug_name = "PBR Pipeline",
-    .vertex_desc = static_3d_vertex_description(),
-    .data_layouts = {camera_data,model_data,material_data, lights_data },
-    .data_layouts_count = 4,
-    .vs = { .debug_name = "PBR (textured) Vertex Shader",
-            .filepath = str8(vert_path),
-            // .code = vertex_shader.contents
-            .code = vert_shader
-             },
-    .fs = { .debug_name = "PBR (textured) Fragment Shader",
-            .filepath = str8(frag_path),
-            .code = frag_shader
-            // .code = fragment_shader.contents,
-            },
-    .depth_test = true,
-    .wireframe = false,
-  };
-  return GPU_GraphicsPipeline_Create(desc, rpass);
+  // Skinned
+  {
+    const char* vert_path = "assets/shaders/skinned_geometry.vert";
+    const char* frag_path = "assets/shaders/pbr_textured.frag";
+    char* vert_shader = string_from_file(vert_path);
+    char* frag_shader = string_from_file(frag_path);
+
+    ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
+    ShaderDataLayout model_data = Binding_Model_GetLayout(NULL);
+    ShaderDataLayout material_data = PBRMaterial_GetLayout(NULL);
+    ShaderDataLayout lights_data = Binding_Lights_GetLayout(NULL);
+
+    VertexDescription vertex_desc = { .debug_label = "Skinned vertices",
+                                      .use_full_vertex_size = true };
+    VertexDesc_AddAttr(&vertex_desc, "inPos", ATTR_F32x3);
+    VertexDesc_AddAttr(&vertex_desc, "inNormal", ATTR_F32x3);
+    VertexDesc_AddAttr(&vertex_desc, "inTexCoords", ATTR_F32x2);
+    VertexDesc_AddAttr(&vertex_desc, "inBoneIndices", ATTR_I32x4);
+    VertexDesc_AddAttr(&vertex_desc, "inWeights", ATTR_F32x4);
+
+    GraphicsPipelineDesc desc = {
+      .debug_name = "PBR (Skinned) Pipeline",
+      .vertex_desc = vertex_desc,
+      .data_layouts = { camera_data, model_data, material_data, lights_data },
+      .data_layouts_count = 4,
+      .vs = { .debug_name = "PBR (textured) Vertex Shader",
+              .filepath = str8(vert_path),
+              .code = vert_shader },
+      .fs = { .debug_name = "PBR (textured) Fragment Shader",
+              .filepath = str8(frag_path),
+              .code = frag_shader },
+      .depth_test = true,
+      .wireframe = true,
+    };
+    storage->pbr_skinned_pipeline = GPU_GraphicsPipeline_Create(desc, rpass);
+  }
 }
 
 void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_tex,
@@ -75,7 +102,7 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
 
   GPU_CmdEncoder* enc = GPU_GetDefaultEncoder();
   GPU_CmdEncoder_BeginRender(enc, storage->pbr_pass);
-  GPU_EncodeBindPipeline(enc, storage->pbr_pipeline);
+  GPU_EncodeBindPipeline(enc, storage->pbr_static_pipeline);
 
   // Feed shader data
   Mat4 view, proj;

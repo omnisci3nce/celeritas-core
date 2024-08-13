@@ -17,9 +17,9 @@
 #define WHT "\e[0;37m"
 #define CRESET "\e[0m"
 
-static const char *level_strings[6] = { "[FATAL]: ", "[ERROR]: ", "[WARN]: ",
+static const char* level_strings[6] = { "[FATAL]: ", "[ERROR]: ", "[WARN]: ",
                                         "[INFO]: ",  "[DEBUG]: ", "[TRACE]: " };
-static const char *level_colours[6] = { RED, RED, YEL, BLU, CYN, MAG };
+static const char* level_colours[6] = { RED, RED, YEL, BLU, CYN, MAG };
 
 bool logger_init() {
   // TODO: create log file
@@ -30,7 +30,7 @@ void logger_shutdown() {
   // does nothing right now
 }
 
-void log_output(log_level level, const char *message, ...) {
+void log_output(log_level level, const char* message, ...) {
   char out_message[32000];
   memset(out_message, 0, sizeof(out_message));
 
@@ -49,7 +49,7 @@ void log_output(log_level level, const char *message, ...) {
   printf("%s", out_message2);
 }
 
-void report_assertion_failure(const char *expression, const char *message, const char *file,
+void report_assertion_failure(const char* expression, const char* message, const char* file,
                               int line) {
   log_output(LOG_LEVEL_FATAL, "Assertion failure: %s, message: '%s', in file: %s, on line %d\n",
              expression, message, file, line);

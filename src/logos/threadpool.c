@@ -6,8 +6,8 @@
 #include "log.h"
 #include "ring_queue.h"
 
-static void *worker_factory(void *arg) {
-  threadpool_worker *worker = arg;
+static void* worker_factory(void* arg) {
+  threadpool_worker* worker = arg;
   // INFO("Starting job thread %d", worker->id);
 
   // Run forever, waiting for jobs.
@@ -50,7 +50,7 @@ static void *worker_factory(void *arg) {
   return NULL;
 }
 
-bool threadpool_create(threadpool *pool, u8 thread_count, u32 queue_size) {
+bool threadpool_create(threadpool* pool, u8 thread_count, u32 queue_size) {
   INFO("Threadpool init");
   pool->next_task_id = 0;
   pool->context = NULL;
@@ -84,13 +84,13 @@ bool threadpool_create(threadpool *pool, u8 thread_count, u32 queue_size) {
   return true;
 }
 
-bool threadpool_add_task(threadpool *pool, tpool_task_start do_task,
+bool threadpool_add_task(threadpool* pool, tpool_task_start do_task,
                          tpool_task_on_complete on_success, tpool_task_on_complete on_fail,
-                         bool buffer_result_for_main_thread, void *param_data, u32 param_data_size,
+                         bool buffer_result_for_main_thread, void* param_data, u32 param_data_size,
                          u32 result_data_size) {
-  void *result_data = malloc(result_data_size);
+  void* result_data = malloc(result_data_size);
 
-  task *work_task = malloc(sizeof(task));
+  task* work_task = malloc(sizeof(task));
   work_task->task_id = 0;
   work_task->do_task = do_task;
   work_task->on_success = on_success;
@@ -123,11 +123,11 @@ bool threadpool_add_task(threadpool *pool, tpool_task_start do_task,
   return true;
 }
 
-void threadpool_process_results(threadpool *pool, int _num_to_process) {
+void threadpool_process_results(threadpool* pool, int _num_to_process) {
   pthread_mutex_lock(&pool->mutex);
   size_t num_results = deferred_task_result_darray_len(pool->results);
   if (num_results > 0) {
-    u32 _size = ((deferred_task_result *)pool->results->data)[num_results].result_data_size;
+    u32 _size = ((deferred_task_result*)pool->results->data)[num_results].result_data_size;
     deferred_task_result res;
     deferred_task_result_darray_pop(pool->results, &res);
     pthread_mutex_unlock(&pool->mutex);
@@ -138,4 +138,4 @@ void threadpool_process_results(threadpool *pool, int _num_to_process) {
   }
 }
 
-void threadpool_set_ctx(threadpool *pool, void *ctx) { pool->context = ctx; }
+void threadpool_set_ctx(threadpool* pool, void* ctx) { pool->context = ctx; }

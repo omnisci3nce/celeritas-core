@@ -4,4 +4,6 @@ BasedOnStyle: Google
 ColumnLimit: 100
 Cpp11BracedListStyle: false # {.x = 1.0, .y = 2.0} -> { .x = 1.0, .y = 2.0 }
 IncludeBlocks: Preserve     # sort each block of include statements instead of all
+DerivePointerAlignment: false
+PointerAlignment: Left
 ...

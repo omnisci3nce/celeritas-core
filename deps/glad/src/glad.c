@@ -642,7 +642,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void *get_proc(const char *namez);
+static void* get_proc(const char* namez);
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #ifndef _WINDOWS_
@@ -651,7 +651,7 @@ static void *get_proc(const char *namez);
 #include <windows.h>
 static HMODULE libGL;
 
-typedef void *(APIENTRYP PFNWGLGETPROCADDRESSPROC_PRIVATE)(const char *);
+typedef void*(APIENTRYP PFNWGLGETPROCADDRESSPROC_PRIVATE)(const char*);
 static PFNWGLGETPROCADDRESSPROC_PRIVATE gladGetProcAddressPtr;
 
 #ifdef _MSC_VER
@@ -694,22 +694,22 @@ static void close_gl(void) {
 }
 #else
 #include <dlfcn.h>
-static void *libGL;
+static void* libGL;
 
 #if !defined(__APPLE__) && !defined(__HAIKU__)
-typedef void *(APIENTRYP PFNGLXGETPROCADDRESSPROC_PRIVATE)(const char *);
+typedef void*(APIENTRYP PFNGLXGETPROCADDRESSPROC_PRIVATE)(const char*);
 static PFNGLXGETPROCADDRESSPROC_PRIVATE gladGetProcAddressPtr;
 #endif
 
 static int open_gl(void) {
 #ifdef __APPLE__
-  static const char *NAMES[] = {
+  static const char* NAMES[] = {
     "../Frameworks/OpenGL.framework/OpenGL", "/Library/Frameworks/OpenGL.framework/OpenGL",
     "/System/Library/Frameworks/OpenGL.framework/OpenGL",
     "/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL"
   };
 #else
-  static const char *NAMES[] = { "libGL.so.1", "libGL.so" };
+  static const char* NAMES[] = { "libGL.so.1", "libGL.so" };
 #endif
 
   unsigned int index = 0;
@@ -738,8 +738,8 @@ static void close_gl(void) {
 }
 #endif
 
-static void *get_proc(const char *namez) {
-  void *result = NULL;
+static void* get_proc(const char* namez) {
+  void* result = NULL;
   if (libGL == NULL) return NULL;
 
 #if !defined(__APPLE__) && !defined(__HAIKU__)
@@ -749,7 +749,7 @@ static void *get_proc(const char *namez) {
 #endif
   if (result == NULL) {
 #if defined(_WIN32) || defined(__CYGWIN__)
-    result = (void *)GetProcAddress((HMODULE)libGL, namez);
+    result = (void*)GetProcAddress((HMODULE)libGL, namez);
 #else
     result = dlsym(libGL, namez);
 #endif
@@ -778,15 +778,15 @@ struct gladGLversionStruct GLVersion = { 0, 0 };
 static int max_loaded_major;
 static int max_loaded_minor;
 
-static const char *exts = NULL;
+static const char* exts = NULL;
 static int num_exts_i = 0;
-static char **exts_i = NULL;
+static char** exts_i = NULL;
 
 static int get_exts(void) {
 #ifdef _GLAD_IS_SOME_NEW_VERSION
   if (max_loaded_major < 3) {
 #endif
-    exts = (const char *)glGetString(GL_EXTENSIONS);
+    exts = (const char*)glGetString(GL_EXTENSIONS);
 #ifdef _GLAD_IS_SOME_NEW_VERSION
   } else {
     unsigned int index;
@@ -794,7 +794,7 @@ static int get_exts(void) {
     num_exts_i = 0;
     glGetIntegerv(GL_NUM_EXTENSIONS, &num_exts_i);
     if (num_exts_i > 0) {
-      exts_i = (char **)malloc((size_t)num_exts_i * (sizeof *exts_i));
+      exts_i = (char**)malloc((size_t)num_exts_i * (sizeof *exts_i));
     }
 
     if (exts_i == NULL) {
@@ -802,10 +802,10 @@ static int get_exts(void) {
     }
 
     for (index = 0; index < (unsigned)num_exts_i; index++) {
-      const char *gl_str_tmp = (const char *)glGetStringi(GL_EXTENSIONS, index);
+      const char* gl_str_tmp = (const char*)glGetStringi(GL_EXTENSIONS, index);
       size_t len = strlen(gl_str_tmp);
 
-      char *local_str = (char *)malloc((len + 1) * sizeof(char));
+      char* local_str = (char*)malloc((len + 1) * sizeof(char));
       if (local_str != NULL) {
         memcpy(local_str, gl_str_tmp, (len + 1) * sizeof(char));
       }
@@ -820,20 +820,20 @@ static void free_exts(void) {
   if (exts_i != NULL) {
     int index;
     for (index = 0; index < num_exts_i; index++) {
-      free((char *)exts_i[index]);
+      free((char*)exts_i[index]);
     }
-    free((void *)exts_i);
+    free((void*)exts_i);
     exts_i = NULL;
   }
 }
 
-static int has_ext(const char *ext) {
+static int has_ext(const char* ext) {
 #ifdef _GLAD_IS_SOME_NEW_VERSION
   if (max_loaded_major < 3) {
 #endif
-    const char *extensions;
-    const char *loc;
-    const char *terminator;
+    const char* extensions;
+    const char* loc;
+    const char* terminator;
     extensions = exts;
     if (extensions == NULL || ext == NULL) {
       return 0;
@@ -856,7 +856,7 @@ static int has_ext(const char *ext) {
     int index;
     if (exts_i == NULL) return 0;
     for (index = 0; index < num_exts_i; index++) {
-      const char *e = exts_i[index];
+      const char* e = exts_i[index];
 
       if (exts_i[index] != NULL && strcmp(e, ext) == 0) {
         return 1;
@@ -10708,10 +10708,10 @@ static void find_coreGL(void) {
    */
   int i, major, minor;
 
-  const char *version;
-  const char *prefixes[] = { "OpenGL ES-CM ", "OpenGL ES-CL ", "OpenGL ES ", NULL };
+  const char* version;
+  const char* prefixes[] = { "OpenGL ES-CM ", "OpenGL ES-CL ", "OpenGL ES ", NULL };
 
-  version = (const char *)glGetString(GL_VERSION);
+  version = (const char*)glGetString(GL_VERSION);
   if (!version) return;
 
   for (i = 0; prefixes[i]; i++) {

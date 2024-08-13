@@ -29,16 +29,16 @@ void physics_system_update(physics_world* phys_world, f64 deltatime);
 
 /** @brief Oriented Bounding Box */
 typedef struct OBB {
-    Vec3 center;
-    Bbox_3D bbox;
-    Quat rotation;
+  Vec3 center;
+  Bbox_3D bbox;
+  Quat rotation;
 } OBB;
 
 PUB void Debug_DrawOBB(OBB obb);
 
 /** @brief generic collider structure */
 typedef struct Collider {
-  u64 id;  // ? Replace with handle?
-  OBB shape; // NOTE: We're only supporting the one collider type for now
+  u64 id;     // ? Replace with handle?
+  OBB shape;  // NOTE: We're only supporting the one collider type for now
   bool on_ground;
 } Collider;

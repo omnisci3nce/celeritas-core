@@ -10,8 +10,8 @@
 #include "mem.h"
 #include "str.h"
 
-const char *string_from_file(const char *path) {
-  FILE *f = fopen(path, "rb");
+const char* string_from_file(const char* path) {
+  FILE* f = fopen(path, "rb");
   if (f == NULL) {
     ERROR("Error reading file: %s. errno: %d", path, errno);
     return NULL;
@@ -24,7 +24,7 @@ const char *string_from_file(const char *path) {
   long fsize = ftell(f);
   rewind(f);
 
-  char *string = malloc(fsize + 1);
+  char* string = malloc(fsize + 1);
   fread(string, fsize, 1, f);
   fclose(f);
 
@@ -33,11 +33,11 @@ const char *string_from_file(const char *path) {
   return string;
 }
 
-str8_opt str8_from_file(arena *a, Str8 path) {
-  char *p = cstr(a, path);
+str8_opt str8_from_file(arena* a, Str8 path) {
+  char* p = cstr(a, path);
   str8_opt result = { .has_value = false };
 
-  FILE *f = fopen(p, "rb");
+  FILE* f = fopen(p, "rb");
   if (f == NULL) {
     ERROR("Error reading file: %s. errno: %d", path, errno);
     return result;
@@ -50,7 +50,7 @@ str8_opt str8_from_file(arena *a, Str8 path) {
   long fsize = ftell(f);
   rewind(f);
 
-  u8 *raw = arena_alloc(a, fsize + 1);
+  u8* raw = arena_alloc(a, fsize + 1);
   Str8 contents = Str8_create(raw, fsize);
   contents.buf[contents.len] = '\0';
 
@@ -62,8 +62,8 @@ str8_opt str8_from_file(arena *a, Str8 path) {
   return result;
 }
 
-FileData load_spv_file(const char *path) {
-  FILE *f = fopen(path, "rb");
+FileData load_spv_file(const char* path) {
+  FILE* f = fopen(path, "rb");
   if (f == NULL) {
     perror("Error opening file");
     return (FileData){ NULL, 0 };
@@ -73,7 +73,7 @@ FileData load_spv_file(const char *path) {
   long fsize = ftell(f);
   rewind(f);
 
-  char *data = (char *)malloc(fsize);
+  char* data = (char*)malloc(fsize);
   if (data == NULL) {
     perror("Memory allocation failed");
     fclose(f);

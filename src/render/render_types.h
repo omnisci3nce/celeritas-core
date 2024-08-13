@@ -3,6 +3,7 @@
  */
 
 #pragma once
+#include "animation.h"
 #include "defines.h"
 #include "maths_types.h"
 #include "mem.h"
@@ -95,6 +96,9 @@ typedef struct Model {
   size_t mesh_count;
   MaterialHandle* materials;
   size_t material_count;
+  Armature armature;
+  bool has_joints;
+  AnimationClip_darray* animations;
 } Model;
 #ifndef TYPED_MODEL_ARRAY
 KITC_DECL_TYPED_ARRAY(Model)

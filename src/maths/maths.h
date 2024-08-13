@@ -178,9 +178,9 @@ static Mat4 mat4_rotation(Quat rotation) {
 static Mat4 mat4_mult(Mat4 lhs, Mat4 rhs) {
   Mat4 out_matrix = mat4_ident();
 
-  const f32 *m1_ptr = lhs.data;
-  const f32 *m2_ptr = rhs.data;
-  f32 *dst_ptr = out_matrix.data;
+  const f32* m1_ptr = lhs.data;
+  const f32* m2_ptr = rhs.data;
+  f32* dst_ptr = out_matrix.data;
 
   for (i32 i = 0; i < 4; ++i) {
     for (i32 j = 0; j < 4; ++j) {
@@ -311,7 +311,7 @@ static Transform transform_create(Vec3 pos, Quat rot, Vec3 scale) {
   return (Transform){ .position = pos, .rotation = rot, .scale = scale, .is_dirty = true };
 }
 
-Mat4 transform_to_mat(Transform *tf);
+Mat4 transform_to_mat(Transform* tf);
 
 // --- Sizing asserts
 

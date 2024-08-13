@@ -16,7 +16,8 @@
 /** @brief Holds data for the PBR pipeline */
 typedef struct PBR_Storage {
   GPU_Renderpass* pbr_pass;
-  GPU_Pipeline* pbr_pipeline;
+  GPU_Pipeline* pbr_static_pipeline;
+  GPU_Pipeline* pbr_skinned_pipeline;
 } PBR_Storage;
 
 typedef struct PBRMaterialUniforms {
@@ -62,7 +63,8 @@ PUB ShaderDataLayout PBRMaterial_GetLayout(void* data);
 
 GPU_Renderpass* PBR_RPassCreate(); /** @brief Create the PBR Renderpass */
 
-GPU_Pipeline* PBR_PipelineCreate(GPU_Renderpass* rpass); /** @brief Create the PBR Pipeline */
+void PBR_PipelinesCreate(PBR_Storage* storage,
+                         GPU_Renderpass* rpass); /** @brief Create PBR Pipelines */
 
 void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_tex,
                  RenderEnt* entities, size_t entity_count);

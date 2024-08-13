@@ -37,7 +37,8 @@ PUB void Immdraw_TransformGizmo(Transform tf, f32 size);
 
 // --- Internal
 
-void Immdraw_Primitive(Transform tf, PrimitiveTopology topology, f32 size, Vec4 colour, bool wireframe, Mesh mesh);
+void Immdraw_Primitive(Transform tf, PrimitiveTopology topology, f32 size, Vec4 colour,
+                       bool wireframe, Mesh mesh);
 
 Mesh GenBboxMesh();
 

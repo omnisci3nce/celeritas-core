@@ -283,6 +283,11 @@ PUB MaterialHandle Material_Insert(Material* material) {
 }
 Mesh* Mesh_Get(MeshHandle handle) { return Mesh_pool_get(Render_GetMeshPool(), handle); }
 
+void Mesh_DebugPrint(Mesh* mesh) {
+  printf("Mesh %d vertices %d indices %d joints \n", mesh->geometry.vertices->len,
+         mesh->geometry.indices->len);
+}
+
 size_t ModelExtractRenderEnts(RenderEnt_darray* entities, ModelHandle model_handle, Mat4 affine,
                               RenderEntityFlags flags) {
   Model* model = MODEL_GET(model_handle);

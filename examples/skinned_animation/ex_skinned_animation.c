@@ -7,6 +7,8 @@
 #include "log.h"
 #include "maths.h"
 #include "maths_types.h"
+#include "pbr.h"
+#include "render.h"
 #include "render_types.h"
 
 int main() {
@@ -18,6 +20,8 @@ int main() {
 
   ModelHandle handle = ModelLoad_gltf("assets/models/gltf/SimpleSkin/glTF/SimpleSkin.gltf", false);
   Model* simple_skin = MODEL_GET(handle);
+
+  RenderEnt_darray* rend_ents = RenderEnt_darray_new(1);
 
   // Okay, right here we've loaded the model. let's assert some facts
   // assert(simple_skin->animations->len == 1);
@@ -67,8 +71,12 @@ int main() {
     // Transform tf = transform_create(VEC3_ZERO, quat_ident(), 1.0);
 
     // TODO: Drawing should still just use the PBR pipeline
+    ModelExtractRenderEnts(rend_ents, handle, mat4_translation(vec3(0, -1, 0)), 0);
 
     // draw_skinned_model(&core->renderer, &game.camera, simple_skin, tf, &our_scene);
+    Render_RenderEntities(rend_ents->data, rend_ents->len);
+
+    RenderEnt_darray_clear(rend_ents);
 
     Frame_End();
   }

@@ -76,6 +76,7 @@ PUB void Mesh_Delete(Mesh* mesh);
 Mesh* Mesh_Get(MeshHandle handle);
 void Geometry_Destroy(Geometry* geometry);
 MeshHandle Mesh_Insert(Mesh* mesh);
+void Mesh_DebugPrint(Mesh* mesh);
 MaterialHandle Material_Insert(Material* material);
 
 /** @brief gets render entities from a model and pushes them into a dynamic array for rendering */

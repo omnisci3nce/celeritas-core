@@ -45,6 +45,8 @@ char* Str8_to_cstr(arena* a, Str8 s);
     @note  The backing `string` cannot be modified. */
 Str8 Str8_cstr_view(char* string);
 
+char* Clone_cstr(arena* a, const char* s);
+
 // --- Comparisons
 
 /** @brief Compare two strings for exact equality */

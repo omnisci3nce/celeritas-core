@@ -36,7 +36,7 @@ void logger_shutdown();
 // TODO: macro that outputs logger macros for a specific subsystem or string prefix e.g. "MEMORY" ->
 // logs now have more context potentially have line numbers too?
 
-void log_output(log_level level, const char *message, ...);
+void log_output(log_level level, const char* message, ...);
 
 #define FATAL(message, ...) log_output(LOG_LEVEL_FATAL, message, ##__VA_ARGS__)
 #define ERROR(message, ...) log_output(LOG_LEVEL_ERROR, message, ##__VA_ARGS__)
@@ -57,7 +57,7 @@ void log_output(log_level level, const char *message, ...);
 
 // TODO: Move this to an asserts file
 
-void report_assertion_failure(const char *expression, const char *message, const char *file,
+void report_assertion_failure(const char* expression, const char* message, const char* file,
                               int line);
 
 #define CASSERT(expr)                                          \

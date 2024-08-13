@@ -62,7 +62,8 @@ PUB void GPU_TextureDestroy(TextureHandle handle);
 PUB void GPU_TextureUpload(TextureHandle handle, size_t n_bytes, const void* data);
 
 // --- Data copy commands
-PUB void GPU_EncodeCopyBufToBuf(GPU_CmdEncoder* encoder, BufferHandle src, u64 src_offset, BufferHandle dst, u64 dst_offset, u64 copy_size);
+PUB void GPU_EncodeCopyBufToBuf(GPU_CmdEncoder* encoder, BufferHandle src, u64 src_offset,
+                                BufferHandle dst, u64 dst_offset, u64 copy_size);
 
 // PUB void GPU_EncodeCopyBufToTex(GPU_CmdEncoder* encoder, BufferHandle src, TextureHandle dst,
 //     u32 x_offset, u32 y_offset, u32 width, u32 height, const void* data);
@@ -81,7 +82,8 @@ PUB void GPU_EncodeSetVertexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf);
 PUB void GPU_EncodeSetIndexBuffer(GPU_CmdEncoder* encoder, BufferHandle buf);
 
 PUB void GPU_EncodeDraw(GPU_CmdEncoder* encoder, PrimitiveTopology topology, u64 count);
-PUB void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, PrimitiveTopology topology, u64 index_count);
+PUB void GPU_EncodeDrawIndexed(GPU_CmdEncoder* encoder, PrimitiveTopology topology,
+                               u64 index_count);
 // convenience versions of the above
 PUB void GPU_EncodeDrawTris(GPU_CmdEncoder* encoder, u64 count);
 PUB void GPU_EncodeDrawIndexedTris(GPU_CmdEncoder* encoder, u64 index_count);

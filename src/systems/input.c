@@ -7,9 +7,9 @@
 #include "keys.h"
 #include "log.h"
 
-static Input_State *g_input;  // Use a global to simplify caller code
+static Input_State* g_input;  // Use a global to simplify caller code
 
-bool Input_Init(Input_State *input, GLFWwindow *window) {
+bool Input_Init(Input_State* input, GLFWwindow* window) {
   INFO("Input init");
   memset(input, 0, sizeof(Input_State));
 
@@ -30,9 +30,9 @@ bool Input_Init(Input_State *input, GLFWwindow *window) {
   return true;
 }
 
-void Input_Shutdown(Input_State *input) {}
+void Input_Shutdown(Input_State* input) {}
 
-void Input_Update(Input_State *input) {
+void Input_Update(Input_State* input) {
   glfwPollEvents();
   // --- update keyboard input
 
