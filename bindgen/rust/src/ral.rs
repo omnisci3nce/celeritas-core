@@ -305,9 +305,9 @@ pub enum PrimitiveTopology {
 impl From<celeritas_sys::PrimitiveTopology> for PrimitiveTopology {
     fn from(value: celeritas_sys::PrimitiveTopology) -> Self {
         match value {
-            celeritas_sys::PrimitiveTopology_PRIMITIVE_TOPOLOGY_POINT => PrimitiveTopology::Point,
-            celeritas_sys::PrimitiveTopology_PRIMITIVE_TOPOLOGY_LINE => PrimitiveTopology::Line,
-            celeritas_sys::PrimitiveTopology_PRIMITIVE_TOPOLOGY_TRIANGLE => {
+            celeritas_sys::PrimitiveTopology_CEL_POINT => PrimitiveTopology::Point,
+            celeritas_sys::PrimitiveTopology_CEL_LINE => PrimitiveTopology::Line,
+            celeritas_sys::PrimitiveTopology_CEL_TRI => {
                 PrimitiveTopology::Triangle
             }
             _ => unreachable!("enum conversion should be infallible"),
