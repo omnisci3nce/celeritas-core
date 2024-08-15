@@ -168,7 +168,7 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
   // --- Skin
   size_t num_skins = data->skins_count;
   bool is_skinned = false;
-  Armature main_skeleton = {0};
+  Armature main_skeleton = { 0 };
   if (num_skins == 1) {
     is_skinned = true;
   } else if (num_skins > 1) {

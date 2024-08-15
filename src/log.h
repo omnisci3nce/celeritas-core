@@ -10,6 +10,11 @@
     exit(1);                      \
   }
 
+#define TODO(msg)                                          \
+  do {                                                                 \
+    ERROR_EXIT("TODO: %s", msg); \
+  } while (0)
+
 #define LOG_WARN_ENABLED 1
 #define LOG_INFO_ENABLED 1
 

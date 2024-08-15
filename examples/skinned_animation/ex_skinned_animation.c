@@ -73,15 +73,13 @@ int main() {
 
     // TODO: Drawing should still just use the PBR pipeline
     Mesh* m = Mesh_Get(simple_skin->meshes[0]);
-    RenderEnt render_ents[1] = {
-        (RenderEnt ){ .mesh = simple_skin->meshes[0],
-                           .material = m->material,
-                           .animation_clip = simple_skin->animations->data[0],
-                           .is_playing = true,
-                           .t = 0.0,
-                           .affine = mat4_ident(),
-                           .flags = 0 }
-    };
+    RenderEnt render_ents[1] = { (RenderEnt){ .mesh = simple_skin->meshes[0],
+                                              .material = m->material,
+                                              .animation_clip = simple_skin->animations->data[0],
+                                              .is_playing = true,
+                                              .t = 0.0,
+                                              .affine = mat4_ident(),
+                                              .flags = 0 } };
     // ModelExtractRenderEnts(rend_ents, handle, mat4_translation(vec3(0, 0, 0)), 0);
 
     // draw_skinned_model(&core->renderer, &game.camera, simple_skin, tf, &our_scene);

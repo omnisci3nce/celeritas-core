@@ -25,11 +25,11 @@ GPU_Renderpass* PBR_RPassCreate() {
 }
 
 void PBR_PipelinesCreate(PBR_Storage* storage, GPU_Renderpass* rpass) {
-    // Common shader bindings
-    ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
-    ShaderDataLayout model_data = Binding_Model_GetLayout(NULL);
-    ShaderDataLayout material_data = PBRMaterial_GetLayout(NULL);
-    ShaderDataLayout lights_data = Binding_Lights_GetLayout(NULL);
+  // Common shader bindings
+  ShaderDataLayout camera_data = Binding_Camera_GetLayout(NULL);
+  ShaderDataLayout model_data = Binding_Model_GetLayout(NULL);
+  ShaderDataLayout material_data = PBRMaterial_GetLayout(NULL);
+  ShaderDataLayout lights_data = Binding_Lights_GetLayout(NULL);
 
   // Static
   {
@@ -144,9 +144,9 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
     Binding_Model model_data = { .model = renderable.affine };
     GPU_EncodeBindShaderData(enc, 1, Binding_Model_GetLayout(&model_data));
 
-    AnimDataUniform anim_data = {0};
-    for (int i =0; i < 4; i++) {
-        anim_data.bone_matrices[i] = mat4_ident();
+    AnimDataUniform anim_data = { 0 };
+    for (int i = 0; i < 4; i++) {
+      anim_data.bone_matrices[i] = mat4_ident();
     }
     GPU_EncodeBindShaderData(enc, 3, AnimData_GetLayout(&anim_data));
     // Calculate matrices here

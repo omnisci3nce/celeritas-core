@@ -2,6 +2,7 @@
 #include "colours.h"
 #include "log.h"
 #include "maths.h"
+#include "maths_types.h"
 #include "ral_types.h"
 #include "render_types.h"
 
@@ -230,5 +231,41 @@ Geometry Geo_CreateUVsphere(f32 radius, u32 north_south_lines, u32 east_west_lin
     .indices = indices,
   };
 
+  return geo;
+}
+
+Geometry Geo_CreateCylinder(f32 radius, f32 height, u32 resolution) {
+  TODO("implement cylinder meshing");
+}
+
+Geometry Geo_CreateCone(f32 radius, f32 height, u32 resolution) {
+  Vertex_darray* vertices = Vertex_darray_new(1);
+  u32_darray* indices = u32_darray_new(1);
+
+  // tip
+  VERT_3D(vertices, vec3(0.0, height, 0.0), VEC3_Y, vec2(0, 0));  // TODO: fix uvs
+
+  // base center
+  VERT_3D(vertices, VEC3_ZERO, VEC3_NEG_Y, vec2(0, 0));  // TODO: fix uvs
+
+  // base circle
+  f32 step = TAU / resolution;
+  for (u32 i = 0; i < resolution; i++) {
+    f32 x = cos(step * i) * radius;
+    f32 z = sin(step * i) * radius;
+    VERT_3D(vertices, vec3(x, 0.0, z), VEC3_NEG_Z, vec2(0, 0));
+  }
+
+  // sides
+  for (u32 i = 0; i < resolution; i++) {
+  }
+
+  Geometry geo = {
+    .format = VERTEX_STATIC_3D,
+    .vertices = vertices,
+    .has_indices = true,
+    .index_count = indices->len,
+    .indices = indices,
+  };
   return geo;
 }
