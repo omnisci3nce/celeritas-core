@@ -77,8 +77,8 @@ int main() {
   MaterialHandle crate_mat_handle = Material_pool_insert(Render_GetMaterialPool(), &crate_mat);
   // ModelHandle cube_handle = ModelLoad_gltf("assets/models/gltf/Cube/glTF/Cube.gltf", false);
   ModelHandle cube_handle =
-      // ModelLoad_gltf("assets/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf", false);
-      ModelLoad_gltf("../../assets/prototyper/prototyper_m.gltf", false);
+      ModelLoad_gltf("assets/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf", false);
+  // ModelLoad_gltf("../../assets/prototyper/prototyper_m.gltf", false);
 
   RenderEnt_darray* render_entities = RenderEnt_darray_new(1);
 
@@ -113,8 +113,24 @@ int main() {
     //                vec4(1.0, 0.0, 0.0, 1.0), true);
     // Immdraw_Bbox(transform_create(vec3(0.0, 0.0, 0.0), quat_ident(), vec3(2.0, 2.0, 2.0)),
     //              vec4(0.0, 1.0, 0.0, 1.0), true);
-    Immdraw_Cone(transform_create(VEC3_ZERO, quat_ident(), vec3(1.0, 2.0, 1.0)),
-                 vec4(1.0, 1.0, 1.0, 1.0), true);
+    f32 thickness = 0.1;
+    // Y Axis (blue)
+    Immdraw_Cone(transform_create(vec3(0.0, 2.0, 0.0), quat_ident(), vec3(0.3, 1.0, 0.3)),
+                 vec4(0.0, 0.0, 1.0, 1.0), false);
+    Immdraw_Cylinder(transform_create(VEC3_ZERO, quat_ident(), vec3(thickness, 1.1, thickness)), vec4(0.0, 0.0, 1.0, 1.0),
+        false);
+
+    // X Axis (green)
+    Immdraw_Cone(transform_create(vec3(2.0, 0.0, 0.0), quat_from_axis_angle(VEC3_Z, HALF_PI, true), vec3(0.3, 1.0, 0.3)),
+                 vec4(0.0, 1.0, 0.0, 1.0), false);
+    Immdraw_Cylinder(transform_create(VEC3_ZERO, quat_from_axis_angle(VEC3_Z, HALF_PI, true), vec3(thickness, 1.1, thickness)), vec4(0.0, 1.0, 0.0, 1.0),
+        false);
+
+    // Z Axis (red)
+    Immdraw_Cone(transform_create(vec3(0.0, 0.0, 2.0), quat_from_axis_angle(VEC3_X, -HALF_PI, true), vec3(0.3, 1.0, 0.3)),
+                 vec4(1.0, 0.0, 0.0, 1.0), false);
+    Immdraw_Cylinder(transform_create(VEC3_ZERO, quat_from_axis_angle(VEC3_X, -HALF_PI, true), vec3(thickness, 1.1, thickness)), vec4(1.0, 0.0, 0.0, 1.0),
+        false);
 
     if (draw_debug) {
       // draw the player model with shadows

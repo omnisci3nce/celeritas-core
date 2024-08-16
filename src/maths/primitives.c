@@ -234,10 +234,6 @@ Geometry Geo_CreateUVsphere(f32 radius, u32 north_south_lines, u32 east_west_lin
   return geo;
 }
 
-Geometry Geo_CreateCylinder(f32 radius, f32 height, u32 resolution) {
-  TODO("implement cylinder meshing");
-}
-
 Geometry Geo_CreateCone(f32 radius, f32 height, u32 resolution) {
   Vertex_darray* vertices = Vertex_darray_new((resolution + 1) * 2);
   u32_darray* indices = u32_darray_new(resolution * 2 * 3);
@@ -280,6 +276,60 @@ Geometry Geo_CreateCone(f32 radius, f32 height, u32 resolution) {
     push_triangle(indices, center_idx, center_idx + i, center_idx + i + 1);
   }
   push_triangle(indices, center_idx, center_idx + resolution, center_idx + 1);
+
+  Geometry geo = {
+    .format = VERTEX_STATIC_3D,
+    .vertices = vertices,
+    .has_indices = true,
+    .index_count = indices->len,
+    .indices = indices,
+  };
+  return geo;
+}
+
+Geometry Geo_CreateCylinder(f32 radius, f32 height, u32 resolution) {
+  Vertex_darray* vertices = Vertex_darray_new(1);
+  u32_darray* indices = u32_darray_new(1);
+
+  f32 step = TAU / resolution;
+
+  // bot cap
+  VERT_3D(vertices, VEC3_ZERO, VEC3_NEG_Y, vec2(0, 0));
+  for (u32 i = 0; i < resolution; i++) {
+      VERT_3D(vertices, vec3(cos(step * i) * radius, 0.0, sin(step * i) * radius), VEC3_NEG_Y, vec2(0, 0));
+  }
+  for (u32 i = 1; i < resolution; i++) {
+    push_triangle(indices, 0, i, i + 1);
+  }
+  push_triangle(indices, 0, resolution, 1);
+
+  // top cap
+  u32 center_idx = vertices->len;
+  VERT_3D(vertices, vec3(0.0, height, 0.0), VEC3_Y, vec2(0, 0));
+  for (u32 i = 0; i < resolution; i++) {
+    VERT_3D(vertices, vec3(cos(step * i) * radius, height, sin(step * i) * radius), VEC3_Y,
+            vec2(0, 0));
+  }
+  for (u32 i = 1; i < resolution; i++) {
+    push_triangle(indices, center_idx, center_idx + i + 1, center_idx + i);
+  }
+  push_triangle(indices, center_idx, center_idx + 1, center_idx + resolution);
+
+  // sides
+  u32 sides_start = vertices->len;
+  for (u32 i = 0; i < resolution; i++) {
+    f32 x = cos(step * i) * radius;
+    f32 z = sin(step * i) * radius;
+    // top then bottom
+    VERT_3D(vertices, vec3(x, height, z), vec3_normalise(vec3(x, 0.0, z)), vec2(0, 0));
+    VERT_3D(vertices, vec3(x, 0.0, z), vec3_normalise(vec3(x, 0.0, z)), vec2(0, 0));
+  }
+  for (u32 i = 0; i < resolution; i++) {
+      u32 current = sides_start + i * 2;
+      u32 next = sides_start + ((i + 1) % resolution) * 2;
+      push_triangle(indices, current, next, current + 1);
+      push_triangle(indices, current + 1, next, next + 1);
+  }
 
   Geometry geo = {
     .format = VERTEX_STATIC_3D,
