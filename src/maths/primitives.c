@@ -239,26 +239,47 @@ Geometry Geo_CreateCylinder(f32 radius, f32 height, u32 resolution) {
 }
 
 Geometry Geo_CreateCone(f32 radius, f32 height, u32 resolution) {
-  Vertex_darray* vertices = Vertex_darray_new(1);
-  u32_darray* indices = u32_darray_new(1);
+  Vertex_darray* vertices = Vertex_darray_new((resolution + 1) * 2);
+  u32_darray* indices = u32_darray_new(resolution * 2 * 3);
+
+  // TODO: decide how UVs are unwrapped
 
   // tip
-  VERT_3D(vertices, vec3(0.0, height, 0.0), VEC3_Y, vec2(0, 0));  // TODO: fix uvs
+  VERT_3D(vertices, vec3(0.0, height, 0.0), VEC3_Y, vec2(0, 0));
+
+  // sides
+  f32 step = TAU / resolution;
+
+  for (u32 i = 0; i < resolution; i++) {
+    f32 x = cos(step * i) * radius;
+    f32 z = sin(step * i) * radius;
+    Vec3 pos = vec3(x, 0.0, z);
+    Vec3 tip_to_vertex = vec3_sub(pos, vertices->data[0].static_3d.position);
+    Vec3 center_to_vertex = pos;
+    Vec3 tangent = vec3_cross(VEC3_Y, center_to_vertex);
+    Vec3 normal_dir = vec3_cross(tangent, tip_to_vertex);
+    Vec3 normal = vec3_normalise(normal_dir);
+    VERT_3D(vertices, pos, normal, vec2(0, 0));
+  }
+  for (u32 i = 1; i < resolution; i++) {
+    push_triangle(indices, 0, i + 1, i);
+  }
+  push_triangle(indices, 0, 1, resolution);
 
   // base center
-  VERT_3D(vertices, VEC3_ZERO, VEC3_NEG_Y, vec2(0, 0));  // TODO: fix uvs
+  u32 center_idx = vertices->len;
+  VERT_3D(vertices, VEC3_ZERO, VEC3_NEG_Y, vec2(0, 0));
 
   // base circle
-  f32 step = TAU / resolution;
   for (u32 i = 0; i < resolution; i++) {
     f32 x = cos(step * i) * radius;
     f32 z = sin(step * i) * radius;
     VERT_3D(vertices, vec3(x, 0.0, z), VEC3_NEG_Z, vec2(0, 0));
   }
-
-  // sides
-  for (u32 i = 0; i < resolution; i++) {
+  for (u32 i = 1; i < resolution; i++) {
+    push_triangle(indices, center_idx, center_idx + i, center_idx + i + 1);
   }
+  push_triangle(indices, center_idx, center_idx + resolution, center_idx + 1);
 
   Geometry geo = {
     .format = VERTEX_STATIC_3D,

@@ -13,6 +13,7 @@ typedef struct Immdraw_Storage {
   Mesh plane;
   Mesh cube;
   Mesh sphere;
+  Mesh cone;
   Mesh bbox;
   GPU_Pipeline* colour_pipeline; /** @brief Pipeline for drawing geometry that has vertex colours */
 } Immdraw_Storage;
@@ -30,6 +31,7 @@ PUB void Immdraw_Shutdown(Immdraw_Storage* storage);
 // These functions cause a pipeline switch and so aren't optimised for performance
 PUB void Immdraw_Plane(Transform tf, Vec4 colour, bool wireframe);
 PUB void Immdraw_Cuboid(Transform tf, Vec4 colour, bool wireframe);
+PUB void Immdraw_Cone(Transform tf, Vec4 colour, bool wireframe);
 PUB void Immdraw_Sphere(Transform tf, Vec4 colour, bool wireframe);
 PUB void Immdraw_Bbox(Transform tf, Vec4 colour, bool wireframe);
 

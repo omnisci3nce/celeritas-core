@@ -25,6 +25,9 @@ void Immdraw_Init(Immdraw_Storage* storage) {
   Geometry plane_geo = Geo_CreatePlane(f32x2(1.0, 1.0), 1, 1);
   storage->plane = Mesh_Create(&plane_geo, true);
 
+  Geometry cone_geo = Geo_CreateCone(1.0, 1.0, 8);
+  storage->cone = Mesh_Create(&cone_geo, true);
+
   storage->bbox = GenBboxMesh();
 
   // Pipeline / material
@@ -78,10 +81,16 @@ void Immdraw_Plane(Transform tf, Vec4 colour, bool wireframe) {
   Immdraw_Primitive(tf, CEL_TRI, 1.0, colour, wireframe, imm->plane);
 }
 
-PUB void Immdraw_Bbox(Transform tf, Vec4 colour, bool wireframe) {
+void Immdraw_Bbox(Transform tf, Vec4 colour, bool wireframe) {
   TRACE("Draw bbox");
   Immdraw_Storage* imm = Render_GetImmdrawStorage();
   Immdraw_Primitive(tf, CEL_LINE, 1.0, colour, wireframe, imm->bbox);
+}
+
+void Immdraw_Cone(Transform tf, Vec4 colour, bool wireframe) {
+  TRACE("Draw cone");
+  Immdraw_Storage* imm = Render_GetImmdrawStorage();
+  Immdraw_Primitive(tf, CEL_TRI, 1.0, colour, wireframe, imm->cone);
 }
 
 void Immdraw_Primitive(Transform tf, PrimitiveTopology topology, f32 size, Vec4 colour,
