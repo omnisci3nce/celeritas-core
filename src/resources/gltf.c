@@ -37,6 +37,7 @@ KITC_DECL_TYPED_ARRAY(Vec4u)
 KITC_DECL_TYPED_ARRAY(Vec4i)
 KITC_DECL_TYPED_ARRAY(Vec4)
 KITC_DECL_TYPED_ARRAY(face)
+KITC_DECL_TYPED_ARRAY(i32)
 
 size_t GLTF_LoadMaterials(cgltf_data* data, Str8 relative_path, Material_darray* out_materials);
 
@@ -149,7 +150,7 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
   Vec4_darray* tmp_weights = Vec4_darray_new(1000);
   Material_darray* tmp_materials = Material_darray_new(1);
   Mesh_darray* tmp_meshes = Mesh_darray_new(1);
-  u32_darray* tmp_material_indexes = u32_darray_new(1);
+  i32_darray* tmp_material_indexes = i32_darray_new(1);
 
   Joint_darray* joints = Joint_darray_new(256);
 
@@ -183,24 +184,35 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
     DEBUG("# Joints %d", num_joints);
 
     // Create our data that will be placed onto the model
-    Armature armature = { .arena = arena_create(malloc(MB(1)), MB(1)) };
+    Armature armature = {
+        .label = "test_skin"};
     printf("Skin %s\n", gltf_skin->name);
-    armature.label = "test_skin";
     // armature.label = Clone_cstr(&armature.arena, gltf_skin->name);
     armature.joints = joints;  // ! Make sure not to free this
 
     cgltf_accessor* gltf_inverse_bind_matrices = gltf_skin->inverse_bind_matrices;
 
+    // --- Joints
     // for each one we'll spit out a joint
     for (size_t i = 0; i < num_joints; i++) {
-      TRACE("Joint %d", i);
+      // Get the joint and assign its node index for later referencing
       cgltf_node* joint_node = gltf_skin->joints[i];
-      Joint joint_i = { .debug_label = "test_joint" };
+      TRACE("Joint %d (node index %d)", i, cgltf_node_index(data, joint_node));
+      Joint joint_i = {
+          .debug_label = "test_joint",
+            .node_idx = cgltf_node_index(data, joint_node),
+            .inverse_bind_matrix = mat4_ident()
+      };
 
       if (joint_node->children_count > 0 && !joint_node->has_translation &&
           !joint_node->has_rotation) {
-        WARN("joint Node with index %d is the root node", i);
+        WARN("Joint node with index %d is the root node", i);
         joint_i.transform_components = TRANSFORM_DEFAULT;
+        joint_i.parent = -1;
+        for (u32 c_i = 0; c_i < joint_node->children_count; c_i++) {
+            joint_i.children[c_i] = cgltf_node_index(data, joint_node->children[c_i]);
+            joint_i.children_count++;
+        }
       } else {
         TRACE("Storing joint transform");
         joint_i.transform_components = TRANSFORM_DEFAULT;
@@ -213,8 +225,11 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
         if (joint_node->has_scale) {
           memcpy(&joint_i.transform_components.scale, &joint_node->scale, 3 * sizeof(f32));
         }
+        joint_i.parent = cgltf_node_index(data, joint_node->parent);
       }
+      // Calculate and store the starting transform of the joint
       joint_i.local_transform = transform_to_mat(&joint_i.transform_components);
+      // Read in the inverse bind matrix
       cgltf_accessor_read_float(gltf_inverse_bind_matrices, i, &joint_i.inverse_bind_matrix.data[0],
                                 16);
       Joint_darray_push(armature.joints, joint_i);
@@ -280,10 +295,12 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
           if (strcmp(primitive.material->name, tmp_materials->data[i].name) == 0) {
             INFO("Found material");
             mat_idx = i;
-            u32_darray_push(tmp_material_indexes, mat_idx);
+            i32_darray_push(tmp_material_indexes, mat_idx);
             break;
           }
         }
+      } else {
+        i32_darray_push(tmp_material_indexes, -1);
       }
 
       TRACE("Vertex data has been loaded");
@@ -361,34 +378,32 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
       out_model->anim_arena = arena_create(malloc(MB(1)), MB(1));
       arena* arena = &out_model->anim_arena;
 
+      // Iterate over each animation in the GLTF
       for (int anim_idx = 0; anim_idx < data->animations_count; anim_idx++) {
         cgltf_animation animation = data->animations[anim_idx];
         AnimationClip clip = { 0 };
+        clip.clip_name = "test anim clip";
+        clip.channels = AnimationSampler_darray_new(1);
 
         // for each animation, loop through all the channels
         for (size_t c = 0; c < animation.channels_count; c++) {
           cgltf_animation_channel channel = animation.channels[c];
 
-          AnimationSampler* sampler = arena_alloc(arena, sizeof(AnimationSampler));
+          AnimationSampler sampler = {0};
 
-          AnimationSampler** target_property;
           KeyframeKind data_type;
 
           switch (channel.target_path) {
             case cgltf_animation_path_type_rotation:
-              target_property = &clip.rotation;
               data_type = KEYFRAME_ROTATION;
               break;
             case cgltf_animation_path_type_translation:
-              target_property = &clip.translation;
               data_type = KEYFRAME_TRANSLATION;
               break;
             case cgltf_animation_path_type_scale:
-              target_property = &clip.scale;
               data_type = KEYFRAME_SCALE;
               break;
             case cgltf_animation_path_type_weights:
-              target_property = &clip.weights;
               data_type = KEYFRAME_WEIGHTS;
               WARN("Morph target weights arent supported yet");
               return false;
@@ -397,16 +412,16 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
               return false;
           }
 
-          sampler->current_index = 0;
-          sampler->animation.interpolation = INTERPOLATION_LINEAR;  // NOTE: hardcoded for now
+          sampler.current_index = 0;
+          sampler.animation.interpolation = INTERPOLATION_LINEAR;  // NOTE: hardcoded for now
 
           // Keyframe times
           size_t n_frames = channel.sampler->input->count;
           CASSERT_MSG(channel.sampler->input->component_type == cgltf_component_type_r_32f,
                       "Expected animation sampler input component to be type f32");
           f32* times = arena_alloc(arena, n_frames * sizeof(f32));
-          sampler->animation.n_timestamps = n_frames;
-          sampler->animation.timestamps = times;
+          sampler.animation.n_timestamps = n_frames;
+          sampler.animation.timestamps = times;
           cgltf_accessor_unpack_floats(channel.sampler->input, times, n_frames);
 
           // Keyframe values
@@ -422,7 +437,7 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
               case KEYFRAME_ROTATION: {
                 Quat rot;
                 cgltf_accessor_read_float(channel.sampler->output, v, &rot.x, 4);
-                printf("Quat %f %f %f %f\n", rot.x, rot.y, rot.z, rot.w);
+                // printf("Quat %f %f %f %f\n", rot.x, rot.y, rot.z, rot.w);
                 keyframes.values[v].rotation = rot;
                 break;
               }
@@ -444,18 +459,35 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
               }
             }
           }
-          sampler->animation.values = keyframes;
-          sampler->min = channel.sampler->input->min[0];
-          sampler->max = channel.sampler->input->max[0];
+          sampler.animation.values = keyframes;
+          sampler.min = channel.sampler->input->min[0];
+          sampler.max = channel.sampler->input->max[0];
 
-          *target_property = sampler;
-          printf("%d timestamps between %f and %f\n", sampler->animation.n_timestamps, sampler->min,
-                 sampler->max);
+          // *target_property = sampler;
+          printf("%d timestamps between %f and %f\n", sampler.animation.n_timestamps, sampler.min,
+                 sampler.max);
+
+          // TODO: get target
+          size_t target_index = cgltf_node_index(data, channel.target_node);
+          size_t joint_index = 0;
+          bool found = false;
+          for (u32 ji = 0; ji < main_skeleton.joints->len; ji++) {
+              if (main_skeleton.joints->data[ji].node_idx == target_index) {
+                 joint_index = ji;
+                 found = true;
+                break;
+              }
+          }
+          if (!found) { WARN("Coulndnt find joint index");}
+          sampler.target_joint_idx = joint_index; // NOTE: this assuming the target is a joint at the moment
+          AnimationSampler_darray_push(clip.channels, sampler);
         }
 
         AnimationClip_darray_push(out_model->animations, clip);
       }
     }
+
+    // exit(0);
   }
 
   num_meshes = tmp_meshes->len;
@@ -474,8 +506,15 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
   memcpy(out_model->materials, mat_handles, num_materials * sizeof(MaterialHandle));
 
   for (u32 mesh_i = 0; mesh_i < num_meshes; mesh_i++) {
-    u32 mat_idx = tmp_material_indexes->data[mesh_i];
-    tmp_meshes->data[mesh_i].material = mat_handles[mat_idx];
+    i32 mat_idx = tmp_material_indexes->data[mesh_i];
+    if (mat_idx > 0) {
+      tmp_meshes->data[mesh_i].material = mat_handles[mat_idx];
+
+    } else {
+      Material default_mat = PBRMaterialDefault();
+      tmp_meshes->data[mesh_i].material =
+          Material_pool_insert(Render_GetMaterialPool(), &default_mat);
+    }
     MeshHandle mesh = Mesh_pool_insert(Render_GetMeshPool(), &tmp_meshes->data[mesh_i]);
     out_model->meshes[mesh_i] = mesh;
   }

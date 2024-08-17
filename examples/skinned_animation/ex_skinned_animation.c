@@ -15,7 +15,7 @@
 int main() {
   double currentFrame = glfwGetTime();
   double lastFrame = currentFrame;
-  double deltaTime;
+  double delta_time;
 
   Core_Bringup("Skinned Animation", NULL);
 
@@ -40,7 +40,7 @@ int main() {
 
   // scene our_scene = make_default_scene();
 
-  Vec3 cam_pos = vec3_create(0, 1.2, 4);
+  Vec3 cam_pos = vec3_create(1.5, 2.2, 8);
   Camera cam = Camera_Create(cam_pos, VEC3_NEG_Z, VEC3_Y, deg_to_rad(45.0));
   SetCamera(cam);
 
@@ -50,18 +50,20 @@ int main() {
 
   // animation
   // animation_clip track = simple_skin->animations->data[0];
-  // f64 total_time = 0.0;
+  CASSERT(AnimationClip_darray_len(simple_skin->animations) > 0);
+  AnimationClip track = simple_skin->animations->data[0];
+  f64 total_time = 0.0;
 
   while (!ShouldExit()) {
     Frame_Begin();
 
     currentFrame = glfwGetTime();
-    deltaTime = currentFrame - lastFrame;
+    delta_time = currentFrame - lastFrame;
     lastFrame = currentFrame;
-    // total_time += deltaTime;
+    total_time += delta_time;
     // printf("delta time %f\n", deltaTime);
-    // f64 t = fmod(total_time, track.rotation->max);
-    // INFO("Total time: %f", t);
+    f64 t = fmod(total_time, track.channels->data[0].max);
+    INFO("Delta time %f   Animation time: %f", delta_time, t);
 
     // bone rotation
     // Quat rot = animation_sample(track.rotation, t).rotation;
@@ -75,17 +77,17 @@ int main() {
     Mesh* m = Mesh_Get(simple_skin->meshes[0]);
     RenderEnt render_ents[1] = { (RenderEnt){ .mesh = simple_skin->meshes[0],
                                               .material = m->material,
-                                              .animation_clip = simple_skin->animations->data[0],
-                                              .is_playing = true,
-                                              .t = 0.0,
+                                              .armature = &m->armature,
                                               .affine = mat4_ident(),
                                               .flags = 0 } };
     // ModelExtractRenderEnts(rend_ents, handle, mat4_translation(vec3(0, 0, 0)), 0);
 
     // draw_skinned_model(&core->renderer, &game.camera, simple_skin, tf, &our_scene);
+    Animation_Tick(&track, &m->armature, t);
+
     Render_RenderEntities(render_ents, 1);
 
-    // Animation_VisualiseJoints(&m->armature);
+    Animation_VisualiseJoints(&m->armature);
 
     RenderEnt_darray_clear(rend_ents);
 

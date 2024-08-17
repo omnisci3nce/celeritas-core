@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cgltf.h"
 #include "darray.h"
 #include "defines.h"
 #include "maths_types.h"
@@ -36,9 +37,16 @@ typedef struct Keyframes {
 } Keyframes;
 
 typedef struct Joint {
+  // used instead of pointers later to update correct joints
+  size_t node_idx;
+  ssize_t parent; // parent bone. -1 means its the root
+  size_t children[8]; // children bones, upto 8
+  u8 children_count;
   char* debug_label;  // optional
   Mat4 inverse_bind_matrix;
   Mat4 local_transform;
+  /** @brief holds position, rotation, and scale that will be written to by animation
+  samplers every tick of the animation system. */
   Transform transform_components;
 } Joint;
 #ifndef TYPED_JOINT_ARRAY
@@ -50,7 +58,6 @@ typedef u32 JointIdx;
 
 typedef struct Armature {
   char* label;
-  arena arena;
   Joint_darray* joints;
 } Armature;
 
@@ -65,41 +72,52 @@ typedef struct AnimationSpline {
   Interpolation interpolation;
 } AnimationSpline;
 
+// combines a sampler and a channel in gltf
 typedef struct AnimationSampler {
   int current_index;
   f32 min;
   f32 max;
   AnimationSpline animation;
+  u32 target_joint_idx; // index into the array of joints in an armature
 } AnimationSampler;
+#ifndef TYPED_ANIM_SAMPLER_ARRAY
+KITC_DECL_TYPED_ARRAY(AnimationSampler);
+#define TYPED_ANIM_SAMPLER_ARRAY
+#endif
 
 /** @brief Sample an animation at a given time `t` returning an interpolated keyframe */
 PUB Keyframe Animation_Sample(AnimationSampler* sampler, f32 t);
 
+/** @brief A clip contains one or more animation curves. */
 typedef struct AnimationClip {
-  // A clip contains one or more animation curves.
-  // For now I think we can just enumerate all of the properties (assuming *only* one per type is in
-  // a clip) and NULL = the property is not animated in this clip
-  // NOTE: when I call 'property' is typically referred to as a 'channel' by GLTF
-  AnimationSampler* rotation;
-  AnimationSampler* translation;
-  AnimationSampler* scale;
-  AnimationSampler* weights;
+  const char* clip_name;
+  bool is_playing;
+  f32 time;
+  AnimationSampler_darray* channels;
 } AnimationClip;
 #ifndef TYPED_ANIM_CLIP_ARRAY
 KITC_DECL_TYPED_ARRAY(AnimationClip);
 #define TYPED_ANIM_CLIP_ARRAY
 #endif
 
-typedef struct SkinnedAnimation {
-  Mat4* joint_matrices;
-  size_t n_joints;
-} SkinnedAnimation;
+// typedef struct SkinnedAnimation {
+//   Mat4* joint_matrices;
+//   size_t n_joints;
+// } SkinnedAnimation;
 
 PUB void Animation_Play(AnimationClip* clip);
 
+void Animation_Tick(AnimationClip* clip, Armature* armature, f32 delta_time);
+
 void Animation_VisualiseJoints(Armature* armature);
 
+#define MAX_BONES 100
+
 typedef struct AnimDataUniform {
-    Mat4 bone_matrices[4];
+    Mat4 bone_matrices[MAX_BONES];
 } AnimDataUniform;
 ShaderDataLayout AnimData_GetLayout(void* data);
+
+// Animation Targets:
+// - Mesh
+// - Joint

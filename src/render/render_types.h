@@ -135,9 +135,8 @@ typedef u32 RenderEntityFlags;
 typedef struct RenderEnt {
   MeshHandle mesh;
   MaterialHandle material;
-  AnimationClip animation_clip;
-  bool is_playing;
-  f32 t;
+  /** If NULL, no armature and the mesh is static geometry, else it is to be skinned */
+  Armature* armature;
   Mat4 affine;  // In the future this should be updated by the transform graph
   Bbox_3D bounding_box;
   RenderEntityFlags flags;

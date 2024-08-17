@@ -296,7 +296,8 @@ Geometry Geo_CreateCylinder(f32 radius, f32 height, u32 resolution) {
   // bot cap
   VERT_3D(vertices, VEC3_ZERO, VEC3_NEG_Y, vec2(0, 0));
   for (u32 i = 0; i < resolution; i++) {
-      VERT_3D(vertices, vec3(cos(step * i) * radius, 0.0, sin(step * i) * radius), VEC3_NEG_Y, vec2(0, 0));
+    VERT_3D(vertices, vec3(cos(step * i) * radius, 0.0, sin(step * i) * radius), VEC3_NEG_Y,
+            vec2(0, 0));
   }
   for (u32 i = 1; i < resolution; i++) {
     push_triangle(indices, 0, i, i + 1);
@@ -325,10 +326,10 @@ Geometry Geo_CreateCylinder(f32 radius, f32 height, u32 resolution) {
     VERT_3D(vertices, vec3(x, 0.0, z), vec3_normalise(vec3(x, 0.0, z)), vec2(0, 0));
   }
   for (u32 i = 0; i < resolution; i++) {
-      u32 current = sides_start + i * 2;
-      u32 next = sides_start + ((i + 1) % resolution) * 2;
-      push_triangle(indices, current, next, current + 1);
-      push_triangle(indices, current + 1, next, next + 1);
+    u32 current = sides_start + i * 2;
+    u32 next = sides_start + ((i + 1) % resolution) * 2;
+    push_triangle(indices, current, next, current + 1);
+    push_triangle(indices, current + 1, next, next + 1);
   }
 
   Geometry geo = {
