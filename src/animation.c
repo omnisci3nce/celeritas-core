@@ -47,23 +47,23 @@ Keyframe Animation_Sample(AnimationSampler* sampler, f32 t) {
 }
 
 void Animation_Tick(AnimationClip* clip, Armature* armature, f32 time) {
-    TRACE("Ticking animation %s", clip->clip_name);
+  TRACE("Ticking animation %s", clip->clip_name);
 
-    for (u32 c_i = 0; c_i < clip->channels->len; c_i++) {
-        AnimationSampler* sampler = clip->channels->data;
+  for (u32 c_i = 0; c_i < clip->channels->len; c_i++) {
+    AnimationSampler* sampler = clip->channels->data;
 
-        // Interpolated keyframe based on time
-        Keyframe k = Animation_Sample(sampler, time);
+    // Interpolated keyframe based on time
+    Keyframe k = Animation_Sample(sampler, time);
 
-        // Get the joint in the armature
-        Joint* joint = &armature->joints->data[sampler->target_joint_idx];
-        if (sampler->animation.values.kind == KEYFRAME_ROTATION) {
-            // Update the joints rotation
-            joint->transform_components.rotation = k.rotation;
-        } else {
-            WARN("not yet implemented animation kind");
-        }
+    // Get the joint in the armature
+    Joint* joint = &armature->joints->data[sampler->target_joint_idx];
+    if (sampler->animation.values.kind == KEYFRAME_ROTATION) {
+      // Update the joints rotation
+      joint->transform_components.rotation = k.rotation;
+    } else {
+      WARN("not yet implemented animation kind");
     }
+  }
 }
 
 void Animation_VisualiseJoints(Armature* armature) {

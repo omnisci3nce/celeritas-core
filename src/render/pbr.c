@@ -13,7 +13,6 @@
 #include "render_types.h"
 #include "shader_layouts.h"
 
-
 void PBR_Init(PBR_Storage* storage) {
   INFO("PBR shaders init");
   storage->pbr_pass = PBR_RPassCreate();
@@ -153,12 +152,12 @@ void PBR_Execute(PBR_Storage* storage, Camera camera, TextureHandle shadowmap_te
     Armature* skeleton = renderable.armature;
     // Skip the first one as we assume its root for this test
     for (int j_i = 1; j_i < skeleton->joints->len; j_i++) {
-        Joint* j = &skeleton->joints->data[j_i];
-        j->local_transform = transform_to_mat(&j->transform_components);
-        Mat4 m = mat4_mult(j->local_transform, j->inverse_bind_matrix);
-        Joint* p = &skeleton->joints->data[j->parent];
-        j->local_transform = mat4_mult(j->local_transform, p->local_transform);
-        printf("Quat %f \n", j->transform_components.rotation.z);
+      Joint* j = &skeleton->joints->data[j_i];
+      j->local_transform = transform_to_mat(&j->transform_components);
+      Mat4 m = mat4_mult(j->local_transform, j->inverse_bind_matrix);
+      Joint* p = &skeleton->joints->data[j->parent];
+      j->local_transform = mat4_mult(j->local_transform, p->local_transform);
+      printf("Quat %f \n", j->transform_components.rotation.z);
     }
 
     // 2. bind and upload

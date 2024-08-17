@@ -184,8 +184,7 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
     DEBUG("# Joints %d", num_joints);
 
     // Create our data that will be placed onto the model
-    Armature armature = {
-        .label = "test_skin"};
+    Armature armature = { .label = "test_skin" };
     printf("Skin %s\n", gltf_skin->name);
     // armature.label = Clone_cstr(&armature.arena, gltf_skin->name);
     armature.joints = joints;  // ! Make sure not to free this
@@ -198,11 +197,9 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
       // Get the joint and assign its node index for later referencing
       cgltf_node* joint_node = gltf_skin->joints[i];
       TRACE("Joint %d (node index %d)", i, cgltf_node_index(data, joint_node));
-      Joint joint_i = {
-          .debug_label = "test_joint",
-            .node_idx = cgltf_node_index(data, joint_node),
-            .inverse_bind_matrix = mat4_ident()
-      };
+      Joint joint_i = { .debug_label = "test_joint",
+                        .node_idx = cgltf_node_index(data, joint_node),
+                        .inverse_bind_matrix = mat4_ident() };
 
       if (joint_node->children_count > 0 && !joint_node->has_translation &&
           !joint_node->has_rotation) {
@@ -210,8 +207,8 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
         joint_i.transform_components = TRANSFORM_DEFAULT;
         joint_i.parent = -1;
         for (u32 c_i = 0; c_i < joint_node->children_count; c_i++) {
-            joint_i.children[c_i] = cgltf_node_index(data, joint_node->children[c_i]);
-            joint_i.children_count++;
+          joint_i.children[c_i] = cgltf_node_index(data, joint_node->children[c_i]);
+          joint_i.children_count++;
         }
       } else {
         TRACE("Storing joint transform");
@@ -389,7 +386,7 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
         for (size_t c = 0; c < animation.channels_count; c++) {
           cgltf_animation_channel channel = animation.channels[c];
 
-          AnimationSampler sampler = {0};
+          AnimationSampler sampler = { 0 };
 
           KeyframeKind data_type;
 
@@ -472,14 +469,17 @@ bool model_load_gltf_str(const char* file_string, const char* filepath, Str8 rel
           size_t joint_index = 0;
           bool found = false;
           for (u32 ji = 0; ji < main_skeleton.joints->len; ji++) {
-              if (main_skeleton.joints->data[ji].node_idx == target_index) {
-                 joint_index = ji;
-                 found = true;
-                break;
-              }
+            if (main_skeleton.joints->data[ji].node_idx == target_index) {
+              joint_index = ji;
+              found = true;
+              break;
+            }
           }
-          if (!found) { WARN("Coulndnt find joint index");}
-          sampler.target_joint_idx = joint_index; // NOTE: this assuming the target is a joint at the moment
+          if (!found) {
+            WARN("Coulndnt find joint index");
+          }
+          sampler.target_joint_idx =
+              joint_index;  // NOTE: this assuming the target is a joint at the moment
           AnimationSampler_darray_push(clip.channels, sampler);
         }
 
