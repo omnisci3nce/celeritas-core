@@ -11,6 +11,7 @@
 #include "input.h"
 #include "keys.h"
 #include "loaders.h"
+#include "log.h"
 #include "maths.h"
 #include "maths_types.h"
 #include "pbr.h"
@@ -20,11 +21,18 @@
 #include "render_types.h"
 #include "shadows.h"
 #include "skybox.h"
+#include "stack_array.h"
 #include "terrain.h"
 
 static const char* faces[6] = { "assets/skybox/right.jpg", "assets/skybox/left.jpg",
                                 "assets/skybox/top.jpg",   "assets/skybox/bottom.jpg",
                                 "assets/skybox/front.jpg", "assets/skybox/back.jpg" };
+
+typedef struct Thing {
+  float x;
+} Thing;
+
+TYPED_STACK_ARRAY(Thing, Thing, 6);
 
 int main() {
   Core_Bringup("Celeritas: Game Demo", NULL);

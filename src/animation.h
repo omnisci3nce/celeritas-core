@@ -4,7 +4,6 @@
 #include "darray.h"
 #include "defines.h"
 #include "maths_types.h"
-#include "mem.h"
 #include "ral_types.h"
 
 typedef enum Interpolation {
