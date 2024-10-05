@@ -9,11 +9,6 @@
 
 #include "defines.h"
 
-// --- Constants
-#define PI 3.14159265358979323846
-#define HALF_PI 1.57079632679489661923
-#define TAU (2.0 * PI)
-
 // --- Types
 
 /** @brief 2D Vector */
