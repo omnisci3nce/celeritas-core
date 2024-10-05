@@ -2,10 +2,14 @@
 
 #include <celeritas.h>
 
-void Core_Bringup(const char* window_name) {
-  // INFO("Initiate Core bringup");
-  printf("Initiate core bringup\n");
+NAMESPACED_LOGGER(core);
 
-  printf("Create GLFW window\n");
+void Core_Bringup(const char* window_name, struct GLFWwindow* optional_window) {
+  // INFO("Initiate Core bringup");
+  INFO("Initiate Core bringup");
+
+  INFO("Create GLFW window");
 }
 void Core_Shutdown() {}
+
+bool AppShouldExit() { return true; }

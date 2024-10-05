@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard library includes
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -82,9 +83,10 @@ struct Core {
 };
 extern Core g_core; /** @brief global `Core` that other files can use */
 
-void Core_Bringup(const char* window_name);
+void Core_Bringup(const char* window_name, struct GLFWwindow* optional_window);
 void Core_Shutdown();
-bool should_exit();
+void Core_ResizeViewport(int width, int height);
+bool AppShouldExit();
 
 // --- Memory facilities: Allocators, helpers
 
@@ -95,7 +97,55 @@ bool should_exit();
 
 // --- Logging
 
-// TODO: Namespaced logger
+// Log levels
+typedef enum LogLevel {
+  LOG_LEVEL_FATAL = 0,
+  LOG_LEVEL_ERROR = 1,
+  LOG_LEVEL_WARN = 2,
+  LOG_LEVEL_INFO = 3,
+  LOG_LEVEL_DEBUG = 4,
+  LOG_LEVEL_TRACE = 5,
+} LogLevel;
+
+void log_output(char* module, LogLevel level, const char* msg, ...);
+
+#define NAMESPACED_LOGGER(module)                    \
+  static inline void FATAL(const char* msg, ...) {   \
+    va_list args;                                    \
+    va_start(args, msg);                             \
+    log_output(#module, LOG_LEVEL_FATAL, msg, args); \
+    va_end(args);                                    \
+  }                                                  \
+  static inline void ERROR(const char* msg, ...) {   \
+    va_list args;                                    \
+    va_start(args, msg);                             \
+    log_output(#module, LOG_LEVEL_FATAL, msg, args); \
+    va_end(args);                                    \
+  }                                                  \
+  static inline void WARN(const char* msg, ...) {    \
+    va_list args;                                    \
+    va_start(args, msg);                             \
+    log_output(#module, LOG_LEVEL_FATAL, msg, args); \
+    va_end(args);                                    \
+  }                                                  \
+  static inline void INFO(const char* msg, ...) {    \
+    va_list args;                                    \
+    va_start(args, msg);                             \
+    log_output(#module, LOG_LEVEL_FATAL, msg, args); \
+    va_end(args);                                    \
+  }                                                  \
+  static inline void DEBUG(const char* msg, ...) {   \
+    va_list args;                                    \
+    va_start(args, msg);                             \
+    log_output(#module, LOG_LEVEL_FATAL, msg, args); \
+    va_end(args);                                    \
+  }                                                  \
+  static inline void TRACE(const char* msg, ...) {   \
+    va_list args;                                    \
+    va_start(args, msg);                             \
+    log_output(#module, LOG_LEVEL_FATAL, msg, args); \
+    va_end(args);                                    \
+  }
 
 // --- Maths
 
@@ -103,6 +153,11 @@ bool should_exit();
 #define PI 3.14159265358979323846
 #define HALF_PI 1.57079632679489661923
 #define TAU (2.0 * PI)
+
+/** @brief 2D Vector */
+typedef struct Vec2 {
+  f32 x, y;
+} Vec2;
 
 /** @brief 3D Vector */
 typedef struct Vec3 {
@@ -116,6 +171,20 @@ typedef struct Vec4 {
 
 /** @brief Quaternion */
 typedef Vec4 Quat;
+
+/** @brief 4x4 Matrix */
+typedef struct Mat4 {
+  // TODO: use this format for more readable code: vec4 x_axis, y_axis, z_axis, w_axis;
+  f32 data[16];
+} Mat4;
+
+/** @brief 3D affine transformation */
+typedef struct Transform {
+  Vec3 position;
+  Quat rotation;
+  Vec3 scale;
+  bool is_dirty;
+} Transform;
 
 inlined Vec3 Vec3_Create(f32 x, f32 y, f32 z);
 inlined Vec3 Vec3_Add(Vec3 u, Vec3 v);
@@ -292,3 +361,5 @@ typedef struct Camera {
 // --- Physics
 
 // --- Platform
+
+// --- Audio

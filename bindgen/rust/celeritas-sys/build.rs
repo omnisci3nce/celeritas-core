@@ -46,15 +46,14 @@ fn main() {
     // TODO: we need to look based on OS
 
     // Tell cargo to look for shared libraries in the specified directory
-    let static_lib_path = "/home/joshua/repos/cel-core3/build".to_string();
+    let static_lib_path = "/Users/josh/code/CodenameVentus/deps/cel-core/build".to_string();
     // let static_lib_path = std::env::var("CELERITAS_CORE_LIB")
     //     .unwrap_or("../../../build/macosx/arm64/debug".to_string());
 
     println!("cargo:rustc-link-search={static_lib_path}");
 
-    // Tell cargo to tell rustc to link the system bzip2
-    // shared library.
-    println!("cargo:rustc-link-lib=dylib=celeritas");
+    // Tell cargo to tell rustc to link the necc. libraries
+    println!("cargo:rustc-link-lib=celeritas");
     println!("cargo:rustc-link-lib=glfw");
 
     // The bindgen::Builder is the main entry point
