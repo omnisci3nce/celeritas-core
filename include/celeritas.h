@@ -93,6 +93,10 @@ bool should_exit();
 
 // --- Strings
 
+// --- Logging
+
+// TODO: Namespaced logger
+
 // --- Maths
 
 /** @brief 3D Vector */
@@ -230,7 +234,7 @@ void GPU_TextureDestroy(TexHandle handle);
 // --- Containers (Forward declared as internals are unnecessary for external header)
 typedef struct u32_darray u32_darray;
 
-// --- Base Renderer
+// --- Base Renderer types
 
 DEFINE_HANDLE(MeshHandle);
 DEFINE_HANDLE(MaterialHandle);
@@ -272,8 +276,14 @@ typedef struct Camera {
   f32 fov;
 } Camera;
 
+// --- Reference Renderer
+
+// TODO: Filament PBR model
+
 // --- Animation
 
 // --- Collisions
 
 // --- Physics
+
+// --- Platform
