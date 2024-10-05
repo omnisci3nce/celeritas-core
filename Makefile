@@ -4,7 +4,7 @@ CFLAGS := -Wall -Wextra -O2 $(INCLUDES)
 LDFLAGS := -lglfw
 
 # Directories
-SRC_DIR := new_src
+SRC_DIR := src
 BUILD_DIR := build
 OBJ_DIR := $(BUILD_DIR)/objs
 SHADER_DIR := assets/shaders
