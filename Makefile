@@ -1,7 +1,7 @@
 CC := clang
 INCLUDES := -I./include -Ideps/glfw-3.3.8/include/GLFW
 CFLAGS := -Wall -Wextra -O2 $(INCLUDES)
-LDFLAGS := -lglfw3
+LDFLAGS := -lglfw
 
 # Directories
 SRC_DIR := new_src
