@@ -21,19 +21,6 @@ typedef struct Vec2 {
   f32 x, y;
 } Vec2;
 
-/** @brief 3D Vector */
-typedef struct Vec3 {
-  f32 x, y, z;
-} Vec3;
-
-/** @brief 4D Vector */
-typedef struct Vec4 {
-  f32 x, y, z, w;
-} Vec4;
-
-/** @brief Quaternion */
-typedef Vec4 Quat;
-
 /** @brief 4x4 Matrix */
 typedef struct Mat4 {
   // TODO: use this format for more readable code: vec4 x_axis, y_axis, z_axis, w_axis;

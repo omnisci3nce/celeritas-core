@@ -18,7 +18,7 @@ typedef struct Core {
   GLFWwindow* window;
   Renderer* renderer;
   Input_State input;
-  Model_pool models;
+  // Model_pool models;
 } Core;
 extern Core g_core;
 

@@ -4,5 +4,4 @@ Planned languages are:
 
 - OCaml (due to fairly different semantics we may have an extra high-level wrapper around the C bindings for convenience)
 - Odin
-- Zig
 - Rust

@@ -10,9 +10,7 @@
 #include "ral_types.h"
 
 // --- Handles
-CORE_DEFINE_HANDLE(ModelHandle);
-CORE_DEFINE_HANDLE(MaterialHandle);
-CORE_DEFINE_HANDLE(MeshHandle);
+
 #define INVALID_MODEL_HANDLE ((ModelHandle){ .raw = 9999991 })
 #define INVALID_MATERIAL_HANDLE ((MaterialHandle){ .raw = 9999992 })
 #define INVALID_MESH_HANDLE ((MeshHandle){ .raw = 9999993 })
@@ -24,14 +22,6 @@ typedef enum RenderMode {
   RENDER_MODE_COUNT
 } RenderMode;
 
-typedef struct Geometry {
-  VertexFormat format;
-  Vertex_darray* vertices;
-  u32_darray* indices;
-  bool has_indices;
-  size_t index_count;
-} Geometry;
-
 typedef struct u32_opt {
   u32 value;
   bool has_value;
@@ -42,7 +32,7 @@ typedef struct Mesh {
   BufferHandle index_buffer;
   Geometry geometry;  // NULL means it has been freed CPU-side
   MaterialHandle material;
-  bool is_skinned;   // false = its static
+  bool is_skinned;  // false = its static
   Armature armature;
   bool is_uploaded;  // has the data been uploaded to the GPU
 } Mesh;

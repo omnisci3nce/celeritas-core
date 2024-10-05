@@ -1,0 +1,9 @@
+- [ ] Port build to Makefile
+  - glsl -> spirv
+  - compile static lib
+  - compile shared lib
+  - compile and run tests
+  - compile example
+- [ ] Consolidate down to one example
+- [ ] Get rid of doxygen
+- [ ] Move to Vulkan-first rendering
