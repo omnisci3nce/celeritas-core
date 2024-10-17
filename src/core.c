@@ -2,6 +2,7 @@
 
 #include <celeritas.h>
 #include <stdlib.h>
+#include "glfw3.h"
 
 NAMESPACED_LOGGER(core);
 
@@ -15,12 +16,15 @@ static const char* gapi = "Vulkan";
 
 // forward declares
 void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods);
+void resize_callback(GLFWwindow* win, int width, int height);
 
 void core_bringup(const char* window_name, struct GLFWwindow* optional_window) {
   INFO("Initiate Core bringup");
 
   INFO("Create GLFW window");
   glfwInit();
+
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
   char* full_window_name = malloc(sizeof(char) * 100);
   int _offset = sprintf(full_window_name, "%s (%s)", window_name, gapi);
@@ -32,6 +36,7 @@ void core_bringup(const char* window_name, struct GLFWwindow* optional_window) {
   ral_backend_init(window_name, glfw_window);
 
   glfwSetKeyCallback(glfw_window, key_callback);
+  glfwSetFramebufferSizeCallback(glfw_window, resize_callback);
 }
 void core_shutdown() {
   ral_backend_shutdown();
@@ -46,4 +51,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
         g_core.should_exit = true;
     }
+}
+
+void resize_callback(GLFWwindow* window, int width, int height) {
+  ral_backend_resize_framebuffer(width, height);
 }

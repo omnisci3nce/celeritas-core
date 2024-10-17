@@ -1,5 +1,5 @@
 CC := clang
-INCLUDES := -I./include -Ideps/glfw-3.3.8/include/GLFW
+INCLUDES := -I./include -Ideps/glfw-3.3.8/include/GLFW -Ideps/stb_image
 CFLAGS := -Wall -Wextra -O2 $(INCLUDES)
 LDFLAGS := -lglfw
 
@@ -78,6 +78,12 @@ triangle: $(EXAMPLES_DIR)/triangle.c $(SHARED_LIB) $(SHADER_OUT_DIR)/triangle.ai
 		@mkdir -p $(BUILD_DIR)
 		$(CC) $(CFLAGS) $(EXAMPLES_DIR)/triangle.c -L$(BUILD_DIR) -lceleritas $(LDFLAGS) -o $(BUILD_DIR)/triangle.bin
 		MTL_DEBUG_LAYER=1 build/triangle.bin
+
+.PHONY: cube
+cube: $(EXAMPLES_DIR)/cube.c $(SHARED_LIB) $(SHADER_OUT_DIR)/cube.air $(METAL_LIB)
+		@mkdir -p $(BUILD_DIR)
+		$(CC) $(CFLAGS) $(EXAMPLES_DIR)/cube.c -L$(BUILD_DIR) -lceleritas $(LDFLAGS) -o $(BUILD_DIR)/cube.bin
+		MTL_DEBUG_LAYER=1 build/cube.bin
 
 .PHONY: clean
 clean:

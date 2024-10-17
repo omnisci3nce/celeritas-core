@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 
@@ -252,6 +253,25 @@ inlined vec3 vec3_sub(vec3 u, vec3 v);
 inlined vec3 vec3_mult(vec3 u, f32 s);
 inlined vec3 vec3_div(vec3 u, f32 s);
 
+inlined vec4 vec4_create(f32 x, f32 y, f32 z, f32 w);
+
+// helpers
+
+#define vec3(x,y,z) ((vec3){ x, y, z })
+#define vec4(x,y,z,w) ((vec4){ x, y, z, w })
+inlined vec4 v3tov4(vec3 v3) { return vec4_create(v3.x, v3.y, v3.z, 0.0); }
+
+static const vec3 VEC3_X = vec3(1.0, 0.0, 0.0);
+static const vec3 VEC3_NEG_X = vec3(-1.0, 0.0, 0.0);
+static const vec3 VEC3_Y = vec3(0.0, 1.0, 0.0);
+static const vec3 VEC3_NEG_Y = vec3(0.0, -1.0, 0.0);
+static const vec3 VEC3_Z = vec3(0.0, 0.0, 1.0);
+static const vec3 VEC3_NEG_Z = vec3(0.0, 0.0, -1.0);
+static const vec3 VEC3_ZERO = vec3(0.0, 0.0, 0.0);
+static const vec3 VEC3_ONES = vec3(1.0, 1.0, 1.0);
+
+
+
 // --- RAL
 
 DEFINE_HANDLE(buf_handle);
@@ -307,7 +327,11 @@ typedef struct vertex_desc {
   const char* label;
   vertex_attrib_type attributes[MAX_VERTEX_ATTRIBUTES];
   u32 attribute_count;
+  u32 padding;
 } vertex_desc;
+
+// Some default formats
+vertex_desc static_3d_vertex_format();
 
 typedef enum shader_binding_type {
   BINDING_BYTES,
@@ -377,7 +401,9 @@ typedef struct render_pass_desc {
 // Resources
 buf_handle ral_buffer_create(u64 size, const void* data);
 void ral_buffer_destroy(buf_handle handle);
+
 tex_handle ral_texture_create(texture_desc desc, bool create_view, const void* data);
+tex_handle ral_texture_load_from_file(const char* filepath);
 void ral_texture_destroy(tex_handle handle);
 
 // Encoders / cmd buffers
@@ -400,11 +426,13 @@ void ral_compute_pipeline_destroy(compute_pipeline_handle handle);
 void ral_encode_bind_pipeline(gpu_encoder* enc, pipeline_handle pipeline);
 void ral_encode_set_vertex_buf(gpu_encoder* enc, buf_handle vbuf);
 void ral_encode_set_index_buf(gpu_encoder* enc, buf_handle ibuf);
+void ral_encode_set_texture(gpu_encoder* enc, tex_handle texture, u32 slot);
 void ral_encode_draw_tris(gpu_encoder* enc, size_t start, size_t count);
 
 // Backend lifecycle
 void ral_backend_init(const char* window_name, struct GLFWwindow* window);
 void ral_backend_shutdown();
+void ral_backend_resize_framebuffer(int width, int height);
 
 // Frame lifecycle
 
