@@ -18,6 +18,9 @@ EXAMPLES_DIR := examples
 SRCS := $(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/**/*.c)
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 
+# Format-able files
+FORMAT_FILES :=  include/celeritas.h $(SRC_DIR)/*.c $(EXAMPLES_DIR)/*.c
+
 # Shader files
 METAL_SHADERS := $(wildcard $(SHADER_DIR)/*.metal)
 METAL_AIR_FILES := $(patsubst $(SHADER_DIR)/%.metal,$(SHADER_OUT_DIR)/%.air,$(METAL_SHADERS))
@@ -84,6 +87,14 @@ cube: $(EXAMPLES_DIR)/cube.c $(SHARED_LIB) $(SHADER_OUT_DIR)/cube.air $(METAL_LI
 		@mkdir -p $(BUILD_DIR)
 		$(CC) $(CFLAGS) $(EXAMPLES_DIR)/cube.c -L$(BUILD_DIR) -lceleritas $(LDFLAGS) -o $(BUILD_DIR)/cube.bin
 		MTL_DEBUG_LAYER=1 build/cube.bin
+
+.PHONY: format
+format:
+	clang-format -i $(FORMAT_FILES)
+
+.PHONY: tidy
+tidy:
+	clang-tidy $(SRCS) $(EXAMPLES_DIR)/*.c -- $(CFLAGS)
 
 .PHONY: clean
 clean:

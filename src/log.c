@@ -1,8 +1,6 @@
 #include <celeritas.h>
 
-static const char* log_level_strings[] = {
-  "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"
-};
+static const char* log_level_strings[] = { "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE" };
 
 void log_output(char* module, loglevel level, const char* message, ...) {
   char out_msg[4096];

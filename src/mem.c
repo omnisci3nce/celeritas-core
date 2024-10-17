@@ -22,8 +22,7 @@ void void_pool_free_all(void_pool* pool) {
   // set all entries to be free
   for (u64 i = 0; i < pool->capacity; i++) {
     void* ptr = &pool->backing_buffer[i * pool->entry_size];
-    void_pool_header* free_node =
-        (void_pool_header*)ptr;  // we reuse the actual entry itself to hold the header
+    void_pool_header* free_node = (void_pool_header*)ptr;  // we reuse the actual entry itself to hold the header
     if (i == (pool->capacity - 1)) {
       // if the last one we make its next pointer NULL indicating its full
       free_node->next = NULL;

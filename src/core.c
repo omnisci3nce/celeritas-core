@@ -6,7 +6,7 @@
 
 NAMESPACED_LOGGER(core);
 
-core g_core = {0};
+core g_core = { 0 };
 
 #ifdef GPU_METAL
 static const char* gapi = "Metal";
@@ -43,16 +43,12 @@ void core_shutdown() {
   glfwTerminate();
 }
 
-bool app_should_exit() {
-  return glfwWindowShouldClose(g_core.window) || g_core.should_exit;
-}
+bool app_should_exit() { return glfwWindowShouldClose(g_core.window) || g_core.should_exit; }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
-        g_core.should_exit = true;
-    }
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
+    g_core.should_exit = true;
+  }
 }
 
-void resize_callback(GLFWwindow* window, int width, int height) {
-  ral_backend_resize_framebuffer(width, height);
-}
+void resize_callback(GLFWwindow* window, int width, int height) { ral_backend_resize_framebuffer(width, height); }

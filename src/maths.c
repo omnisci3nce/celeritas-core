@@ -4,9 +4,7 @@ vec3 vec3_create(f32 x, f32 y, f32 z) { return (vec3){ x, y, z }; }
 
 vec4 vec4_create(f32 x, f32 y, f32 z, f32 w) { return (vec4){ x, y, z, w }; }
 
-mat4 mat4_ident() {
-  return (mat4){ .data = { 1.0, 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.0 } };
-}
+mat4 mat4_ident() { return (mat4){ .data = { 1.0, 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.0 } }; }
 
 mat4 mat4_mult(mat4 lhs, mat4 rhs) {
   mat4 out_matrix = mat4_ident();
