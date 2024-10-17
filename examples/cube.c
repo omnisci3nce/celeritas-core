@@ -1,12 +1,25 @@
 #include <celeritas.h>
-
-// vertices
+#include "glfw3.h"
 
 pipeline_handle draw_pipeline;
 buf_handle cube_vbuf;
 tex_handle texture;
 
+// transformation data
+typedef struct MVPData {
+  mat4 model;
+  mat4 view;
+  mat4 projection;
+} MVPData;
+
 void draw() {
+  // prepare data
+  mat4 translation_matrix = mat4_translation(vec3(0, 0, -1));
+
+  f32 angle_degrees = glfwGetTime() / 2.0 * 45.0;
+  f32 angle = angle_degrees * PI / 180.0;
+  mat4 rotation_matrix = mat4_rotation(quat_from_axis_angle(VEC3_Y, angle, true));
+
   render_pass_desc d = {};
   gpu_encoder* enc = ral_render_encoder(d);
   ral_encode_bind_pipeline(enc, draw_pipeline);
@@ -32,7 +45,7 @@ int main() {
     .fragment = {
       .source = NULL,
       .is_spirv = false,
-      .entry_point = "cubeFragmentShader",
+      .entry_point = "fragmentShader",
       .stage = STAGE_FRAGMENT,
     },
   };

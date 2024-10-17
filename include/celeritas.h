@@ -1,13 +1,14 @@
 #pragma once
 
 // Standard library includes
+#include <assert.h>
+#include <math.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <string.h>
 
 // Third party dependency includes
@@ -107,7 +108,7 @@ void _cel_push_error(int error_code);
 // TODO: Arenas
 
 // Pool
-typedef struct void_pool_header void_pool_header; // TODO: change name of this
+typedef struct void_pool_header void_pool_header;  // TODO: change name of this
 struct void_pool_header {
   void_pool_header* next;
 };
@@ -130,26 +131,26 @@ void* void_pool_alloc(void_pool* pool, u32* out_raw_handle);
 void void_pool_dealloc(void_pool* pool, u32 raw_handle);
 u32 void_pool_insert(void_pool* pool, void* item);
 
-#define TYPED_POOL(T, Name)                                                         \
-  typedef struct Name##_pool {                                                      \
-    void_pool inner;                                                                \
-  } Name##_pool;                                                                    \
-                                                                                    \
-  static Name##_pool Name##_pool_create(void* storage, u64 cap, u64 entry_size) {        \
-    void_pool p = void_pool_create(storage, "\"" #Name "\"", cap, entry_size);            \
-    return (Name##_pool){ .inner = p };                                             \
-  }                                                                                 \
+#define TYPED_POOL(T, Name)                                                          \
+  typedef struct Name##_pool {                                                       \
+    void_pool inner;                                                                 \
+  } Name##_pool;                                                                     \
+                                                                                     \
+  static Name##_pool Name##_pool_create(void* storage, u64 cap, u64 entry_size) {    \
+    void_pool p = void_pool_create(storage, "\"" #Name "\"", cap, entry_size);       \
+    return (Name##_pool){ .inner = p };                                              \
+  }                                                                                  \
   static inline T* Name##_pool_get(Name##_pool* pool, Name##_handle handle) {        \
-    return (T*)void_pool_get(&pool->inner, handle.raw);                             \
-  }                                                                                 \
+    return (T*)void_pool_get(&pool->inner, handle.raw);                              \
+  }                                                                                  \
   static inline T* Name##_pool_alloc(Name##_pool* pool, Name##_handle* out_handle) { \
-    return (T*)void_pool_alloc(&pool->inner, &out_handle->raw);                     \
-  }                                                                                 \
+    return (T*)void_pool_alloc(&pool->inner, &out_handle->raw);                      \
+  }                                                                                  \
   static inline void Name##_pool_dealloc(Name##_pool* pool, Name##_handle handle) {  \
-    void_pool_dealloc(&pool->inner, handle.raw);                                    \
-  }                                                                                 \
+    void_pool_dealloc(&pool->inner, handle.raw);                                     \
+  }                                                                                  \
   static Name##_handle Name##_pool_insert(Name##_pool* pool, T* item) {              \
-    u32 raw_handle = void_pool_insert(pool, item);                                  \
+    u32 raw_handle = void_pool_insert(pool, item);                                   \
     return (Name##_handle){ .raw = raw_handle };                                     \
   }
 
@@ -185,13 +186,13 @@ void log_output(char* module, loglevel level, const char* msg, ...);
   static inline void WARN(const char* msg, ...) {    \
     va_list args;                                    \
     va_start(args, msg);                             \
-    log_output(#module, LOG_LEVEL_WARN, msg, args); \
+    log_output(#module, LOG_LEVEL_WARN, msg, args);  \
     va_end(args);                                    \
   }                                                  \
   static inline void INFO(const char* msg, ...) {    \
     va_list args;                                    \
     va_start(args, msg);                             \
-    log_output(#module, LOG_LEVEL_INFO, msg, args); \
+    log_output(#module, LOG_LEVEL_INFO, msg, args);  \
     va_end(args);                                    \
   }                                                  \
   static inline void DEBUG(const char* msg, ...) {   \
@@ -236,7 +237,6 @@ typedef vec4 quat;
 typedef struct mat4 {
   // TODO: use this format for more readable code: vec4 x_axis, y_axis, z_axis, w_axis;
   f32 data[16];
-  
 } mat4;
 
 /** @brief 3D affine transformation */
@@ -247,19 +247,49 @@ typedef struct transform {
   bool is_dirty;
 } transform;
 
+_Static_assert(alignof(vec3) == 4, "vec3 is 4 byte aligned");
+_Static_assert(sizeof(vec3) == 12, "vec3 is 12 bytes so has no padding");
+_Static_assert(alignof(vec4) == 4, "vec4 is 4 byte aligned");
+
 inlined vec3 vec3_create(f32 x, f32 y, f32 z);
 inlined vec3 vec3_add(vec3 u, vec3 v);
 inlined vec3 vec3_sub(vec3 u, vec3 v);
 inlined vec3 vec3_mult(vec3 u, f32 s);
 inlined vec3 vec3_div(vec3 u, f32 s);
+inlined vec3 vec3_len_squared(vec3 a);
+inlined f32 vec3_len(vec3 a);
+inlined vec3 vec3_negate(vec3 a);
+inlined vec3 vec3_normalise(vec3 a);
+inlined f32 vec3_dot(vec3 a, vec3 b);
+inlined vec3 vec3_cross(vec3 a, vec3 b);
 
 inlined vec4 vec4_create(f32 x, f32 y, f32 z, f32 w);
 
+// quaternion functions
+inlined quat quat_ident();
+quat quat_from_axis_angle(vec3 axis, f32 angle, bool normalise);
+quat quat_slerp(quat a, quat b, f32 percentage);
+
+// matrix functions
+inlined mat4 mat4_ident();
+mat4 mat4_translation(vec3 position);
+mat4 mat4_scale(vec3 scale);
+mat4 mat4_rotation(quat rotation);
+mat4 mat4_mult(mat4 lhs, mat4 rhs);
+mat4 mat4_transposed(mat4 m);
+mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_clip, f32 far_clip);
+mat4 mat4_orthographic(f32 left, f32 right, f32 bottom, f32 top, f32 near_clip, f32 far_clip);
+mat4 mat4_look_at(vec3 position, vec3 target, vec3 up);
+
+// transform functions
+inlined transform transform_create(vec3 pos, quat rot, vec3 scale);
+mat4 transform_to_mat(transform* tf);
+
 // helpers
 
-#define vec3(x,y,z) ((vec3){ x, y, z })
-#define vec4(x,y,z,w) ((vec4){ x, y, z, w })
-inlined vec4 v3tov4(vec3 v3) { return vec4_create(v3.x, v3.y, v3.z, 0.0); }
+#define vec3(x, y, z) ((vec3){ x, y, z })
+#define vec4(x, y, z, w) ((vec4){ x, y, z, w })
+inlined vec4 v3tov4(vec3 v3) { return vec4_create(v3.x, v3.y, v3.z, 1.0); }
 
 static const vec3 VEC3_X = vec3(1.0, 0.0, 0.0);
 static const vec3 VEC3_NEG_X = vec3(-1.0, 0.0, 0.0);
@@ -269,8 +299,6 @@ static const vec3 VEC3_Z = vec3(0.0, 0.0, 1.0);
 static const vec3 VEC3_NEG_Z = vec3(0.0, 0.0, -1.0);
 static const vec3 VEC3_ZERO = vec3(0.0, 0.0, 0.0);
 static const vec3 VEC3_ONES = vec3(1.0, 1.0, 1.0);
-
-
 
 // --- RAL
 
@@ -284,7 +312,7 @@ DEFINE_HANDLE(compute_pipeline_handle);
 
 // Backend-specific structs
 typedef struct gpu_swapchain gpu_swapchain;
-typedef struct gpu_encoder gpu_encoder; // Render command encoder
+typedef struct gpu_encoder gpu_encoder;  // Render command encoder
 typedef struct gpu_compute_encoder gpu_compute_encoder;
 typedef struct gpu_buffer gpu_buffer;
 typedef struct gpu_texture gpu_texture;
@@ -390,10 +418,10 @@ typedef struct gfx_pipeline_desc {
   // u32 data_layouts_count;
 } gfx_pipeline_desc;
 
-typedef struct compute_pipeline_desc { /* TODO */ } compute_pipeline_desc;
+typedef struct compute_pipeline_desc { /* TODO */
+} compute_pipeline_desc;
 
 typedef struct render_pass_desc {
-
 } render_pass_desc;
 
 // --- RAL Functions
@@ -436,7 +464,7 @@ void ral_backend_resize_framebuffer(int width, int height);
 
 // Frame lifecycle
 
-typedef void (*scoped_draw_commands)(); // callback that we run our draw commands within.
+typedef void (*scoped_draw_commands)();  // callback that we run our draw commands within.
 // allows us to wrap some api-specific behaviour
 
 void ral_frame_start();
@@ -493,6 +521,8 @@ typedef struct camera {
   f32 fov;
 } camera;
 
+mat4 camera_view_proj(camera);
+
 // --- Reference Renderer
 
 // TODO: Filament PBR model
@@ -502,7 +532,6 @@ typedef struct camera {
 DEFINE_HANDLE(model_handle);
 
 typedef struct model {
-
 } model;
 
 model_handle model_load_from_gltf(const char* path);
