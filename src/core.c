@@ -4,12 +4,12 @@
 
 NAMESPACED_LOGGER(core);
 
-void Core_Bringup(const char* window_name, struct GLFWwindow* optional_window) {
+void core_bringup(const char* window_name, struct GLFWwindow* optional_window) {
   // INFO("Initiate Core bringup");
   INFO("Initiate Core bringup");
 
   INFO("Create GLFW window");
 }
-void Core_Shutdown() {}
+void core_shutdown() {}
 
-bool AppShouldExit() { return true; }
+bool app_should_exit() { return false; }

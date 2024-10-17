@@ -3,7 +3,11 @@
 #include <celeritas.h>
 
 int main() {
-  Core_Bringup("Celeritas Example: Triangle", NULL);
+  core_bringup("Celeritas Example: Triangle", NULL);
+
+  while (!app_should_exit()) {
+    // 
+  }
 
   return 0;
 }

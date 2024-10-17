@@ -60,7 +60,7 @@ _Static_assert(sizeof(ptrdiff_t) == 8, "type ptrdiff_t should be 8 bytes");
 // Platform informs renderer backend (unless user overrides)
 #if defined(CEL_PLATFORM_LINUX) || defined(CEL_PLATFORM_WINDOWS)
 #define GPU_VULKAN 1
-#elif defined(CEL_PLATFORM_MAC)
+#else
 #define GPU_METAL 1
 #endif
 
@@ -88,10 +88,45 @@ void core_shutdown();
 void core_resize_viewport(int width, int height);
 bool app_should_exit();
 
+// --- Error handling
+
+// global error handling
+#define CEL_OK 0
+extern int g_last_error;
+
+/** @brief get last global status value */
+int cel_check_status();
+void _cel_push_error(int error_code);
+
 // --- Memory facilities: Allocators, helpers
 
 // TODO: Arenas
-// TODO: Pool allocator
+
+// Pool
+typedef struct void_pool_header void_pool_header; // TODO: change name of this
+struct void_pool_header {
+  void_pool_header* next;
+};
+
+typedef struct void_pool {
+  u64 capacity;
+  u64 entry_size;
+  u64 count;
+  void* backing_buffer;
+  void_pool_header* free_list_head;
+  const char* debug_label;
+} void_pool;
+
+void_pool void_pool_create(void* storage, const char* debug_label, u64 capacity, u64 entry_size);
+void void_pool_free_all(void_pool* pool);
+bool void_pool_is_empty(void_pool* pool);
+bool void_pool_is_full(void_pool* pool);
+void* void_pool_get(void_pool* pool, u32 raw_handle);
+void* void_pool_alloc(void_pool* pool, u32* out_raw_handle);
+void void_pool_dealloc(void_pool* pool, u32 raw_handle);
+u32 void_pool_insert(void_pool* pool, void* item);
+
+// TODO: Typed pool
 
 // --- Strings
 
@@ -119,31 +154,31 @@ void log_output(char* module, loglevel level, const char* msg, ...);
   static inline void ERROR(const char* msg, ...) {   \
     va_list args;                                    \
     va_start(args, msg);                             \
-    log_output(#module, LOG_LEVEL_FATAL, msg, args); \
+    log_output(#module, LOG_LEVEL_ERROR, msg, args); \
     va_end(args);                                    \
   }                                                  \
   static inline void WARN(const char* msg, ...) {    \
     va_list args;                                    \
     va_start(args, msg);                             \
-    log_output(#module, LOG_LEVEL_FATAL, msg, args); \
+    log_output(#module, LOG_LEVEL_WARN, msg, args); \
     va_end(args);                                    \
   }                                                  \
   static inline void INFO(const char* msg, ...) {    \
     va_list args;                                    \
     va_start(args, msg);                             \
-    log_output(#module, LOG_LEVEL_FATAL, msg, args); \
+    log_output(#module, LOG_LEVEL_INFO, msg, args); \
     va_end(args);                                    \
   }                                                  \
   static inline void DEBUG(const char* msg, ...) {   \
     va_list args;                                    \
     va_start(args, msg);                             \
-    log_output(#module, LOG_LEVEL_FATAL, msg, args); \
+    log_output(#module, LOG_LEVEL_DEBUG, msg, args); \
     va_end(args);                                    \
   }                                                  \
   static inline void TRACE(const char* msg, ...) {   \
     va_list args;                                    \
     va_start(args, msg);                             \
-    log_output(#module, LOG_LEVEL_FATAL, msg, args); \
+    log_output(#module, LOG_LEVEL_TRACE, msg, args); \
     va_end(args);                                    \
   }
 
@@ -203,10 +238,13 @@ DEFINE_HANDLE(pipeline_handle);
 #define MAX_SHADER_BINDINGS 16
 
 // Backend-specific structs
+typedef struct gpu_device gpu_device;
 typedef struct gpu_swapchain gpu_swapchain;
 typedef struct gpu_compute_pipeline gpu_compute_pipeline;
 typedef struct gpu_gfx_pipeline gpu_gfx_pipeline;
 typedef struct gpu_encoder gpu_encoder; // Command encoder
+typedef struct gpu_buffer gpu_buffer;
+typedef struct gpu_texture gpu_texture;
 
 // NOTE: Can we just use Storage buffer for everything?
 // typedef enum gpu_buf_type {} gpu_buf_type;
@@ -347,15 +385,25 @@ geometry geo_ico_sphere(f32 radius, f32 n_subdivisions);
 
 // --- Gameplay
 
-typedef struct Camera {
+typedef struct camera {
   vec3 position;
   quat orientation;
   f32 fov;
-} Camera;
+} camera;
 
 // --- Reference Renderer
 
 // TODO: Filament PBR model
+
+// --- Game and model data
+
+DEFINE_HANDLE(model_handle);
+
+typedef struct model {
+
+} model;
+
+model_handle model_load_from_gltf(const char* path);
 
 // --- Animation
 

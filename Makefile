@@ -4,7 +4,11 @@ CFLAGS := -Wall -Wextra -O2 $(INCLUDES)
 LDFLAGS := -lglfw
 
 # Detect OS
-UNAME_S := $(shell uname -s)
+ifeq ($(OS),Windows_NT)
+    DETECTED_OS := Windows
+else
+    DETECTED_OS := $(shell uname -s)
+endif
 
 # Directories
 SRC_DIR := src
@@ -17,6 +21,11 @@ EXAMPLES_DIR := examples
 # Source files
 SRCS := $(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/**/*.c)
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
+
+# Add Metal backend written in Objective C only on Mac platform
+ifeq ($(DETECTED_OS),Darwin)
+    SRCS += $(SRC_DIR)/backend_mtl.m
+endif
 
 # Library outputs
 STATIC_LIB := $(BUILD_DIR)/libceleritas.a
