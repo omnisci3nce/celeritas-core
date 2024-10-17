@@ -36,7 +36,7 @@ ifeq ($(UNAME_S),Darwin)
 		OBJS += $(OBJ_DIR)/backend_mtl.o
 else
     SHARED_LIB := $(BUILD_DIR)/libceleritas.so
-    SHARED_FLAGS := -shared
+    SHARED_FLAGS := -shared -fPIC
 endif
 
 ## Makefile notes
