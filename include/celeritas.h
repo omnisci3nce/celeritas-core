@@ -155,42 +155,43 @@ void log_output(char* module, LogLevel level, const char* msg, ...);
 #define TAU (2.0 * PI)
 
 /** @brief 2D Vector */
-typedef struct Vec2 {
+typedef struct vec2 {
   f32 x, y;
-} Vec2;
+} vec2;
 
 /** @brief 3D Vector */
-typedef struct Vec3 {
+typedef struct vec3 {
   f32 x, y, z;
-} Vec3;
+} vec3;
 
 /** @brief 4D Vector */
-typedef struct Vec4 {
+typedef struct vec4 {
   f32 x, y, z, w;
-} Vec4;
+} vec4;
 
 /** @brief Quaternion */
-typedef Vec4 Quat;
+typedef vec4 quat;
 
 /** @brief 4x4 Matrix */
-typedef struct Mat4 {
+typedef struct mat4 {
   // TODO: use this format for more readable code: vec4 x_axis, y_axis, z_axis, w_axis;
   f32 data[16];
-} Mat4;
+  
+} mat4;
 
 /** @brief 3D affine transformation */
-typedef struct Transform {
-  Vec3 position;
-  Quat rotation;
-  Vec3 scale;
+typedef struct transform {
+  vec3 position;
+  quat rotation;
+  vec3 scale;
   bool is_dirty;
-} Transform;
+} transform;
 
-inlined Vec3 Vec3_Create(f32 x, f32 y, f32 z);
-inlined Vec3 Vec3_Add(Vec3 u, Vec3 v);
-inlined Vec3 Vec3_Sub(Vec3 u, Vec3 v);
-inlined Vec3 Vec3_Mult(Vec3 u, f32 s);
-inlined Vec3 Vec3_Div(Vec3 u, f32 s);
+inlined vec3 vec3_create(f32 x, f32 y, f32 z);
+inlined vec3 vec3_add(vec3 u, vec3 v);
+inlined vec3 Vec3_sub(vec3 u, vec3 v);
+inlined vec3 Vec3_mult(vec3 u, f32 s);
+inlined vec3 Vec3_div(vec3 u, f32 s);
 
 // --- RAL
 
@@ -321,7 +322,7 @@ typedef struct Geometry {
   u32_darray* indices;
 } Geometry;
 
-typedef struct Mesh {
+typedef struct mesh {
   BufHandle vertex_buffer;
   BufHandle index_buffer;
   MaterialHandle material;
@@ -329,7 +330,7 @@ typedef struct Mesh {
   // bool is_skinned;  // false = its static
   // Armature armature;
   // bool is_uploaded;  // has the data been uploaded to the GPU
-} Mesh;
+} mesh;
 
 // --- Render primitives
 
@@ -345,8 +346,8 @@ Geometry Geo_CreateIcosphere(f32 radius, f32 n_subdivisions);
 // --- Gameplay
 
 typedef struct Camera {
-  Vec3 position;
-  Quat orientation;
+  vec3 position;
+  quat orientation;
   f32 fov;
 } Camera;
 

@@ -18,6 +18,8 @@ All third-party dependencies are licensed under their own license.
 - Bindgen
 - Targets Vulkan 1.3 for simpler code
 - Plugin system (?)
+- We can build tools on top of this layer while maintaining high performance. The C side retains
+  all rendering data.
 
 Renderer Goals:
 
@@ -32,8 +34,7 @@ Renderer Goals:
 
 #### Handy commands
 
-* Check symbols in an 'archive' (static library)
-    * `nm -C build/libcore.a`
-* Generate compiler_commands.json
-    * `xmake project -k compile_commands`
-
+- Check symbols in an 'archive' (static library)
+  - `nm -C build/libcore.a`
+- Generate compiler_commands.json
+  - `xmake project -k compile_commands`
