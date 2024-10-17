@@ -59,34 +59,34 @@ _Static_assert(sizeof(ptrdiff_t) == 8, "type ptrdiff_t should be 8 bytes");
 
 // Platform informs renderer backend (unless user overrides)
 #if defined(CEL_PLATFORM_LINUX) || defined(CEL_PLATFORM_WINDOWS)
-#define CEL_REND_BACKEND_VULKAN 1
+#define GPU_VULKAN 1
 #elif defined(CEL_PLATFORM_MAC)
-#define CEL_REND_BACKEND_METAL 1
+#define GPU_METAL 1
 #endif
 
 // --- Forward declare vital structures
-typedef struct Core Core;
-typedef struct Renderer Renderer;
-typedef struct InputState InputState;
+typedef struct core core;
+typedef struct renderer renderer;
+typedef struct input_state input_state;
 struct GLFWwindow;
 
 // Global getters
-Core* GetGlobalCore();
-Renderer* GetRenderer();
-struct GLFWwindow* GetWindow();
+core* get_g_core();
+renderer* get_g_renderer();
+struct GLFWwindow* get_window();
 
-struct Core {
+struct core {
   const char* app_name;
   struct GLFWwindow* window;
-  Renderer* renderer;
-  InputState* input;
+  renderer* renderer;
+  input_state* input;
 };
-extern Core g_core; /** @brief global `Core` that other files can use */
+extern core g_core; /** @brief global `Core` that other files can use */
 
-void Core_Bringup(const char* window_name, struct GLFWwindow* optional_window);
-void Core_Shutdown();
-void Core_ResizeViewport(int width, int height);
-bool AppShouldExit();
+void core_bringup(const char* window_name, struct GLFWwindow* optional_window);
+void core_shutdown();
+void core_resize_viewport(int width, int height);
+bool app_should_exit();
 
 // --- Memory facilities: Allocators, helpers
 
@@ -98,16 +98,16 @@ bool AppShouldExit();
 // --- Logging
 
 // Log levels
-typedef enum LogLevel {
+typedef enum loglevel {
   LOG_LEVEL_FATAL = 0,
   LOG_LEVEL_ERROR = 1,
   LOG_LEVEL_WARN = 2,
   LOG_LEVEL_INFO = 3,
   LOG_LEVEL_DEBUG = 4,
   LOG_LEVEL_TRACE = 5,
-} LogLevel;
+} loglevel;
 
-void log_output(char* module, LogLevel level, const char* msg, ...);
+void log_output(char* module, loglevel level, const char* msg, ...);
 
 #define NAMESPACED_LOGGER(module)                    \
   static inline void FATAL(const char* msg, ...) {   \
@@ -189,9 +189,9 @@ typedef struct transform {
 
 inlined vec3 vec3_create(f32 x, f32 y, f32 z);
 inlined vec3 vec3_add(vec3 u, vec3 v);
-inlined vec3 Vec3_sub(vec3 u, vec3 v);
-inlined vec3 Vec3_mult(vec3 u, f32 s);
-inlined vec3 Vec3_div(vec3 u, f32 s);
+inlined vec3 vec3_sub(vec3 u, vec3 v);
+inlined vec3 vec3_mult(vec3 u, f32 s);
+inlined vec3 vec3_div(vec3 u, f32 s);
 
 // --- RAL
 
@@ -203,13 +203,13 @@ DEFINE_HANDLE(pipeline_handle);
 #define MAX_SHADER_BINDINGS 16
 
 // Backend-specific structs
-typedef struct gpu_swapchain GPU_Swapchain;
+typedef struct gpu_swapchain gpu_swapchain;
 typedef struct gpu_compute_pipeline gpu_compute_pipeline;
 typedef struct gpu_gfx_pipeline gpu_gfx_pipeline;
 typedef struct gpu_encoder gpu_encoder; // Command encoder
 
 // NOTE: Can we just use Storage buffer for everything?
-typedef enum gpu_buf_type {} gpu_buf_type;
+// typedef enum gpu_buf_type {} gpu_buf_type;
 
 typedef enum gpu_tex_type {
   TEXTURE_TYPE_2D,
@@ -227,7 +227,7 @@ typedef struct texture_desc {
 } texture_desc;
 
 /// @strip_prefix(ATTR_)
-typedef enum VertexAttribType {
+typedef enum vertex_attrib_type {
   ATTR_F32,
   ATTR_F32x2,
   ATTR_F32x3,
@@ -240,18 +240,15 @@ typedef enum VertexAttribType {
   ATTR_I32x2,
   ATTR_I32x3,
   ATTR_I32x4,
-} VertexAttribType;
+} vertex_attrib_type;
 
-typedef struct VertexDesc {
+typedef struct vertex_desc {
   const char* label;
-  VertexAttribType attributes[MAX_VERTEX_ATTRIBUTES];
+  vertex_attrib_type attributes[MAX_VERTEX_ATTRIBUTES];
   u32 attribute_count;
-} VertexDesc;
+} vertex_desc;
 
-typedef struct ShaderDesc {
-} ShaderDesc;
-
-typedef enum ShaderBindingKind {
+typedef enum shader_binding_type {
   BINDING_BYTES,
   BINDING_BUFFER,
   BINDING_BUFFER_ARRAY,
@@ -259,53 +256,57 @@ typedef enum ShaderBindingKind {
   BINDING_TEXTURE_ARRAY,
   BINDING_SAMPLER,
   BINDING_COUNT
-} ShaderBindingKind;
+} shader_binding_type;
 
-typedef enum ShaderVisibility {
+typedef enum shader_vis {
   VISIBILITY_VERTEX = 1 << 0,
   VISIBILITY_FRAGMENT = 1 << 1,
   VISIBILITY_COMPUTE = 1 << 2,
-} ShaderVisibility;
+} shader_vis;
 
-typedef struct ShaderBinding {
+typedef struct shader_binding {
   const char* label;
-  ShaderBindingKind kind;
-  ShaderVisibility vis;
+  shader_binding_type binding_type;
+  shader_vis vis;
   union {
     struct {
       u32 size;
       void* data;
     } bytes;
     struct {
-      BufHandle handle;
+      buf_handle handle;
     } buffer;
     struct {
-      TexHandle handle;
+      tex_handle handle;
     } texture;
   } data;
-} ShaderBinding;
+} shader_binding;
 
-typedef struct ShaderDataLayout {
-  ShaderBinding bindings[MAX_SHADER_BINDINGS];
+typedef struct shader_data_layout {
+  shader_binding bindings[MAX_SHADER_BINDINGS];
   size_t binding_count;
-} ShaderDataLayout;
+} shader_data_layout;
 
-typedef enum CullMode { CULL_BACK_FACE, CULL_FRONT_FACE } CullMode;
+typedef struct shader_desc {
+  // TODO
+} shader_desc;
 
-typedef struct GraphicsPipelineDesc {
+typedef enum cull_mode { CULL_BACK_FACE, CULL_FRONT_FACE } cull_mode;
+
+typedef struct gfx_pipeline_desc {
   const char* label;
-  VertexDesc vertex_desc;
-  ShaderDesc vs;
-  ShaderDesc fs;
+  vertex_desc vertex_desc;
+  shader_desc vs;
+  shader_desc fs;
   // ShaderDataLayout data_layouts[MAX_SHADER_DATA_LAYOUTS];
   // u32 data_layouts_count;
-} GraphicsPipelineDesc;
+} gfx_pipeline_desc;
 
 // --- RAL Functions
-BufHandle GPU_BufferCreate(u64 size, const void* data);
-void GPU_BufferDestroy(BufHandle handle);
-TexHandle GPU_TextureCreate(TextureDesc desc, bool create_view, const void* data);
-void GPU_TextureDestroy(TexHandle handle);
+buf_handle ral_buffer_create(u64 size, const void* data);
+void ral_buffer_destroy(buf_handle handle);
+tex_handle ral_texture_create(texture_desc desc, bool create_view, const void* data);
+void ral_texture_destroy(tex_handle handle);
 
 // --- Containers (Forward declared as internals are unnecessary for external header)
 typedef struct u32_darray u32_darray;
@@ -316,18 +317,18 @@ DEFINE_HANDLE(MeshHandle);
 DEFINE_HANDLE(MaterialHandle);
 DEFINE_HANDLE(ModelHandle);
 
-typedef struct Geometry {
-  VertexDesc vertex_format;
+typedef struct geometry {
+  vertex_desc vertex_format;
   void* vertex_data;
   bool has_indices;  // When this is false indexed drawing is not used
   u32_darray* indices;
-} Geometry;
+} geometry;
 
 typedef struct mesh {
-  BufHandle vertex_buffer;
-  BufHandle index_buffer;
+  buf_handle vertex_buffer;
+  buf_handle index_buffer;
   MaterialHandle material;
-  Geometry geometry;
+  geometry geometry;
   // bool is_skinned;  // false = its static
   // Armature armature;
   // bool is_uploaded;  // has the data been uploaded to the GPU
@@ -335,12 +336,12 @@ typedef struct mesh {
 
 // --- Render primitives
 
-Geometry Geo_CreatePlane(f32 x_scale, f32 z_scale, u32 tiling_u, u32 tiling_v);
-Geometry Geo_CreateCuboid(f32 x_scale, f32 y_scale, f32 z_scale);
-Geometry Geo_CreateCylinder(f32 radius, f32 height, u32 resolution);
-Geometry Geo_CreateCone(f32 radius, f32 height, u32 resolution);
-Geometry Geo_CreateUVsphere(f32 radius, u32 north_south_lines, u32 east_west_lines);
-Geometry Geo_CreateIcosphere(f32 radius, f32 n_subdivisions);
+geometry geo_plane(f32 x_scale, f32 z_scale, u32 tiling_u, u32 tiling_v);
+geometry geo_cuboid(f32 x_scale, f32 y_scale, f32 z_scale);
+geometry geo_cylinder(f32 radius, f32 height, u32 resolution);
+geometry geo_cone(f32 radius, f32 height, u32 resolution);
+geometry geo_uv_sphere(f32 radius, u32 north_south_lines, u32 east_west_lines);
+geometry geo_ico_sphere(f32 radius, f32 n_subdivisions);
 
 // --- Scene / Transform Hierarchy
 
