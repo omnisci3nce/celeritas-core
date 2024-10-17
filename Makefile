@@ -63,7 +63,7 @@ $(STATIC_LIB): $(OBJS)
 	@mkdir -p $(BUILD_DIR)
 	ar rcs $@ $^
 
-shared: $(SHARED_LIB) CFLAGS += 
+shared: $(SHARED_LIB)
 
 static: $(STATIC_LIB)
 
