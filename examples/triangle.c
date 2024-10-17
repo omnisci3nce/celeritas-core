@@ -31,13 +31,13 @@ int main() {
       .source = NULL,
       .is_spirv = false,
       .entry_point = "vertexShader",
-      .shader_stage = VISIBILITY_VERTEX,
+      .stage = STAGE_VERTEX,
     },
     .fragment = {
       .source = NULL,
       .is_spirv = false,
       .entry_point = "fragmentShader",
-      .shader_stage = VISIBILITY_FRAGMENT,
+      .stage = STAGE_FRAGMENT,
     },
   };
 

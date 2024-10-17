@@ -319,16 +319,16 @@ typedef enum shader_binding_type {
   BINDING_COUNT
 } shader_binding_type;
 
-typedef enum shader_vis {
-  VISIBILITY_VERTEX = 1 << 0,
-  VISIBILITY_FRAGMENT = 1 << 1,
-  VISIBILITY_COMPUTE = 1 << 2,
-} shader_vis;
+typedef enum shader_stage {
+  STAGE_VERTEX = 1 << 0,
+  STAGE_FRAGMENT = 1 << 1,
+  STAGE_COMPUTE = 1 << 2,
+} shader_stage;
 
 typedef struct shader_binding {
   const char* label;
   shader_binding_type binding_type;
-  shader_vis vis;
+  shader_stage visibility;
   union {
     struct {
       u32 size;
@@ -352,7 +352,7 @@ typedef struct shader_function {
   const char* source;
   bool is_spirv;
   const char* entry_point;
-  shader_vis shader_stage;
+  shader_stage stage;
 } shader_function;
 
 typedef enum cull_mode { CULL_BACK_FACE, CULL_FRONT_FACE } cull_mode;
