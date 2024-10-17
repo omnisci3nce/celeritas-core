@@ -1,6 +1,7 @@
 CC := clang
 INCLUDES := -I./include -Ideps/glfw-3.3.8/include/GLFW -Ideps/stb_image
-CFLAGS := -Wall -Wextra -O2 $(INCLUDES)
+CFLAGS := -Wall -Wextra -O2 -fPIC $(INCLUDES)
+# TODO(low prio): split static object files and shared object files so we can remove -fPIC from static lib builds
 LDFLAGS := -lglfw
 
 # Detect OS
@@ -28,6 +29,7 @@ METAL_LIB := $(SHADER_OUT_DIR)/default.metallib
 
 # Library outputs
 STATIC_LIB := $(BUILD_DIR)/libceleritas.a
+SHARED_FLAGS := -fPIC
 ifeq ($(UNAME_S),Darwin)
     SHARED_LIB := $(BUILD_DIR)/libceleritas.dylib
     SHARED_FLAGS := -dynamiclib
@@ -36,7 +38,7 @@ ifeq ($(UNAME_S),Darwin)
 		OBJS += $(OBJ_DIR)/backend_mtl.o
 else
     SHARED_LIB := $(BUILD_DIR)/libceleritas.so
-    SHARED_FLAGS := -shared -fPIC
+    SHARED_FLAGS := -shared
 endif
 
 ## Makefile notes
@@ -61,7 +63,7 @@ $(STATIC_LIB): $(OBJS)
 	@mkdir -p $(BUILD_DIR)
 	ar rcs $@ $^
 
-shared: $(SHARED_LIB)
+shared: $(SHARED_LIB) CFLAGS += 
 
 static: $(STATIC_LIB)
 
