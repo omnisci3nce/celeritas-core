@@ -7,5 +7,5 @@ static const char* log_level_strings[] = {
 void log_output(char* module, loglevel level, const char* message, ...) {
   char out_msg[4096];
 
-  printf("[%s] %s Msg: %s\n", module, log_level_strings[level], message);
+  printf("[%s] %s - %s\n", module, log_level_strings[level], message);
 }

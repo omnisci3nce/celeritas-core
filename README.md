@@ -37,4 +37,4 @@ Renderer Goals:
 - Check symbols in an 'archive' (static library)
   - `nm -C build/libcore.a`
 - Generate compiler_commands.json
-  - `xmake project -k compile_commands`
+  - `bear -- make`

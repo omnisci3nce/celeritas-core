@@ -1,10 +1,17 @@
 // The engine "core"
 
 #include <celeritas.h>
+#include <stdlib.h>
 
 NAMESPACED_LOGGER(core);
 
 core g_core = {0};
+
+#ifdef GPU_METAL
+static const char* gapi = "Metal";
+#else
+static const char* gapi = "Vulkan";
+#endif
 
 // forward declares
 void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods);
@@ -14,7 +21,11 @@ void core_bringup(const char* window_name, struct GLFWwindow* optional_window) {
 
   INFO("Create GLFW window");
   glfwInit();
-  GLFWwindow* glfw_window = glfwCreateWindow(800, 600, window_name, NULL, NULL);
+
+  char* full_window_name = malloc(sizeof(char) * 100);
+  int _offset = sprintf(full_window_name, "%s (%s)", window_name, gapi);
+
+  GLFWwindow* glfw_window = glfwCreateWindow(800, 600, full_window_name, NULL, NULL);
   g_core.window = glfw_window;
 
   // This may move into a renderer struct

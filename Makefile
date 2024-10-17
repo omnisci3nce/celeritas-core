@@ -18,6 +18,11 @@ EXAMPLES_DIR := examples
 SRCS := $(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/**/*.c)
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 
+# Shader files
+METAL_SHADERS := $(wildcard $(SHADER_DIR)/*.metal)
+METAL_AIR_FILES := $(patsubst $(SHADER_DIR)/%.metal,$(SHADER_OUT_DIR)/%.air,$(METAL_SHADERS))
+METAL_LIB := $(SHADER_OUT_DIR)/default.metallib
+
 # Library outputs
 STATIC_LIB := $(BUILD_DIR)/libceleritas.a
 ifeq ($(UNAME_S),Darwin)
@@ -57,13 +62,21 @@ shared: $(SHARED_LIB)
 
 static: $(STATIC_LIB)
 
+# Shaders
+$(SHADER_OUT_DIR)/%.air: $(SHADER_DIR)/%.metal
+	@mkdir -p $(SHADER_OUT_DIR)
+	xcrun -sdk macosx metal -c $< -o $@
+	
+$(METAL_LIB): $(METAL_AIR_FILES)
+	xcrun -sdk macosx metallib $^ -o $(SHADER_OUT_DIR)/default.metallib
+
 .PHONY: all
 all: shared static
 
 .PHONY: triangle
-triangle: $(EXAMPLES_DIR)/triangle.c $(SHARED_LIB)
+triangle: $(EXAMPLES_DIR)/triangle.c $(SHARED_LIB) $(SHADER_OUT_DIR)/triangle.air $(METAL_LIB)
 		@mkdir -p $(BUILD_DIR)
-		$(CC) $(CFLAGS) $(EXAMPLES_DIR)/triangle.c -L$(BUILD_DIR) -lceleritas $(LDFLAGS)
+		$(CC) $(CFLAGS) $(EXAMPLES_DIR)/triangle.c -L$(BUILD_DIR) -lceleritas $(LDFLAGS) -o $(BUILD_DIR)/triangle.bin
 		MTL_DEBUG_LAYER=1 build/triangle.bin
 
 .PHONY: clean

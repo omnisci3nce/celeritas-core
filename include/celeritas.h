@@ -6,6 +6,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <assert.h>
+#include <string.h>
 
 // Third party dependency includes
 #include <glfw3.h>
@@ -127,7 +129,28 @@ void* void_pool_alloc(void_pool* pool, u32* out_raw_handle);
 void void_pool_dealloc(void_pool* pool, u32 raw_handle);
 u32 void_pool_insert(void_pool* pool, void* item);
 
-// TODO: Typed pool
+#define TYPED_POOL(T, Name)                                                         \
+  typedef struct Name##_pool {                                                      \
+    void_pool inner;                                                                \
+  } Name##_pool;                                                                    \
+                                                                                    \
+  static Name##_pool Name##_pool_create(void* storage, u64 cap, u64 entry_size) {        \
+    void_pool p = void_pool_create(storage, "\"" #Name "\"", cap, entry_size);            \
+    return (Name##_pool){ .inner = p };                                             \
+  }                                                                                 \
+  static inline T* Name##_pool_get(Name##_pool* pool, Name##_handle handle) {        \
+    return (T*)void_pool_get(&pool->inner, handle.raw);                             \
+  }                                                                                 \
+  static inline T* Name##_pool_alloc(Name##_pool* pool, Name##_handle* out_handle) { \
+    return (T*)void_pool_alloc(&pool->inner, &out_handle->raw);                     \
+  }                                                                                 \
+  static inline void Name##_pool_dealloc(Name##_pool* pool, Name##_handle handle) {  \
+    void_pool_dealloc(&pool->inner, handle.raw);                                    \
+  }                                                                                 \
+  static Name##_handle Name##_pool_insert(Name##_pool* pool, T* item) {              \
+    u32 raw_handle = void_pool_insert(pool, item);                                  \
+    return (Name##_handle){ .raw = raw_handle };                                     \
+  }
 
 // --- Strings
 
@@ -234,15 +257,15 @@ inlined vec3 vec3_div(vec3 u, f32 s);
 DEFINE_HANDLE(buf_handle);
 DEFINE_HANDLE(tex_handle);
 DEFINE_HANDLE(pipeline_handle);
+DEFINE_HANDLE(compute_pipeline_handle);
 
 #define MAX_VERTEX_ATTRIBUTES 16
 #define MAX_SHADER_BINDINGS 16
 
 // Backend-specific structs
 typedef struct gpu_swapchain gpu_swapchain;
-typedef struct gpu_compute_pipeline gpu_compute_pipeline;
-typedef struct gpu_gfx_pipeline gpu_gfx_pipeline;
-typedef struct gpu_encoder gpu_encoder; // Command encoder
+typedef struct gpu_encoder gpu_encoder; // Render command encoder
+typedef struct gpu_compute_encoder gpu_compute_encoder;
 typedef struct gpu_buffer gpu_buffer;
 typedef struct gpu_texture gpu_texture;
 
@@ -325,20 +348,29 @@ typedef struct shader_data_layout {
   size_t binding_count;
 } shader_data_layout;
 
-typedef struct shader_desc {
-  // TODO
-} shader_desc;
+typedef struct shader_function {
+  const char* source;
+  bool is_spirv;
+  const char* entry_point;
+  shader_vis shader_stage;
+} shader_function;
 
 typedef enum cull_mode { CULL_BACK_FACE, CULL_FRONT_FACE } cull_mode;
 
 typedef struct gfx_pipeline_desc {
   const char* label;
   vertex_desc vertex_desc;
-  shader_desc vs;
-  shader_desc fs;
+  shader_function vertex;
+  shader_function fragment;
   // ShaderDataLayout data_layouts[MAX_SHADER_DATA_LAYOUTS];
   // u32 data_layouts_count;
 } gfx_pipeline_desc;
+
+typedef struct compute_pipeline_desc { /* TODO */ } compute_pipeline_desc;
+
+typedef struct render_pass_desc {
+
+} render_pass_desc;
 
 // --- RAL Functions
 
@@ -348,12 +380,39 @@ void ral_buffer_destroy(buf_handle handle);
 tex_handle ral_texture_create(texture_desc desc, bool create_view, const void* data);
 void ral_texture_destroy(tex_handle handle);
 
+// Encoders / cmd buffers
+/** @brief grabs a new command encoder from the pool of available ones and begins recording */
+gpu_encoder* ral_render_encoder(render_pass_desc rpass_desc);
+
+gpu_compute_encoder ral_compute_encoder();
+
+void ral_encoder_finish(gpu_encoder* enc);
+void ral_encoder_submit(gpu_encoder* enc);
+void ral_encoder_finish_and_submit(gpu_encoder* enc);
+
+pipeline_handle ral_gfx_pipeline_create(gfx_pipeline_desc desc);
+void ral_gfx_pipeline_destroy(pipeline_handle handle);
+
+compute_pipeline_handle ral_compute_pipeline_create(compute_pipeline_desc);
+void ral_compute_pipeline_destroy(compute_pipeline_handle handle);
+
+// Encoding
+void ral_encode_bind_pipeline(gpu_encoder* enc, pipeline_handle pipeline);
+void ral_encode_set_vertex_buf(gpu_encoder* enc, buf_handle vbuf);
+void ral_encode_set_index_buf(gpu_encoder* enc, buf_handle ibuf);
+void ral_encode_draw_tris(gpu_encoder* enc, size_t start, size_t count);
+
 // Backend lifecycle
 void ral_backend_init(const char* window_name, struct GLFWwindow* window);
 void ral_backend_shutdown();
 
 // Frame lifecycle
+
+typedef void (*scoped_draw_commands)(); // callback that we run our draw commands within.
+// allows us to wrap some api-specific behaviour
+
 void ral_frame_start();
+void ral_frame_draw(scoped_draw_commands draw_fn);
 void ral_frame_end();
 
 // --- Containers (Forward declared as internals are unnecessary for external header)
