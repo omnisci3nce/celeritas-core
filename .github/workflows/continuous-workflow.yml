@@ -5,11 +5,10 @@ jobs:
   Compile-and-Test:
     runs-on: ubuntu-latest
     steps:
-      - name: Install system dependencies, xmake, etc
+      - name: Install system dependencies, make, etc
         run: |
-          sudo add-apt-repository ppa:xmake-io/xmake
           sudo apt update
-          sudo apt install -y xmake xorg-dev libglu1-mesa-dev clang-format
+          sudo apt install -y xorg-dev libglu1-mesa-dev clang-format make
       - name: Check out repository code
         uses: actions/checkout@v4
       - name: List files in the repository
