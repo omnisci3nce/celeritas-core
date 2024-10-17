@@ -94,7 +94,7 @@ format:
 
 .PHONY: tidy
 tidy:
-	clang-tidy $(SRCS) $(EXAMPLES_DIR)/*.c -- $(CFLAGS)
+	clang-tidy -fix $(SRCS) $(EXAMPLES_DIR)/*.c -- $(CFLAGS)
 
 .PHONY: clean
 clean:

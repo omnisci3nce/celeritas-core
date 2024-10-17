@@ -18,4 +18,4 @@ jobs:
       - name: Check formatting
         run: find src/ -iname *.h -o -iname *.c | xargs clang-format --style=file --dry-run --Werror
       - name: Compile C code
-        run: xmake build -y
+        run: make
