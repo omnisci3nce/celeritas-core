@@ -102,14 +102,14 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 //     };
 // }
 
-impl Default for ShaderBinding {
+impl Default for shader_binding {
     fn default() -> Self {
         Self {
             label: "static".as_ptr() as *const _,
-            kind: ShaderBindingKind_BINDING_COUNT,
-            vis: ShaderVisibility_VISIBILITY_VERTEX,
-            data: ShaderBinding__bindgen_ty_1 {
-                bytes: ShaderBinding__bindgen_ty_1__bindgen_ty_1 {
+            binding_type: shader_binding_type_BINDING_BUFFER,
+            visibility: shader_stage_STAGE_VERTEX,
+            data: shader_binding__bindgen_ty_1 {
+                bytes: shader_binding__bindgen_ty_1__bindgen_ty_1 {
                     size: 0,
                     data: std::ptr::null_mut(),
                 },
