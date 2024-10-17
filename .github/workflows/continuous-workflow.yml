@@ -8,7 +8,7 @@ jobs:
       - name: Install system dependencies, make, etc
         run: |
           sudo apt update
-          sudo apt install -y xorg-dev libglu1-mesa-dev clang-format make
+          sudo apt install -y xorg-dev libglfw3-dev libglu1-mesa-dev clang-format make
       - name: Check out repository code
         uses: actions/checkout@v4
       - name: List files in the repository
