@@ -92,9 +92,17 @@ cube: $(EXAMPLES_DIR)/cube.c $(SHARED_LIB) $(SHADER_OUT_DIR)/cube.air $(METAL_LI
 format:
 	clang-format -i $(FORMAT_FILES)
 
-.PHONY: tidy
+.PHONY: format-check
+format-check:
+	clang-format --dry-run -Werror $(FORMAT_FILES)
+
+.PHONY: tidy-fix
 tidy:
 	clang-tidy -fix $(SRCS) $(EXAMPLES_DIR)/*.c -- $(CFLAGS)
+
+.PHONY: tidy-check
+tidy-check:
+	clang-tidy $(SRCS) $(EXAMPLES_DIR)/*.c -- $(CFLAGS)
 
 .PHONY: clean
 clean:
