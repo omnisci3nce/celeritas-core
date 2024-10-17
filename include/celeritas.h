@@ -78,6 +78,7 @@ struct GLFWwindow* get_window();
 struct core {
   const char* app_name;
   struct GLFWwindow* window;
+  bool should_exit;
   renderer* renderer;
   input_state* input;
 };
@@ -238,7 +239,6 @@ DEFINE_HANDLE(pipeline_handle);
 #define MAX_SHADER_BINDINGS 16
 
 // Backend-specific structs
-typedef struct gpu_device gpu_device;
 typedef struct gpu_swapchain gpu_swapchain;
 typedef struct gpu_compute_pipeline gpu_compute_pipeline;
 typedef struct gpu_gfx_pipeline gpu_gfx_pipeline;
@@ -341,10 +341,20 @@ typedef struct gfx_pipeline_desc {
 } gfx_pipeline_desc;
 
 // --- RAL Functions
+
+// Resources
 buf_handle ral_buffer_create(u64 size, const void* data);
 void ral_buffer_destroy(buf_handle handle);
 tex_handle ral_texture_create(texture_desc desc, bool create_view, const void* data);
 void ral_texture_destroy(tex_handle handle);
+
+// Backend lifecycle
+void ral_backend_init(const char* window_name, struct GLFWwindow* window);
+void ral_backend_shutdown();
+
+// Frame lifecycle
+void ral_frame_start();
+void ral_frame_end();
 
 // --- Containers (Forward declared as internals are unnecessary for external header)
 typedef struct u32_darray u32_darray;
@@ -381,6 +391,11 @@ geometry geo_cone(f32 radius, f32 height, u32 resolution);
 geometry geo_uv_sphere(f32 radius, u32 north_south_lines, u32 east_west_lines);
 geometry geo_ico_sphere(f32 radius, f32 n_subdivisions);
 
+// --- Renderer
+
+// void renderer_init(renderer* rend);
+// void renderer_shutdown(renderer* rend);
+
 // --- Scene / Transform Hierarchy
 
 // --- Gameplay
@@ -406,6 +421,8 @@ typedef struct model {
 model_handle model_load_from_gltf(const char* path);
 
 // --- Animation
+
+// Compute shader approach so we only need one kind of vertex format
 
 // --- Collisions
 

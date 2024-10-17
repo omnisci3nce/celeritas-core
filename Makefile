@@ -4,11 +4,7 @@ CFLAGS := -Wall -Wextra -O2 $(INCLUDES)
 LDFLAGS := -lglfw
 
 # Detect OS
-ifeq ($(OS),Windows_NT)
-    DETECTED_OS := Windows
-else
-    DETECTED_OS := $(shell uname -s)
-endif
+UNAME_S := $(shell uname -s)
 
 # Directories
 SRC_DIR := src
@@ -22,17 +18,14 @@ EXAMPLES_DIR := examples
 SRCS := $(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/**/*.c)
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 
-# Add Metal backend written in Objective C only on Mac platform
-ifeq ($(DETECTED_OS),Darwin)
-    SRCS += $(SRC_DIR)/backend_mtl.m
-endif
-
 # Library outputs
 STATIC_LIB := $(BUILD_DIR)/libceleritas.a
 ifeq ($(UNAME_S),Darwin)
     SHARED_LIB := $(BUILD_DIR)/libceleritas.dylib
     SHARED_FLAGS := -dynamiclib
-    LDFLAGS += -framework Foundation -framework CoreFoundation -framework CoreGraphics -framework AppKit
+    LDFLAGS += -framework Foundation -framework CoreFoundation -framework CoreGraphics -framework AppKit -framework QuartzCore -framework Metal -framework MetalKit
+		SRCS += $(SRC_DIR)/backend_mtl.m
+		OBJS += $(OBJ_DIR)/backend_mtl.o
 else
     SHARED_LIB := $(BUILD_DIR)/libceleritas.so
     SHARED_FLAGS := -shared
@@ -44,6 +37,11 @@ endif
 # $< - first prerequisite file only
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Objective C
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.m
 	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -63,11 +61,10 @@ static: $(STATIC_LIB)
 all: shared static
 
 .PHONY: triangle
-triangle: build/triangle.bin
-
-build/triangle.bin: $(EXAMPLES_DIR)/triangle.c $(STATIC_LIB)
+triangle: $(EXAMPLES_DIR)/triangle.c $(SHARED_LIB)
 		@mkdir -p $(BUILD_DIR)
-		$(CC) $(CFLAGS) $< -o $@ -L$(BUILD_DIR) -lceleritas $(LDFLAGS)
+		$(CC) $(CFLAGS) $(EXAMPLES_DIR)/triangle.c -L$(BUILD_DIR) -lceleritas $(LDFLAGS)
+		MTL_DEBUG_LAYER=1 build/triangle.bin
 
 .PHONY: clean
 clean:
