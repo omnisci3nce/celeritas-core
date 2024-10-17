@@ -195,35 +195,36 @@ inlined vec3 Vec3_div(vec3 u, f32 s);
 
 // --- RAL
 
-DEFINE_HANDLE(BufHandle);
-DEFINE_HANDLE(TexHandle);
-DEFINE_HANDLE(PipelineHandle);
+DEFINE_HANDLE(buf_handle);
+DEFINE_HANDLE(tex_handle);
+DEFINE_HANDLE(pipeline_handle);
 
 #define MAX_VERTEX_ATTRIBUTES 16
 #define MAX_SHADER_BINDINGS 16
 
 // Backend-specific structs
-typedef struct GPU_Swapchain GPU_Swapchain;
-typedef struct GPU_Pipeline GPU_Pipeline;
-typedef struct GPU_CmdEncoder GPU_CmdEncoder;
+typedef struct gpu_swapchain GPU_Swapchain;
+typedef struct gpu_compute_pipeline gpu_compute_pipeline;
+typedef struct gpu_gfx_pipeline gpu_gfx_pipeline;
+typedef struct gpu_encoder gpu_encoder; // Command encoder
 
 // NOTE: Can we just use Storage buffer for everything?
-// typedef enum GPU_BufferType {} GPU_BufferType;
+typedef enum gpu_buf_type {} gpu_buf_type;
 
-typedef enum GPU_TextureType {
+typedef enum gpu_tex_type {
   TEXTURE_TYPE_2D,
   TEXTURE_TYPE_3D,
   TEXTURE_TYPE_2D_ARRAY,
   TEXTURE_TYPE_CUBE_MAP,
   TEXTURE_TYPE_COUNT
-} GPU_TextureType;
+} gpu_tex_type;
 
 /** @brief Texture Description - used by texture creation functions */
-typedef struct TextureDesc {
-  GPU_TextureType tex_type;
+typedef struct texture_desc {
+  gpu_tex_type tex_type;
   // GPU_TextureFormat format;
   int width, height, num_channels;
-} TextureDesc;
+} texture_desc;
 
 /// @strip_prefix(ATTR_)
 typedef enum VertexAttribType {

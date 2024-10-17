@@ -8,3 +8,4 @@
 - [x] Get rid of doxygen
 - [ ] Move to Vulkan-first rendering
 - [ ] Build in pipeline (needs vulkan)
+- [ ] Incorporate vma
