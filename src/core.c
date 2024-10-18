@@ -36,7 +36,6 @@ void core_bringup(const char* window_name, struct GLFWwindow* optional_window) {
     g_core.window = glfw_window;
   }
 
-
   // This may move into a renderer struct
   ral_backend_init(window_name, g_core.window);
 

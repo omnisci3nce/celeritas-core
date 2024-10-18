@@ -2,9 +2,7 @@
 
 vec3 vec3_create(f32 x, f32 y, f32 z) { return (vec3){ x, y, z }; }
 
-vec3 vec3_add(vec3 u, vec3 v) {
-  return (vec3){ .x = u.x + v.x, .y = u.y + v.y, .z = u.z + v.z };
-}
+vec3 vec3_add(vec3 u, vec3 v) { return (vec3){ .x = u.x + v.x, .y = u.y + v.y, .z = u.z + v.z }; }
 
 vec4 vec4_create(f32 x, f32 y, f32 z, f32 w) { return (vec4){ x, y, z, w }; }
 
