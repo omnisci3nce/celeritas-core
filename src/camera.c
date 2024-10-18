@@ -6,10 +6,8 @@ mat4 camera_view_proj(camera camera, f32 lens_height, f32 lens_width, mat4* out_
 
   vec3 camera_direction = vec3_add(camera.position, camera.forwards);
   mat4 view_matrix = mat4_look_at(camera.position, camera_direction, camera.up);
-  if (out_view)
-    *out_view = view_matrix;
-  if (out_proj)
-    *out_proj = projection_matrix;
+  if (out_view) *out_view = view_matrix;
+  if (out_proj) *out_proj = projection_matrix;
 
   return mat4_mult(view_matrix, projection_matrix);
 }

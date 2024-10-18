@@ -1,17 +1,17 @@
 /**
  * @file scene.c
  * @author your name (you@domain.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-10-18
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 #include <celeritas.h>
 
-// Retained mode scene tree that handles performant transform propagation, and allows systems, or other languages via bindings, to
-// manipulate rendering/scene data without *owning* said data.
+// Retained mode scene tree that handles performant transform propagation, and allows systems, or other languages via
+// bindings, to manipulate rendering/scene data without *owning* said data.
 
 typedef struct scene_tree_node {
   const char* label;

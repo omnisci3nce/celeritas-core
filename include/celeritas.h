@@ -578,11 +578,7 @@ typedef struct keyframes {
   size_t n_frames;
 } keyframes;
 
-typedef enum interpolation {
-  Interpolation_Step,
-  Interpolation_Linear,
-  Interpolation_Cubic
-} interpolation;
+typedef enum interpolation { Interpolation_Step, Interpolation_Linear, Interpolation_Cubic } interpolation;
 
 typedef struct animation_spline {
   f32* timestamps;
@@ -593,7 +589,6 @@ typedef struct animation_spline {
 // Compute shader approach so we only need one kind of vertex format
 
 // --- Input
-
 
 // --- Collisions
 
