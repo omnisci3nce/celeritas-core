@@ -1,5 +1,13 @@
 #pragma once
 
+/*
+  Common abbreviations:
+  buf = buffer
+  tex = texture
+  desc = description
+  idx = index
+*/
+
 // Standard library includes
 #include <assert.h>
 #include <math.h>
@@ -407,7 +415,7 @@ typedef struct shader_function {
   shader_stage stage;
 } shader_function;
 
-typedef enum cull_mode { CULL_BACK_FACE, CULL_FRONT_FACE } cull_mode;
+typedef enum cull_mode { Cull_BackFace, Cull_FrontFace } cull_mode;
 
 typedef struct gfx_pipeline_desc {
   const char* label;
@@ -476,9 +484,9 @@ typedef struct u32_darray u32_darray;
 
 // --- Base Renderer types
 
-DEFINE_HANDLE(MeshHandle);
-DEFINE_HANDLE(MaterialHandle);
-DEFINE_HANDLE(ModelHandle);
+DEFINE_HANDLE(mesh_handle);
+DEFINE_HANDLE(material_handle);
+DEFINE_HANDLE(model_handle);
 
 typedef struct geometry {
   vertex_desc vertex_format;
@@ -487,17 +495,30 @@ typedef struct geometry {
   u32_darray* indices;
 } geometry;
 
+typedef u32 joint_idx;
+typedef struct armature {
+} armature;
+
+/** @brief Mesh data that has been uploaded to GPU and is ready to be rendered each frame
+           Gets stored in a pool */
 typedef struct mesh {
   buf_handle vertex_buffer;
   buf_handle index_buffer;
-  MaterialHandle material;
-  geometry geometry;
-  // bool is_skinned;  // false = its static
-  // Armature armature;
-  // bool is_uploaded;  // has the data been uploaded to the GPU
+  // todo: material?
+  geometry geo;  // the originating mesh data
+  const armature* skinning_data;
 } mesh;
 
-// --- Render primitives
+typedef struct draw_mesh_cmd {
+  mesh_handle mesh;
+  mat4 transform;
+  vec3 bounding_sphere_center;
+  f32 bounding_sphere_radius;
+  const armature* skinning_data;  // NULL = static mesh
+  bool cast_shadows;
+} draw_mesh_cmd;
+
+// --- Geometry/Mesh primitives
 
 geometry geo_plane(f32 x_scale, f32 z_scale, u32 tiling_u, u32 tiling_v);
 geometry geo_cuboid(f32 x_scale, f32 y_scale, f32 z_scale);
@@ -505,31 +526,33 @@ geometry geo_cylinder(f32 radius, f32 height, u32 resolution);
 geometry geo_cone(f32 radius, f32 height, u32 resolution);
 geometry geo_uv_sphere(f32 radius, u32 north_south_lines, u32 east_west_lines);
 geometry geo_ico_sphere(f32 radius, f32 n_subdivisions);
+void geo_scale_uniform(geometry* geo, f32 scale);
+void geo_scale_xyz(geometry* geo, vec3 scale_xyz);
 
 // --- Renderer
 
 // void renderer_init(renderer* rend);
 // void renderer_shutdown(renderer* rend);
 
+typedef struct camera {
+  vec3 position;
+  // TODO: move to using a quaternion for the camera's orientation - need to update
+  //       how the view transformation matrix is calculated
+  vec3 forwards;
+  vec3 up;
+  f32 fov;
+} camera;
+
+/** @brief calculates the view and projection matrices for a camera  */
+mat4 camera_view_proj(camera camera, f32 lens_height, f32 lens_width, mat4* out_view, mat4* out_proj);
+
+// TODO: Filament PBR model
+
 // --- Scene / Transform Hierarchy
 
 // --- Gameplay
 
-typedef struct camera {
-  vec3 position;
-  quat orientation;
-  f32 fov;
-} camera;
-
-mat4 camera_view_proj(camera);
-
-// --- Reference Renderer
-
-// TODO: Filament PBR model
-
 // --- Game and model data
-
-DEFINE_HANDLE(model_handle);
 
 typedef struct model {
 } model;
@@ -538,7 +561,39 @@ model_handle model_load_from_gltf(const char* path);
 
 // --- Animation
 
+typedef enum keyframe_kind { Keyframe_Rotation, Keyframe_Translation, Keyframe_Scale, Keyframe_Weights } keyframe_kind;
+
+const char* keyframe_kind_strings[4] = { "ROTATION", "TRANSLATION", "SCALE", "WEIGHTS" };
+
+typedef union keyframe {
+  quat rotation;
+  vec3 translation;
+  vec3 scale;
+  f32 weights[4];
+} keyframe;
+
+typedef struct keyframes {
+  keyframe_kind kind;
+  keyframe* values;
+  size_t n_frames;
+} keyframes;
+
+typedef enum interpolation {
+  Interpolation_Step,
+  Interpolation_Linear,
+  Interpolation_Cubic
+} interpolation;
+
+typedef struct animation_spline {
+  f32* timestamps;
+  size_t n_timestamps;
+  keyframes frames;
+} animation_spline;
+
 // Compute shader approach so we only need one kind of vertex format
+
+// --- Input
+
 
 // --- Collisions
 

@@ -6,28 +6,29 @@ use serde::{Deserialize, Serialize};
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
-// // --- Conversions
-// pub mod conversions {
-//     use crate::{Mat4, Vec3, Vec4};
+// --- Conversions
+pub mod conversions {
+    use crate::{mat4, vec3, vec4};
 
-//     impl From<Vec3> for glam::Vec3 {
-//         fn from(v: Vec3) -> Self {
-//             Self {
-//                 x: v.x,
-//                 y: v.y,
-//                 z: v.z,
-//             }
-//         }
-//     }
-//     impl From<glam::Vec3> for Vec3 {
-//         fn from(v: glam::Vec3) -> Self {
-//             Self {
-//                 x: v.x,
-//                 y: v.y,
-//                 z: v.z,
-//             }
-//         }
-//     }
+    impl From<vec3> for glam::Vec3 {
+        fn from(v: vec3) -> Self {
+            Self {
+                x: v.x,
+                y: v.y,
+                z: v.z,
+            }
+        }
+    }
+    impl From<glam::Vec3> for vec3 {
+        fn from(v: glam::Vec3) -> Self {
+            Self {
+                x: v.x,
+                y: v.y,
+                z: v.z,
+            }
+        }
+    }
+}
 
 //     impl From<Vec4> for glam::Vec4 {
 //         fn from(v: Vec4) -> Self {

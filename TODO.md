@@ -4,9 +4,9 @@
   - ~~compile shared lib~~
   - compile and run tests
   - compile example
-- [ ] Consolidate down to a handful of examples
+- [x] Consolidate down to a handful of examples
 - [x] Get rid of doxygen
 - [ ] make format
 - [ ] Move to Vulkan-first rendering
-- [ ] Build in pipeline (needs vulkan)
+- [ ] Build in CI pipeline (needs vulkan)
 - [ ] Incorporate vma

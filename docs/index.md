@@ -20,7 +20,7 @@ Celeritas is the original Latin word for celerity that the English is derived fr
 
 ## Feature Set
 
-[See here (README)](https://github.com/omnisci3nce/celeritas-core/blob/winter-cleaning/README.md#todo)
+[See here (README)](https://github.com/omnisci3nce/celeritas-core/blob/masterREADME.md#goals)
 
 ## Getting started
 

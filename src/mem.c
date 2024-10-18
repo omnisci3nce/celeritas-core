@@ -1,7 +1,7 @@
 #include <celeritas.h>
 
 void_pool void_pool_create(void* storage, const char* debug_label, u64 capacity, u64 entry_size) {
-  size_t memory_requirements = capacity * entry_size;
+  size_t _memory_requirements = capacity * entry_size;
   // void* backing_buf = arena_alloc(a, memory_requirements);
 
   assert(entry_size >= sizeof(void_pool_header));  // TODO: create my own assert with error message
