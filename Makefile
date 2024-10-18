@@ -46,7 +46,7 @@ endif
 # $^ - prerequisites of current rule separated by spaces
 # $< - first prerequisite file only
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c include/celeritas.h
 	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 

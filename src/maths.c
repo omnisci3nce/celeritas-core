@@ -2,6 +2,10 @@
 
 vec3 vec3_create(f32 x, f32 y, f32 z) { return (vec3){ x, y, z }; }
 
+vec3 vec3_add(vec3 u, vec3 v) {
+  return (vec3){ .x = u.x + v.x, .y = u.y + v.y, .z = u.z + v.z };
+}
+
 vec4 vec4_create(f32 x, f32 y, f32 z, f32 w) { return (vec4){ x, y, z, w }; }
 
 mat4 mat4_ident() { return (mat4){ .data = { 1.0, 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.0 } }; }
@@ -34,4 +38,8 @@ mat4 mat4_perspective(f32 fov_radians, f32 aspect_ratio, f32 near_z, f32 far_z) 
   out_matrix.data[11] = -1.0f;
   out_matrix.data[14] = -((2.0f * far_z * near_z) / (far_z - near_z));
   return out_matrix;
+}
+
+mat4 mat4_look_at(vec3 position, vec3 target, vec3 up) {
+  // TODO
 }

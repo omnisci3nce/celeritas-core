@@ -6,7 +6,7 @@
   - compile example
 - [x] Consolidate down to a handful of examples
 - [x] Get rid of doxygen
-- [ ] make format
+- [x] make format
 - [ ] Move to Vulkan-first rendering
 - [ ] Build in CI pipeline (needs vulkan)
 - [ ] Incorporate vma

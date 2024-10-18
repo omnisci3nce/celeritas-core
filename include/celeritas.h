@@ -563,7 +563,7 @@ model_handle model_load_from_gltf(const char* path);
 
 typedef enum keyframe_kind { Keyframe_Rotation, Keyframe_Translation, Keyframe_Scale, Keyframe_Weights } keyframe_kind;
 
-const char* keyframe_kind_strings[4] = { "ROTATION", "TRANSLATION", "SCALE", "WEIGHTS" };
+extern const char* keyframe_kind_strings[4];
 
 typedef union keyframe {
   quat rotation;
@@ -579,6 +579,8 @@ typedef struct keyframes {
 } keyframes;
 
 typedef enum interpolation { Interpolation_Step, Interpolation_Linear, Interpolation_Cubic } interpolation;
+
+extern const char* interpolation_strings[3];
 
 typedef struct animation_spline {
   f32* timestamps;

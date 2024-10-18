@@ -27,16 +27,21 @@ void core_bringup(const char* window_name, struct GLFWwindow* optional_window) {
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
   char* full_window_name = malloc(sizeof(char) * 100);
-  int _offset = sprintf(full_window_name, "%s (%s)", window_name, gapi);
+  sprintf(full_window_name, "%s (%s)", window_name, gapi);
 
-  GLFWwindow* glfw_window = glfwCreateWindow(800, 600, full_window_name, NULL, NULL);
-  g_core.window = glfw_window;
+  if (optional_window) {
+    g_core.window = optional_window;
+  } else {
+    GLFWwindow* glfw_window = glfwCreateWindow(800, 600, full_window_name, NULL, NULL);
+    g_core.window = glfw_window;
+  }
+
 
   // This may move into a renderer struct
-  ral_backend_init(window_name, glfw_window);
+  ral_backend_init(window_name, g_core.window);
 
-  glfwSetKeyCallback(glfw_window, key_callback);
-  glfwSetFramebufferSizeCallback(glfw_window, resize_callback);
+  glfwSetKeyCallback(g_core.window, key_callback);
+  glfwSetFramebufferSizeCallback(g_core.window, resize_callback);
 }
 void core_shutdown() {
   ral_backend_shutdown();
